@@ -256,9 +256,10 @@ flowchart TB
   subgraph Compose[Docker Compose]
     FE[frontend container\nReact + Vite preview]
     BE[backend container\nFastAPI + workers]
-    DB[(postgres container)]
-    OBJ[(object storage container)]
-    MQ[(queue container)]
+    DB[(postgres container :5432)]
+    OBJ[(minio container :9000/:9001)]
+    MQ[(redis container :6379)]
+    INIT[minio-init one-shot job]
   end
 
   USER[Chrome Browser] --> FE
@@ -266,6 +267,7 @@ flowchart TB
   BE --> DB
   BE --> OBJ
   BE --> MQ
+  INIT --> OBJ
   BE --> OLL[Ollama]
   BE <--> GCAL[Google Calendar]
 ```

@@ -10,6 +10,7 @@
 - [ ] Deploy steps executed in order.
 - [ ] Smoke checks passed.
 - [ ] Monitoring and alerts verified.
+- [ ] Container baseline check passed (`docker compose config` + service health checks).
 
 ## Post-Release
 - [ ] No critical regressions within observation window.

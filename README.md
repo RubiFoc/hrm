@@ -19,6 +19,11 @@ Every behavior change must update code and documentation in the same task.
 - Frontend (React + TS): `cd apps/frontend && npm install && npm run dev`
 - Docs check: `./scripts/check-docs-structure.sh`
 
+## Docker Bootstrap
+1. `cp .env.example .env`
+2. `docker compose up -d --build`
+3. Frontend: `http://localhost:5173`, Backend health: `http://localhost:8000/health`
+
 ## Delivery Process
 - Git/GitHub flow and protected branch policy: `docs/operations/github-workflow.md`
 - PR Definition of Done: `.github/PULL_REQUEST_TEMPLATE.md`

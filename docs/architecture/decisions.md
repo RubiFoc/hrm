@@ -9,6 +9,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0002 | 2026-03-03 | accepted | Adopt modular monolith with phased domain rollout | architect | architecture, delivery |
 | ADR-0003 | 2026-03-03 | accepted | Make diagrams and best-practice checks mandatory | architect | architecture, engineering process |
 | ADR-0004 | 2026-03-03 | accepted | Standardize frontend stack on React.js + TypeScript | architect | frontend architecture, delivery |
+| ADR-0005 | 2026-03-04 | accepted | Standardize local platform runtime on Docker Compose | architect | infra, operations, developer experience |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -52,3 +53,15 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Consistent frontend architecture and faster onboarding for contributors.
   - Reduced technology fragmentation risk.
   - Frontend stack changes require explicit ADR review.
+
+## ADR-0005
+- Context: The project needs a deterministic local runtime that aligns backend, frontend, and mandatory infrastructure dependencies for rapid parallel delivery.
+- Decision:
+  - Use Docker Compose as the default local platform runtime.
+  - Provide containerized services for backend, frontend, PostgreSQL, Redis queue, and MinIO object storage.
+  - Keep environment configuration centralized via `.env.example` and runtime `.env`.
+  - Require runbook and diagram updates when compose topology changes.
+- Consequences:
+  - Faster onboarding and fewer environment drift issues.
+  - Higher confidence for shared smoke checks and incident triage.
+  - Added maintenance responsibility for container image and compose configuration.

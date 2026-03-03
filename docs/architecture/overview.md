@@ -69,6 +69,7 @@ flowchart LR
 ## Deployment View
 - Runtime style: modular monolith first, with clear domain modules and async workers.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
+- Compose baseline services: `frontend`, `backend`, `postgres`, `redis`, `minio`, `minio-init`.
 - Frontend style: React.js + TypeScript SPA with role-based route guards and shared component system.
 - Frontend libraries: MUI, React Router, TanStack Query, React Hook Form, Zod, i18next.
 - Browser support target: Google Chrome.
