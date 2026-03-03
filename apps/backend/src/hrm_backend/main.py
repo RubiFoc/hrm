@@ -2,10 +2,12 @@
 
 from fastapi import FastAPI
 
+from hrm_backend.api.auth import router as auth_router
 from hrm_backend.api.rbac_demo import router as rbac_demo_router
 from hrm_backend.rbac import ROLE_PERMISSION_MATRIX
 
 app = FastAPI(title="HRM Backend", version="0.1.0")
+app.include_router(auth_router)
 app.include_router(rbac_demo_router)
 
 

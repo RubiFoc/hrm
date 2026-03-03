@@ -13,6 +13,7 @@ required_files=(
   "docs/project/legal-framework.md"
   "docs/project/legal-controls-matrix.md"
   "docs/project/rbac-matrix.md"
+  "docs/project/auth-session-lifecycle.md"
   "docs/project/sprint-m1-plan.md"
   "docs/architecture/overview.md"
   "docs/architecture/diagrams.md"

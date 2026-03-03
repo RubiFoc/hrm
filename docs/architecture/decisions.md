@@ -10,6 +10,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0003 | 2026-03-03 | accepted | Make diagrams and best-practice checks mandatory | architect | architecture, engineering process |
 | ADR-0004 | 2026-03-03 | accepted | Standardize frontend stack on React.js + TypeScript | architect | frontend architecture, delivery |
 | ADR-0005 | 2026-03-04 | accepted | Standardize local platform runtime on Docker Compose | architect | infra, operations, developer experience |
+| ADR-0006 | 2026-03-04 | accepted | Adopt signed access tokens with rotating refresh sessions for MVP auth | architect + backend-engineer | backend security, RBAC integration |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -63,5 +64,17 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Require runbook and diagram updates when compose topology changes.
 - Consequences:
   - Faster onboarding and fewer environment drift issues.
-  - Higher confidence for shared smoke checks and incident triage.
-  - Added maintenance responsibility for container image and compose configuration.
+- Higher confidence for shared smoke checks and incident triage.
+- Added maintenance responsibility for container image and compose configuration.
+
+## ADR-0006
+- Context: `TASK-01-02` requires replacing header-based role input with authenticated identity claims and defining token/session lifecycle for Phase 1.
+- Decision:
+  - Use signed short-lived bearer access tokens for API authorization.
+  - Use rotating refresh tokens bound to server-side session records.
+  - Enforce session revocation via logout and reject revoked/expired sessions during bearer validation.
+  - Keep session storage in-memory for MVP bootstrap; plan migration to persistent shared storage before production.
+- Consequences:
+  - RBAC enforcement now relies on validated token claims instead of request headers.
+  - Security baseline improves (refresh replay prevention, explicit session revocation).
+  - Current implementation is not horizontally scalable until session store is externalized.

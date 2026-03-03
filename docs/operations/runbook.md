@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-04
-- Updated by: devops-engineer
+- Updated by: devops-engineer + backend-engineer
 
 ## Local Environment (Docker Compose)
 ### Prerequisites
@@ -26,6 +26,7 @@ Shortcut wrappers:
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8000`
 - Backend health: `http://localhost:8000/health`
+- Backend auth login: `http://localhost:8000/api/v1/auth/login`
 - MinIO API: `http://localhost:9000`
 - MinIO Console: `http://localhost:9001`
 
@@ -37,7 +38,8 @@ Shortcut wrappers:
 ### Smoke Verification
 1. `docker compose ps` shows `healthy` for backend/postgres/redis/minio.
 2. `curl -fsS http://localhost:8000/health` returns `{"status":"ok"}`.
-3. Open frontend at `http://localhost:5173` and verify route render.
+3. `curl -fsS -X POST http://localhost:8000/api/v1/auth/login -H 'Content-Type: application/json' -d '{"subject_id":"smoke-hr","role":"hr"}'` returns token payload.
+4. Open frontend at `http://localhost:5173` and verify route render.
 
 ## Incident Triage
 1. Confirm impact and affected user segment.

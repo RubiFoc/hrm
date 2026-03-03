@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-04
-- Updated by: architect
+- Updated by: architect + backend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -42,6 +42,7 @@ flowchart TB
   API[API Gateway]
 
   subgraph Core[Core Services]
+    AUTH[Auth and Session Service]
     REC[Recruitment Services]
     EMPDOM[Employee Services]
     HROPS[HR Automation Services]
@@ -53,6 +54,7 @@ flowchart TB
     DB[(PostgreSQL)]
     OBJ[(Object Storage)]
     QUEUE[(Queue/Event Bus)]
+    SESSION[(Session Store: in-memory MVP)]
   end
 
   subgraph Ext[External Integrations]
@@ -62,10 +64,12 @@ flowchart TB
   end
 
   UI --> API
+  API --> AUTH
   API --> REC
   API --> EMPDOM
   API --> HROPS
   API --> ANALYTICS
+  AUTH --> SESSION
 
   REC --> DB
   EMPDOM --> DB
@@ -270,4 +274,40 @@ flowchart TB
   INIT --> OBJ
   BE --> OLL[Ollama]
   BE <--> GCAL[Google Calendar]
+```
+
+## Diagram 10: Authentication and Session Lifecycle Sequence
+
+```mermaid
+sequenceDiagram
+  participant U as User (HR/Candidate/...)
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant AUTH as Auth and Session Service
+  participant STORE as Session Store
+
+  U->>UI: Sign in
+  UI->>API: POST /api/v1/auth/login (subject_id, role)
+  API->>AUTH: Issue session and token pair
+  AUTH->>STORE: Save session + refresh hash
+  AUTH-->>UI: access_token + refresh_token
+
+  U->>UI: Open protected page
+  UI->>API: Authorization: Bearer access_token
+  API->>AUTH: Validate access token + session
+  AUTH->>STORE: Check session state
+  AUTH-->>API: Auth context (subject, role, sid)
+  API-->>UI: Protected resource
+
+  U->>UI: Refresh session
+  UI->>API: POST /api/v1/auth/refresh (refresh_token)
+  API->>AUTH: Rotate refresh token
+  AUTH->>STORE: Replace refresh hash
+  AUTH-->>UI: New access_token + new refresh_token
+
+  U->>UI: Logout
+  UI->>API: POST /api/v1/auth/logout (Bearer access_token)
+  API->>AUTH: Revoke session
+  AUTH->>STORE: Mark session revoked
+  AUTH-->>UI: 204 No Content
 ```

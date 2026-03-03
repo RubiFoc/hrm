@@ -2,10 +2,12 @@
 
 ## Last Updated
 - Date: 2026-03-04
-- Updated by: architect
+- Updated by: backend-engineer
 
-This matrix is the initial access baseline for `TASK-01-01`.
-API enforcement source of truth: `apps/backend/src/hrm_backend/rbac.py`.
+This matrix is the access baseline for `TASK-01-01` and `TASK-01-02`.
+API enforcement source of truth:
+- `apps/backend/src/hrm_backend/rbac.py`
+- `apps/backend/src/hrm_backend/auth.py`
 
 ## Roles
 - `hr`
@@ -32,11 +34,11 @@ API enforcement source of truth: `apps/backend/src/hrm_backend/rbac.py`.
 | `accounting:read` | no | no | no | no | no | yes |
 
 ## Enforcement Rules
-- Role is read from request header `X-Role`.
-- Missing role header: `401 Unauthorized`.
-- Unknown role: `403 Forbidden`.
+- Role is resolved from validated access token claim (`role`).
+- Missing/invalid bearer token: `401 Unauthorized`.
+- Unknown role claim: `403 Forbidden`.
 - Permission mismatch: `403 Forbidden`.
 
 ## Next Steps
-- Replace header-based role resolution with authenticated identity claims in `TASK-01-02`.
+- Enforce access policy centrally for API and background jobs in `TASK-01-03`.
 - Expand permission set per domain modules as APIs are implemented.

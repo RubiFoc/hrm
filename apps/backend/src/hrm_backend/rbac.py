@@ -7,9 +7,11 @@ runtime helpers that the API layer can use to enforce access policies.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Final, Literal
+from typing import Annotated, Final, Literal
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, status
+
+from hrm_backend.auth import AuthContext, get_current_auth_context
 
 Role = Literal["hr", "candidate", "manager", "employee", "leader", "accountant"]
 Permission = Literal[
@@ -64,10 +66,10 @@ ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
 
 
 def parse_role(raw_role: str | None) -> Role:
-    """Parse and validate a role value from request metadata.
+    """Parse and validate role claim value.
 
     Args:
-        raw_role: Role string from request headers.
+        raw_role: Role claim from authenticated context.
 
     Returns:
         Role: Valid normalized role.
@@ -78,29 +80,31 @@ def parse_role(raw_role: str | None) -> Role:
     if raw_role is None or not raw_role.strip():
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing role header: use X-Role",
+            detail="Missing role claim in authenticated session",
         )
 
     candidate = raw_role.strip().lower()
     if candidate not in ROLE_PERMISSION_MATRIX:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Unknown role: {raw_role}",
+            detail=f"Unknown role claim: {raw_role}",
         )
 
     return candidate  # type: ignore[return-value]
 
 
-def get_current_role(request: Request) -> Role:
-    """Extract current role from request headers.
+def get_current_role(
+    auth_context: Annotated[AuthContext, Depends(get_current_auth_context)],
+) -> Role:
+    """Extract current role from validated authentication context.
 
     Args:
-        request: Incoming FastAPI request instance.
+        auth_context: Validated authentication context.
 
     Returns:
-        Role: Authenticated role resolved from `X-Role` header.
+        Role: Authenticated role resolved from access token claims.
     """
-    return parse_role(request.headers.get("X-Role"))
+    return parse_role(auth_context.role)
 
 
 def require_permission(permission: Permission) -> Callable[[Role], Role]:
@@ -116,7 +120,7 @@ def require_permission(permission: Permission) -> Callable[[Role], Role]:
         HTTPException: If role does not contain required permission.
     """
 
-    def dependency(role: Role = Depends(get_current_role)) -> Role:
+    def dependency(role: Annotated[Role, Depends(get_current_role)]) -> Role:
         if permission not in ROLE_PERMISSION_MATRIX[role]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

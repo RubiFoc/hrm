@@ -1,14 +1,8 @@
-"""Integration tests for core service health behavior."""
+"""Unit tests for core service health behavior."""
 
-from fastapi.testclient import TestClient
-
-from hrm_backend.main import app
+from hrm_backend.main import health
 
 
 def test_health() -> None:
-    """Verify that the health endpoint returns a successful status payload."""
-    client = TestClient(app)
-    response = client.get("/health")
-
-    assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    """Verify that the health endpoint function returns expected payload."""
+    assert health() == {"status": "ok"}

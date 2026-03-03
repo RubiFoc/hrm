@@ -1,8 +1,8 @@
 # Architecture Decomposition
 
 ## Last Updated
-- Date: 2026-03-03
-- Updated by: architect
+- Date: 2026-03-04
+- Updated by: architect + backend-engineer
 
 This document breaks the system architecture from high-level domains into smaller technical units.
 
@@ -83,6 +83,16 @@ This document breaks the system architecture from high-level domains into smalle
 - Monitoring Module:
   emit execution metrics and failure events.
 
+### 5. Auth and Access Service
+- Token Issuance Module:
+  issue signed short-lived access tokens and rotating refresh tokens.
+- Session Store Module:
+  keep active session state, refresh hash, and revocation markers.
+- Token Validation Module:
+  validate bearer signature/claims and bind to active session state.
+- Access Policy Module:
+  map validated role claims to RBAC permission checks.
+
 ## Data Decomposition
 
 | Data Group | Primary Owner Service | Storage Type | Notes |
@@ -96,6 +106,7 @@ This document breaks the system architecture from high-level domains into smalle
 | Onboarding tasks | Onboarding Service | PostgreSQL | Linked to employee profile |
 | Automation executions | Workflow Automation Service | PostgreSQL | Used for KPI and incident analysis |
 | Audit events | Audit Service | Append-only storage | Compliance evidence |
+| Auth sessions | Auth and Access Service | In-memory (phase-1 baseline) | Must move to persistent shared store before production |
 
 ## Integration Decomposition
 

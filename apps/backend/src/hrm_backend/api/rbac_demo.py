@@ -6,15 +6,24 @@ integration tests can verify authorization behavior.
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 
 from hrm_backend.rbac import Role, require_permission
 
 router = APIRouter(prefix="/api/v1", tags=["rbac-demo"])
+VacancyReadRole = Annotated[Role, Depends(require_permission("vacancy:read"))]
+VacancyCreateRole = Annotated[Role, Depends(require_permission("vacancy:create"))]
+CandidateProfileReadOwnRole = Annotated[
+    Role,
+    Depends(require_permission("candidate_profile:read_own")),
+]
+AnalyticsReadRole = Annotated[Role, Depends(require_permission("analytics:read"))]
 
 
 @router.get("/vacancies")
-def list_vacancies(role: Role = Depends(require_permission("vacancy:read"))) -> dict[str, object]:
+def list_vacancies(role: VacancyReadRole) -> dict[str, object]:
     """Return vacancy listing placeholder for authorized roles.
 
     Args:
@@ -27,7 +36,7 @@ def list_vacancies(role: Role = Depends(require_permission("vacancy:read"))) -> 
 
 
 @router.post("/vacancies")
-def create_vacancy(role: Role = Depends(require_permission("vacancy:create"))) -> dict[str, str]:
+def create_vacancy(role: VacancyCreateRole) -> dict[str, str]:
     """Create vacancy placeholder for authorized roles.
 
     Args:
@@ -40,9 +49,7 @@ def create_vacancy(role: Role = Depends(require_permission("vacancy:create"))) -
 
 
 @router.get("/candidate/profile")
-def read_own_candidate_profile(
-    role: Role = Depends(require_permission("candidate_profile:read_own")),
-) -> dict[str, str]:
+def read_own_candidate_profile(role: CandidateProfileReadOwnRole) -> dict[str, str]:
     """Return own profile placeholder for self-service roles.
 
     Args:
@@ -55,9 +62,7 @@ def read_own_candidate_profile(
 
 
 @router.get("/reports/automation")
-def read_automation_report(
-    role: Role = Depends(require_permission("analytics:read")),
-) -> dict[str, object]:
+def read_automation_report(role: AnalyticsReadRole) -> dict[str, object]:
     """Return automation KPI placeholder for reporting roles.
 
     Args:

@@ -7,6 +7,7 @@ Load the smallest set of documents required for the task.
 | --- | --- |
 | Bug fix | `project/brief.md`, `testing/strategy.md`, `operations/runbook.md`, `engineering/best-practices.md` |
 | New feature | `project/brief.md`, `architecture/overview.md`, `architecture/diagrams.md`, `testing/strategy.md`, `engineering/best-practices.md` |
+| Security/Auth feature | `project/brief.md`, `project/rbac-matrix.md`, `project/auth-session-lifecycle.md`, `architecture/overview.md`, `architecture/decisions.md`, `testing/strategy.md` |
 | Frontend feature | `project/brief.md`, `project/frontend-requirements.md`, `architecture/overview.md`, `architecture/diagrams.md`, `testing/strategy.md`, `engineering/best-practices.md` |
 | Refactor | `architecture/overview.md`, `architecture/diagrams.md`, `architecture/decisions.md`, `testing/strategy.md`, `engineering/best-practices.md` |
 | Incident response | `operations/runbook.md`, `operations/release-checklist.md` |
