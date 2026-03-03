@@ -12,6 +12,7 @@ required_files=(
   "docs/project/frontend-requirements.md"
   "docs/project/legal-framework.md"
   "docs/project/legal-controls-matrix.md"
+  "docs/project/rbac-matrix.md"
   "docs/project/sprint-m1-plan.md"
   "docs/architecture/overview.md"
   "docs/architecture/diagrams.md"
