@@ -14,6 +14,12 @@
 2. Start stack: `docker compose up -d --build`
 3. Verify status: `docker compose ps`
 
+Shortcut wrappers:
+- `make up` / `just up`
+- `make ps` / `just ps`
+- `make smoke` / `just smoke`
+- `make down` / `just down`
+
 ### Service Endpoints
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8000`
@@ -24,6 +30,7 @@
 ### Stop and Cleanup
 - Stop stack: `docker compose down`
 - Stop and remove volumes: `docker compose down -v`
+- Wrapper cleanup: `make down-v` or `just down-v`
 
 ### Smoke Verification
 1. `docker compose ps` shows `healthy` for backend/postgres/redis/minio.
