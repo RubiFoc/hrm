@@ -248,3 +248,24 @@ flowchart LR
   FE --> MERGE
   MERGE --> MAIN[Protected main]
 ```
+
+## Diagram 9: Docker Compose Runtime Topology (Phase 1)
+
+```mermaid
+flowchart TB
+  subgraph Compose[Docker Compose]
+    FE[frontend container\nReact + Vite preview]
+    BE[backend container\nFastAPI + workers]
+    DB[(postgres container)]
+    OBJ[(object storage container)]
+    MQ[(queue container)]
+  end
+
+  USER[Chrome Browser] --> FE
+  FE --> BE
+  BE --> DB
+  BE --> OBJ
+  BE --> MQ
+  BE --> OLL[Ollama]
+  BE <--> GCAL[Google Calendar]
+```
