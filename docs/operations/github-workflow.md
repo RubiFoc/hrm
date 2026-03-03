@@ -26,6 +26,7 @@
 - Include administrators in branch restrictions.
 - Restrict force pushes and deletions.
 - Require conversation resolution before merge.
+- Automation option: run `scripts/setup-github-repo.sh` with `GH_TOKEN` and repo name.
 
 ## Review Responsibilities
 - Backend changes: backend + architect.
