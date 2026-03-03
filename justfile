@@ -13,6 +13,14 @@ up:
   just env
   docker compose up -d --build
 
+rebuild:
+  just env
+  docker compose up -d --build --force-recreate
+
+clean-orphans:
+  just env
+  docker compose up -d --remove-orphans
+
 down:
   docker compose down
 

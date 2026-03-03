@@ -25,8 +25,8 @@ Every behavior change must update code and documentation in the same task.
 3. Frontend: `http://localhost:5173`, Backend health: `http://localhost:8000/health`
 
 Shortcut commands:
-- `make up`, `make down`, `make ps`, `make logs`, `make smoke`
-- `just up`, `just down`, `just ps`, `just logs`, `just smoke`
+- `make up`, `make rebuild`, `make clean-orphans`, `make down`, `make ps`, `make logs`, `make smoke`
+- `just up`, `just rebuild`, `just clean-orphans`, `just down`, `just ps`, `just logs`, `just smoke`
 
 ## Delivery Process
 - Git/GitHub flow and protected branch policy: `docs/operations/github-workflow.md`

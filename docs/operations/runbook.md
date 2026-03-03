@@ -16,6 +16,8 @@
 
 Shortcut wrappers:
 - `make up` / `just up`
+- `make rebuild` / `just rebuild`
+- `make clean-orphans` / `just clean-orphans`
 - `make ps` / `just ps`
 - `make smoke` / `just smoke`
 - `make down` / `just down`
@@ -61,3 +63,5 @@ Shortcut wrappers:
 - Follow logs: `docker compose logs -f <service>`
 - Restart one service: `docker compose restart <service>`
 - Rebuild after dependency/image changes: `docker compose up -d --build`
+- Force-recreate all services: `make rebuild` or `just rebuild`
+- Remove orphan containers: `make clean-orphans` or `just clean-orphans`

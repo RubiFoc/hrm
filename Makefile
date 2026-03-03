@@ -1,10 +1,12 @@
 SHELL := /bin/bash
 
-.PHONY: help env compose-config up down down-v ps logs smoke
+.PHONY: help env compose-config up rebuild clean-orphans down down-v ps logs smoke
 
 help:
 	@echo "Available targets:"
 	@echo "  make up            # create .env if missing and start stack"
+	@echo "  make rebuild       # rebuild images and force recreate containers"
+	@echo "  make clean-orphans # remove orphan containers without full teardown"
 	@echo "  make down          # stop stack"
 	@echo "  make down-v        # stop stack and remove volumes + orphans"
 	@echo "  make ps            # show compose services status"
@@ -20,6 +22,12 @@ compose-config:
 
 up: env
 	@docker compose up -d --build
+
+rebuild: env
+	@docker compose up -d --build --force-recreate
+
+clean-orphans: env
+	@docker compose up -d --remove-orphans
 
 down:
 	@docker compose down
