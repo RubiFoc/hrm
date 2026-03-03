@@ -1,0 +1,54 @@
+# Architecture Decisions
+
+Use this log for decisions that change interfaces, data models, deployment topology, or operational risk.
+
+## Decision Log
+| ID | Date | Status | Title | Owner | Impacted Areas |
+| --- | --- | --- | --- | --- | --- |
+| ADR-0001 | 2026-03-03 | accepted | Establish documentation-first LLM workflow | architect | docs, process |
+| ADR-0002 | 2026-03-03 | accepted | Adopt modular monolith with phased domain rollout | architect | architecture, delivery |
+| ADR-0003 | 2026-03-03 | accepted | Make diagrams and best-practice checks mandatory | architect | architecture, engineering process |
+| ADR-0004 | 2026-03-03 | accepted | Standardize frontend stack on React.js + TypeScript | architect | frontend architecture, delivery |
+
+## ADR-0001
+- Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
+- Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
+- Consequences: Slight overhead per change, significantly lower context loss and easier LLM onboarding.
+
+## ADR-0002
+- Context: The product has broad v1 scope, multiple role groups, and mandatory integrations (Ollama, Google Calendar), while delivery should start quickly and remain maintainable.
+- Decision: Start with a modular monolith architecture using clear domain modules and async workers, then deliver by phases:
+  1. HR + Candidates
+  2. Managers + Employees + Accountants + Leaders
+- Consequences:
+  - Faster initial delivery and lower operational complexity than early microservices.
+  - Strong need for strict module boundaries and interface contracts to avoid monolith coupling.
+  - Clear extraction path for high-load or high-volatility services in later stages.
+
+## ADR-0003
+- Context: Architecture knowledge can drift from implementation when diagrams and engineering standards are optional.
+- Decision:
+  - Maintain a canonical diagram set in `docs/architecture/diagrams.md`.
+  - Require diagram updates for architecture/data-flow/critical workflow changes.
+  - Require best-practice checks from `docs/engineering/best-practices.md` in every development task.
+  - Require architect sign-off for architecture-level changes.
+- Consequences:
+  - Better alignment between architecture intent and implementation.
+  - Slight documentation overhead per task.
+  - Higher consistency and maintainability for LLM-assisted development.
+
+## ADR-0004
+- Context: The product requires rapid delivery across multiple role workspaces while maintaining maintainable frontend patterns.
+- Decision:
+  - Use React.js + TypeScript as mandatory frontend technology baseline.
+  - Use popular ready-made frontend libraries for UI and application scaffolding.
+  - Support RU/EN localization in v1.
+  - Use Google Chrome as the v1 browser support target.
+  - Use Sentry for frontend monitoring and error telemetry.
+  - Keep mobile app out of scope; ship responsive web only.
+  - Manage frontend requirements in `docs/project/frontend-requirements.md`.
+  - Add dedicated frontend epic/tasks with priority in delivery planning.
+- Consequences:
+  - Consistent frontend architecture and faster onboarding for contributors.
+  - Reduced technology fragmentation risk.
+  - Frontend stack changes require explicit ADR review.

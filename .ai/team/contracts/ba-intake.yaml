@@ -1,0 +1,15 @@
+request_id: "REQ-0001"
+owner_role: "business-analyst"
+status: "done" # blocked | in_progress | done
+source_artifacts:
+  - path: "prb.md"
+    type: "problem-brief"
+    status: "filled"
+summary: "Baseline requirements finalized with stakeholder and structured into project docs."
+blockers: []
+open_questions:
+  - "Detailed legal-act matrix for Belarus and Russia to be completed in legal review."
+next_actions:
+  - "Prepare legal-act matrix for Belarus and Russia requirements."
+  - "Define detailed feature decomposition inside phase 1 and phase 2."
+  - "Hand off finalized requirements to architect for solution design."

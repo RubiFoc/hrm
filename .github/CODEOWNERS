@@ -1,0 +1,10 @@
+* @hrm-core/architect @hrm-core/tech-lead
+
+/docs/project/* @hrm-core/business-analyst @hrm-core/architect
+/docs/architecture/* @hrm-core/architect
+/docs/operations/* @hrm-core/coordinator
+/docs/testing/* @hrm-core/qa
+/apps/backend/* @hrm-core/backend
+/apps/frontend/* @hrm-core/frontend
+/scripts/* @hrm-core/tech-lead
+/prb.md @hrm-core/business-analyst

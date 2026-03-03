@@ -1,0 +1,53 @@
+request_id: "REQ-0001"
+summary: "Define baseline HRM product requirements for v1 planning."
+business_context:
+  problem_statement: "Simplify hiring, fairness, onboarding, and HR automation while reducing operational load across roles."
+  target_users:
+    - "hr"
+    - "candidates"
+    - "managers"
+    - "employees"
+    - "leaders"
+    - "accountants"
+  success_metrics:
+    - "(automated_hr_operations / total_hr_operations) * 100 per calendar month"
+scope:
+  in_scope:
+    - "core hrm features"
+    - "cv analysis"
+    - "role-specific functionality for hr/managers/leaders/accountants/employees"
+  out_of_scope: []
+constraints:
+  - "comply with personal data laws in belarus and russia"
+  - "deliver as fast as possible"
+  - "frontend must be implemented with react + typescript"
+  - "frontend must support ru and en localization"
+  - "frontend browser target for v1 is google chrome"
+  - "frontend monitoring must use sentry"
+  - "mobile application is out of scope"
+non_functional_requirements:
+  - "protect sensitive personal data"
+acceptance_criteria:
+  - "define and approve v1 feature decomposition by phase and role"
+  - "define belarus/russia compliance baseline"
+  - "automation metric target fixed at 70%"
+risks:
+  - "scope risk due to 'most functionality in v1' expectation"
+  - "compliance implementation risk if controls are not mapped to legal-framework baseline"
+documentation:
+  affected_docs:
+    - "prb.md"
+    - "docs/project/brief.md"
+    - "docs/project/requirements-questionnaire.md"
+    - "docs/project/frontend-requirements.md"
+  affected_diagrams: []
+  requires_decision_log_update: false
+  requires_architect_signoff: false
+  update_owner: "business-analyst"
+artifacts:
+  files_to_touch:
+    - "docs/project/*"
+    - ".ai/team/contracts/*"
+  dependencies:
+    - "ollama"
+    - "google calendar"
