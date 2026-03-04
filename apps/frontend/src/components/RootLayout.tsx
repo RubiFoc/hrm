@@ -4,6 +4,7 @@ import { Link, Outlet } from "react-router-dom";
 
 export function RootLayout() {
   const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.language || i18n.resolvedLanguage || "en";
 
   return (
     <Box>
@@ -18,8 +19,11 @@ export function RootLayout() {
           <Button color="inherit" component={Link} to="/candidate">
             {t("candidateWorkspace")}
           </Button>
-          <Button color="inherit" onClick={() => void i18n.changeLanguage(i18n.language === "ru" ? "en" : "ru") }>
-            {i18n.language.toUpperCase()}
+          <Button
+            color="inherit"
+            onClick={() => void i18n.changeLanguage(currentLanguage === "ru" ? "en" : "ru")}
+          >
+            {currentLanguage.toUpperCase()}
           </Button>
         </Toolbar>
       </AppBar>
