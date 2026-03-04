@@ -15,6 +15,11 @@
 3. Verify status: `docker compose ps`
 4. Run smoke suite: `./scripts/smoke-compose.sh`
 
+Compose bootstrap notes:
+- `postgres-init` ensures `${POSTGRES_DB}` exists even when reusing an old data volume.
+- `backend-migrate` runs `alembic upgrade head` before backend starts.
+- Backend container starts only after DB bootstrap and migrations complete successfully.
+
 Shortcut wrappers:
 - `make up` / `just up`
 - `make rebuild` / `just rebuild`

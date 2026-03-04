@@ -34,7 +34,10 @@ class AppSettings(BaseSettings):
     """
 
     backend_port: int = Field(default=8000, env="BACKEND_PORT", gt=0)
-    database_url: str = Field(default="postgresql://hrm:hrm@postgres:5432/hrm", env="DATABASE_URL")
+    database_url: str = Field(
+        default="postgresql+psycopg://hrm:hrm@postgres:5432/hrm",
+        env="DATABASE_URL",
+    )
     redis_url: str = Field(default="redis://redis:6379/0", env="REDIS_URL")
     object_storage_endpoint: str = Field(
         default="http://minio:9000",

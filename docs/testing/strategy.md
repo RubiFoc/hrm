@@ -48,6 +48,7 @@ apps/backend/tests/
 - Canonical command: `./scripts/smoke-compose.sh`.
 - The smoke script must verify:
   - compose service status and health for `backend`, `postgres`, `redis`, `minio`;
+  - compose bootstrap prerequisites (`postgres-init`, `backend-migrate`) complete successfully before API checks;
   - backend `GET /health`;
   - frontend HTTP response;
   - MinIO live health endpoint;

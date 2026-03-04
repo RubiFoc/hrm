@@ -10,6 +10,8 @@ RUN pip install --no-cache-dir uv
 
 COPY apps/backend/pyproject.toml apps/backend/README.md ./
 COPY apps/backend/src ./src
+COPY apps/backend/alembic.ini ./
+COPY apps/backend/alembic ./alembic
 
 RUN uv sync --no-dev
 

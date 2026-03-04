@@ -42,12 +42,13 @@ post_json_with_retry() {
 }
 
 echo "[smoke] validating docker compose service status..."
-COMPOSE_PS_JSON="$(docker compose ps --format json)"
+COMPOSE_PS_JSON="$(docker compose ps --all --format json)"
 python3 - "${COMPOSE_PS_JSON}" <<'PY'
 import json
 import sys
 
 required_services = ("backend", "postgres", "redis", "minio")
+bootstrap_services = ("postgres-init", "backend-migrate")
 raw = sys.argv[1].strip()
 
 if not raw:
@@ -71,6 +72,19 @@ for service in required_services:
         raise SystemExit(f"{service} must be running, got state={state or 'unknown'}")
     if health != "healthy":
         raise SystemExit(f"{service} must be healthy, got health={health or 'unknown'}")
+
+for service in bootstrap_services:
+    row = services.get(service)
+    if row is None:
+        raise SystemExit(f"{service} must exist in compose status output")
+
+    state = (row.get("State") or "").lower()
+    if state not in ("exited", "stopped"):
+        raise SystemExit(f"{service} must complete and exit, got state={state or 'unknown'}")
+
+    exit_code = row.get("ExitCode")
+    if str(exit_code) != "0":
+        raise SystemExit(f"{service} must exit with code 0, got {exit_code!r}")
 PY
 
 echo "[smoke] checking backend health endpoint..."
