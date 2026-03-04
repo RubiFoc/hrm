@@ -13,6 +13,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0006 | 2026-03-04 | accepted | Adopt signed access tokens with rotating refresh sessions for MVP auth | architect + backend-engineer | backend security, RBAC integration |
 | ADR-0007 | 2026-03-04 | accepted | Adopt stateless JWT auth with Redis denylist and fail-closed policy | architect + backend-engineer | backend security, auth runtime |
 | ADR-0008 | 2026-03-04 | accepted | Introduce shared backend `core` package for cross-domain primitives | architect + backend-engineer | backend architecture, maintainability |
+| ADR-0009 | 2026-03-04 | accepted | Centralize RBAC evaluation for API/background paths and add immutable audit events | architect + backend-engineer | backend security, compliance evidence, observability |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -107,3 +108,21 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Lower duplication and simpler onboarding for new domains.
   - Clearer separation between domain logic and shared technical foundation.
   - Requires review discipline to keep domain-specific business logic out of `core`.
+
+## ADR-0009
+- Context: `TASK-01-03` and `TASK-01-04` require one enforcement policy path for API and background operations, plus immutable evidence for sensitive auth/access actions.
+- Decision:
+  - Introduce centralized RBAC evaluator interface:
+    - `PolicyDecision`
+    - `evaluate_permission(role, permission)`
+    - `enforce_background_permission(...)`
+    - keep `require_permission(...)` as FastAPI compatibility wrapper.
+  - Persist audit events in PostgreSQL append-only table `audit_events` with migration-managed schema.
+  - Record audit events for:
+    - auth sensitive operations (`login`, `refresh`, `logout`, `me`);
+    - RBAC decisions on both API (`source=api`) and background (`source=job`) paths.
+  - Propagate request correlation ID (`X-Request-ID`) through middleware and persist as `correlation_id` in audit storage.
+- Consequences:
+  - API and background paths use the same policy semantics and permission matrix.
+  - Security/compliance evidence is queryable and immutable at storage contract level.
+  - Additional write load and storage growth from audit events must be managed by retention/archival policy.
