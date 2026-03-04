@@ -58,10 +58,10 @@ flowchart LR
    accepted candidate -> employee profile creation -> onboarding checklist -> completion tracking.
 4. HR Automation Flow:
    rule trigger -> workflow engine -> task creation/assignment -> status update and reporting.
-5. Candidate Self-Service Flow:
-   candidate registration -> profile confirmation -> CV upload -> interview registration.
+5. Public Candidate Apply Flow:
+   anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue.
 6. Authentication Flow:
-   login -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
+   staff key issuance -> staff register/login (login/email + password) -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
 
 ## Data Boundaries
 - Source of truth entities:
@@ -77,6 +77,7 @@ flowchart LR
 - Shared backend primitives are centralized in `hrm_backend/core` to prevent domain duplication.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
 - Compose baseline services: `frontend`, `backend`, `postgres`, `redis`, `minio`, `minio-init`.
+- Async runtime baseline: dedicated `backend-worker` (Celery) processing DB-backed jobs.
 - Frontend style: React.js + TypeScript SPA with role-based route guards and shared component system.
 - Frontend libraries: MUI, React Router, TanStack Query, React Hook Form, Zod, i18next.
 - Browser support target: Google Chrome.
@@ -88,6 +89,8 @@ flowchart LR
   internal command/event interfaces + connector adapters for external systems.
 - Auth config baseline:
   `HRM_JWT_SECRET`, `HRM_JWT_ALGORITHM`, `HRM_ACCESS_TOKEN_TTL_SECONDS`, `HRM_REFRESH_TOKEN_TTL_SECONDS`, `HRM_AUTH_REDIS_PREFIX`, `REDIS_URL`.
+- Staff auth additions:
+  `EMPLOYEE_KEY_TTL_SECONDS` and Celery runtime settings (`CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`, `CELERY_TASK_DEFAULT_QUEUE`, `CELERY_TASK_TIME_LIMIT_SECONDS`).
 
 ## Non-Functional Requirements
 - Reliability:

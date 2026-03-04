@@ -14,6 +14,12 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0007 | 2026-03-04 | accepted | Adopt stateless JWT auth with Redis denylist and fail-closed policy | architect + backend-engineer | backend security, auth runtime |
 | ADR-0008 | 2026-03-04 | accepted | Introduce shared backend `core` package for cross-domain primitives | architect + backend-engineer | backend architecture, maintainability |
 | ADR-0009 | 2026-03-04 | accepted | Centralize RBAC evaluation for API/background paths and add immutable audit events | architect + backend-engineer | backend security, compliance evidence, observability |
+| ADR-0010 | 2026-03-04 | accepted | Model candidate profile as typed core fields plus JSONB extension and backend multipart CV upload | architect + backend-engineer | recruitment domain, object storage, API contracts |
+| ADR-0011 | 2026-03-04 | accepted | Use append-only pipeline transitions with strict canonical stage graph | architect + backend-engineer | recruitment domain, workflow integrity, auditability |
+| ADR-0012 | 2026-03-04 | accepted | Implement DB-backed asynchronous CV parsing jobs with retry-safe worker lifecycle | architect + backend-engineer | recruitment domain, async processing, operations |
+| ADR-0013 | 2026-03-04 | accepted | Move to staff-only password authentication with employee registration keys and `admin` role | architect + backend-engineer | auth, RBAC, API contracts |
+| ADR-0014 | 2026-03-04 | accepted | Replace candidate auth flow with public vacancy application endpoint | architect + backend-engineer | recruitment API, RBAC, audit model |
+| ADR-0015 | 2026-03-04 | accepted | Use Celery as execution engine for CV parsing with DB job table as source of truth | architect + backend-engineer | async runtime, operations, reliability |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -126,3 +132,82 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - API and background paths use the same policy semantics and permission matrix.
   - Security/compliance evidence is queryable and immutable at storage contract level.
   - Additional write load and storage growth from audit events must be managed by retention/archival policy.
+
+## ADR-0010
+- Context: `TASK-03-01` and `TASK-03-02` require candidate profile CRUD with extensible schema plus secure CV upload into MinIO.
+- Decision:
+  - Add table `candidate_profiles` with typed core fields:
+    `first_name`, `last_name`, `email`, `phone`, `location`, `current_title`,
+    and extensible `extra_data` (`JSONB`).
+  - Add table `candidate_documents` for CV metadata and active-document linkage.
+  - Keep CV ingestion mode as `multipart/form-data` through backend API.
+  - Validate CV upload by MIME, max size, and SHA-256 checksum before object write.
+  - Persist CV binaries in MinIO bucket and keep metadata in PostgreSQL.
+- Consequences:
+  - Candidate profile model supports stable typed querying without blocking future schema extensions.
+  - Backend remains enforcement point for RBAC, ownership, and upload validation.
+  - Object storage keys become critical references and must stay consistent with DB metadata rows.
+
+## ADR-0011
+- Context: `TASK-02-01` and `TASK-02-02` need vacancy CRUD and deterministic candidate pipeline progression.
+- Decision:
+  - Add table `vacancies` for vacancy lifecycle state.
+  - Add append-only table `pipeline_transitions` to store candidate stage history.
+  - Enforce strict canonical transition graph:
+    `None -> applied -> screening -> shortlist -> interview -> offer -> (hired|rejected)`.
+  - Derive current stage from latest append-only transition event for `(vacancy_id, candidate_id)`.
+- Consequences:
+  - Transition history is immutable and auditable.
+  - Invalid or skipped states are blocked consistently by one validator.
+  - Additional read step is required to resolve current stage before each new transition.
+
+## ADR-0012
+- Context: `TASK-03-03` requires asynchronous CV parsing with explicit lifecycle and retry-safe behavior.
+- Decision:
+  - Add table `cv_parsing_jobs` with lifecycle states:
+    `queued`, `running`, `succeeded`, `failed`.
+  - On each CV upload, enqueue one parsing job linked to document metadata.
+  - Keep processing outside request thread and persist status transitions atomically.
+  - Retries are bounded by `CV_PARSING_MAX_ATTEMPTS`; terminal `succeeded` jobs are never reprocessed.
+  - Expose current parsing status via candidate API endpoint.
+- Consequences:
+  - Heavy parsing work is decoupled from API latency path.
+  - Operational visibility improves through explicit job table state and failure reasons.
+  - Runtime needs dedicated worker process and queue configuration.
+
+## ADR-0013
+- Context: passwordless `subject_id/role` login was insufficient for production-like staff identity controls and did not support controlled employee onboarding.
+- Decision:
+  - Introduce staff account model (`staff_accounts`) with `login`, `email`, `password_hash`, role, and active flag.
+  - Use Argon2id for password hashing and enforce baseline password policy.
+  - Add one-time employee registration keys (`employee_registration_keys`) with TTL and single-use semantics.
+  - Add role `admin` with full platform CRUD and manual CLI bootstrap for first admin.
+  - Keep JWT `sub/sid/jti` as UUID values.
+- Consequences:
+  - Staff identity lifecycle becomes auditable and centrally managed.
+  - Registration/login contracts are changed and require client updates.
+  - Backward compatibility path exists temporarily for legacy login payload.
+
+## ADR-0014
+- Context: candidate role-based authentication was removed from backend scope; candidates should be able to apply without account creation.
+- Decision:
+  - Remove `candidate` from RBAC role matrix and auth flows.
+  - Add anonymous endpoint `POST /api/v1/vacancies/{vacancy_id}/applications` with multipart CV submission.
+  - Public apply flow creates/updates candidate profile, stores CV metadata/object, appends `None -> applied` transition, and enqueues parsing job.
+  - Persist audit events for public flow with technical/null actor identity and correlation id.
+- Consequences:
+  - Candidate intake UX becomes simpler and does not depend on auth session state.
+  - Staff-only endpoints remain protected by RBAC and ownership policy.
+  - Increased need for abuse controls/rate limiting on public apply path.
+
+## ADR-0015
+- Context: polling loop worker model created operational drift and lacked standardized queue execution controls.
+- Decision:
+  - Use Celery with Redis broker/result backend for CV parsing execution.
+  - Keep `cv_parsing_jobs` table as source of truth for job status lifecycle.
+  - Enqueue by `job_id`; task claims DB job (`queued/failed -> running`) and writes terminal `succeeded/failed`.
+  - Keep retry-safe behavior bounded by `CV_PARSING_MAX_ATTEMPTS`; never reprocess terminal `succeeded`.
+- Consequences:
+  - Async execution gains standard queue controls (routing, timeout, retries, worker scaling).
+  - Compose/runtime must include dedicated `backend-worker` service.
+  - Operational runbook and smoke checks must cover worker health path.

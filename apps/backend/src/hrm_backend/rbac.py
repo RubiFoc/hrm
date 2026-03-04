@@ -17,35 +17,73 @@ from hrm_backend.audit.services.audit_service import AuditService
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 
-Role = Literal["hr", "candidate", "manager", "employee", "leader", "accountant"]
+Role = Literal["admin", "hr", "manager", "employee", "leader", "accountant"]
 Permission = Literal[
+    "admin:staff:create",
+    "admin:employee_key:create",
     "vacancy:read",
     "vacancy:create",
+    "vacancy:update",
     "pipeline:read",
     "pipeline:update",
-    "candidate_profile:read_own",
-    "candidate_profile:update_own",
+    "pipeline:transition",
+    "candidate_profile:create",
+    "candidate_profile:read",
+    "candidate_profile:update",
+    "candidate_profile:list",
+    "candidate_cv:upload",
+    "candidate_cv:read",
+    "candidate_cv:parsing_status",
+    # Backward-compatible aliases retained for existing integrations.
     "candidate_profile:read_all",
-    "interview:register",
     "interview:manage",
+    "candidate_cv:parse",
     "analytics:read",
     "accounting:read",
 ]
 
 ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
-    "hr": {
+    "admin": {
+        "admin:staff:create",
+        "admin:employee_key:create",
         "vacancy:read",
         "vacancy:create",
+        "vacancy:update",
         "pipeline:read",
         "pipeline:update",
+        "pipeline:transition",
+        "candidate_profile:create",
+        "candidate_profile:read",
+        "candidate_profile:update",
+        "candidate_profile:list",
+        "candidate_cv:upload",
+        "candidate_cv:read",
+        "candidate_cv:parsing_status",
+        "candidate_cv:parse",
         "candidate_profile:read_all",
         "interview:manage",
         "analytics:read",
+        "accounting:read",
     },
-    "candidate": {
-        "candidate_profile:read_own",
-        "candidate_profile:update_own",
-        "interview:register",
+    "hr": {
+        "admin:employee_key:create",
+        "vacancy:read",
+        "vacancy:create",
+        "vacancy:update",
+        "pipeline:read",
+        "pipeline:update",
+        "pipeline:transition",
+        "candidate_profile:create",
+        "candidate_profile:read",
+        "candidate_profile:update",
+        "candidate_profile:list",
+        "candidate_cv:upload",
+        "candidate_cv:read",
+        "candidate_cv:parsing_status",
+        "candidate_cv:parse",
+        "candidate_profile:read_all",
+        "interview:manage",
+        "analytics:read",
     },
     "manager": {
         "vacancy:read",
@@ -54,8 +92,7 @@ ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
         "analytics:read",
     },
     "employee": {
-        "candidate_profile:read_own",
-        "candidate_profile:update_own",
+        "analytics:read",
     },
     "leader": {
         "vacancy:read",
@@ -179,7 +216,7 @@ def require_permission(permission: Permission) -> Callable[[Role], Role]:
                 role=auth_context.role,
                 allowed=False,
                 request=request,
-                actor_sub=auth_context.subject_id,
+                actor_sub=str(auth_context.subject_id),
                 reason=str(exc.detail),
             )
             raise
@@ -189,7 +226,7 @@ def require_permission(permission: Permission) -> Callable[[Role], Role]:
             role=role,
             allowed=decision.allowed,
             request=request,
-            actor_sub=auth_context.subject_id,
+            actor_sub=str(auth_context.subject_id),
             reason=decision.reason,
         )
         if not decision.allowed:

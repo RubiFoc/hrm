@@ -207,4 +207,4 @@ def actor_from_auth_context(auth_context: AuthContext) -> tuple[str, str]:
     Returns:
         tuple[str, str]: Subject ID and role pair.
     """
-    return auth_context.subject_id, auth_context.role
+    return str(auth_context.subject_id), auth_context.role

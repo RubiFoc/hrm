@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import uuid
 from typing import Final
+from uuid import UUID, uuid4
 
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
@@ -29,31 +29,18 @@ class TokenService:
     """Service for issuing and validating JWT access and refresh tokens."""
 
     def __init__(self, settings: AppSettings) -> None:
-        """Initialize token service with auth settings.
-
-        Args:
-            settings: Auth runtime settings.
-        """
+        """Initialize token service with auth settings."""
         self._settings = settings
 
-    def issue_access_token(self, subject_id: str, role: str, session_id: str) -> tuple[str, int]:
-        """Issue signed access token.
-
-        Args:
-            subject_id: Subject identifier for token claims.
-            role: Role claim for RBAC checks.
-            session_id: Session identifier shared with refresh token.
-
-        Returns:
-            tuple[str, int]: Encoded JWT and expiration timestamp.
-        """
+    def issue_access_token(self, subject_id: UUID, role: str, session_id: UUID) -> tuple[str, int]:
+        """Issue signed access token."""
         now = utc_now_epoch()
         expires_at = now + self._settings.access_token_ttl_seconds
         payload = {
-            "sub": subject_id,
+            "sub": str(subject_id),
             "role": role,
-            "sid": session_id,
-            "jti": uuid.uuid4().hex,
+            "sid": str(session_id),
+            "jti": str(uuid4()),
             "iat": now,
             "exp": expires_at,
             "typ": "access",
@@ -65,24 +52,15 @@ class TokenService:
         )
         return token, expires_at
 
-    def issue_refresh_token(self, subject_id: str, role: str, session_id: str) -> tuple[str, int]:
-        """Issue signed refresh token.
-
-        Args:
-            subject_id: Subject identifier for token claims.
-            role: Role claim mirrored from access token.
-            session_id: Session identifier shared with access token.
-
-        Returns:
-            tuple[str, int]: Encoded JWT and expiration timestamp.
-        """
+    def issue_refresh_token(self, subject_id: UUID, role: str, session_id: UUID) -> tuple[str, int]:
+        """Issue signed refresh token."""
         now = utc_now_epoch()
         expires_at = now + self._settings.refresh_token_ttl_seconds
         payload = {
-            "sub": subject_id,
+            "sub": str(subject_id),
             "role": role,
-            "sid": session_id,
-            "jti": uuid.uuid4().hex,
+            "sid": str(session_id),
+            "jti": str(uuid4()),
             "iat": now,
             "exp": expires_at,
             "typ": "refresh",
@@ -95,40 +73,15 @@ class TokenService:
         return token, expires_at
 
     def decode_access_token(self, token: str) -> TokenClaims:
-        """Decode and validate access token claims.
-
-        Args:
-            token: Encoded JWT access token.
-
-        Returns:
-            TokenClaims: Validated access token claims.
-        """
+        """Decode and validate access token claims."""
         return self._decode_token(token=token, expected_type="access")
 
     def decode_refresh_token(self, token: str) -> TokenClaims:
-        """Decode and validate refresh token claims.
-
-        Args:
-            token: Encoded JWT refresh token.
-
-        Returns:
-            TokenClaims: Validated refresh token claims.
-        """
+        """Decode and validate refresh token claims."""
         return self._decode_token(token=token, expected_type="refresh")
 
     def _decode_token(self, token: str, expected_type: TokenType) -> TokenClaims:
-        """Decode, verify signature, and validate token claims.
-
-        Args:
-            token: Encoded JWT token.
-            expected_type: Expected token type claim.
-
-        Returns:
-            TokenClaims: Validated claims object.
-
-        Raises:
-            HTTPException: If token is invalid, expired, or wrong type.
-        """
+        """Decode, verify signature, and validate token claims."""
         try:
             raw_claims = jwt.decode(
                 token,

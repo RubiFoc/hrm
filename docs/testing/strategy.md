@@ -68,6 +68,27 @@ apps/backend/tests/
 | Immutable audit storage writes | Audit service and payload validation via unit imports | `tests/integration/security/test_audit_enforcement.py` | Alembic migration + inserted `audit_events` rows |
 | Auth sensitive audit hooks | N/A | `test_auth_login_is_audited` (+ auth regression suite) | `auth.login` audit event with `correlation_id` |
 
+## Staff Auth Extension Verification
+
+| Capability | Unit Coverage | Integration Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Password policy and hashing (`argon2`) | `tests/unit/auth/*` | `tests/integration/auth/test_auth_stack.py` | `register/login` happy and negative scenarios |
+| Employee key lifecycle (`valid/expired/used`) | `tests/unit/auth/*` | `tests/integration/auth/test_auth_stack.py` | `422` on invalid key paths |
+| UUID claims and token contract | `tests/unit/auth/test_auth_services.py` | auth integration suite | `sub/sid/jti` are UUID-backed |
+| Swagger bearer security scheme | N/A | OpenAPI contract check in auth integration suite | Swagger UI contains `Authorize` flow |
+| Admin APIs and audit hooks | `tests/unit/rbac/test_rbac.py` | `tests/integration/security/test_audit_enforcement.py` | `admin.staff:create` and `admin.employee_key:create` success/failure events |
+
+## Recruitment Domain Verification (TASK-03-01, TASK-03-02, TASK-02-01, TASK-02-02, TASK-03-03)
+
+| Capability | Unit Coverage | Integration Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Candidate profile schema and ownership guards | `tests/unit/candidates/test_cv_validation.py` + role checks in `tests/unit/rbac/test_rbac.py` | `tests/integration/candidates/test_candidate_api.py` | `uv run --project apps/backend pytest -q` |
+| CV upload validation (mime/size/checksum) | `tests/unit/candidates/test_cv_validation.py` | `test_cv_upload_download_status_and_validation_failures` | Validation negative paths return `415/422/413` |
+| Public vacancy apply flow (anonymous) | `tests/unit/vacancies/test_pipeline_validator.py` + candidate validation units | `tests/integration/vacancies/test_vacancy_pipeline_api.py` | Apply creates candidate/doc/transition/parsing job |
+| Vacancy lifecycle and canonical pipeline transitions | `tests/unit/vacancies/test_pipeline_validator.py` | `tests/integration/vacancies/test_vacancy_pipeline_api.py` | Valid chain passes, invalid chain returns `422` |
+| Async CV parsing lifecycle and retry-safe behavior (Celery executor) | `tests/unit/candidates/test_cv_parsing_worker.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` | `queued/running/succeeded/failed` with bounded retries |
+| RBAC + audit coverage for recruitment endpoints | `tests/unit/rbac/test_rbac.py` | `tests/integration/security/test_audit_enforcement.py` + recruitment integration suites | `allowed/denied/success/failure` audit records in `audit_events` |
+
 ## Baseline Verification Commands
 - `./scripts/check-docs-structure.sh`
 - `uv run --project apps/backend ruff check apps/backend/src apps/backend/tests apps/backend/alembic`
