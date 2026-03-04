@@ -27,6 +27,18 @@ def _session_factory(database_url: str) -> sessionmaker[Session]:
     return sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 
 
+def get_session_factory(database_url: str) -> sessionmaker[Session]:
+    """Return cached SQLAlchemy session factory for database URL.
+
+    Args:
+        database_url: SQLAlchemy database URL.
+
+    Returns:
+        sessionmaker[Session]: Cached session factory instance.
+    """
+    return _session_factory(database_url)
+
+
 def get_db_session(
     settings: Annotated[AppSettings, Depends(get_settings)],
 ) -> Generator[Session, None, None]:
