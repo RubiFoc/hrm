@@ -13,14 +13,14 @@
 ## Pull Request Rules
 - Direct push to `main` is forbidden.
 - Every change goes through PR with linked `TASK-*`.
-- Minimum reviewers: 2 (tech owner + domain owner).
+- Minimum reviewers: 0 for solo-owner repository mode; CI checks remain mandatory.
 - Required CI checks: `docs-check`, `backend`, `frontend`.
 - Squash merge by default to keep history clean.
 
 ## Protected Branch Setup (GitHub)
 - Protect `main` branch.
 - Require pull request before merging.
-- Require approvals: at least 2.
+- Require approvals: `0` (solo-owner mode).
 - Dismiss stale approvals when new commits are pushed.
 - Require status checks to pass before merge.
 - Include administrators in branch restrictions.
@@ -30,10 +30,12 @@
 - Backlog metadata sync option: run `scripts/sync-m1-issues-metadata.sh` with `GH_TOKEN` that has `Issues: Read and write`.
 
 ## Review Responsibilities
-- Backend changes: backend + architect.
-- Frontend changes: frontend + architect.
-- Compliance/legal-impacting changes: business-analyst + architect.
-- Documentation-only changes: area owner from `docs/ownership.md`.
+- Solo mode default: self-review + required CI checks.
+- If collaborators are available:
+  - Backend changes: backend + architect.
+  - Frontend changes: frontend + architect.
+  - Compliance/legal-impacting changes: business-analyst + architect.
+  - Documentation-only changes: area owner from `docs/ownership.md`.
 
 ## Commit and PR Hygiene
 - Commit scope: one concern per commit.

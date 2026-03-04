@@ -50,6 +50,47 @@ Shortcut wrappers:
 - Auth validation is fail-closed when Redis denylist is unavailable.
 - Expected behavior during Redis outage: protected auth checks return `503`.
 
+## Compliance Baseline (Dev Non-Blocking, Prod Blocking)
+This section defines provisional operational controls until final legal/security sign-off.
+
+### Data Retention Policy (Provisional)
+
+| Data Class | Storage | Retention Window | Disposal Strategy | Owner |
+| --- | --- | --- | --- | --- |
+| Auth denylist keys (`jti`, `sid`) | Redis | TTL-bound to token/session validity window | Auto-expire via Redis TTL | backend |
+| Audit events (`audit_events`) | PostgreSQL | 365 days hot storage | Archive then purge by approved retention job | backend + devops |
+| Application logs | Container/log backend | 90 days | Rotation + purge | devops |
+| Candidate CV/documents | Object storage | 24 months after workflow closure (provisional) | Delete object + metadata tombstone | hr-ops + backend |
+
+- TODO(owner: business-analyst + legal, due_trigger: before first production release): approve final retention windows for each PD category.
+
+### Encryption Policy (Provisional)
+- In transit:
+  - All production HTTP endpoints must be exposed only via TLS 1.2+.
+  - Service-to-service integrations (Google Calendar, object storage access, admin consoles) must use TLS-enabled endpoints.
+- At rest:
+  - PostgreSQL data volume must use encrypted storage class.
+  - Object storage buckets with personal data must use server-side encryption.
+  - Backups/snapshots must be encrypted and access-restricted.
+
+- TODO(owner: devops + security, due_trigger: before first production release): attach concrete infrastructure evidence (KMS/SSE/TLS termination config) to release checklist.
+
+### Access Policy and Review Cadence (Provisional)
+- Least-privilege access is mandatory for platform, database, object storage, and CI/CD.
+- No shared human accounts for production administration.
+- Privileged role grants require ticket-based justification and explicit expiration date.
+- Access review cadence:
+  - monthly review for privileged/admin roles;
+  - quarterly review for all operational/service accounts.
+- Access revocation SLA: same business day for role removal or offboarding events.
+
+- TODO(owner: architect + security, due_trigger: before first production release): finalize break-glass procedure and reviewer roster.
+
+### Release Gate Policy
+- Dev and test deployments are allowed with provisional controls.
+- Production release is blocked until critical controls in `docs/project/legal-controls-matrix.md` are at least `implemented`.
+- Production release is additionally blocked until legal/security sign-off marks critical controls as `verified`.
+
 ## Incident Triage
 1. Confirm impact and affected user segment.
 2. Capture failing signal (logs/metrics/error id).
