@@ -1,8 +1,8 @@
 # Engineering Best Practices
 
 ## Last Updated
-- Date: 2026-03-03
-- Updated by: architect
+- Date: 2026-03-04
+- Updated by: architect + backend-engineer
 
 These practices are mandatory for development and documentation.
 
@@ -11,6 +11,12 @@ These practices are mandatory for development and documentation.
 - Define stable interfaces before implementation.
 - Prefer modular monolith boundaries and asynchronous processing for heavy jobs.
 - Make idempotency explicit for retried commands and background jobs.
+- For components that can later be extracted as independent services, use dedicated domain packages.
+- Every extraction-ready domain package must include subpackages:
+  `models`, `schemas`, `services`, `dao`, `routers`, `utils`, `dependencies`.
+- Use versioned routers for API boundaries (for example `routers/v1.py` with `/api/v1/...`).
+- Keep domain infrastructure adapters as explicit subpackages inside domain package
+  (for example `auth/redis`, `employee/redis`).
 
 ## 2. Code Quality
 - Keep changes small, reversible, and focused on one concern.
@@ -28,7 +34,7 @@ These practices are mandatory for development and documentation.
 
 ## 4. Data and Reliability
 - Keep one source of truth per entity.
-- Use explicit schema migrations with rollback strategy.
+- Use explicit schema migrations with rollback strategy via Alembic.
 - Add retries with backoff only for safe idempotent operations.
 - Add circuit-breaker/fallback behavior for external integrations.
 

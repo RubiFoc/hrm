@@ -5,51 +5,71 @@
 - Updated by: backend-engineer
 
 This document defines the Phase-1 authentication baseline for backend APIs.
-Source of truth: `apps/backend/src/hrm_backend/auth.py` and `apps/backend/src/hrm_backend/api/auth.py`.
+Source of truth package: `apps/backend/src/hrm_backend/auth/`.
 
 ## Token Model
 
 | Token | Purpose | TTL | Storage | Rotation |
 | --- | --- | --- | --- | --- |
-| Access token (`Bearer`) | Authorize API requests | `HRM_ACCESS_TOKEN_TTL_SECONDS` (default: 900s) | Client-side (short-lived) | Re-issued on login/refresh |
-| Refresh token | Renew access token and extend session | `HRM_REFRESH_TOKEN_TTL_SECONDS` (default: 604800s) | Client-side (secure storage) + server-side hash | Mandatory rotation on every refresh |
+| Access token (`Bearer`) | Authorize API requests | `HRM_ACCESS_TOKEN_TTL_SECONDS` (default: 900s) | Client-side only | Re-issued on login/refresh |
+| Refresh token (`JWT`) | Renew access token and extend session window | `HRM_REFRESH_TOKEN_TTL_SECONDS` (default: 604800s) | Client-side only | Mandatory rotation on every refresh |
 
-## Session Model
-- Session id (`sid`) is created at login.
-- Server keeps in-memory session record with subject, role, refresh token hash, expiry, and revoke marker.
-- Logout revokes session immediately.
+## Stateless Session Model with Redis Denylist
+- Tokens are stateless JWT and are validated by signature + claims + expiration.
+- Valid tokens are not stored server-side.
+- Redis stores only denied identifiers:
+  - token denylist key: `auth:deny:jti:{jti}`
+  - session denylist key: `auth:deny:sid:{sid}`
 - Access token is valid only when:
-  - signature is valid,
-  - token not expired,
-  - linked session exists,
-  - session is not revoked,
-  - session claims (subject/role) match token claims.
+  - JWT signature is valid,
+  - token is not expired,
+  - `typ` is `access`,
+  - `jti` is not denylisted,
+  - `sid` is not denylisted.
 
 ## API Endpoints
 
 | Endpoint | Method | Purpose | Auth Required |
 | --- | --- | --- | --- |
-| `/api/v1/auth/login` | `POST` | Issue access + refresh token pair | no |
+| `/api/v1/auth/login` | `POST` | Issue access + refresh JWT pair | no |
 | `/api/v1/auth/refresh` | `POST` | Rotate refresh token and issue new access token | refresh token in body |
-| `/api/v1/auth/logout` | `POST` | Revoke current session | access token |
+| `/api/v1/auth/logout` | `POST` | Revoke current access token and session (`sid`) | access token |
 | `/api/v1/auth/me` | `GET` | Return current identity claims | access token |
 
-## Configuration
-- `HRM_AUTH_SECRET`: HMAC signing secret for access token signature.
-- `HRM_ACCESS_TOKEN_TTL_SECONDS`: access token TTL.
-- `HRM_REFRESH_TOKEN_TTL_SECONDS`: refresh token/session TTL.
+## JWT Claims
+- Common: `sub`, `sid`, `jti`, `iat`, `exp`, `typ`, `role`
+- Access token: `typ=access`
+- Refresh token: `typ=refresh`
 
-## Security Baseline and Current Limits
-- Refresh token is never stored in plaintext server-side (hash only).
-- Session revocation is immediate for API checks.
-- Current storage is process-local in memory (non-persistent).
-- Horizontal scaling requires shared persistent session storage (planned after MVP baseline).
+## Configuration
+- `HRM_JWT_SECRET`: JWT signing secret.
+- `HRM_JWT_ALGORITHM`: JWT signing algorithm (`HS256`).
+- `HRM_ACCESS_TOKEN_TTL_SECONDS`: access token TTL.
+- `HRM_REFRESH_TOKEN_TTL_SECONDS`: refresh token TTL.
+- `REDIS_URL`: Redis URL for denylist storage.
+- `HRM_AUTH_REDIS_PREFIX`: Redis key prefix for denylist entries.
+
+## Redis Failure Policy (Fail Closed)
+- If Redis denylist read/write fails during auth checks or revoke operations:
+  - backend returns `503 Service Unavailable`,
+  - token is not treated as valid.
 
 ## RBAC Integration
-- RBAC role is no longer taken from `X-Role` header for protected routes.
-- RBAC role is resolved from validated token claims (`role`) after access token/session checks.
+- RBAC role is resolved from validated access token claim (`role`).
+- Header `X-Role` is not used by protected routes.
+
+## Package Structure Requirement
+Auth domain follows extraction-ready package decomposition:
+- `models`
+- `schemas`
+- `services`
+- `dao`
+- `routers`
+- `utils`
+- `dependencies`
+- infra subpackage: `redis`
 
 ## Next Steps
-- `TASK-01-03`: move access policy enforcement to middleware for API and background jobs.
+- `TASK-01-03`: centralize access policy enforcement for API and background jobs.
 - `TASK-01-04`: add immutable audit logs for auth/session and sensitive data access.
 - `TASK-01-05`: map auth/session controls to Belarus/Russia legal controls matrix.

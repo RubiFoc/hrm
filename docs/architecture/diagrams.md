@@ -42,7 +42,7 @@ flowchart TB
   API[API Gateway]
 
   subgraph Core[Core Services]
-    AUTH[Auth and Session Service]
+    AUTH[Auth and Access Service]
     REC[Recruitment Services]
     EMPDOM[Employee Services]
     HROPS[HR Automation Services]
@@ -54,7 +54,7 @@ flowchart TB
     DB[(PostgreSQL)]
     OBJ[(Object Storage)]
     QUEUE[(Queue/Event Bus)]
-    SESSION[(Session Store: in-memory MVP)]
+    REDISDNL[(Redis Denylist: jti/sid)]
   end
 
   subgraph Ext[External Integrations]
@@ -69,7 +69,7 @@ flowchart TB
   API --> EMPDOM
   API --> HROPS
   API --> ANALYTICS
-  AUTH --> SESSION
+  AUTH --> REDISDNL
 
   REC --> DB
   EMPDOM --> DB
@@ -283,31 +283,30 @@ sequenceDiagram
   participant U as User (HR/Candidate/...)
   participant UI as React.js + TypeScript UI
   participant API as API Gateway
-  participant AUTH as Auth and Session Service
-  participant STORE as Session Store
+  participant AUTH as Auth and Access Service
+  participant DNL as Redis Denylist
 
   U->>UI: Sign in
   UI->>API: POST /api/v1/auth/login (subject_id, role)
-  API->>AUTH: Issue session and token pair
-  AUTH->>STORE: Save session + refresh hash
+  API->>AUTH: Issue access/refresh JWT pair
   AUTH-->>UI: access_token + refresh_token
 
   U->>UI: Open protected page
   UI->>API: Authorization: Bearer access_token
-  API->>AUTH: Validate access token + session
-  AUTH->>STORE: Check session state
+  API->>AUTH: Validate access token claims
+  AUTH->>DNL: Check jti/sid absence
   AUTH-->>API: Auth context (subject, role, sid)
   API-->>UI: Protected resource
 
   U->>UI: Refresh session
   UI->>API: POST /api/v1/auth/refresh (refresh_token)
-  API->>AUTH: Rotate refresh token
-  AUTH->>STORE: Replace refresh hash
+  API->>AUTH: Validate refresh token + rotate
+  AUTH->>DNL: Deny old refresh jti until exp
   AUTH-->>UI: New access_token + new refresh_token
 
   U->>UI: Logout
   UI->>API: POST /api/v1/auth/logout (Bearer access_token)
-  API->>AUTH: Revoke session
-  AUTH->>STORE: Mark session revoked
+  API->>AUTH: Revoke token/session window
+  AUTH->>DNL: Deny access jti + session sid
   AUTH-->>UI: 204 No Content
 ```

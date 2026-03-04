@@ -3,6 +3,7 @@
 ## Pre-Release
 - [ ] Acceptance criteria are satisfied.
 - [ ] Required tests passed and evidence attached.
+- [ ] PostgreSQL migrations verified (`alembic upgrade head` / rollback check as needed).
 - [ ] Rollback strategy is documented.
 - [ ] `docs/` updates are complete.
 

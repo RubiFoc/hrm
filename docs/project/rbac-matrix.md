@@ -7,7 +7,7 @@
 This matrix is the access baseline for `TASK-01-01` and `TASK-01-02`.
 API enforcement source of truth:
 - `apps/backend/src/hrm_backend/rbac.py`
-- `apps/backend/src/hrm_backend/auth.py`
+- `apps/backend/src/hrm_backend/auth/`
 
 ## Roles
 - `hr`

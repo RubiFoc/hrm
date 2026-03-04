@@ -86,10 +86,10 @@ This document breaks the system architecture from high-level domains into smalle
 ### 5. Auth and Access Service
 - Token Issuance Module:
   issue signed short-lived access tokens and rotating refresh tokens.
-- Session Store Module:
-  keep active session state, refresh hash, and revocation markers.
+- Denylist Module:
+  store only revoked token/session markers in Redis (`jti` + `sid`).
 - Token Validation Module:
-  validate bearer signature/claims and bind to active session state.
+  validate bearer signature/claims and enforce denylist checks.
 - Access Policy Module:
   map validated role claims to RBAC permission checks.
 
@@ -106,7 +106,7 @@ This document breaks the system architecture from high-level domains into smalle
 | Onboarding tasks | Onboarding Service | PostgreSQL | Linked to employee profile |
 | Automation executions | Workflow Automation Service | PostgreSQL | Used for KPI and incident analysis |
 | Audit events | Audit Service | Append-only storage | Compliance evidence |
-| Auth sessions | Auth and Access Service | In-memory (phase-1 baseline) | Must move to persistent shared store before production |
+| Auth denylist markers (`jti`/`sid`) | Auth and Access Service | Redis | Valid tokens are not persisted server-side |
 
 ## Integration Decomposition
 

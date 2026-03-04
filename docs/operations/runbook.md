@@ -35,11 +35,20 @@ Shortcut wrappers:
 - Stop and remove volumes: `docker compose down -v`
 - Wrapper cleanup: `make down-v` or `just down-v`
 
+### Database Migrations (Alembic)
+- Upgrade: `uv run --project apps/backend alembic -c apps/backend/alembic.ini upgrade head`
+- Downgrade one revision: `uv run --project apps/backend alembic -c apps/backend/alembic.ini downgrade -1`
+- Offline SQL preview: `uv run --project apps/backend alembic -c apps/backend/alembic.ini upgrade head --sql`
+
 ### Smoke Verification
 1. `docker compose ps` shows `healthy` for backend/postgres/redis/minio.
 2. `curl -fsS http://localhost:8000/health` returns `{"status":"ok"}`.
 3. `curl -fsS -X POST http://localhost:8000/api/v1/auth/login -H 'Content-Type: application/json' -d '{"subject_id":"smoke-hr","role":"hr"}'` returns token payload.
 4. Open frontend at `http://localhost:5173` and verify route render.
+
+### Auth Denylist Failure Policy
+- Auth validation is fail-closed when Redis denylist is unavailable.
+- Expected behavior during Redis outage: protected auth checks return `503`.
 
 ## Incident Triage
 1. Confirm impact and affected user segment.

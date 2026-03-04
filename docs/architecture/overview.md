@@ -39,7 +39,7 @@ flowchart LR
 | React.js + TypeScript Web App | Role-based UX for all user groups, localization (ru/en), candidate self-service | User actions | API requests, UI states | frontend |
 | Frontend Telemetry | Client-side errors and performance telemetry | Browser events/errors | Sentry issues and traces | frontend |
 | API Gateway | AuthN/AuthZ entrypoint and request routing | HTTPS requests | Routed calls, access decisions | platform |
-| Auth and Session Service | Access token validation, refresh token rotation, session revocation | Auth requests and bearer tokens | Auth claims, active session state | platform |
+| Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
 | Recruitment Domain | Vacancies, candidates, pipeline, interview lifecycle | Candidate and vacancy data | Match scores, pipeline states | hr-tech |
 | Employee Domain | Employee profile and onboarding workflows | Hire decisions, profile data | Employee records, onboarding tasks | hr-tech |
 | HR Operations Domain | HR process automation and workflow execution | Rules and triggers | Automated tasks, status updates | hr-ops |
@@ -60,11 +60,13 @@ flowchart LR
 5. Candidate Self-Service Flow:
    candidate registration -> profile confirmation -> CV upload -> interview registration.
 6. Authentication Flow:
-   login -> access/refresh issuance -> bearer validation for protected APIs -> refresh rotation -> logout revocation.
+   login -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
 
 ## Data Boundaries
 - Source of truth entities:
-  vacancies, candidates, CV metadata, interview records, employee profiles, onboarding tasks, HR operations, audit events, auth sessions.
+  vacancies, candidates, CV metadata, interview records, employee profiles, onboarding tasks, HR operations, audit events.
+- Auth revocation artifacts:
+  denylisted token ids (`jti`) and session ids (`sid`) in Redis.
 - External integrations: Ollama, Google Calendar
 - Sensitive data classes:
   candidate and employee personal data, interview evaluations, HR records, accounting exports.
@@ -83,7 +85,7 @@ flowchart LR
 - Integration style:
   internal command/event interfaces + connector adapters for external systems.
 - Auth config baseline:
-  `HRM_AUTH_SECRET`, `HRM_ACCESS_TOKEN_TTL_SECONDS`, `HRM_REFRESH_TOKEN_TTL_SECONDS`.
+  `HRM_JWT_SECRET`, `HRM_JWT_ALGORITHM`, `HRM_ACCESS_TOKEN_TTL_SECONDS`, `HRM_REFRESH_TOKEN_TTL_SECONDS`, `HRM_AUTH_REDIS_PREFIX`, `REDIS_URL`.
 
 ## Non-Functional Requirements
 - Reliability:

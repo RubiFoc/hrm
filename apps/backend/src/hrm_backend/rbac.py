@@ -11,7 +11,8 @@ from typing import Annotated, Final, Literal
 
 from fastapi import Depends, HTTPException, status
 
-from hrm_backend.auth import AuthContext, get_current_auth_context
+from hrm_backend.auth.dependencies.auth import get_current_auth_context
+from hrm_backend.auth.schemas.token_claims import AuthContext
 
 Role = Literal["hr", "candidate", "manager", "employee", "leader", "accountant"]
 Permission = Literal[

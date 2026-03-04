@@ -11,6 +11,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0004 | 2026-03-03 | accepted | Standardize frontend stack on React.js + TypeScript | architect | frontend architecture, delivery |
 | ADR-0005 | 2026-03-04 | accepted | Standardize local platform runtime on Docker Compose | architect | infra, operations, developer experience |
 | ADR-0006 | 2026-03-04 | accepted | Adopt signed access tokens with rotating refresh sessions for MVP auth | architect + backend-engineer | backend security, RBAC integration |
+| ADR-0007 | 2026-03-04 | accepted | Adopt stateless JWT auth with Redis denylist and fail-closed policy | architect + backend-engineer | backend security, auth runtime |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -68,6 +69,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 - Added maintenance responsibility for container image and compose configuration.
 
 ## ADR-0006
+- Status note: superseded by ADR-0007 for final auth storage model.
 - Context: `TASK-01-02` requires replacing header-based role input with authenticated identity claims and defining token/session lifecycle for Phase 1.
 - Decision:
   - Use signed short-lived bearer access tokens for API authorization.
@@ -78,3 +80,17 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - RBAC enforcement now relies on validated token claims instead of request headers.
   - Security baseline improves (refresh replay prevention, explicit session revocation).
   - Current implementation is not horizontally scalable until session store is externalized.
+
+## ADR-0007
+- Context: Project requires stateless JWT model where valid tokens are not persisted server-side, while revocation and rotation safety must remain enforceable.
+- Decision:
+  - Use PyJWT for both access and refresh tokens (`HS256`).
+  - Keep storage stateless for valid tokens; persist only denied identifiers in Redis.
+  - Use denylist keys for token id (`jti`) and session id (`sid`).
+  - Keep mandatory refresh rotation by denylisting old refresh `jti` until token expiration.
+  - On logout, denylist current access `jti` and session `sid` for refresh-window duration.
+  - Apply fail-closed behavior: deny auth validation when Redis denylist is unavailable.
+- Consequences:
+  - Stateless token model aligns with JWT architecture goals.
+  - Redis availability becomes a hard dependency for auth checks under fail-closed policy.
+  - Revocation and replay protection remain enforceable without storing active sessions.
