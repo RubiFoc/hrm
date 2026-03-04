@@ -1,4 +1,4 @@
-# Authentication and Session Lifecycle (TASK-01-02, TASK-01-04)
+# Authentication and Session Lifecycle (TASK-01-02, TASK-01-04, staff auth extension)
 
 ## Last Updated
 - Date: 2026-03-04
@@ -31,13 +31,27 @@ Source of truth package: `apps/backend/src/hrm_backend/auth/`.
 
 | Endpoint | Method | Purpose | Auth Required |
 | --- | --- | --- | --- |
-| `/api/v1/auth/login` | `POST` | Issue access + refresh JWT pair | no |
+| `/api/v1/auth/register` | `POST` | Staff self-registration by one-time `employee_key` | no |
+| `/api/v1/auth/login` | `POST` | Issue access + refresh JWT pair by `identifier` + `password` | no |
 | `/api/v1/auth/refresh` | `POST` | Rotate refresh token and issue new access token | refresh token in body |
 | `/api/v1/auth/logout` | `POST` | Revoke current access token and session (`sid`) | access token |
 | `/api/v1/auth/me` | `GET` | Return current identity claims | access token |
+| `/api/v1/admin/staff` | `POST` | Admin direct staff account creation | admin permission |
+| `/api/v1/admin/employee-keys` | `POST` | Issue one-time employee registration key | `admin`/`hr` permission |
+
+Bootstrap note:
+- first `admin` is created manually through CLI:
+  `uv run --project apps/backend python -m hrm_backend.auth.cli.create_admin`.
+
+Temporary compatibility:
+- `POST /api/v1/auth/login` still accepts legacy `subject_id + role` payload for backward compatibility.
 
 ## JWT Claims
 - Common: `sub`, `sid`, `jti`, `iat`, `exp`, `typ`, `role`
+- ID claim types:
+  - `sub` = `staff_id` (UUID)
+  - `sid` = session UUID
+  - `jti` = token UUID
 - Access token: `typ=access`
 - Refresh token: `typ=refresh`
 
@@ -48,6 +62,7 @@ Source of truth package: `apps/backend/src/hrm_backend/auth/`.
 - `HRM_REFRESH_TOKEN_TTL_SECONDS`: refresh token TTL.
 - `REDIS_URL`: Redis URL for denylist storage.
 - `HRM_AUTH_REDIS_PREFIX`: Redis key prefix for denylist entries.
+- `EMPLOYEE_KEY_TTL_SECONDS`: default one-time employee key ttl (default 7 days).
 
 ## Redis Failure Policy (Fail Closed)
 - If Redis denylist read/write fails during auth checks or revoke operations:
@@ -71,10 +86,13 @@ Source of truth package: `apps/backend/src/hrm_backend/auth/`.
 
 | Operation | Action | Source | Result Values | Notes |
 | --- | --- | --- | --- | --- |
+| Register | `auth.register` | `api` | `success` / `failure` | employee-key-based self-registration |
 | Login | `auth.login` | `api` | `success` / `failure` | Includes actor from login payload |
 | Refresh | `auth.refresh` | `api` | `success` / `failure` | Failure is audited for invalid/denied token path |
 | Logout | `auth.logout` | `api` | `success` / `failure` | Bound to authenticated actor/session |
 | Identity read | `auth.me.read` | `api` | `success` | Read of authenticated identity |
+| Admin create staff | `admin.staff:create` | `api` | `success` / `failure` | privileged action |
+| Admin create employee key | `admin.employee_key:create` | `api` | `success` / `failure` | privileged action |
 | RBAC decision | `<permission>` (e.g. `vacancy:create`) | `api` / `job` | `allowed` / `denied` | Recorded for both API and background checks |
 
 Audit storage model:
@@ -91,7 +109,10 @@ Auth domain follows extraction-ready package decomposition:
 - `routers`
 - `utils`
 - `dependencies`
-- infra subpackage: `redis`
+- infra subpackages:
+  - `infra/postgres`
+  - `infra/redis`
+  - `infra/security`
 
 ## Next Steps
 - `TASK-01-05`: map auth/session controls to Belarus/Russia legal controls matrix.

@@ -31,6 +31,16 @@ class AppSettings(BaseSettings):
         access_token_ttl_seconds: Access token ttl in seconds.
         refresh_token_ttl_seconds: Refresh token ttl in seconds.
         redis_prefix: Redis key prefix for auth denylist.
+        cv_allowed_mime_types: Allowed MIME types for CV uploads.
+        cv_max_size_bytes: Maximum allowed CV payload size.
+        object_storage_sse_enabled: Whether uploads use SSE-S3 headers.
+        cv_parsing_max_attempts: Maximum worker retries for CV parsing.
+        employee_key_ttl_seconds: Default ttl for one-time employee registration keys.
+        celery_broker_url: Celery broker URL.
+        celery_result_backend: Celery result backend URL.
+        celery_task_default_queue: Default Celery queue name.
+        celery_task_time_limit_seconds: Hard Celery task timeout.
+        celery_task_always_eager: Whether Celery executes tasks synchronously in-process.
     """
 
     backend_port: int = Field(default=8000, env="BACKEND_PORT", gt=0)
@@ -66,6 +76,31 @@ class AppSettings(BaseSettings):
         gt=0,
     )
     redis_prefix: str = Field(default="auth:deny", env="HRM_AUTH_REDIS_PREFIX")
+    cv_allowed_mime_types: tuple[str, ...] = Field(
+        default=(
+            "application/pdf",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ),
+        env="CV_ALLOWED_MIME_TYPES",
+    )
+    cv_max_size_bytes: int = Field(default=10 * 1024 * 1024, env="CV_MAX_SIZE_BYTES", gt=0)
+    object_storage_sse_enabled: bool = Field(default=True, env="OBJECT_STORAGE_SSE_ENABLED")
+    cv_parsing_max_attempts: int = Field(default=3, env="CV_PARSING_MAX_ATTEMPTS", gt=0)
+    employee_key_ttl_seconds: int = Field(
+        default=7 * 24 * 60 * 60,
+        env="EMPLOYEE_KEY_TTL_SECONDS",
+        gt=0,
+    )
+    celery_broker_url: str = Field(default="redis://redis:6379/0", env="CELERY_BROKER_URL")
+    celery_result_backend: str = Field(default="redis://redis:6379/0", env="CELERY_RESULT_BACKEND")
+    celery_task_default_queue: str = Field(default="cv_parsing", env="CELERY_TASK_DEFAULT_QUEUE")
+    celery_task_time_limit_seconds: int = Field(
+        default=120,
+        env="CELERY_TASK_TIME_LIMIT_SECONDS",
+        gt=0,
+    )
+    celery_task_always_eager: bool = Field(default=False, env="CELERY_TASK_ALWAYS_EAGER")
 
     @validator(
         "database_url",
@@ -78,6 +113,9 @@ class AppSettings(BaseSettings):
         "jwt_secret",
         "jwt_algorithm",
         "redis_prefix",
+        "celery_broker_url",
+        "celery_result_backend",
+        "celery_task_default_queue",
     )
     def _normalize_required_strings(cls, value: str) -> str:
         """Normalize required string settings and reject empty values.
@@ -95,6 +133,35 @@ class AppSettings(BaseSettings):
         if not normalized:
             raise ValueError("must be non-empty")
         return normalized
+
+    @validator("cv_allowed_mime_types", pre=True)
+    def _parse_cv_allowed_mime_types(cls, value: object) -> tuple[str, ...]:
+        """Parse CV MIME list from env string/list into normalized tuple.
+
+        Args:
+            value: Raw value loaded from environment.
+
+        Returns:
+            tuple[str, ...]: Normalized non-empty MIME type set preserving order.
+        """
+        if isinstance(value, tuple):
+            raw_items = list(value)
+        elif isinstance(value, list):
+            raw_items = value
+        elif isinstance(value, str):
+            raw_items = value.split(",")
+        else:
+            raise ValueError("CV allowed MIME types must be list/tuple/comma-separated string")
+
+        normalized: list[str] = []
+        for raw_item in raw_items:
+            item = str(raw_item).strip().lower()
+            if item and item not in normalized:
+                normalized.append(item)
+
+        if not normalized:
+            raise ValueError("CV allowed MIME types must contain at least one value")
+        return tuple(normalized)
 
     class Config:
         """Base settings config with local `.env` support.

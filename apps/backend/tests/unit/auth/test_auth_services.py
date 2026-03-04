@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 import pytest
 from fastapi import HTTPException
 from redis.exceptions import RedisError
@@ -154,8 +156,8 @@ def test_login_returns_access_and_refresh_jwt_tokens() -> None:
     assert token_response.expires_in == 900
     assert access_claims.typ == "access"
     assert refresh_claims.typ == "refresh"
-    assert access_claims.sub == "hr-user-1"
-    assert refresh_claims.sub == "hr-user-1"
+    assert isinstance(access_claims.sub, UUID)
+    assert access_claims.sub == refresh_claims.sub
     assert access_claims.role == "hr"
     assert refresh_claims.role == "hr"
     assert access_claims.sid == token_response.session_id == refresh_claims.sid
@@ -168,7 +170,7 @@ def test_access_token_validation_passes_when_not_denylisted() -> None:
 
     auth_context = auth_service.authenticate_access_token(token_response.access_token)
 
-    assert auth_context.subject_id == "candidate-1"
+    assert isinstance(auth_context.subject_id, UUID)
     assert auth_context.role == "candidate"
     assert auth_context.session_id == token_response.session_id
 

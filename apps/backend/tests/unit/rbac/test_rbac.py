@@ -1,13 +1,10 @@
 """Authorization unit tests for role-permission matrix behavior."""
 
+from __future__ import annotations
+
 import pytest
 from fastapi import HTTPException
 
-from hrm_backend.api.rbac_demo import (
-    create_vacancy,
-    read_automation_report,
-    read_own_candidate_profile,
-)
 from hrm_backend.main import get_rbac_matrix
 from hrm_backend.rbac import (
     BackgroundAccessDeniedError,
@@ -47,20 +44,28 @@ def test_parse_role_unknown_value_returns_403() -> None:
     assert "Unknown role claim" in str(exc_info.value.detail)
 
 
-def test_hr_can_create_vacancy() -> None:
+def test_hr_can_create_vacancy_permission() -> None:
     """Verify that HR role has create permission for vacancies."""
-    response = create_vacancy(role="hr")
+    decision = evaluate_permission(role="hr", permission="vacancy:create")
 
-    assert response == {"status": "created", "role": "hr"}
+    assert decision.allowed is True
+    assert decision.reason is None
 
 
-def test_candidate_is_denied_for_vacancy_create_permission() -> None:
-    """Verify centralized evaluator denies vacancy create for candidate role."""
-    decision = evaluate_permission(role="candidate", permission="vacancy:create")
+def test_manager_is_denied_for_vacancy_create_permission() -> None:
+    """Verify centralized evaluator denies vacancy create for manager role."""
+    decision = evaluate_permission(role="manager", permission="vacancy:create")
 
     assert decision.allowed is False
     assert decision.reason is not None
     assert "vacancy:create" in decision.reason
+
+
+def test_admin_can_upload_cv_permission() -> None:
+    """Verify admin role contains CV upload permission."""
+    decision = evaluate_permission(role="admin", permission="candidate_cv:upload")
+
+    assert decision.allowed is True
 
 
 def test_background_enforcement_records_denied_decision() -> None:
@@ -70,7 +75,7 @@ def test_background_enforcement_records_denied_decision() -> None:
     with pytest.raises(BackgroundAccessDeniedError):
         enforce_background_permission(
             subject_id="job-user",
-            role="candidate",
+            role="manager",
             permission="vacancy:create",
             audit_service=audit_service,  # type: ignore[arg-type]
             correlation_id="job-correlation-1",
@@ -100,27 +105,13 @@ def test_background_enforcement_records_invalid_role_reason() -> None:
     assert audit_service.events[0]["reason"] == "Unknown role claim: intern"
 
 
-def test_candidate_can_read_own_profile() -> None:
-    """Verify candidate role can access own profile endpoint function."""
-    response = read_own_candidate_profile(role="candidate")
-
-    assert response == {"profile": "self", "role": "candidate"}
-
-
-def test_accountant_can_read_automation_report() -> None:
-    """Verify accountant role has analytics read access."""
-    response = read_automation_report(role="accountant")
-
-    assert response["role"] == "accountant"
-
-
 def test_rbac_matrix_contains_all_phase1_roles() -> None:
     """Verify exported RBAC matrix includes full phase-1 role set."""
     matrix = get_rbac_matrix()
 
     assert set(matrix) == {
+        "admin",
         "hr",
-        "candidate",
         "manager",
         "employee",
         "leader",

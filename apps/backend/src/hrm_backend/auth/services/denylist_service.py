@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from redis.exceptions import RedisError
 
 from hrm_backend.auth.dao.redis_denylist_dao import RedisDenylistDAO
@@ -22,7 +24,7 @@ class DenylistService:
         self._dao = dao
         self._refresh_token_ttl_seconds = refresh_token_ttl_seconds
 
-    def ensure_not_denied(self, token_id: str, session_id: str) -> None:
+    def ensure_not_denied(self, token_id: str | UUID, session_id: str | UUID) -> None:
         """Ensure token/session are not denylisted.
 
         Args:
@@ -33,12 +35,16 @@ class DenylistService:
             HTTPException: 401 when token/session are denied, 503 on Redis errors.
         """
         try:
-            if self._dao.is_jti_denied(token_id) or self._dao.is_sid_denied(session_id):
+            normalized_token_id = str(token_id)
+            normalized_session_id = str(session_id)
+            if self._dao.is_jti_denied(normalized_token_id) or self._dao.is_sid_denied(
+                normalized_session_id
+            ):
                 raise unauthorized("Token revoked")
         except RedisError as exc:
             raise service_unavailable("Token validation is temporarily unavailable") from exc
 
-    def deny_jti_until_exp(self, token_id: str, expires_at: int) -> None:
+    def deny_jti_until_exp(self, token_id: str | UUID, expires_at: int) -> None:
         """Denylist token id until token expiration.
 
         Args:
@@ -53,11 +59,11 @@ class DenylistService:
             return
 
         try:
-            self._dao.deny_jti(token_id, ttl_seconds)
+            self._dao.deny_jti(str(token_id), ttl_seconds)
         except RedisError as exc:
             raise service_unavailable("Token validation is temporarily unavailable") from exc
 
-    def deny_sid_for_refresh_window(self, session_id: str) -> None:
+    def deny_sid_for_refresh_window(self, session_id: str | UUID) -> None:
         """Denylist session id for full refresh window after logout.
 
         Args:
@@ -67,6 +73,6 @@ class DenylistService:
             HTTPException: 503 when Redis write fails.
         """
         try:
-            self._dao.deny_sid(session_id, self._refresh_token_ttl_seconds)
+            self._dao.deny_sid(str(session_id), self._refresh_token_ttl_seconds)
         except RedisError as exc:
             raise service_unavailable("Token validation is temporarily unavailable") from exc

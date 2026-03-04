@@ -9,6 +9,8 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from hrm_backend.audit.models.event import AuditEvent  # noqa: F401
+from hrm_backend.auth.models.employee_registration_key import EmployeeRegistrationKey  # noqa: F401
+from hrm_backend.auth.models.staff_account import StaffAccount  # noqa: F401
 from hrm_backend.core.models.base import Base
 
 config = context.config

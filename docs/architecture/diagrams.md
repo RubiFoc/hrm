@@ -219,27 +219,26 @@ flowchart TB
   WEB --> SENTRYX
 ```
 
-## Diagram 7: Candidate Self-Service Sequence (v1)
+## Diagram 7: Public Vacancy Application Sequence (v1)
 
 ```mermaid
 sequenceDiagram
   participant C as Candidate
   participant UI as React.js + TypeScript UI
   participant API as API Gateway
-  participant CAND as Candidate Service
-  participant INT as Interview Service
+  participant VAC as Vacancy Application Service
+  participant DB as PostgreSQL
+  participant OBJ as MinIO
+  participant Q as Celery/Redis
 
-  C->>UI: Register and fill profile information
-  UI->>API: Submit profile + confirmation flag
-  API->>CAND: Save candidate profile
-  C->>UI: Upload CV
-  UI->>API: Upload CV metadata/file reference
-  API->>CAND: Persist CV attachment
-  C->>UI: Register for interview slot
-  UI->>API: Send interview registration request
-  API->>INT: Reserve candidate interview slot
-  INT-->>API: Registration status
-  API-->>UI: Confirmation to candidate
+  C->>UI: Fill contacts + upload CV
+  UI->>API: POST /api/v1/vacancies/{vacancy_id}/applications
+  API->>VAC: validate vacancy + cv payload
+  VAC->>DB: upsert candidate_profiles
+  VAC->>OBJ: put CV object (SSE-S3)
+  VAC->>DB: insert candidate_documents + pipeline_transitions (None->applied) + cv_parsing_jobs(queued)
+  VAC->>Q: enqueue process_cv_parsing_job(job_id)
+  API-->>UI: 201 Created (candidate_id, document_id, job_id)
 ```
 
 ## Diagram 8: Delivery Pipeline (GitHub + CI)
@@ -272,7 +271,8 @@ flowchart LR
 flowchart TB
   subgraph Compose[Docker Compose]
     FE[frontend container\nReact + Vite preview]
-    BE[backend container\nFastAPI + workers]
+    BE[backend container\nFastAPI API]
+    WKR[backend-worker container\nCelery worker]
     DB[(postgres container :5432)]
     OBJ[(minio container :9000/:9001)]
     MQ[(redis container :6379)]
@@ -284,6 +284,9 @@ flowchart TB
   BE --> DB
   BE --> OBJ
   BE --> MQ
+  WKR --> DB
+  WKR --> MQ
+  WKR --> OBJ
   INIT --> OBJ
   BE --> OLL[Ollama]
   BE <--> GCAL[Google Calendar]
@@ -293,16 +296,27 @@ flowchart TB
 
 ```mermaid
 sequenceDiagram
-  participant U as User (HR/Candidate/...)
+  participant U as Staff User
+  participant A as Admin/HR
   participant UI as React.js + TypeScript UI
   participant API as API Gateway
   participant AUTH as Auth and Access Service
   participant DNL as Redis Denylist
+  participant DB as PostgreSQL
   participant AUD as Audit Service
 
+  A->>API: POST /api/v1/admin/employee-keys
+  API->>DB: issue one-time employee_key (ttl=7d)
+  API->>AUD: admin.employee_key:create
+
+  U->>UI: Register account
+  UI->>API: POST /api/v1/auth/register (login, email, password, employee_key)
+  API->>AUTH: Validate key + create staff account
+  API->>AUD: auth.register
+
   U->>UI: Sign in
-  UI->>API: POST /api/v1/auth/login (subject_id, role)
-  API->>AUTH: Issue access/refresh JWT pair
+  UI->>API: POST /api/v1/auth/login (identifier, password)
+  API->>AUTH: Issue access/refresh JWT pair (UUID sub/sid/jti)
   API->>AUD: Write auth.login (success/failure, correlation_id)
   AUTH-->>UI: access_token + refresh_token
 
@@ -355,4 +369,58 @@ flowchart LR
   DEP --> APIAUD --> STORE
   JOB --> JOBROLE --> ENF --> EVAL --> JOBRES
   ENF --> JOBAUD --> STORE
+```
+
+## Diagram 12: Candidate Profile and CV Upload Sequence
+
+```mermaid
+sequenceDiagram
+  participant ACT as Staff Actor (admin/hr)
+  participant API as API Gateway
+  participant CAND as Candidate Service
+  participant DB as PostgreSQL
+  participant OBJ as MinIO
+  participant Q as Celery/Redis
+  participant AUD as Audit Service
+
+  ACT->>API: POST /api/v1/candidates
+  API->>CAND: validate RBAC + ownership policy
+  CAND->>DB: insert candidate_profiles
+  CAND->>AUD: candidate_profile:create success
+  API-->>ACT: candidate profile payload
+
+  ACT->>API: POST /api/v1/candidates/{id}/cv (multipart + checksum)
+  API->>CAND: validate RBAC + ownership + mime/size/checksum
+  CAND->>OBJ: put object (SSE-S3)
+  CAND->>DB: candidate_documents upsert(active) + cv_parsing_jobs queued
+  CAND->>Q: enqueue process_cv_parsing_job(job_id)
+  CAND->>AUD: candidate_cv:upload success
+  API-->>ACT: CV metadata payload
+```
+
+## Diagram 13: Pipeline Transition Validator Flow
+
+```mermaid
+flowchart LR
+  REQ[POST /api/v1/pipeline/transitions] --> RBAC[require_permission pipeline:transition]
+  RBAC --> LOAD[Load vacancy + candidate + latest transition]
+  LOAD --> CURR[Resolve from_stage from append-only history]
+  CURR --> VAL{Canonical transition allowed?}
+  VAL -->|No| ERR[422 Unprocessable Entity]
+  VAL -->|Yes| APPEND[Insert pipeline_transitions row]
+  APPEND --> AUD[Audit pipeline:transition success]
+  AUD --> RES[200 Transition response]
+```
+
+## Diagram 14: Async CV Parsing Worker Lifecycle
+
+```mermaid
+stateDiagram-v2
+  [*] --> queued
+  queued --> running: celery task claims job
+  running --> succeeded: parse + persist success
+  running --> failed: parser/storage error
+  failed --> running: retry if attempt_count < max_attempts
+  failed --> [*]: terminal when attempts exhausted
+  succeeded --> [*]
 ```

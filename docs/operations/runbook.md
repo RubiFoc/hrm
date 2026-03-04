@@ -32,7 +32,9 @@ Shortcut wrappers:
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8000`
 - Backend health: `http://localhost:8000/health`
-- Backend auth login: `http://localhost:8000/api/v1/auth/login`
+- Backend auth register/login:
+  - `http://localhost:8000/api/v1/auth/register`
+  - `http://localhost:8000/api/v1/auth/login`
 - MinIO API: `http://localhost:9000`
 - MinIO Console: `http://localhost:9001`
 
@@ -45,6 +47,27 @@ Shortcut wrappers:
 - Upgrade: `uv run --project apps/backend alembic -c apps/backend/alembic.ini upgrade head`
 - Downgrade one revision: `uv run --project apps/backend alembic -c apps/backend/alembic.ini downgrade -1`
 - Offline SQL preview: `uv run --project apps/backend alembic -c apps/backend/alembic.ini upgrade head --sql`
+
+### Admin Bootstrap
+- First `admin` bootstrap is manual:
+  `uv run --project apps/backend python -m hrm_backend.auth.cli.create_admin`
+
+### CV Parsing Worker (Celery executor)
+- Primary worker command:
+  `uv run --project apps/backend celery -A hrm_backend.candidates.infra.celery.app:celery_app worker --loglevel=INFO --queues=cv_parsing`
+- Compose service: `backend-worker`.
+- Runtime lifecycle in DB (`cv_parsing_jobs` source of truth):
+  `queued -> running -> succeeded/failed`.
+- Retry behavior is bounded by `CV_PARSING_MAX_ATTEMPTS`.
+- Celery runtime settings:
+  - `CELERY_BROKER_URL`
+  - `CELERY_RESULT_BACKEND`
+  - `CELERY_TASK_DEFAULT_QUEUE`
+  - `CELERY_TASK_TIME_LIMIT_SECONDS`
+- Upload validation settings:
+  - `CV_ALLOWED_MIME_TYPES`
+  - `CV_MAX_SIZE_BYTES`
+  - `OBJECT_STORAGE_SSE_ENABLED`
 
 ### Smoke Verification
 1. Run canonical smoke script: `./scripts/smoke-compose.sh`.

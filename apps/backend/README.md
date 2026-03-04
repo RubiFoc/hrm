@@ -3,6 +3,7 @@
 ## Setup
 - Install dependencies: `uv sync --project .`
 - Run app: `uv run --project . uvicorn hrm_backend.main:app --reload`
+- Run CV parsing worker loop: `uv run --project . python -m hrm_backend.candidates.workers.cv_parsing_worker`
 - Run tests: `uv run --project . pytest -q`
 - Run only unit tests: `uv run --project . pytest -q tests/unit`
 - Run only integration tests: `uv run --project . pytest -q tests/integration`
@@ -36,6 +37,10 @@
 - `OBJECT_STORAGE_ACCESS_KEY`
 - `OBJECT_STORAGE_SECRET_KEY`
 - `OBJECT_STORAGE_BUCKET`
+- `OBJECT_STORAGE_SSE_ENABLED`
+- `CV_ALLOWED_MIME_TYPES`
+- `CV_MAX_SIZE_BYTES`
+- `CV_PARSING_MAX_ATTEMPTS`
 - `OLLAMA_BASE_URL`
 - `GOOGLE_CALENDAR_ENABLED`
 - `HRM_JWT_SECRET`
@@ -61,3 +66,19 @@
 - Tests are split by level and package:
   - `tests/unit/<package>/...`
   - `tests/integration/<package>/...`
+
+## Recruitment APIs (Phase 1)
+- Candidate profile + CV:
+  - `POST /api/v1/candidates`
+  - `GET /api/v1/candidates/{candidate_id}`
+  - `PATCH /api/v1/candidates/{candidate_id}`
+  - `GET /api/v1/candidates`
+  - `POST /api/v1/candidates/{candidate_id}/cv`
+  - `GET /api/v1/candidates/{candidate_id}/cv`
+  - `GET /api/v1/candidates/{candidate_id}/cv/parsing-status`
+- Vacancy + pipeline:
+  - `POST /api/v1/vacancies`
+  - `GET /api/v1/vacancies`
+  - `GET /api/v1/vacancies/{vacancy_id}`
+  - `PATCH /api/v1/vacancies/{vacancy_id}`
+  - `POST /api/v1/pipeline/transitions`

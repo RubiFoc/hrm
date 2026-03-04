@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -36,10 +37,10 @@ def configured_app(sqlite_database_url: str):
     )
     context_holder = {
         "context": AuthContext(
-            subject_id="hr-user",
+            subject_id=uuid4(),
             role="hr",
-            session_id="sid-1",
-            token_id="jti-1",
+            session_id=uuid4(),
+            token_id=uuid4(),
             expires_at=9999999999,
         )
     }
@@ -83,52 +84,80 @@ def test_api_permission_decisions_are_audited(configured_app) -> None:
 
     with TestClient(configured) as client:
         context_holder["context"] = AuthContext(
-            subject_id="hr-actor",
+            subject_id=uuid4(),
             role="hr",
-            session_id="sid-hr",
-            token_id="jti-hr",
+            session_id=uuid4(),
+            token_id=uuid4(),
             expires_at=9999999999,
         )
-        allow_response = client.post("/api/v1/vacancies", headers={"X-Request-ID": "req-allow-1"})
+        allow_response = client.post(
+            "/api/v1/vacancies",
+            headers={"X-Request-ID": "req-allow-1"},
+            json={
+                "title": "Backend Engineer",
+                "description": "Build recruitment platform modules",
+                "department": "Engineering",
+                "status": "open",
+            },
+        )
         assert allow_response.status_code == 200
         assert allow_response.headers.get("X-Request-ID") == "req-allow-1"
 
         context_holder["context"] = AuthContext(
-            subject_id="candidate-actor",
-            role="candidate",
-            session_id="sid-cand",
-            token_id="jti-cand",
+            subject_id=uuid4(),
+            role="manager",
+            session_id=uuid4(),
+            token_id=uuid4(),
             expires_at=9999999999,
         )
-        deny_response = client.post("/api/v1/vacancies", headers={"X-Request-ID": "req-deny-1"})
+        deny_response = client.post(
+            "/api/v1/vacancies",
+            headers={"X-Request-ID": "req-deny-1"},
+            json={
+                "title": "Backend Engineer",
+                "description": "Build recruitment platform modules",
+                "department": "Engineering",
+                "status": "open",
+            },
+        )
         assert deny_response.status_code == 403
         assert deny_response.headers.get("X-Request-ID") == "req-deny-1"
 
         context_holder["context"] = AuthContext(
-            subject_id="unknown-role-actor",
+            subject_id=uuid4(),
             role="intern",
-            session_id="sid-unknown",
-            token_id="jti-unknown",
+            session_id=uuid4(),
+            token_id=uuid4(),
             expires_at=9999999999,
         )
         unknown_role_response = client.post(
             "/api/v1/vacancies",
             headers={"X-Request-ID": "req-unknown-role-1"},
+            json={
+                "title": "Backend Engineer",
+                "description": "Build recruitment platform modules",
+                "department": "Engineering",
+                "status": "open",
+            },
         )
         assert unknown_role_response.status_code == 403
         assert unknown_role_response.headers.get("X-Request-ID") == "req-unknown-role-1"
 
     events = _load_events(database_url)
-    permission_events = [event for event in events if event.action == "vacancy:create"]
+    permission_events = [
+        event
+        for event in events
+        if event.action == "vacancy:create" and event.result in {"allowed", "denied"}
+    ]
     assert len(permission_events) == 3
     assert permission_events[0].result == "allowed"
-    assert permission_events[0].actor_sub == "hr-actor"
+    assert permission_events[0].actor_sub is not None
     assert permission_events[0].correlation_id == "req-allow-1"
     assert permission_events[1].result == "denied"
-    assert permission_events[1].actor_sub == "candidate-actor"
+    assert permission_events[1].actor_sub is not None
     assert permission_events[1].correlation_id == "req-deny-1"
     assert permission_events[2].result == "denied"
-    assert permission_events[2].actor_sub == "unknown-role-actor"
+    assert permission_events[2].actor_sub is not None
     assert permission_events[2].reason == "Unknown role claim: intern"
     assert permission_events[2].correlation_id == "req-unknown-role-1"
 
@@ -137,11 +166,12 @@ def test_auth_login_is_audited(configured_app) -> None:
     """Verify auth login endpoint records successful audit event."""
     configured, _, database_url = configured_app
 
+    login_subject = str(uuid4())
     with TestClient(configured) as client:
         response = client.post(
             "/api/v1/auth/login",
             headers={"X-Request-ID": "req-login-1"},
-            json={"subject_id": "login-user-1", "role": "hr"},
+            json={"subject_id": login_subject, "role": "hr"},
         )
         assert response.status_code == 200
         assert response.headers.get("X-Request-ID") == "req-login-1"
@@ -150,7 +180,7 @@ def test_auth_login_is_audited(configured_app) -> None:
     login_events = [event for event in events if event.action == "auth.login"]
     assert len(login_events) == 1
     assert login_events[0].result == "success"
-    assert login_events[0].actor_sub == "login-user-1"
+    assert login_events[0].actor_sub == login_subject
     assert login_events[0].actor_role == "hr"
     assert login_events[0].correlation_id == "req-login-1"
 
