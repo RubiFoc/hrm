@@ -9,7 +9,24 @@ from hrm_backend.api.rbac_demo import (
     read_own_candidate_profile,
 )
 from hrm_backend.main import get_rbac_matrix
-from hrm_backend.rbac import parse_role, require_permission
+from hrm_backend.rbac import (
+    BackgroundAccessDeniedError,
+    enforce_background_permission,
+    evaluate_permission,
+    parse_role,
+)
+
+
+class _InMemoryAuditService:
+    """Simple audit service stub for background enforcement tests."""
+
+    def __init__(self) -> None:
+        """Initialize in-memory event sink."""
+        self.events: list[dict[str, object]] = []
+
+    def record_permission_decision(self, **payload: object) -> None:
+        """Capture permission decision payload."""
+        self.events.append(payload)
 
 
 def test_parse_role_missing_value_returns_401() -> None:
@@ -37,15 +54,50 @@ def test_hr_can_create_vacancy() -> None:
     assert response == {"status": "created", "role": "hr"}
 
 
-def test_candidate_cannot_create_vacancy() -> None:
-    """Verify permission dependency blocks candidate from vacancy creation."""
-    dependency = require_permission("vacancy:create")
+def test_candidate_is_denied_for_vacancy_create_permission() -> None:
+    """Verify centralized evaluator denies vacancy create for candidate role."""
+    decision = evaluate_permission(role="candidate", permission="vacancy:create")
 
-    with pytest.raises(HTTPException) as exc_info:
-        dependency(role="candidate")
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "vacancy:create" in decision.reason
 
-    assert exc_info.value.status_code == 403
-    assert "vacancy:create" in str(exc_info.value.detail)
+
+def test_background_enforcement_records_denied_decision() -> None:
+    """Verify background permission check denies and records audit decision."""
+    audit_service = _InMemoryAuditService()
+
+    with pytest.raises(BackgroundAccessDeniedError):
+        enforce_background_permission(
+            subject_id="job-user",
+            role="candidate",
+            permission="vacancy:create",
+            audit_service=audit_service,  # type: ignore[arg-type]
+            correlation_id="job-correlation-1",
+        )
+
+    assert len(audit_service.events) == 1
+    assert audit_service.events[0]["allowed"] is False
+    assert audit_service.events[0]["permission"] == "vacancy:create"
+    assert audit_service.events[0]["correlation_id"] == "job-correlation-1"
+
+
+def test_background_enforcement_records_invalid_role_reason() -> None:
+    """Verify invalid background role produces explicit audit deny reason."""
+    audit_service = _InMemoryAuditService()
+
+    with pytest.raises(BackgroundAccessDeniedError):
+        enforce_background_permission(
+            subject_id="job-user",
+            role="intern",
+            permission="vacancy:create",
+            audit_service=audit_service,  # type: ignore[arg-type]
+            correlation_id="job-correlation-2",
+        )
+
+    assert len(audit_service.events) == 1
+    assert audit_service.events[0]["allowed"] is False
+    assert audit_service.events[0]["reason"] == "Unknown role claim: intern"
 
 
 def test_candidate_can_read_own_profile() -> None:

@@ -8,6 +8,7 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+from hrm_backend.audit.models.event import AuditEvent  # noqa: F401
 from hrm_backend.core.models.base import Base
 
 config = context.config

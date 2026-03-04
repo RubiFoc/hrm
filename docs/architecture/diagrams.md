@@ -44,9 +44,11 @@ flowchart TB
   subgraph Core[Core Services]
     COREPKG[Core Shared Package]
     AUTH[Auth and Access Service]
+    POLICY[Access Policy Evaluator]
     REC[Recruitment Services]
     EMPDOM[Employee Services]
     HROPS[HR Automation Services]
+    WORKERS[Background Workers]
     ANALYTICS[Reporting and KPI Services]
     AUDIT[Audit Service]
   end
@@ -66,12 +68,15 @@ flowchart TB
 
   UI --> API
   API --> AUTH
+  API --> POLICY
   API --> REC
   API --> EMPDOM
   API --> HROPS
   API --> ANALYTICS
+  WORKERS --> POLICY
   AUTH --> REDISDNL
   AUTH -.imports.-> COREPKG
+  POLICY -.imports.-> COREPKG
   REC -.imports.-> COREPKG
   EMPDOM -.imports.-> COREPKG
   HROPS -.imports.-> COREPKG
@@ -91,6 +96,8 @@ flowchart TB
   REC --> OLLAMA
   REC <--> GCALSYNC
   API --> AUDIT
+  POLICY --> AUDIT
+  WORKERS --> AUDIT
   UI --> SENTRY
 ```
 
@@ -291,10 +298,12 @@ sequenceDiagram
   participant API as API Gateway
   participant AUTH as Auth and Access Service
   participant DNL as Redis Denylist
+  participant AUD as Audit Service
 
   U->>UI: Sign in
   UI->>API: POST /api/v1/auth/login (subject_id, role)
   API->>AUTH: Issue access/refresh JWT pair
+  API->>AUD: Write auth.login (success/failure, correlation_id)
   AUTH-->>UI: access_token + refresh_token
 
   U->>UI: Open protected page
@@ -307,12 +316,43 @@ sequenceDiagram
   U->>UI: Refresh session
   UI->>API: POST /api/v1/auth/refresh (refresh_token)
   API->>AUTH: Validate refresh token + rotate
+  API->>AUD: Write auth.refresh (success/failure, correlation_id)
   AUTH->>DNL: Deny old refresh jti until exp
   AUTH-->>UI: New access_token + new refresh_token
 
   U->>UI: Logout
   UI->>API: POST /api/v1/auth/logout (Bearer access_token)
   API->>AUTH: Revoke token/session window
+  API->>AUD: Write auth.logout (success, correlation_id)
   AUTH->>DNL: Deny access jti + session sid
   AUTH-->>UI: 204 No Content
+```
+
+## Diagram 11: Unified Access Enforcement and Audit Flow
+
+```mermaid
+flowchart LR
+  subgraph APIPath[API Request Path]
+    REQ[HTTP Request]
+    AUTHCTX[Auth Context]
+    DEP[require_permission]
+    EVAL[evaluate_permission]
+    APIAUD[Audit source=api]
+    APIRES[Route Handler or 403]
+  end
+
+  subgraph JobPath[Background Job Path]
+    JOB[Job Command]
+    JOBROLE[Job Actor/Role]
+    ENF[enforce_background_permission]
+    JOBAUD[Audit source=job]
+    JOBRES[Job Step or BackgroundAccessDeniedError]
+  end
+
+  STORE[(PostgreSQL audit_events)]
+
+  REQ --> AUTHCTX --> DEP --> EVAL --> APIRES
+  DEP --> APIAUD --> STORE
+  JOB --> JOBROLE --> ENF --> EVAL --> JOBRES
+  ENF --> JOBAUD --> STORE
 ```

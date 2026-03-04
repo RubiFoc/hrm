@@ -7,10 +7,13 @@ runtime helpers that the API layer can use to enforce access policies.
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Annotated, Final, Literal
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 
+from hrm_backend.audit.dependencies.audit import get_audit_service
+from hrm_backend.audit.services.audit_service import AuditService
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 
@@ -66,6 +69,27 @@ ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
 }
 
 
+@dataclass(frozen=True)
+class PolicyDecision:
+    """Permission decision returned by centralized policy evaluator.
+
+    Attributes:
+        role: Evaluated role.
+        permission: Evaluated permission.
+        allowed: Whether permission is granted.
+        reason: Optional deny reason.
+    """
+
+    role: Role
+    permission: Permission
+    allowed: bool
+    reason: str | None = None
+
+
+class BackgroundAccessDeniedError(RuntimeError):
+    """Raised when background operation is not authorized by policy evaluator."""
+
+
 def parse_role(raw_role: str | None) -> Role:
     """Parse and validate role claim value.
 
@@ -92,6 +116,27 @@ def parse_role(raw_role: str | None) -> Role:
         )
 
     return candidate  # type: ignore[return-value]
+
+
+def evaluate_permission(role: Role, permission: Permission) -> PolicyDecision:
+    """Evaluate role permission against baseline RBAC matrix.
+
+    Args:
+        role: Parsed role claim.
+        permission: Required permission.
+
+    Returns:
+        PolicyDecision: Allow/deny decision with deny reason when applicable.
+    """
+    allowed = permission in ROLE_PERMISSION_MATRIX[role]
+    if allowed:
+        return PolicyDecision(role=role, permission=permission, allowed=True)
+    return PolicyDecision(
+        role=role,
+        permission=permission,
+        allowed=False,
+        reason=f"Role '{role}' has no permission '{permission}'",
+    )
 
 
 def get_current_role(
@@ -121,12 +166,83 @@ def require_permission(permission: Permission) -> Callable[[Role], Role]:
         HTTPException: If role does not contain required permission.
     """
 
-    def dependency(role: Annotated[Role, Depends(get_current_role)]) -> Role:
-        if permission not in ROLE_PERMISSION_MATRIX[role]:
+    def dependency(
+        request: Request,
+        auth_context: Annotated[AuthContext, Depends(get_current_auth_context)],
+        audit_service: Annotated[AuditService, Depends(get_audit_service)],
+    ) -> Role:
+        try:
+            role = parse_role(auth_context.role)
+        except HTTPException as exc:
+            audit_service.record_permission_decision(
+                permission=permission,
+                role=auth_context.role,
+                allowed=False,
+                request=request,
+                actor_sub=auth_context.subject_id,
+                reason=str(exc.detail),
+            )
+            raise
+        decision = evaluate_permission(role=role, permission=permission)
+        audit_service.record_permission_decision(
+            permission=permission,
+            role=role,
+            allowed=decision.allowed,
+            request=request,
+            actor_sub=auth_context.subject_id,
+            reason=decision.reason,
+        )
+        if not decision.allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Role '{role}' has no permission '{permission}'",
+                detail=decision.reason,
             )
         return role
 
     return dependency
+
+
+def enforce_background_permission(
+    *,
+    subject_id: str | None,
+    role: str | None,
+    permission: Permission,
+    audit_service: AuditService,
+    correlation_id: str | None,
+) -> None:
+    """Enforce RBAC permission for background operation context.
+
+    Args:
+        subject_id: Actor subject identifier, if available.
+        role: Actor role value.
+        permission: Required permission for background operation.
+        audit_service: Audit service dependency.
+        correlation_id: Background execution correlation identifier.
+
+    Raises:
+        BackgroundAccessDeniedError: If role is invalid or permission is not granted.
+    """
+    try:
+        parsed_role = parse_role(role)
+    except HTTPException as exc:
+        audit_service.record_permission_decision(
+            permission=permission,
+            role=role,
+            allowed=False,
+            actor_sub=subject_id,
+            correlation_id=correlation_id,
+            reason=str(exc.detail),
+        )
+        raise BackgroundAccessDeniedError(str(exc.detail)) from exc
+
+    decision = evaluate_permission(parsed_role, permission)
+    audit_service.record_permission_decision(
+        permission=permission,
+        role=parsed_role,
+        allowed=decision.allowed,
+        actor_sub=subject_id,
+        correlation_id=correlation_id,
+        reason=decision.reason,
+    )
+    if not decision.allowed:
+        raise BackgroundAccessDeniedError(decision.reason or "Background access denied")

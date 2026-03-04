@@ -1,6 +1,10 @@
 """Application entrypoint and API wiring for the HRM backend service."""
 
-from fastapi import FastAPI
+from __future__ import annotations
+
+from uuid import uuid4
+
+from fastapi import FastAPI, Request
 
 from hrm_backend.api.rbac_demo import router as rbac_demo_router
 from hrm_backend.auth.routers.v1 import router as auth_router
@@ -9,6 +13,24 @@ from hrm_backend.rbac import ROLE_PERMISSION_MATRIX
 app = FastAPI(title="HRM Backend", version="0.1.0")
 app.include_router(auth_router)
 app.include_router(rbac_demo_router)
+
+
+@app.middleware("http")
+async def correlation_id_middleware(request: Request, call_next):
+    """Attach correlation ID to request state and outgoing response headers.
+
+    Args:
+        request: Incoming HTTP request.
+        call_next: Next middleware/route handler in chain.
+
+    Returns:
+        Response: Outgoing HTTP response enriched with `X-Request-ID` header.
+    """
+    request_id = request.headers.get("X-Request-ID") or uuid4().hex
+    request.state.request_id = request_id
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
 
 
 @app.get("/health")

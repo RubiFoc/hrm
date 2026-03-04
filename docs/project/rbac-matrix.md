@@ -4,10 +4,11 @@
 - Date: 2026-03-04
 - Updated by: backend-engineer
 
-This matrix is the access baseline for `TASK-01-01` and `TASK-01-02`.
-API enforcement source of truth:
+This matrix is the access baseline for `TASK-01-01`, `TASK-01-02`, and `TASK-01-03`.
+Enforcement source of truth:
 - `apps/backend/src/hrm_backend/rbac.py`
 - `apps/backend/src/hrm_backend/auth/`
+- `apps/backend/src/hrm_backend/audit/`
 
 ## Roles
 - `hr`
@@ -38,7 +39,27 @@ API enforcement source of truth:
 - Missing/invalid bearer token: `401 Unauthorized`.
 - Unknown role claim: `403 Forbidden`.
 - Permission mismatch: `403 Forbidden`.
+- API permission checks are enforced through:
+  - `require_permission(permission)` (FastAPI dependency wrapper)
+  - centralized evaluator `evaluate_permission(role, permission)`
+  - immutable audit write on every decision (`allowed` and `denied`)
+- Background permission checks are enforced through:
+  - `enforce_background_permission(...)`
+  - the same centralized evaluator `evaluate_permission(...)`
+  - immutable audit write with `source=job` on every decision
+
+## API and Background Enforcement Path
+
+| Path | Entry Point | Decision Engine | Deny/Error Contract |
+| --- | --- | --- | --- |
+| API route | `require_permission(...)` | `evaluate_permission(...)` | `HTTP 401/403` |
+| Background job | `enforce_background_permission(...)` | `evaluate_permission(...)` | `BackgroundAccessDeniedError` |
+
+## Audit Linkage
+- Every RBAC decision writes one `audit_events` record.
+- `action` equals permission key (for example `vacancy:create`).
+- `result` is `allowed` or `denied`.
+- `correlation_id` is populated from `X-Request-ID` (API) or job correlation ID (background).
 
 ## Next Steps
-- Enforce access policy centrally for API and background jobs in `TASK-01-03`.
 - Expand permission set per domain modules as APIs are implemented.
