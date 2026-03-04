@@ -1,0 +1,87 @@
+"""DAO for append-only pipeline transition history."""
+
+from __future__ import annotations
+
+from sqlalchemy.orm import Session
+
+from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition
+from hrm_backend.vacancies.schemas.pipeline import PipelineStage
+
+
+class PipelineTransitionDAO:
+    """Data-access helper for pipeline transition events."""
+
+    def __init__(self, session: Session) -> None:
+        """Initialize DAO.
+
+        Args:
+            session: Active SQLAlchemy session.
+        """
+        self._session = session
+
+    def create_transition(
+        self,
+        *,
+        vacancy_id: str,
+        candidate_id: str,
+        from_stage: PipelineStage | None,
+        to_stage: PipelineStage,
+        reason: str | None,
+        changed_by_sub: str,
+        changed_by_role: str,
+    ) -> PipelineTransition:
+        """Insert append-only pipeline transition event.
+
+        Args:
+            vacancy_id: Vacancy identifier.
+            candidate_id: Candidate identifier.
+            from_stage: Previous stage.
+            to_stage: New stage.
+            reason: Optional reason.
+            changed_by_sub: Actor subject id.
+            changed_by_role: Actor role.
+
+        Returns:
+            PipelineTransition: Persisted transition event.
+        """
+        entity = PipelineTransition(
+            vacancy_id=vacancy_id,
+            candidate_id=candidate_id,
+            from_stage=from_stage,
+            to_stage=to_stage,
+            reason=reason,
+            changed_by_sub=changed_by_sub,
+            changed_by_role=changed_by_role,
+        )
+        self._session.add(entity)
+        self._session.commit()
+        self._session.refresh(entity)
+        return entity
+
+    def get_last_transition(
+        self,
+        *,
+        vacancy_id: str,
+        candidate_id: str,
+    ) -> PipelineTransition | None:
+        """Load latest transition event for vacancy+candidate pair.
+
+        Args:
+            vacancy_id: Vacancy identifier.
+            candidate_id: Candidate identifier.
+
+        Returns:
+            PipelineTransition | None: Latest event or `None`.
+        """
+        return (
+            self._session.query(PipelineTransition)
+            .filter(
+                PipelineTransition.vacancy_id == vacancy_id,
+                PipelineTransition.candidate_id == candidate_id,
+            )
+            .order_by(
+                PipelineTransition.transitioned_at.desc(),
+                PipelineTransition.transition_id.desc(),
+            )
+            .first()
+        )
