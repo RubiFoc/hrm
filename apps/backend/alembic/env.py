@@ -11,7 +11,12 @@ from alembic import context
 from hrm_backend.audit.models.event import AuditEvent  # noqa: F401
 from hrm_backend.auth.models.employee_registration_key import EmployeeRegistrationKey  # noqa: F401
 from hrm_backend.auth.models.staff_account import StaffAccount  # noqa: F401
+from hrm_backend.candidates.models.document import CandidateDocument  # noqa: F401
+from hrm_backend.candidates.models.parsing_job import CVParsingJob  # noqa: F401
+from hrm_backend.candidates.models.profile import CandidateProfile  # noqa: F401
 from hrm_backend.core.models.base import Base
+from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition  # noqa: F401
+from hrm_backend.vacancies.models.vacancy import Vacancy  # noqa: F401
 
 config = context.config
 
