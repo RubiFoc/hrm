@@ -16,6 +16,7 @@
 | --- | --- | --- |
 | Unit | Validate isolated logic | Mandatory for all changed logic |
 | Integration/E2E | Validate boundaries and user/system paths | Mandatory for all changed logic and interfaces |
+| Infrastructure Smoke | Validate Docker Compose runtime readiness | Mandatory for container/runtime baseline changes (`TASK-12-01`) |
 
 ## Test Package Layout (Backend)
 - Keep test tree aligned with application package boundaries and split by level.
@@ -41,6 +42,17 @@ apps/backend/tests/
 | Bugfix | Unit regression + integration regression + adjacent behavior check |
 | New feature | Unit happy/negative + integration contract path |
 | Refactor | Unit non-regression + integration non-regression |
+| Runtime/Platform | Compose config validation + deterministic smoke cycle (`up -> smoke`, `down -> up -> smoke`) |
+
+## Infrastructure Smoke Baseline (`TASK-12-01`)
+- Canonical command: `./scripts/smoke-compose.sh`.
+- The smoke script must verify:
+  - compose service status and health for `backend`, `postgres`, `redis`, `minio`;
+  - compose bootstrap prerequisites (`postgres-init`, `backend-migrate`) complete successfully before API checks;
+  - backend `GET /health`;
+  - frontend HTTP response;
+  - MinIO live health endpoint;
+  - backend auth login response contract.
 
 ## Evidence Format
 - Command

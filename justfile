@@ -34,7 +34,4 @@ logs:
   docker compose logs -f --tail=200
 
 smoke:
-  curl -fsS http://localhost:8000/health >/dev/null
-  curl -fsS http://localhost:5173 >/dev/null
-  curl -fsS http://localhost:9000/minio/health/live >/dev/null
-  echo "Smoke checks passed."
+  ./scripts/smoke-compose.sh

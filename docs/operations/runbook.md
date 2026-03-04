@@ -13,6 +13,12 @@
 1. Create runtime env file: `cp .env.example .env`
 2. Start stack: `docker compose up -d --build`
 3. Verify status: `docker compose ps`
+4. Run smoke suite: `./scripts/smoke-compose.sh`
+
+Compose bootstrap notes:
+- `postgres-init` ensures `${POSTGRES_DB}` exists even when reusing an old data volume.
+- `backend-migrate` runs `alembic upgrade head` before backend starts.
+- Backend container starts only after DB bootstrap and migrations complete successfully.
 
 Shortcut wrappers:
 - `make up` / `just up`
@@ -41,10 +47,16 @@ Shortcut wrappers:
 - Offline SQL preview: `uv run --project apps/backend alembic -c apps/backend/alembic.ini upgrade head --sql`
 
 ### Smoke Verification
-1. `docker compose ps` shows `healthy` for backend/postgres/redis/minio.
-2. `curl -fsS http://localhost:8000/health` returns `{"status":"ok"}`.
-3. `curl -fsS -X POST http://localhost:8000/api/v1/auth/login -H 'Content-Type: application/json' -d '{"subject_id":"smoke-hr","role":"hr"}'` returns token payload.
-4. Open frontend at `http://localhost:5173` and verify route render.
+1. Run canonical smoke script: `./scripts/smoke-compose.sh`.
+2. Script validation scope:
+   - `docker compose ps` contains `running + healthy` for `backend`, `postgres`, `redis`, `minio`;
+   - backend health endpoint returns `{"status":"ok"}`;
+   - frontend and MinIO health endpoints respond successfully;
+   - auth login endpoint returns token payload (`access_token`, `refresh_token`, `token_type`, `expires_in`, `session_id`).
+3. For reproducibility checks, run one teardown/restart cycle:
+   - `docker compose down`
+   - `docker compose up -d --build`
+   - `./scripts/smoke-compose.sh`
 
 ### Auth Denylist Failure Policy
 - Auth validation is fail-closed when Redis denylist is unavailable.
@@ -117,3 +129,4 @@ This section defines provisional operational controls until final legal/security
 - Rebuild after dependency/image changes: `docker compose up -d --build`
 - Force-recreate all services: `make rebuild` or `just rebuild`
 - Remove orphan containers: `make clean-orphans` or `just clean-orphans`
+- Run full smoke suite after mitigation: `./scripts/smoke-compose.sh`
