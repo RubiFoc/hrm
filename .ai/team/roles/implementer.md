@@ -21,6 +21,7 @@ Produce the minimal correct code change that satisfies acceptance criteria.
   `models`, `schemas`, `services`, `dao`, `routers`, `utils`, `dependencies`.
 - Keep domain infrastructure adapters as explicit subpackages (for example `auth/redis`).
 - Keep API routers versioned (`routers/v1.py` + `/api/v1/...`).
+- Move cross-domain reusable backend code to `core` package instead of duplicating it in domain packages.
 - Use Alembic for PostgreSQL schema migrations.
 - Add detailed docstrings for public modules/classes/functions in changed code areas.
 - Keep code comments minimal and essential; avoid AI-style explanatory noise.

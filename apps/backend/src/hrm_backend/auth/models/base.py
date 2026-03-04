@@ -1,10 +1,9 @@
-"""SQLAlchemy declarative base for auth domain models.
+"""Compatibility re-export for auth domain SQLAlchemy base model.
 
-This metadata root is used by Alembic bootstrap in the backend package.
+Use `hrm_backend.core.models.base.Base` as the stable import path for all new
+domain packages.
 """
 
-from sqlalchemy.orm import DeclarativeBase
+from hrm_backend.core.models.base import Base
 
-
-class Base(DeclarativeBase):
-    """Declarative base class for auth database models."""
+__all__ = ["Base"]

@@ -39,6 +39,7 @@ flowchart LR
 | React.js + TypeScript Web App | Role-based UX for all user groups, localization (ru/en), candidate self-service | User actions | API requests, UI states | frontend |
 | Frontend Telemetry | Client-side errors and performance telemetry | Browser events/errors | Sentry issues and traces | frontend |
 | API Gateway | AuthN/AuthZ entrypoint and request routing | HTTPS requests | Routed calls, access decisions | platform |
+| Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
 | Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
 | Recruitment Domain | Vacancies, candidates, pipeline, interview lifecycle | Candidate and vacancy data | Match scores, pipeline states | hr-tech |
 | Employee Domain | Employee profile and onboarding workflows | Hire decisions, profile data | Employee records, onboarding tasks | hr-tech |
@@ -73,6 +74,7 @@ flowchart LR
 
 ## Deployment View
 - Runtime style: modular monolith first, with clear domain modules and async workers.
+- Shared backend primitives are centralized in `hrm_backend/core` to prevent domain duplication.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
 - Compose baseline services: `frontend`, `backend`, `postgres`, `redis`, `minio`, `minio-init`.
 - Frontend style: React.js + TypeScript SPA with role-based route guards and shared component system.

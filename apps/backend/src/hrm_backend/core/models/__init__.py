@@ -1,4 +1,4 @@
-"""Database models for the auth domain."""
+"""Shared SQLAlchemy model primitives."""
 
 from hrm_backend.core.models.base import Base
 

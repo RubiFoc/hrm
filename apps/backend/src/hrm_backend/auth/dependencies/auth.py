@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Request
 from redis import Redis
 
 from hrm_backend.auth.dao.redis_denylist_dao import RedisDenylistDAO
@@ -14,6 +14,7 @@ from hrm_backend.auth.services.auth_service import AuthService
 from hrm_backend.auth.services.denylist_service import DenylistService
 from hrm_backend.auth.services.token_service import TokenService
 from hrm_backend.auth.utils.settings import AuthSettings, get_auth_settings
+from hrm_backend.core.errors.http import unauthorized
 
 SettingsDependency = Annotated[AuthSettings, Depends(get_auth_settings)]
 RedisClientDependency = Annotated[Redis, Depends(get_redis_client)]
@@ -95,15 +96,15 @@ def get_bearer_token(request: Request) -> str:
         str: Raw bearer token string.
 
     Raises:
-        HTTPException: If header is missing or malformed.
+        fastapi.HTTPException: If header is missing or malformed.
     """
     raw_header = request.headers.get("Authorization")
     if raw_header is None:
-        raise _unauthorized("Missing Authorization header: use Bearer token")
+        raise unauthorized("Missing Authorization header: use Bearer token")
 
     scheme, _, token = raw_header.partition(" ")
     if scheme.lower() != "bearer" or not token.strip():
-        raise _unauthorized("Malformed Authorization header: use Bearer <token>")
+        raise unauthorized("Malformed Authorization header: use Bearer <token>")
 
     return token.strip()
 
@@ -122,15 +123,3 @@ def get_current_auth_context(
         AuthContext: Validated identity context.
     """
     return auth_service.authenticate_access_token(token)
-
-
-def _unauthorized(detail: str) -> HTTPException:
-    """Build standardized unauthorized exception.
-
-    Args:
-        detail: Human-readable error detail.
-
-    Returns:
-        HTTPException: 401 exception.
-    """
-    return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)

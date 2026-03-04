@@ -16,6 +16,7 @@ This document breaks the system architecture from high-level domains into smalle
 | HR Operations | Process automation and operational workflows | HR, leaders | Phase 1-2 |
 | Finance Adapter | Accounting-aligned exports and statuses | Accountants, leaders | Phase 2 |
 | Platform | Identity, access, audit, notifications, integrations | All roles | Phase 1 |
+| Core Foundation | Shared technical primitives reused by all backend domains | Backend teams | Phase 1-2 |
 | Intelligence | CV analysis and recommendation support | HR, managers | Phase 1 |
 | Analytics | KPI and operational reporting | HR, leaders, managers | Phase 2 |
 
@@ -25,6 +26,7 @@ This document breaks the system architecture from high-level domains into smalle
 | --- | --- | --- | --- |
 | Frontend App (React.js + TypeScript) | Frontend Experience | Role workspaces, routing, forms, i18n (ru/en), client-side state, API integration | Browser UI |
 | Frontend Telemetry Service | Frontend Experience | Sentry SDK integration and client monitoring | Sentry |
+| Core Shared Package | Core Foundation | Reusable ORM base, env parsers, shared errors, common utils | Python imports |
 | Auth and Access Service | Platform | Authentication, role policies, session validation | REST/Token |
 | Vacancy Service | Recruitment | Vacancy CRUD, requirements and stages | REST |
 | Candidate Service | Recruitment | Candidate profiles, attachments, status transitions | REST |
@@ -118,6 +120,7 @@ This document breaks the system architecture from high-level domains into smalle
 ## Phase Decomposition
 
 ### Phase 1: HR + Candidate (MVP Core)
+- Core Shared Package baseline (`core/models`, `core/config`, `core/errors`, `core/utils`)
 - Frontend App (React.js + TypeScript) foundation: app shell, auth-aware routing, HR/Candidate workspaces
 - Frontend baseline: shared UI library, i18n (ru/en), candidate self-service (CV upload, profile confirmation, interview registration), Chrome target support
 - Auth and Access Service

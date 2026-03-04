@@ -17,6 +17,8 @@ These practices are mandatory for development and documentation.
 - Use versioned routers for API boundaries (for example `routers/v1.py` with `/api/v1/...`).
 - Keep domain infrastructure adapters as explicit subpackages inside domain package
   (for example `auth/redis`, `employee/redis`).
+- Move cross-domain reusable code to `core` package (for example model base classes,
+  generic env parsers, shared error factories, common time helpers).
 
 ## 2. Code Quality
 - Keep changes small, reversible, and focused on one concern.

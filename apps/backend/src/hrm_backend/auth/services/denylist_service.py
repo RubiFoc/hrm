@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from fastapi import HTTPException, status
 from redis.exceptions import RedisError
 
 from hrm_backend.auth.dao.redis_denylist_dao import RedisDenylistDAO
-from hrm_backend.auth.utils.time import ttl_until_epoch
+from hrm_backend.core.errors.http import service_unavailable, unauthorized
+from hrm_backend.core.utils.time import ttl_until_epoch
 
 
 class DenylistService:
@@ -34,9 +34,9 @@ class DenylistService:
         """
         try:
             if self._dao.is_jti_denied(token_id) or self._dao.is_sid_denied(session_id):
-                raise _unauthorized("Token revoked")
+                raise unauthorized("Token revoked")
         except RedisError as exc:
-            raise _denylist_unavailable() from exc
+            raise service_unavailable("Token validation is temporarily unavailable") from exc
 
     def deny_jti_until_exp(self, token_id: str, expires_at: int) -> None:
         """Denylist token id until token expiration.
@@ -55,7 +55,7 @@ class DenylistService:
         try:
             self._dao.deny_jti(token_id, ttl_seconds)
         except RedisError as exc:
-            raise _denylist_unavailable() from exc
+            raise service_unavailable("Token validation is temporarily unavailable") from exc
 
     def deny_sid_for_refresh_window(self, session_id: str) -> None:
         """Denylist session id for full refresh window after logout.
@@ -69,28 +69,4 @@ class DenylistService:
         try:
             self._dao.deny_sid(session_id, self._refresh_token_ttl_seconds)
         except RedisError as exc:
-            raise _denylist_unavailable() from exc
-
-
-def _unauthorized(detail: str) -> HTTPException:
-    """Build standardized unauthorized exception.
-
-    Args:
-        detail: Human-readable error detail.
-
-    Returns:
-        HTTPException: 401 error object.
-    """
-    return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)
-
-
-def _denylist_unavailable() -> HTTPException:
-    """Build fail-closed exception when denylist backend is unavailable.
-
-    Returns:
-        HTTPException: 503 service unavailable error object.
-    """
-    return HTTPException(
-        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-        detail="Token validation is temporarily unavailable",
-    )
+            raise service_unavailable("Token validation is temporarily unavailable") from exc

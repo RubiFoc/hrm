@@ -42,6 +42,7 @@ flowchart TB
   API[API Gateway]
 
   subgraph Core[Core Services]
+    COREPKG[Core Shared Package]
     AUTH[Auth and Access Service]
     REC[Recruitment Services]
     EMPDOM[Employee Services]
@@ -70,6 +71,11 @@ flowchart TB
   API --> HROPS
   API --> ANALYTICS
   AUTH --> REDISDNL
+  AUTH -.imports.-> COREPKG
+  REC -.imports.-> COREPKG
+  EMPDOM -.imports.-> COREPKG
+  HROPS -.imports.-> COREPKG
+  ANALYTICS -.imports.-> COREPKG
 
   REC --> DB
   EMPDOM --> DB

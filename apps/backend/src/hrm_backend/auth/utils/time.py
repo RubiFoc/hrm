@@ -1,28 +1,8 @@
-"""Time helper functions for token and denylist TTL calculations."""
+"""Compatibility re-export for auth time helpers.
 
-from __future__ import annotations
+Use `hrm_backend.core.utils.time` as the stable source for shared time helpers.
+"""
 
-from datetime import UTC, datetime
+from hrm_backend.core.utils.time import ttl_until_epoch, utc_now_epoch
 
-
-def utc_now_epoch() -> int:
-    """Return current UTC timestamp in seconds.
-
-    Returns:
-        int: Current UNIX timestamp in UTC.
-    """
-    return int(datetime.now(tz=UTC).timestamp())
-
-
-def ttl_until_epoch(target_epoch: int, now_epoch: int | None = None) -> int:
-    """Calculate non-negative TTL from target UNIX timestamp.
-
-    Args:
-        target_epoch: Target UNIX timestamp.
-        now_epoch: Optional current UNIX timestamp override.
-
-    Returns:
-        int: Number of seconds until `target_epoch`, never negative.
-    """
-    current = utc_now_epoch() if now_epoch is None else now_epoch
-    return max(0, target_epoch - current)
+__all__ = ["utc_now_epoch", "ttl_until_epoch"]

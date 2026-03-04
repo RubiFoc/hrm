@@ -6,13 +6,13 @@ import uuid
 from typing import Final
 
 import jwt
-from fastapi import HTTPException, status
 from jwt import ExpiredSignatureError, InvalidTokenError
 from pydantic import ValidationError
 
 from hrm_backend.auth.schemas.token_claims import TokenClaims, TokenType
 from hrm_backend.auth.utils.settings import AuthSettings
-from hrm_backend.auth.utils.time import utc_now_epoch
+from hrm_backend.core.errors.http import unauthorized
+from hrm_backend.core.utils.time import utc_now_epoch
 
 _REQUIRED_CLAIMS: Final[tuple[str, ...]] = (
     "sub",
@@ -137,28 +137,16 @@ class TokenService:
                 options={"require": list(_REQUIRED_CLAIMS)},
             )
         except ExpiredSignatureError as exc:
-            raise _unauthorized("Token expired") from exc
+            raise unauthorized("Token expired") from exc
         except InvalidTokenError as exc:
-            raise _unauthorized("Invalid token") from exc
+            raise unauthorized("Invalid token") from exc
 
         try:
             claims = TokenClaims.model_validate(raw_claims)
         except ValidationError as exc:
-            raise _unauthorized("Invalid token claims") from exc
+            raise unauthorized("Invalid token claims") from exc
 
         if claims.typ != expected_type:
-            raise _unauthorized("Invalid token type")
+            raise unauthorized("Invalid token type")
 
         return claims
-
-
-def _unauthorized(detail: str) -> HTTPException:
-    """Build standardized unauthorized exception for token operations.
-
-    Args:
-        detail: Human-readable error message.
-
-    Returns:
-        HTTPException: 401 error object.
-    """
-    return HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)

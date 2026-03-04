@@ -12,6 +12,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0005 | 2026-03-04 | accepted | Standardize local platform runtime on Docker Compose | architect | infra, operations, developer experience |
 | ADR-0006 | 2026-03-04 | accepted | Adopt signed access tokens with rotating refresh sessions for MVP auth | architect + backend-engineer | backend security, RBAC integration |
 | ADR-0007 | 2026-03-04 | accepted | Adopt stateless JWT auth with Redis denylist and fail-closed policy | architect + backend-engineer | backend security, auth runtime |
+| ADR-0008 | 2026-03-04 | accepted | Introduce shared backend `core` package for cross-domain primitives | architect + backend-engineer | backend architecture, maintainability |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -94,3 +95,15 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Stateless token model aligns with JWT architecture goals.
   - Redis availability becomes a hard dependency for auth checks under fail-closed policy.
   - Revocation and replay protection remain enforceable without storing active sessions.
+
+## ADR-0008
+- Context: Domain packages need extraction-friendly boundaries, but some technical primitives (ORM base, env parsers, shared HTTP errors, time helpers) are reused across domains and should not be duplicated.
+- Decision:
+  - Create shared backend package `hrm_backend/core`.
+  - Keep cross-domain primitives in `core` (`models`, `config`, `errors`, `utils`).
+  - Domain packages import shared primitives from `core` and keep only domain-specific logic locally.
+  - Use temporary compatibility re-exports where needed to avoid breaking imports during transition.
+- Consequences:
+  - Lower duplication and simpler onboarding for new domains.
+  - Clearer separation between domain logic and shared technical foundation.
+  - Requires review discipline to keep domain-specific business logic out of `core`.
