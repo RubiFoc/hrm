@@ -20,7 +20,6 @@
 | Russia | Federal Law 152-ФЗ | Personal data processing lawfulness and minimization | CTRL-RU-01 | Personal data classification and minimization policy | business-analyst | planned | Policy doc (to create) |
 | Russia | Federal Law 152-ФЗ | Security of PD information systems | CTRL-RU-02 | Threat model + protection controls baseline | architect + security | planned | `docs/architecture/decisions.md` entry |
 | Russia | Federal Law 242-ФЗ | Localization of Russian citizens' data | CTRL-RU-03 | Data residency control for RU citizen records | architect + devops | planned | Infrastructure ADR (to create) |
-<<<<<<< HEAD
 | Russia | Federal Law 149-ФЗ | Information security and access protection | CTRL-RU-04 | Access control enforcement and immutable audit trail | backend | implemented | `docs/project/rbac-matrix.md`, `docs/project/auth-session-lifecycle.md`, `apps/backend/alembic/versions/20260304_000002_audit_events.py`, `apps/backend/src/hrm_backend/audit/`, PR #37 |
 | Russia | Decree No. 1119 (2012) | Organizational and technical PD protection requirements | CTRL-RU-05 | Security control checklist per ISPDn class | security + business-analyst | planned | Security checklist (to create) |
 

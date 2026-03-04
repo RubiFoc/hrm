@@ -23,6 +23,7 @@
 | EPIC-12 | Platform Infrastructure and Environment Standardization | Provide deterministic runtime for development, QA, and release pipelines | Engineering team | Phase 1 | P0 |
 | EPIC-01 | Identity, Roles, and Data Compliance Foundation | Protect sensitive data and enable controlled access | All roles | Phase 1 | P0 |
 | EPIC-11 | React.js Frontend Foundation and Role UX | Deliver consistent and secure role-based user experience | All roles | Phase 1-2 | P0 |
+| ADMIN-EPIC-01 | Admin Control Plane and Staff Governance | Provide privileged operations for staff lifecycle and platform control | Admin, HR | Phase 1-2 | P0 |
 | EPIC-02 | Vacancy and Recruitment Pipeline Management | Standardize and accelerate candidate flow | HR, Managers | Phase 1 | P0 |
 | EPIC-03 | Candidate Profile and CV Intake | Centralize candidate data and documents | HR, Candidates | Phase 1 | P0 |
 | EPIC-04 | AI CV Analysis and Match Scoring (Ollama) | Improve shortlist quality and speed | HR, Managers | Phase 1 | P0 |
@@ -39,6 +40,7 @@
 | --- | --- |
 | EPIC-12 | - |
 | EPIC-11 | EPIC-01, EPIC-12 |
+| ADMIN-EPIC-01 | EPIC-01, EPIC-11 |
 | EPIC-02 | EPIC-01, EPIC-11 |
 | EPIC-03 | EPIC-01, EPIC-11 |
 | EPIC-04 | EPIC-03 |
@@ -69,6 +71,12 @@
 - Core phase workspaces are delivered with consistent form/error behavior.
 - Frontend observability through Sentry and accessibility baseline are in place.
 - RU/EN localization and Chrome support are verified for critical v1 journeys.
+
+### ADMIN-EPIC-01: Admin Control Plane and Staff Governance
+- Admin-only shell and route guard are implemented.
+- Staff account lifecycle (create/disable/update) is controlled through audited APIs/UI.
+- Employee registration keys can be generated/revoked with TTL visibility.
+- Critical admin operations are traceable in audit with correlation id.
 
 ### EPIC-02: Vacancy and Recruitment Pipeline Management
 - HR can create/manage vacancies and pipeline stages.
@@ -119,15 +127,16 @@
 1. EPIC-12
 2. EPIC-01
 3. EPIC-11
-4. EPIC-02
-5. EPIC-03
-6. EPIC-04
-7. EPIC-05
-8. EPIC-08 (core set)
-9. EPIC-06
-10. EPIC-07
-11. EPIC-09
-12. EPIC-10 (full scope)
+4. ADMIN-EPIC-01
+5. EPIC-02
+6. EPIC-03
+7. EPIC-04
+8. EPIC-05
+9. EPIC-08 (core set)
+10. EPIC-06
+11. EPIC-07
+12. EPIC-09
+13. EPIC-10 (full scope)
 
 ## Execution Mapping
 - Task-level decomposition, dependencies, and global priority queue are documented in `docs/project/tasks.md`.

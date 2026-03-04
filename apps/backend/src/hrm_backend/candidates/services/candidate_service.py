@@ -13,6 +13,7 @@ from hrm_backend.candidates.dao.candidate_document_dao import CandidateDocumentD
 from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
 from hrm_backend.candidates.dao.cv_parsing_job_dao import CVParsingJobDAO
 from hrm_backend.candidates.infra.celery.dispatch import enqueue_cv_parsing
+from hrm_backend.candidates.infra.minio import CandidateStorage
 from hrm_backend.candidates.models.document import CandidateDocument
 from hrm_backend.candidates.models.parsing_job import CVParsingJob
 from hrm_backend.candidates.models.profile import CandidateProfile
@@ -25,7 +26,6 @@ from hrm_backend.candidates.schemas.profile import (
     CandidateUpdateRequest,
 )
 from hrm_backend.candidates.utils.cv import validate_cv_payload
-from hrm_backend.candidates.utils.storage import CandidateStorage
 from hrm_backend.settings import AppSettings
 
 

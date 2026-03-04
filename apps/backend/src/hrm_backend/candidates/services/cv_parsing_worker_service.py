@@ -7,8 +7,8 @@ from dataclasses import dataclass
 from hrm_backend.audit.services.audit_service import AuditService
 from hrm_backend.candidates.dao.candidate_document_dao import CandidateDocumentDAO
 from hrm_backend.candidates.dao.cv_parsing_job_dao import CVParsingJobDAO
+from hrm_backend.candidates.infra.minio import CandidateStorage
 from hrm_backend.candidates.utils.cv import parse_cv_document
-from hrm_backend.candidates.utils.storage import CandidateStorage
 from hrm_backend.settings import AppSettings
 
 
