@@ -9,8 +9,8 @@ from hrm_backend.audit.services.audit_service import AuditService
 from hrm_backend.candidates.dao.candidate_document_dao import CandidateDocumentDAO
 from hrm_backend.candidates.dao.cv_parsing_job_dao import CVParsingJobDAO
 from hrm_backend.candidates.infra.celery.app import celery_app
+from hrm_backend.candidates.infra.minio import MinioCandidateStorage
 from hrm_backend.candidates.services.cv_parsing_worker_service import CVParsingWorkerService
-from hrm_backend.candidates.utils.storage import MinioCandidateStorage
 from hrm_backend.core.db.session import get_session_factory
 from hrm_backend.settings import get_settings
 

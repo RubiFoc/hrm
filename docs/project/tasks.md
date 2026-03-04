@@ -31,6 +31,11 @@
 | TASK-11-10 | EPIC-11 | Implement frontend observability with Sentry (error tracking, performance metrics, release markers) | Phase 1-2 | P1 | TASK-11-02 |
 | TASK-11-11 | EPIC-11 | Implement Chrome compatibility checks and regression verification for critical v1 journeys | Phase 1 | P1 | TASK-11-05, TASK-11-06, TASK-11-08 |
 | TASK-11-12 | EPIC-11 | Implement phase-2 role workspaces (manager, employee, accountant, leader) | Phase 2 | P1 | TASK-06-03, TASK-07-04, TASK-09-01 |
+| ADMIN-01 | ADMIN-EPIC-01 | Implement admin auth guard and admin shell (frontend/backend contract) | Phase 1 | P0 | TASK-01-02, TASK-11-03 |
+| ADMIN-02 | ADMIN-EPIC-01 | Implement staff management APIs/UI (create/update/disable) | Phase 1 | P0 | ADMIN-01 |
+| ADMIN-03 | ADMIN-EPIC-01 | Implement employee registration key management APIs/UI (generate/revoke/list) | Phase 1 | P0 | ADMIN-01 |
+| ADMIN-04 | ADMIN-EPIC-01 | Implement admin CRUD consoles for candidates/vacancies/pipeline/audit | Phase 1-2 | P1 | ADMIN-02, ADMIN-03, TASK-02-02, TASK-03-03 |
+| ADMIN-05 | ADMIN-EPIC-01 | Implement admin observability dashboards (audit + job status) | Phase 1-2 | P1 | ADMIN-04 |
 | TASK-02-01 | EPIC-02 | Implement vacancy CRUD and lifecycle states | Phase 1 | P0 | TASK-01-03 |
 | TASK-02-02 | EPIC-02 | Implement recruitment pipeline stage management | Phase 1 | P0 | TASK-02-01 |
 | TASK-02-03 | EPIC-02 | Implement candidate stage transition history and timeline | Phase 1 | P0 | TASK-02-02 |
@@ -77,43 +82,46 @@
 | 2 | TASK-01-02 | System entrypoint security baseline |
 | 3 | TASK-01-03 | Access enforcement for all endpoints |
 | 4 | TASK-01-05 | Compliance baseline needed before scale |
-| 5 | TASK-03-01 | Candidate domain base model |
-| 6 | TASK-02-01 | Vacancy base model for recruiting flow |
-| 7 | TASK-02-02 | Pipeline states for lifecycle control |
-| 8 | TASK-03-02 | CV intake needed for AI scoring |
-| 9 | TASK-03-03 | Parsed CV status for asynchronous processing |
-| 10 | TASK-04-01 | Mandatory integration with Ollama |
-| 11 | TASK-04-02 | Actual scoring engine execution |
-| 12 | TASK-04-03 | Explainable and reliable scoring output |
-| 13 | TASK-02-03 | Timeline/history for recruiting decisions |
-| 14 | TASK-05-01 | Interview orchestration start point |
-| 15 | TASK-05-02 | Mandatory Google Calendar integration |
-| 16 | TASK-05-03 | Structured interview quality control |
-| 17 | TASK-05-04 | Fairness gate before hiring decision |
-| 18 | TASK-08-01 | Start automation to hit KPI target |
-| 19 | TASK-08-02 | Reliable automation execution |
-| 20 | TASK-08-03 | Operational support and troubleshooting |
-| 21 | TASK-08-04 | Automation KPI telemetry |
-| 22 | TASK-10-01 | KPI data layer foundation |
-| 23 | TASK-10-02 | Automation KPI report for target tracking |
-| 24 | TASK-01-04 | Complete auditability of sensitive actions |
-| 25 | TASK-03-04 | HR productivity via candidate filtering |
-| 26 | TASK-04-04 | Human fallback for low AI confidence |
-| 27 | TASK-02-04 | Manager visibility enrichment |
-| 28 | TASK-06-01 | Offer lifecycle for conversion to employees |
-| 29 | TASK-06-02 | Candidate to employee state transition |
-| 30 | TASK-06-03 | Employee profile initialization |
-| 31 | TASK-06-04 | Onboarding flow trigger |
-| 32 | TASK-07-01 | Onboarding template baseline |
-| 33 | TASK-07-02 | Task execution tracking |
-| 34 | TASK-07-03 | Employee self-service onboarding |
-| 35 | TASK-07-04 | HR/manager onboarding control |
-| 36 | TASK-10-03 | Compliance and audit read interfaces |
-| 37 | TASK-09-01 | Manager workspace full rollout |
-| 38 | TASK-09-03 | Accountant workspace rollout |
-| 39 | TASK-10-04 | Reporting export package |
-| 40 | TASK-09-02 | Leader workspace finalization |
-| 41 | TASK-09-04 | Notification optimization |
+| 5 | ADMIN-01 | Admin shell unblocks privileged control plane work |
+| 6 | ADMIN-02 | Staff lifecycle must be operationalized early |
+| 7 | ADMIN-03 | Employee key lifecycle is required for staff self-registration |
+| 8 | TASK-03-01 | Candidate domain base model |
+| 9 | TASK-02-01 | Vacancy base model for recruiting flow |
+| 10 | TASK-02-02 | Pipeline states for lifecycle control |
+| 11 | TASK-03-02 | CV intake needed for AI scoring |
+| 12 | TASK-03-03 | Parsed CV status for asynchronous processing |
+| 13 | TASK-04-01 | Mandatory integration with Ollama |
+| 14 | TASK-04-02 | Actual scoring engine execution |
+| 15 | TASK-04-03 | Explainable and reliable scoring output |
+| 16 | TASK-02-03 | Timeline/history for recruiting decisions |
+| 17 | TASK-05-01 | Interview orchestration start point |
+| 18 | TASK-05-02 | Mandatory Google Calendar integration |
+| 19 | TASK-05-03 | Structured interview quality control |
+| 20 | TASK-05-04 | Fairness gate before hiring decision |
+| 21 | TASK-08-01 | Start automation to hit KPI target |
+| 22 | TASK-08-02 | Reliable automation execution |
+| 23 | TASK-08-03 | Operational support and troubleshooting |
+| 24 | TASK-08-04 | Automation KPI telemetry |
+| 25 | TASK-10-01 | KPI data layer foundation |
+| 26 | TASK-10-02 | Automation KPI report for target tracking |
+| 27 | TASK-01-04 | Complete auditability of sensitive actions |
+| 28 | TASK-03-04 | HR productivity via candidate filtering |
+| 29 | TASK-04-04 | Human fallback for low AI confidence |
+| 30 | TASK-02-04 | Manager visibility enrichment |
+| 31 | TASK-06-01 | Offer lifecycle for conversion to employees |
+| 32 | TASK-06-02 | Candidate to employee state transition |
+| 33 | TASK-06-03 | Employee profile initialization |
+| 34 | TASK-06-04 | Onboarding flow trigger |
+| 35 | TASK-07-01 | Onboarding template baseline |
+| 36 | TASK-07-02 | Task execution tracking |
+| 37 | TASK-07-03 | Employee self-service onboarding |
+| 38 | TASK-07-04 | HR/manager onboarding control |
+| 39 | TASK-10-03 | Compliance and audit read interfaces |
+| 40 | TASK-09-01 | Manager workspace full rollout |
+| 41 | TASK-09-03 | Accountant workspace rollout |
+| 42 | TASK-10-04 | Reporting export package |
+| 43 | TASK-09-02 | Leader workspace finalization |
+| 44 | TASK-09-04 | Notification optimization |
 
 ## Frontend Prioritized Queue (React.js)
 Use this queue together with the global queue when planning phase implementation.
@@ -132,6 +140,11 @@ Use this queue together with the global queue when planning phase implementation
 | FE-10 | TASK-11-10 | Sentry observability needed for reliable production support |
 | FE-11 | TASK-11-11 | Chrome compatibility gate for v1 rollout |
 | FE-12 | TASK-11-12 | Phase-2 role workspace rollout |
+| FE-13 | ADMIN-01 | Admin shell baseline for privileged workspace |
+| FE-14 | ADMIN-02 | Staff management UI for operational onboarding |
+| FE-15 | ADMIN-03 | Employee key management UI for staff registration flow |
+| FE-16 | ADMIN-04 | Unified admin CRUD consoles |
+| FE-17 | ADMIN-05 | Admin observability and audit dashboards |
 
 ## Milestone Cut Suggestion
 - `M1` (Phase 1 MVP): tasks 1-24 + TASK-12-01 + FE-1..FE-9.
