@@ -23,6 +23,10 @@ These practices are mandatory for development and documentation.
 ## 2. Code Quality
 - Keep changes small, reversible, and focused on one concern.
 - Use clear naming and deterministic behavior for core business logic.
+- Cover business logic with automated tests at two levels:
+  unit and integration/e2e.
+- Split tests by app package and by level:
+  `apps/backend/tests/unit/<package>/...` and `apps/backend/tests/integration/<package>/...`.
 - Add tests for changed behavior: happy path + failure path.
 - Enforce lint/format and avoid dead code.
 - Write detailed docstrings for public modules, classes, and functions (purpose, parameters, returns, errors, side effects).
@@ -37,6 +41,11 @@ These practices are mandatory for development and documentation.
 ## 4. Data and Reliability
 - Keep one source of truth per entity.
 - Use explicit schema migrations with rollback strategy via Alembic.
+- Load environment configuration from `.env` and environment variables only through
+  `pydantic BaseSettings` models (domain settings can inherit from shared `core` settings base).
+- Canonical backend settings entrypoint is `hrm_backend/settings.py`.
+- Legacy settings paths (`auth.utils.settings`, `core.config.settings`) are temporary shims and
+  must be removed in a dedicated follow-up refactor.
 - Add retries with backoff only for safe idempotent operations.
 - Add circuit-breaker/fallback behavior for external integrations.
 

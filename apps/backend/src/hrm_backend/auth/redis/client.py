@@ -8,9 +8,9 @@ from typing import Annotated
 from fastapi import Depends
 from redis import Redis
 
-from hrm_backend.auth.utils.settings import AuthSettings, get_auth_settings
+from hrm_backend.settings import AppSettings, get_settings
 
-AuthSettingsDependency = Annotated[AuthSettings, Depends(get_auth_settings)]
+SettingsDependency = Annotated[AppSettings, Depends(get_settings)]
 
 
 @lru_cache(maxsize=4)
@@ -26,7 +26,7 @@ def _build_redis_client(redis_url: str) -> Redis:
     return Redis.from_url(redis_url, decode_responses=False)
 
 
-def get_redis_client(settings: AuthSettingsDependency) -> Redis:
+def get_redis_client(settings: SettingsDependency) -> Redis:
     """Provide Redis client for request-scoped dependencies.
 
     Args:

@@ -1,14 +1,23 @@
 """Unit tests for shared core package helpers and compatibility shims."""
 
 from hrm_backend.auth.models.base import Base as AuthBase
+from hrm_backend.core.config import CoreSettings
+from hrm_backend.core.config import get_settings as get_core_settings
 from hrm_backend.core.config.env import normalize_non_empty, read_positive_int_env
 from hrm_backend.core.models.base import Base as CoreBase
 from hrm_backend.core.utils.time import ttl_until_epoch
+from hrm_backend.settings import AppSettings, get_settings
 
 
 def test_auth_base_reexports_core_base() -> None:
     """Verify auth model base compatibility path points to shared core base class."""
     assert AuthBase is CoreBase
+
+
+def test_core_settings_shim_reexports_canonical_settings() -> None:
+    """Verify core settings shim maps to canonical app-level settings."""
+    assert CoreSettings is AppSettings
+    assert get_core_settings is get_settings
 
 
 def test_read_positive_int_env_parses_or_falls_back() -> None:

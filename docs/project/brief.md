@@ -53,6 +53,12 @@ Metric formula:
 - Comply with personal data storage and processing laws for Belarus and Russia.
 - Compliance baseline is defined in `docs/project/legal-framework.md`.
 - Protect sensitive personal data.
+- Environment configuration from `.env` must be implemented through
+  `pydantic BaseSettings` models.
+- Canonical backend settings module: `apps/backend/src/hrm_backend/settings.py`.
+- Backend logic must be covered with both unit and integration/e2e tests.
+- Backend tests must be organized by domain package and by level:
+  `apps/backend/tests/unit/<package>` and `apps/backend/tests/integration/<package>`.
 - Frontend implementation technology: React.js + TypeScript.
 - Frontend UI should use popular ready-made libraries.
 - Frontend localization for v1: ru + en.

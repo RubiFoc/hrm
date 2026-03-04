@@ -11,7 +11,7 @@ from hrm_backend.auth.dependencies.auth import get_bearer_token
 from hrm_backend.auth.services.auth_service import AuthService
 from hrm_backend.auth.services.denylist_service import DenylistService
 from hrm_backend.auth.services.token_service import TokenService
-from hrm_backend.auth.utils.settings import AuthSettings
+from hrm_backend.settings import AppSettings
 
 
 class InMemoryDenylistDAO:
@@ -101,13 +101,13 @@ def _request_with_headers(headers: dict[str, str]) -> Request:
     return Request(scope)
 
 
-def _build_settings() -> AuthSettings:
+def _build_settings() -> AppSettings:
     """Build deterministic auth settings for tests.
 
     Returns:
-        AuthSettings: Test-specific settings object.
+        AppSettings: Test-specific settings object.
     """
-    return AuthSettings(
+    return AppSettings(
         jwt_secret="unit-test-secret-with-minimum-32-bytes",
         jwt_algorithm="HS256",
         access_token_ttl_seconds=900,

@@ -1,5 +1,12 @@
-"""Shared configuration helpers for environment-driven settings."""
+"""Shared configuration helpers and base settings abstractions."""
 
 from hrm_backend.core.config.env import normalize_non_empty, read_positive_int_env
+from hrm_backend.core.config.settings import AppSettings, CoreSettings, get_settings
 
-__all__ = ["read_positive_int_env", "normalize_non_empty"]
+__all__ = [
+    "read_positive_int_env",
+    "normalize_non_empty",
+    "AppSettings",
+    "CoreSettings",
+    "get_settings",
+]

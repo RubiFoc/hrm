@@ -10,9 +10,9 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 from pydantic import ValidationError
 
 from hrm_backend.auth.schemas.token_claims import TokenClaims, TokenType
-from hrm_backend.auth.utils.settings import AuthSettings
 from hrm_backend.core.errors.http import unauthorized
 from hrm_backend.core.utils.time import utc_now_epoch
+from hrm_backend.settings import AppSettings
 
 _REQUIRED_CLAIMS: Final[tuple[str, ...]] = (
     "sub",
@@ -28,7 +28,7 @@ _REQUIRED_CLAIMS: Final[tuple[str, ...]] = (
 class TokenService:
     """Service for issuing and validating JWT access and refresh tokens."""
 
-    def __init__(self, settings: AuthSettings) -> None:
+    def __init__(self, settings: AppSettings) -> None:
         """Initialize token service with auth settings.
 
         Args:

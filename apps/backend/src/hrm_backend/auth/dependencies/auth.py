@@ -13,10 +13,10 @@ from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.auth.services.auth_service import AuthService
 from hrm_backend.auth.services.denylist_service import DenylistService
 from hrm_backend.auth.services.token_service import TokenService
-from hrm_backend.auth.utils.settings import AuthSettings, get_auth_settings
 from hrm_backend.core.errors.http import unauthorized
+from hrm_backend.settings import AppSettings, get_settings
 
-SettingsDependency = Annotated[AuthSettings, Depends(get_auth_settings)]
+SettingsDependency = Annotated[AppSettings, Depends(get_settings)]
 RedisClientDependency = Annotated[Redis, Depends(get_redis_client)]
 
 

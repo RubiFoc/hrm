@@ -8,7 +8,7 @@ from hrm_backend.auth.schemas.responses import MeResponse, TokenResponse
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.auth.services.denylist_service import DenylistService
 from hrm_backend.auth.services.token_service import TokenService
-from hrm_backend.auth.utils.settings import AuthSettings
+from hrm_backend.settings import AppSettings
 
 
 class AuthService:
@@ -18,7 +18,7 @@ class AuthService:
         self,
         token_service: TokenService,
         denylist_service: DenylistService,
-        settings: AuthSettings,
+        settings: AppSettings,
     ) -> None:
         """Initialize auth service.
 
