@@ -27,6 +27,7 @@
 - Restrict force pushes and deletions.
 - Require conversation resolution before merge.
 - Automation option: run `scripts/setup-github-repo.sh` with `GH_TOKEN` and repo name.
+- Backlog metadata sync option: run `scripts/sync-m1-issues-metadata.sh` with `GH_TOKEN` that has `Issues: Read and write`.
 
 ## Review Responsibilities
 - Backend changes: backend + architect.

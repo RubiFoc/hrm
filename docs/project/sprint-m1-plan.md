@@ -5,7 +5,7 @@
 - Updated by: coordinator
 
 ## Sprint Goal
-Deliver Phase 1 MVP baseline (global queue items 1-24 + FE-1..FE-9) with working technical foundations, core HR + candidate flows, and compliance baseline.
+Deliver Phase 1 MVP baseline (global queue items 0-24 + FE-1..FE-9) with working technical foundations, containerized platform bootstrap, core HR + candidate flows, and compliance baseline.
 
 ## Team Roles
 - architect
@@ -20,6 +20,7 @@ Deliver Phase 1 MVP baseline (global queue items 1-24 + FE-1..FE-9) with working
 
 | Workstream | Owner | TASK-* |
 | --- | --- | --- |
+| Platform containerization baseline | devops-engineer + backend-engineer + frontend-engineer | TASK-12-01 |
 | Security and access baseline | architect + backend-engineer | TASK-01-01, TASK-01-02, TASK-01-03, TASK-01-04 |
 | Compliance baseline | business-analyst + architect | TASK-01-05 |
 | Candidate and vacancy core domain | backend-engineer | TASK-03-01, TASK-02-01, TASK-02-02, TASK-02-03 |
@@ -38,6 +39,7 @@ Deliver Phase 1 MVP baseline (global queue items 1-24 + FE-1..FE-9) with working
 - End date: rolling, as fast as possible with quality gates.
 
 ## Risks and Dependencies
+- Docker image and compose baseline must be stable before multi-role feature streams scale.
 - Legal controls matrix must progress in parallel for production readiness.
 - External integrations (Ollama, Google Calendar) require stable staging credentials.
 - Frontend localization (RU/EN) must be built into base routing and content model from first iteration.

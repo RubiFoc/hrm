@@ -1,8 +1,8 @@
 # Engineering Best Practices
 
 ## Last Updated
-- Date: 2026-03-03
-- Updated by: architect
+- Date: 2026-03-04
+- Updated by: architect + backend-engineer
 
 These practices are mandatory for development and documentation.
 
@@ -11,10 +11,22 @@ These practices are mandatory for development and documentation.
 - Define stable interfaces before implementation.
 - Prefer modular monolith boundaries and asynchronous processing for heavy jobs.
 - Make idempotency explicit for retried commands and background jobs.
+- For components that can later be extracted as independent services, use dedicated domain packages.
+- Every extraction-ready domain package must include subpackages:
+  `models`, `schemas`, `services`, `dao`, `routers`, `utils`, `dependencies`.
+- Use versioned routers for API boundaries (for example `routers/v1.py` with `/api/v1/...`).
+- Keep domain infrastructure adapters as explicit subpackages inside domain package
+  (for example `auth/redis`, `employee/redis`).
+- Move cross-domain reusable code to `core` package (for example model base classes,
+  generic env parsers, shared error factories, common time helpers).
 
 ## 2. Code Quality
 - Keep changes small, reversible, and focused on one concern.
 - Use clear naming and deterministic behavior for core business logic.
+- Cover business logic with automated tests at two levels:
+  unit and integration/e2e.
+- Split tests by app package and by level:
+  `apps/backend/tests/unit/<package>/...` and `apps/backend/tests/integration/<package>/...`.
 - Add tests for changed behavior: happy path + failure path.
 - Enforce lint/format and avoid dead code.
 - Write detailed docstrings for public modules, classes, and functions (purpose, parameters, returns, errors, side effects).
@@ -28,7 +40,12 @@ These practices are mandatory for development and documentation.
 
 ## 4. Data and Reliability
 - Keep one source of truth per entity.
-- Use explicit schema migrations with rollback strategy.
+- Use explicit schema migrations with rollback strategy via Alembic.
+- Load environment configuration from `.env` and environment variables only through
+  `pydantic BaseSettings` models (domain settings can inherit from shared `core` settings base).
+- Canonical backend settings entrypoint is `hrm_backend/settings.py`.
+- Legacy settings paths (`auth.utils.settings`, `core.config.settings`) are temporary shims and
+  must be removed in a dedicated follow-up refactor.
 - Add retries with backoff only for safe idempotent operations.
 - Add circuit-breaker/fallback behavior for external integrations.
 

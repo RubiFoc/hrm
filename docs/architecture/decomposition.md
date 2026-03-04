@@ -1,8 +1,8 @@
 # Architecture Decomposition
 
 ## Last Updated
-- Date: 2026-03-03
-- Updated by: architect
+- Date: 2026-03-04
+- Updated by: architect + backend-engineer
 
 This document breaks the system architecture from high-level domains into smaller technical units.
 
@@ -16,6 +16,7 @@ This document breaks the system architecture from high-level domains into smalle
 | HR Operations | Process automation and operational workflows | HR, leaders | Phase 1-2 |
 | Finance Adapter | Accounting-aligned exports and statuses | Accountants, leaders | Phase 2 |
 | Platform | Identity, access, audit, notifications, integrations | All roles | Phase 1 |
+| Core Foundation | Shared technical primitives reused by all backend domains | Backend teams | Phase 1-2 |
 | Intelligence | CV analysis and recommendation support | HR, managers | Phase 1 |
 | Analytics | KPI and operational reporting | HR, leaders, managers | Phase 2 |
 
@@ -25,6 +26,7 @@ This document breaks the system architecture from high-level domains into smalle
 | --- | --- | --- | --- |
 | Frontend App (React.js + TypeScript) | Frontend Experience | Role workspaces, routing, forms, i18n (ru/en), client-side state, API integration | Browser UI |
 | Frontend Telemetry Service | Frontend Experience | Sentry SDK integration and client monitoring | Sentry |
+| Core Shared Package | Core Foundation | Reusable ORM base, env parsers, shared errors, common utils | Python imports |
 | Auth and Access Service | Platform | Authentication, role policies, session validation | REST/Token |
 | Vacancy Service | Recruitment | Vacancy CRUD, requirements and stages | REST |
 | Candidate Service | Recruitment | Candidate profiles, attachments, status transitions | REST |
@@ -83,6 +85,16 @@ This document breaks the system architecture from high-level domains into smalle
 - Monitoring Module:
   emit execution metrics and failure events.
 
+### 5. Auth and Access Service
+- Token Issuance Module:
+  issue signed short-lived access tokens and rotating refresh tokens.
+- Denylist Module:
+  store only revoked token/session markers in Redis (`jti` + `sid`).
+- Token Validation Module:
+  validate bearer signature/claims and enforce denylist checks.
+- Access Policy Module:
+  map validated role claims to RBAC permission checks.
+
 ## Data Decomposition
 
 | Data Group | Primary Owner Service | Storage Type | Notes |
@@ -96,6 +108,7 @@ This document breaks the system architecture from high-level domains into smalle
 | Onboarding tasks | Onboarding Service | PostgreSQL | Linked to employee profile |
 | Automation executions | Workflow Automation Service | PostgreSQL | Used for KPI and incident analysis |
 | Audit events | Audit Service | Append-only storage | Compliance evidence |
+| Auth denylist markers (`jti`/`sid`) | Auth and Access Service | Redis | Valid tokens are not persisted server-side |
 
 ## Integration Decomposition
 
@@ -107,6 +120,7 @@ This document breaks the system architecture from high-level domains into smalle
 ## Phase Decomposition
 
 ### Phase 1: HR + Candidate (MVP Core)
+- Core Shared Package baseline (`core/models`, `core/config`, `core/errors`, `core/utils`)
 - Frontend App (React.js + TypeScript) foundation: app shell, auth-aware routing, HR/Candidate workspaces
 - Frontend baseline: shared UI library, i18n (ru/en), candidate self-service (CV upload, profile confirmation, interview registration), Chrome target support
 - Auth and Access Service

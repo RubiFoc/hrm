@@ -17,3 +17,6 @@ coverage/
 # Env
 .env
 .env.*
+
+# Local agent artifacts
+/.serena/

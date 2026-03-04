@@ -1,7 +1,7 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-03
+- Date: 2026-03-04
 - Updated by: architect
 
 ## Priority Model
@@ -18,6 +18,7 @@
 | TASK-01-03 | EPIC-01 | Implement access policy middleware for API and background jobs | Phase 1 | P0 | TASK-01-02 |
 | TASK-01-04 | EPIC-01 | Implement audit logging for sensitive data access | Phase 1 | P0 | TASK-01-03 |
 | TASK-01-05 | EPIC-01 | Define and apply Belarus/Russia data storage and retention baseline | Phase 1 | P0 | TASK-01-01 |
+| TASK-12-01 | EPIC-12 | Provision containerized platform with Docker and Docker Compose (backend, frontend, db, queue, object storage) | Phase 1 | P0 | - |
 | TASK-11-01 | EPIC-11 | Initialize React.js + TypeScript frontend foundation (app shell, routing, project structure) | Phase 1 | P0 | TASK-01-01 |
 | TASK-11-02 | EPIC-11 | Implement frontend engineering baseline with popular libraries (MUI, React Router, TanStack Query, React Hook Form, Zod) | Phase 1 | P0 | TASK-11-01 |
 | TASK-11-03 | EPIC-11 | Implement auth-aware route guards and role-based navigation | Phase 1 | P0 | TASK-11-01, TASK-01-02 |
@@ -71,6 +72,7 @@
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
+| 0 | TASK-12-01 | Highest priority to standardize local/dev/runtime environment and unblock parallel delivery |
 | 1 | TASK-01-01 | Foundation for all role-based behavior |
 | 2 | TASK-01-02 | System entrypoint security baseline |
 | 3 | TASK-01-03 | Access enforcement for all endpoints |
@@ -132,7 +134,7 @@ Use this queue together with the global queue when planning phase implementation
 | FE-12 | TASK-11-12 | Phase-2 role workspace rollout |
 
 ## Milestone Cut Suggestion
-- `M1` (Phase 1 MVP): tasks 1-24 + FE-1..FE-9.
+- `M1` (Phase 1 MVP): tasks 1-24 + TASK-12-01 + FE-1..FE-9.
 - `M2` (Phase 1 hardening): tasks 25-27 + FE-10..FE-11.
 - `M3` (Phase 2 core): tasks 28-36 + FE-12.
 - `M4` (Phase 2 expansion): tasks 37-41.
@@ -140,12 +142,13 @@ Use this queue together with the global queue when planning phase implementation
 ## M1 Sprint Start Approval
 - Date: 2026-03-04
 - Approved by: coordinator, architect, business-analyst
-- Scope: `M1` (tasks 1-24 + FE-1..FE-9)
+- Scope: `M1` (tasks 1-24 + TASK-12-01 + FE-1..FE-9)
 - Ownership matrix: `docs/project/sprint-m1-plan.md`
 
 ### M1 Owners (Grouped by TASK-*)
 - architect + backend-engineer: TASK-01-01, TASK-01-02, TASK-01-03, TASK-01-04
 - business-analyst + architect: TASK-01-05
+- devops-engineer: TASK-12-01
 - backend-engineer: TASK-03-01, TASK-02-01, TASK-02-02, TASK-02-03, TASK-05-01, TASK-05-02, TASK-05-03, TASK-05-04, TASK-08-01, TASK-08-02, TASK-08-03, TASK-08-04, TASK-10-01
 - backend-engineer + data-ml-engineer: TASK-03-02, TASK-03-03, TASK-10-02
 - data-ml-engineer + backend-engineer: TASK-04-01, TASK-04-02, TASK-04-03

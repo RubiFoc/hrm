@@ -1,8 +1,54 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-03
-- Updated by: bootstrap
+- Date: 2026-03-04
+- Updated by: devops-engineer + backend-engineer
+
+## Local Environment (Docker Compose)
+### Prerequisites
+- Docker Engine 24+ with Docker Compose plugin.
+- Available local ports: `5173`, `8000`, `5432`, `6379`, `9000`, `9001`.
+
+### Bootstrap
+1. Create runtime env file: `cp .env.example .env`
+2. Start stack: `docker compose up -d --build`
+3. Verify status: `docker compose ps`
+
+Shortcut wrappers:
+- `make up` / `just up`
+- `make rebuild` / `just rebuild`
+- `make clean-orphans` / `just clean-orphans`
+- `make ps` / `just ps`
+- `make smoke` / `just smoke`
+- `make down` / `just down`
+
+### Service Endpoints
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8000`
+- Backend health: `http://localhost:8000/health`
+- Backend auth login: `http://localhost:8000/api/v1/auth/login`
+- MinIO API: `http://localhost:9000`
+- MinIO Console: `http://localhost:9001`
+
+### Stop and Cleanup
+- Stop stack: `docker compose down`
+- Stop and remove volumes: `docker compose down -v`
+- Wrapper cleanup: `make down-v` or `just down-v`
+
+### Database Migrations (Alembic)
+- Upgrade: `uv run --project apps/backend alembic -c apps/backend/alembic.ini upgrade head`
+- Downgrade one revision: `uv run --project apps/backend alembic -c apps/backend/alembic.ini downgrade -1`
+- Offline SQL preview: `uv run --project apps/backend alembic -c apps/backend/alembic.ini upgrade head --sql`
+
+### Smoke Verification
+1. `docker compose ps` shows `healthy` for backend/postgres/redis/minio.
+2. `curl -fsS http://localhost:8000/health` returns `{"status":"ok"}`.
+3. `curl -fsS -X POST http://localhost:8000/api/v1/auth/login -H 'Content-Type: application/json' -d '{"subject_id":"smoke-hr","role":"hr"}'` returns token payload.
+4. Open frontend at `http://localhost:5173` and verify route render.
+
+### Auth Denylist Failure Policy
+- Auth validation is fail-closed when Redis denylist is unavailable.
+- Expected behavior during Redis outage: protected auth checks return `503`.
 
 ## Incident Triage
 1. Confirm impact and affected user segment.
@@ -22,3 +68,11 @@
 - Root cause
 - Corrective actions
 - Preventive actions
+
+## Container Incident Commands
+- Recent logs by service: `docker compose logs --tail 200 <service>`
+- Follow logs: `docker compose logs -f <service>`
+- Restart one service: `docker compose restart <service>`
+- Rebuild after dependency/image changes: `docker compose up -d --build`
+- Force-recreate all services: `make rebuild` or `just rebuild`
+- Remove orphan containers: `make clean-orphans` or `just clean-orphans`

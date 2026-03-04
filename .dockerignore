@@ -1,0 +1,17 @@
+.git
+.github
+.idea
+.ai
+node_modules
+**/node_modules
+.venv
+**/.venv
+dist
+coverage
+.pytest_cache
+.ruff_cache
+__pycache__
+*.pyc
+.env
+.env.*
+!.env.example

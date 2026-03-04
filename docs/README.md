@@ -13,6 +13,8 @@ This folder is the single source of truth for project context required for deliv
 - `project/frontend-requirements.md`: React.js frontend requirements and confirmed decisions
 - `project/legal-framework.md`: Priority NPAs for Belarus and Russia compliance baseline
 - `project/legal-controls-matrix.md`: NPA-to-controls compliance tracking matrix
+- `project/rbac-matrix.md`: Phase-1 role and permission matrix baseline
+- `project/auth-session-lifecycle.md`: Authentication/session lifecycle baseline and API contract
 - `architecture/overview.md`: System architecture and boundaries
 - `architecture/diagrams.md`: Canonical architecture and flow diagrams
 - `architecture/decomposition.md`: Architecture breakdown by domains, services, and modules

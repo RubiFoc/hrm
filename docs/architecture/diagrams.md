@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-04
-- Updated by: architect
+- Updated by: architect + backend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -42,6 +42,8 @@ flowchart TB
   API[API Gateway]
 
   subgraph Core[Core Services]
+    COREPKG[Core Shared Package]
+    AUTH[Auth and Access Service]
     REC[Recruitment Services]
     EMPDOM[Employee Services]
     HROPS[HR Automation Services]
@@ -53,6 +55,7 @@ flowchart TB
     DB[(PostgreSQL)]
     OBJ[(Object Storage)]
     QUEUE[(Queue/Event Bus)]
+    REDISDNL[(Redis Denylist: jti/sid)]
   end
 
   subgraph Ext[External Integrations]
@@ -62,10 +65,17 @@ flowchart TB
   end
 
   UI --> API
+  API --> AUTH
   API --> REC
   API --> EMPDOM
   API --> HROPS
   API --> ANALYTICS
+  AUTH --> REDISDNL
+  AUTH -.imports.-> COREPKG
+  REC -.imports.-> COREPKG
+  EMPDOM -.imports.-> COREPKG
+  HROPS -.imports.-> COREPKG
+  ANALYTICS -.imports.-> COREPKG
 
   REC --> DB
   EMPDOM --> DB
@@ -247,4 +257,62 @@ flowchart LR
   BE --> MERGE
   FE --> MERGE
   MERGE --> MAIN[Protected main]
+```
+
+## Diagram 9: Docker Compose Runtime Topology (Phase 1)
+
+```mermaid
+flowchart TB
+  subgraph Compose[Docker Compose]
+    FE[frontend container\nReact + Vite preview]
+    BE[backend container\nFastAPI + workers]
+    DB[(postgres container :5432)]
+    OBJ[(minio container :9000/:9001)]
+    MQ[(redis container :6379)]
+    INIT[minio-init one-shot job]
+  end
+
+  USER[Chrome Browser] --> FE
+  FE --> BE
+  BE --> DB
+  BE --> OBJ
+  BE --> MQ
+  INIT --> OBJ
+  BE --> OLL[Ollama]
+  BE <--> GCAL[Google Calendar]
+```
+
+## Diagram 10: Authentication and Session Lifecycle Sequence
+
+```mermaid
+sequenceDiagram
+  participant U as User (HR/Candidate/...)
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant AUTH as Auth and Access Service
+  participant DNL as Redis Denylist
+
+  U->>UI: Sign in
+  UI->>API: POST /api/v1/auth/login (subject_id, role)
+  API->>AUTH: Issue access/refresh JWT pair
+  AUTH-->>UI: access_token + refresh_token
+
+  U->>UI: Open protected page
+  UI->>API: Authorization: Bearer access_token
+  API->>AUTH: Validate access token claims
+  AUTH->>DNL: Check jti/sid absence
+  AUTH-->>API: Auth context (subject, role, sid)
+  API-->>UI: Protected resource
+
+  U->>UI: Refresh session
+  UI->>API: POST /api/v1/auth/refresh (refresh_token)
+  API->>AUTH: Validate refresh token + rotate
+  AUTH->>DNL: Deny old refresh jti until exp
+  AUTH-->>UI: New access_token + new refresh_token
+
+  U->>UI: Logout
+  UI->>API: POST /api/v1/auth/logout (Bearer access_token)
+  API->>AUTH: Revoke token/session window
+  AUTH->>DNL: Deny access jti + session sid
+  AUTH-->>UI: 204 No Content
 ```

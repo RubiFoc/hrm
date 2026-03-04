@@ -1,7 +1,7 @@
 # Product Epics
 
 ## Last Updated
-- Date: 2026-03-03
+- Date: 2026-03-04
 - Updated by: architect
 
 ## Planning Baseline
@@ -20,6 +20,7 @@
 
 | Epic ID | Epic | Business Value | Primary Users | Phase | Priority |
 | --- | --- | --- | --- | --- | --- |
+| EPIC-12 | Platform Infrastructure and Environment Standardization | Provide deterministic runtime for development, QA, and release pipelines | Engineering team | Phase 1 | P0 |
 | EPIC-01 | Identity, Roles, and Data Compliance Foundation | Protect sensitive data and enable controlled access | All roles | Phase 1 | P0 |
 | EPIC-11 | React.js Frontend Foundation and Role UX | Deliver consistent and secure role-based user experience | All roles | Phase 1-2 | P0 |
 | EPIC-02 | Vacancy and Recruitment Pipeline Management | Standardize and accelerate candidate flow | HR, Managers | Phase 1 | P0 |
@@ -36,7 +37,8 @@
 
 | Epic | Depends On |
 | --- | --- |
-| EPIC-11 | EPIC-01 |
+| EPIC-12 | - |
+| EPIC-11 | EPIC-01, EPIC-12 |
 | EPIC-02 | EPIC-01, EPIC-11 |
 | EPIC-03 | EPIC-01, EPIC-11 |
 | EPIC-04 | EPIC-03 |
@@ -48,6 +50,12 @@
 | EPIC-10 | EPIC-01, EPIC-02, EPIC-08 |
 
 ## Definition of Done by Epic
+
+### EPIC-12: Platform Infrastructure and Environment Standardization
+- Dockerfiles exist for backend and frontend with reproducible builds.
+- `docker compose` defines required local stack (app services + storage dependencies).
+- Environment variable templates and startup runbook are documented.
+- CI uses the same baseline assumptions as local containerized stack.
 
 ### EPIC-01: Identity, Roles, and Data Compliance Foundation
 - Role-based access is enforced for all user groups.
@@ -108,17 +116,18 @@
 - Monthly KPI snapshot is reproducible and reviewable.
 
 ## Recommended Build Order
-1. EPIC-01
-2. EPIC-11
-3. EPIC-02
-4. EPIC-03
-5. EPIC-04
-6. EPIC-05
-7. EPIC-08 (core set)
-8. EPIC-06
-9. EPIC-07
-10. EPIC-09
-11. EPIC-10 (full scope)
+1. EPIC-12
+2. EPIC-01
+3. EPIC-11
+4. EPIC-02
+5. EPIC-03
+6. EPIC-04
+7. EPIC-05
+8. EPIC-08 (core set)
+9. EPIC-06
+10. EPIC-07
+11. EPIC-09
+12. EPIC-10 (full scope)
 
 ## Execution Mapping
 - Task-level decomposition, dependencies, and global priority queue are documented in `docs/project/tasks.md`.

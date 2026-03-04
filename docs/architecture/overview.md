@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-04
-- Updated by: architect
+- Updated by: architect + backend-engineer
 
 ## System Context
 HRM platform for Belarus and Russia that supports candidate selection, fair interview workflows, onboarding, HR automation, and operational workflows for HR, managers, employees, leaders, and accountants.
@@ -39,6 +39,8 @@ flowchart LR
 | React.js + TypeScript Web App | Role-based UX for all user groups, localization (ru/en), candidate self-service | User actions | API requests, UI states | frontend |
 | Frontend Telemetry | Client-side errors and performance telemetry | Browser events/errors | Sentry issues and traces | frontend |
 | API Gateway | AuthN/AuthZ entrypoint and request routing | HTTPS requests | Routed calls, access decisions | platform |
+| Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
+| Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
 | Recruitment Domain | Vacancies, candidates, pipeline, interview lifecycle | Candidate and vacancy data | Match scores, pipeline states | hr-tech |
 | Employee Domain | Employee profile and onboarding workflows | Hire decisions, profile data | Employee records, onboarding tasks | hr-tech |
 | HR Operations Domain | HR process automation and workflow execution | Rules and triggers | Automated tasks, status updates | hr-ops |
@@ -58,16 +60,23 @@ flowchart LR
    rule trigger -> workflow engine -> task creation/assignment -> status update and reporting.
 5. Candidate Self-Service Flow:
    candidate registration -> profile confirmation -> CV upload -> interview registration.
+6. Authentication Flow:
+   login -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
 
 ## Data Boundaries
 - Source of truth entities:
   vacancies, candidates, CV metadata, interview records, employee profiles, onboarding tasks, HR operations, audit events.
+- Auth revocation artifacts:
+  denylisted token ids (`jti`) and session ids (`sid`) in Redis.
 - External integrations: Ollama, Google Calendar
 - Sensitive data classes:
   candidate and employee personal data, interview evaluations, HR records, accounting exports.
 
 ## Deployment View
 - Runtime style: modular monolith first, with clear domain modules and async workers.
+- Shared backend primitives are centralized in `hrm_backend/core` to prevent domain duplication.
+- Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
+- Compose baseline services: `frontend`, `backend`, `postgres`, `redis`, `minio`, `minio-init`.
 - Frontend style: React.js + TypeScript SPA with role-based route guards and shared component system.
 - Frontend libraries: MUI, React Router, TanStack Query, React Hook Form, Zod, i18next.
 - Browser support target: Google Chrome.
@@ -77,6 +86,8 @@ flowchart LR
   PostgreSQL for transactional data, object storage for CV/documents, queue for async jobs.
 - Integration style:
   internal command/event interfaces + connector adapters for external systems.
+- Auth config baseline:
+  `HRM_JWT_SECRET`, `HRM_JWT_ALGORITHM`, `HRM_ACCESS_TOKEN_TTL_SECONDS`, `HRM_REFRESH_TOKEN_TTL_SECONDS`, `HRM_AUTH_REDIS_PREFIX`, `REDIS_URL`.
 
 ## Non-Functional Requirements
 - Reliability:
