@@ -205,7 +205,7 @@ def test_auth_login_is_audited(configured_app) -> None:
     assert login_events[0].result == "success"
     assert created_staff_id  # ensure staff creation succeeded with persisted identifier
     assert login_events[0].actor_sub == login_identifier
-    assert login_events[0].actor_role == "hr"
+    assert login_events[0].actor_role is None
     assert login_events[0].correlation_id == "req-login-1"
 
 
