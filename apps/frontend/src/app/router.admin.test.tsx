@@ -83,4 +83,13 @@ describe("admin route guard", () => {
     expect(await screen.findByRole("heading", { name: /управление сотрудниками/i })).toBeDefined();
     expect(setTagMock).toHaveBeenCalledWith("route", "/admin/staff");
   });
+
+  it("allows admin user into /admin/employee-keys and sets sentry route tag", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "admin");
+
+    renderWithPath("/admin/employee-keys");
+    expect(await screen.findByRole("heading", { name: /ключи регистрации сотрудников/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("route", "/admin/employee-keys");
+  });
 });

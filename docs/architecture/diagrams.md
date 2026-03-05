@@ -487,3 +487,42 @@ sequenceDiagram
 
   Note over SRV: Strict guard:\n- self-demotion/self-disable forbidden\n- last-active-admin demotion/disable forbidden
 ```
+
+## Diagram 17: Employee Key Lifecycle Management Flow (ADMIN-03)
+
+```mermaid
+sequenceDiagram
+  participant ADM as Admin/HR User
+  participant UI as React Admin Employee Keys Screen (/admin/employee-keys)
+  participant API as Admin Router
+  participant SRV as Admin Service
+  participant DAO as AdminEmployeeRegistrationKeyDAO
+  participant AUTH as Auth Service (register path)
+  participant AUD as Audit Service
+
+  ADM->>UI: Open /admin/employee-keys
+  UI->>API: GET /api/v1/admin/employee-keys?limit&offset&filters
+  API->>SRV: list_employee_keys(...)
+  SRV->>DAO: list_keys + count_keys
+  DAO-->>SRV: key rows + total
+  SRV-->>API: AdminEmployeeKeyListResponse (status=active|used|expired|revoked)
+  API->>AUD: admin.employee_key:list success/failure
+  API-->>UI: paginated list payload
+
+  ADM->>UI: Create key
+  UI->>API: POST /api/v1/admin/employee-keys
+  API->>SRV: create_employee_key(...)
+  SRV->>DAO: create_key(...)
+  API->>AUD: admin.employee_key:create success/failure
+  API-->>UI: EmployeeRegistrationKeyResponse
+
+  ADM->>UI: Revoke active key
+  UI->>API: POST /api/v1/admin/employee-keys/{key_id}/revoke
+  API->>SRV: revoke_employee_key(...)
+  SRV->>DAO: get_by_id + revoke_key
+  SRV-->>API: 200 or 404/409 reason-code
+  API->>AUD: admin.employee_key:revoke success/failure + reason
+  API-->>UI: revoked row or localized error
+
+  Note over AUTH: Register path consumes only keys where\nused_at=null, revoked_at=null, expires_at>now
+```

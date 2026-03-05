@@ -68,6 +68,24 @@ def test_admin_can_upload_cv_permission() -> None:
     assert decision.allowed is True
 
 
+def test_hr_can_list_and_revoke_employee_keys_permissions() -> None:
+    """Verify HR role can list and revoke employee registration keys."""
+    list_decision = evaluate_permission(role="hr", permission="admin:employee_key:list")
+    revoke_decision = evaluate_permission(role="hr", permission="admin:employee_key:revoke")
+
+    assert list_decision.allowed is True
+    assert revoke_decision.allowed is True
+
+
+def test_manager_is_denied_for_employee_key_list_permission() -> None:
+    """Verify manager role is denied for employee-key list permission."""
+    decision = evaluate_permission(role="manager", permission="admin:employee_key:list")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "admin:employee_key:list" in decision.reason
+
+
 def test_background_enforcement_records_denied_decision() -> None:
     """Verify background permission check denies and records audit decision."""
     audit_service = _InMemoryAuditService()

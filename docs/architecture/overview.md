@@ -41,7 +41,7 @@ flowchart LR
 | API Gateway | AuthN/AuthZ entrypoint and request routing | HTTPS requests | Routed calls, access decisions | platform |
 | Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
 | Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
-| Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key issuance, audit hooks | platform |
+| Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key lifecycle (issue/list/revoke), audit hooks | platform |
 | Recruitment Domain | Vacancies, candidates, pipeline, interview lifecycle | Candidate and vacancy data | Match scores, pipeline states | hr-tech |
 | Employee Domain | Employee profile and onboarding workflows | Hire decisions, profile data | Employee records, onboarding tasks | hr-tech |
 | HR Operations Domain | HR process automation and workflow execution | Rules and triggers | Automated tasks, status updates | hr-ops |
@@ -66,6 +66,9 @@ flowchart LR
 7. Admin Staff Governance Flow:
    admin opens `/admin/staff` -> paginated/filterable staff list -> patch `role`/`is_active` ->
    strict guard (self-protection + last-active-admin protection) -> audit success/failure reason codes.
+8. Admin Employee Key Lifecycle Flow:
+   admin/hr issues key -> list/filter key registry -> revoke active key when needed ->
+   registration rejects revoked/expired/used keys -> audit success/failure reason codes.
 
 ## Data Boundaries
 - Source of truth entities:

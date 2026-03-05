@@ -140,6 +140,28 @@ Shortcut wrappers:
   4. For `last_admin_protection`, verify number of active admin rows in `staff_accounts`.
   5. For `self_modification_forbidden`, verify actor `subject_id` equals target `staff_id`.
 
+### Admin Employee Key Lifecycle Diagnostics (`/admin/employee-keys`)
+- Endpoints:
+  - `GET /api/v1/admin/employee-keys`
+  - `POST /api/v1/admin/employee-keys/{key_id}/revoke`
+  - `POST /api/v1/admin/employee-keys` (create, backward-compatible)
+- Expected guard/error behavior for revoke:
+  - `404` + `detail=key_not_found`
+  - `409` + `detail=key_already_used`
+  - `409` + `detail=key_already_expired`
+  - `409` + `detail=key_already_revoked`
+  - `422` + `detail=validation_failed` (or framework validation payload)
+- Audit actions:
+  - `admin.employee_key:create`
+  - `admin.employee_key:list`
+  - `admin.employee_key:revoke`
+- Triage sequence:
+  1. Capture failing response with `X-Request-ID`.
+  2. Check key lifecycle fields in DB (`used_at`, `expires_at`, `revoked_at`, `revoked_by_staff_id`).
+  3. Query `audit_events` by `action in ('admin.employee_key:list','admin.employee_key:revoke')` and `correlation_id`.
+  4. For revoke conflicts, validate lifecycle precedence: `revoked` -> `used` -> `expired` -> `active`.
+  5. For register failures with revoked keys, confirm `employee_registration_keys.revoked_at` is not null.
+
 ## Compliance Baseline (Dev Non-Blocking, Prod Blocking)
 This section defines provisional operational controls until final legal/security sign-off.
 

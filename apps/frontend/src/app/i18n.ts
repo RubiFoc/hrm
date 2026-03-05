@@ -20,9 +20,13 @@ const resources = {
       backToWorkspace: "Back to workspace",
       adminCard: {
         open: "Open",
-        users: {
+        staff: {
           title: "Staff Users",
           description: "Manage staff accounts and access levels.",
+        },
+        employeeKeys: {
+          title: "Employee Keys",
+          description: "Generate, review, and revoke employee registration keys.",
         },
         audit: {
           title: "Audit Signals",
@@ -85,6 +89,58 @@ const resources = {
           http_422: "Request validation failed. Please check entered values.",
         },
       },
+      adminEmployeeKeys: {
+        title: "Employee Registration Keys",
+        subtitle: "Manage employee key lifecycle with create/list/revoke operations.",
+        loading: "Loading employee keys...",
+        empty: "No employee keys found for current filters.",
+        createSuccess: "Employee key created: {{key}}",
+        revokeSuccess: "Employee key revoked successfully.",
+        create: {
+          targetRole: "Target role",
+          ttlSeconds: "TTL seconds",
+          submit: "Create key",
+        },
+        filters: {
+          search: "Search by key id or employee key",
+          targetRole: "Target role",
+          status: "Status",
+          createdBy: "Created by staff ID",
+          any: "Any",
+          apply: "Apply",
+          reset: "Reset",
+        },
+        table: {
+          employeeKey: "Employee key",
+          targetRole: "Target role",
+          status: "Status",
+          expiresAt: "Expires at",
+          usedAt: "Used at",
+          revokedAt: "Revoked at",
+          createdBy: "Created by",
+          actions: "Actions",
+        },
+        status: {
+          active: "Active",
+          used: "Used",
+          expired: "Expired",
+          revoked: "Revoked",
+        },
+        actions: {
+          revoke: "Revoke",
+        },
+        errors: {
+          key_not_found: "Employee key was not found.",
+          key_already_used: "Employee key is already used.",
+          key_already_expired: "Employee key is already expired.",
+          key_already_revoked: "Employee key is already revoked.",
+          unsupported_role: "Selected role is not supported.",
+          validation_failed: "Request validation failed. Please check entered values.",
+          http_404: "Requested resource was not found.",
+          http_409: "Operation conflicts with key lifecycle rules.",
+          http_422: "Request validation failed. Please check entered values.",
+        },
+      },
     },
   },
   ru: {
@@ -105,9 +161,13 @@ const resources = {
       backToWorkspace: "Вернуться в рабочее пространство",
       adminCard: {
         open: "Открыть",
-        users: {
+        staff: {
           title: "Сотрудники",
           description: "Управление staff-аккаунтами и уровнями доступа.",
+        },
+        employeeKeys: {
+          title: "Ключи регистрации",
+          description: "Создание, просмотр и отзыв ключей регистрации сотрудников.",
         },
         audit: {
           title: "Аудит сигналы",
@@ -167,6 +227,58 @@ const resources = {
           validation_failed: "Ошибка валидации запроса. Проверьте введённые значения.",
           http_404: "Запрошенный ресурс не найден.",
           http_409: "Операция конфликтует с правилом безопасности.",
+          http_422: "Ошибка валидации запроса. Проверьте введённые значения.",
+        },
+      },
+      adminEmployeeKeys: {
+        title: "Ключи регистрации сотрудников",
+        subtitle: "Управление жизненным циклом ключей: create/list/revoke.",
+        loading: "Загрузка ключей регистрации...",
+        empty: "По текущим фильтрам ключи не найдены.",
+        createSuccess: "Ключ регистрации создан: {{key}}",
+        revokeSuccess: "Ключ регистрации успешно отозван.",
+        create: {
+          targetRole: "Целевая роль",
+          ttlSeconds: "TTL в секундах",
+          submit: "Создать ключ",
+        },
+        filters: {
+          search: "Поиск по key id или employee key",
+          targetRole: "Целевая роль",
+          status: "Статус",
+          createdBy: "Created by staff ID",
+          any: "Любой",
+          apply: "Применить",
+          reset: "Сбросить",
+        },
+        table: {
+          employeeKey: "Employee key",
+          targetRole: "Целевая роль",
+          status: "Статус",
+          expiresAt: "Истекает",
+          usedAt: "Использован",
+          revokedAt: "Отозван",
+          createdBy: "Кем создан",
+          actions: "Действия",
+        },
+        status: {
+          active: "Активен",
+          used: "Использован",
+          expired: "Истёк",
+          revoked: "Отозван",
+        },
+        actions: {
+          revoke: "Отозвать",
+        },
+        errors: {
+          key_not_found: "Ключ регистрации не найден.",
+          key_already_used: "Ключ регистрации уже использован.",
+          key_already_expired: "Срок действия ключа регистрации истёк.",
+          key_already_revoked: "Ключ регистрации уже отозван.",
+          unsupported_role: "Выбранная роль не поддерживается.",
+          validation_failed: "Ошибка валидации запроса. Проверьте введённые значения.",
+          http_404: "Запрошенный ресурс не найден.",
+          http_409: "Операция конфликтует с правилами жизненного цикла ключа.",
           http_422: "Ошибка валидации запроса. Проверьте введённые значения.",
         },
       },

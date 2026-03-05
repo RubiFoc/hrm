@@ -11,13 +11,37 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Employee Keys
+         * @description List employee registration keys with pagination and optional filters.
+         */
+        get: operations["list_employee_keys_api_v1_admin_employee_keys_get"];
         put?: never;
         /**
          * Create Employee Key
          * @description Issue one-time employee registration key for self-registration.
          */
         post: operations["create_employee_key_api_v1_admin_employee_keys_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/employee-keys/{key_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke Employee Key
+         * @description Revoke active employee registration key.
+         */
+        post: operations["revoke_employee_key_api_v1_admin_employee_keys__key_id__revoke_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -445,6 +469,64 @@ export interface components {
              * @enum {string}
              */
             role: "admin" | "hr" | "manager" | "employee" | "leader" | "accountant";
+        };
+        /**
+         * AdminEmployeeKeyListItem
+         * @description One employee registration key record returned by admin list endpoint.
+         */
+        AdminEmployeeKeyListItem: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Created By Staff Id
+             * Format: uuid
+             */
+            created_by_staff_id: string;
+            /**
+             * Employee Key
+             * Format: uuid
+             */
+            employee_key: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /**
+             * Key Id
+             * Format: uuid
+             */
+            key_id: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Revoked By Staff Id */
+            revoked_by_staff_id: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "active" | "used" | "expired" | "revoked";
+            /** Target Role */
+            target_role: string;
+            /** Used At */
+            used_at: string | null;
+        };
+        /**
+         * AdminEmployeeKeyListResponse
+         * @description Paginated response payload for admin employee-key list endpoint.
+         */
+        AdminEmployeeKeyListResponse: {
+            /** Items */
+            items: components["schemas"]["AdminEmployeeKeyListItem"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
         };
         /**
          * AdminStaffListItem
@@ -1038,6 +1120,42 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_employee_keys_api_v1_admin_employee_keys_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                target_role?: ("admin" | "hr" | "manager" | "employee" | "leader" | "accountant") | null;
+                status?: ("active" | "used" | "expired" | "revoked") | null;
+                created_by_staff_id?: string | null;
+                search?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEmployeeKeyListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_employee_key_api_v1_admin_employee_keys_post: {
         parameters: {
             query?: never;
@@ -1068,6 +1186,49 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    revoke_employee_key_api_v1_admin_employee_keys__key_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminEmployeeKeyListItem"];
+                };
+            };
+            /** @description Employee key not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Employee key is not revocable */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failure */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

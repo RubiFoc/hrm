@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -9,9 +10,12 @@ from fastapi import HTTPException, status
 from hrm_backend.admin.dao.employee_registration_key_dao import AdminEmployeeRegistrationKeyDAO
 from hrm_backend.admin.dao.staff_account_dao import AdminStaffAccountDAO
 from hrm_backend.admin.schemas.responses import (
+    AdminEmployeeKeyListItem,
+    AdminEmployeeKeyListResponse,
     AdminStaffListItem,
     AdminStaffListResponse,
     EmployeeRegistrationKeyResponse,
+    EmployeeRegistrationKeyStatus,
     StaffResponse,
 )
 from hrm_backend.admin.utils.roles import STAFF_ROLES
@@ -252,6 +256,103 @@ class AdminService:
             created_at=key_row.created_at,
         )
 
+    def list_employee_keys(
+        self,
+        *,
+        limit: int,
+        offset: int,
+        target_role: str | None = None,
+        key_status: str | None = None,
+        created_by_staff_id: UUID | None = None,
+        search: str | None = None,
+    ) -> AdminEmployeeKeyListResponse:
+        """List employee registration keys with pagination and filters.
+
+        Args:
+            limit: Maximum number of rows to return.
+            offset: Number of rows to skip from ordered result.
+            target_role: Optional target-role filter.
+            key_status: Optional lifecycle status filter.
+            created_by_staff_id: Optional issuer identifier filter.
+            search: Optional case-insensitive search for key identifiers.
+
+        Returns:
+            AdminEmployeeKeyListResponse: Paginated employee-key list payload.
+
+        Raises:
+            HTTPException: If target-role filter is unsupported.
+        """
+        if target_role is not None and target_role not in STAFF_ROLES:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="unsupported_role",
+            )
+
+        entities = self._employee_registration_key_dao.list_keys(
+            limit=limit,
+            offset=offset,
+            target_role=target_role,
+            status=key_status,
+            created_by_staff_id=str(created_by_staff_id) if created_by_staff_id else None,
+            search=search,
+        )
+        total = self._employee_registration_key_dao.count_keys(
+            target_role=target_role,
+            status=key_status,
+            created_by_staff_id=str(created_by_staff_id) if created_by_staff_id else None,
+            search=search,
+        )
+        items = [self._to_employee_key_list_item(entity) for entity in entities]
+        return AdminEmployeeKeyListResponse(items=items, total=total, limit=limit, offset=offset)
+
+    def revoke_employee_key(
+        self,
+        *,
+        key_id: UUID,
+        revoked_by_staff_id: UUID,
+    ) -> AdminEmployeeKeyListItem:
+        """Revoke active employee registration key.
+
+        Args:
+            key_id: Target key identifier.
+            revoked_by_staff_id: Authenticated actor identifier.
+
+        Returns:
+            AdminEmployeeKeyListItem: Revoked key payload.
+
+        Raises:
+            HTTPException: For missing key, or when key is already used/expired/revoked.
+        """
+        now = datetime.now(UTC)
+        entity = self._employee_registration_key_dao.get_by_id(str(key_id))
+        if entity is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="key_not_found",
+            )
+        if entity.revoked_at is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="key_already_revoked",
+            )
+        if entity.used_at is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="key_already_used",
+            )
+        if self._is_employee_key_expired(entity.expires_at, now):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="key_already_expired",
+            )
+
+        revoked = self._employee_registration_key_dao.revoke_key(
+            entity=entity,
+            revoked_at=now,
+            revoked_by_staff_id=str(revoked_by_staff_id),
+        )
+        return self._to_employee_key_list_item(revoked)
+
     @staticmethod
     def _to_staff_response(account) -> StaffResponse:
         """Map staff account entity to API response payload.
@@ -271,3 +372,62 @@ class AdminService:
             created_at=account.created_at,
             updated_at=account.updated_at,
         )
+
+    @staticmethod
+    def _to_employee_key_list_item(entity) -> AdminEmployeeKeyListItem:
+        """Map employee registration key entity to admin list payload item.
+
+        Args:
+            entity: Persistent employee registration key row/entity.
+
+        Returns:
+            AdminEmployeeKeyListItem: Serialized key payload with computed status.
+        """
+        return AdminEmployeeKeyListItem(
+            key_id=UUID(entity.key_id),
+            employee_key=UUID(entity.employee_key),
+            target_role=entity.target_role,
+            status=AdminService._resolve_employee_key_status(entity),
+            expires_at=entity.expires_at,
+            used_at=entity.used_at,
+            revoked_at=entity.revoked_at,
+            revoked_by_staff_id=UUID(entity.revoked_by_staff_id)
+            if entity.revoked_by_staff_id
+            else None,
+            created_by_staff_id=UUID(entity.created_by_staff_id),
+            created_at=entity.created_at,
+        )
+
+    @staticmethod
+    def _resolve_employee_key_status(entity) -> EmployeeRegistrationKeyStatus:
+        """Resolve employee registration key lifecycle status from timestamps.
+
+        Args:
+            entity: Persistent employee registration key row/entity.
+
+        Returns:
+            EmployeeRegistrationKeyStatus: Computed status string.
+        """
+        if entity.revoked_at is not None:
+            return "revoked"
+        if entity.used_at is not None:
+            return "used"
+        if AdminService._is_employee_key_expired(entity.expires_at):
+            return "expired"
+        return "active"
+
+    @staticmethod
+    def _is_employee_key_expired(expires_at: datetime, now: datetime | None = None) -> bool:
+        """Check whether key expiration timestamp is in the past.
+
+        Args:
+            expires_at: Key expiration timestamp from storage.
+            now: Optional current timestamp override for deterministic checks.
+
+        Returns:
+            bool: True when key is expired.
+        """
+        now_value = now or datetime.now(UTC)
+        if expires_at.tzinfo is None:
+            now_value = now_value.replace(tzinfo=None)
+        return expires_at <= now_value

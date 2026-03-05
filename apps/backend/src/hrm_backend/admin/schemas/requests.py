@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 StaffRoleClaim = Literal["admin", "hr", "manager", "employee", "leader", "accountant"]
+EmployeeKeyStatusClaim = Literal["active", "used", "expired", "revoked"]
 
 
 class AdminCreateStaffRequest(BaseModel):
