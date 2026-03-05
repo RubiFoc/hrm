@@ -30,6 +30,8 @@ jobs:
         run: uv run --project apps/backend ruff check .
       - name: Test backend
         run: uv run --project apps/backend pytest -q
+      - name: Check OpenAPI freeze
+        run: ./scripts/check-openapi-freeze.sh
 
   frontend:
     runs-on: ubuntu-latest
@@ -47,6 +49,8 @@ jobs:
           else
             npm --prefix apps/frontend install
           fi
+      - name: Check frontend API types
+        run: npm --prefix apps/frontend run api:types:check
       - name: Lint frontend
         run: npm --prefix apps/frontend run lint
       - name: Test frontend

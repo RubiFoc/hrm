@@ -260,15 +260,21 @@ flowchart LR
     DOCS[docs-check]
     BE[backend lint+test via uv]
     FE[frontend lint+test]
+    OAPI[openapi freeze check]
+    FECG[frontend api typegen check]
   end
 
   CI --> DOCS
   CI --> BE
   CI --> FE
+  CI --> OAPI
+  CI --> FECG
 
   DOCS --> MERGE[Squash Merge]
   BE --> MERGE
   FE --> MERGE
+  OAPI --> MERGE
+  FECG --> MERGE
   MERGE --> MAIN[Protected main]
 ```
 

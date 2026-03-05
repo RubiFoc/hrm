@@ -5,6 +5,8 @@
 - Run dev: `npm run dev`
 - Lint: `npm run lint`
 - Test: `npm run test -- --run`
+- Generate API types: `npm run api:types:generate`
+- Check API types generation: `npm run api:types:check`
 
 ## Docker
 - Built by root compose stack using `docker/frontend.Dockerfile`.

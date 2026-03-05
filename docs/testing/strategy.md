@@ -48,6 +48,16 @@ apps/backend/tests/
   - `uv run --project apps/backend pytest -q apps/backend/tests/integration/security/test_audit_enforcement.py apps/backend/tests/integration/auth/test_auth_stack.py`
 - The gate must pass in two consecutive runs when harness-level changes are introduced.
 
+## OpenAPI Freeze Discipline
+- Frozen backend contract source of truth: `docs/api/openapi.frozen.json`.
+- Regeneration command:
+  - `./scripts/generate-openapi-frozen.sh`
+- Verification command:
+  - `./scripts/check-openapi-freeze.sh`
+- CI must fail when runtime OpenAPI differs from frozen spec.
+- Frontend typed contract generation must run from frozen spec:
+  - `npm --prefix apps/frontend run api:types:generate`
+
 ## Change-Based Verification Matrix
 | Change Type | Required Checks |
 | --- | --- |

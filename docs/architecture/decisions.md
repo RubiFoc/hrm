@@ -23,6 +23,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0016 | 2026-03-04 | accepted | Remove legacy auth login payload and temporary settings compatibility shims | architect + backend-engineer | auth API contract, backend shared config imports |
 | ADR-0017 | 2026-03-05 | accepted | Add layered anti-abuse controls for public vacancy application endpoint | architect + backend-engineer | recruitment API, observability, operations |
 | ADR-0018 | 2026-03-05 | accepted | Normalize API ID contracts to UUID at boundary level | architect + backend-engineer | candidate/vacancy/pipeline contracts, OpenAPI |
+| ADR-0019 | 2026-03-05 | accepted | Freeze OpenAPI contract and enforce drift checks in CI | architect + backend-engineer | API governance, CI/CD, frontend integration |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -257,3 +258,15 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - OpenAPI now exposes uniform `format: uuid` for normalized ID fields.
   - Contract validation becomes stricter for clients still sending legacy non-UUID values.
   - Service signatures become type-safe without forcing DB storage migration in this phase.
+
+## ADR-0019
+- Context: Backend and frontend integration velocity depends on stable API contracts; drift between runtime schema and client expectations caused avoidable regressions.
+- Decision:
+  - Store frozen OpenAPI contract in-repo at `docs/api/openapi.frozen.json`.
+  - Add generation script (`scripts/generate-openapi-frozen.sh`) and drift check (`scripts/check-openapi-freeze.sh`).
+  - Enforce contract drift check in CI.
+  - Generate frontend TypeScript API types from frozen spec via `openapi-typescript`.
+- Consequences:
+  - Contract changes become explicit and reviewable.
+  - CI fails early when runtime schema diverges from frozen contract.
+  - Frontend typed API artifacts stay aligned with reviewed backend contract.
