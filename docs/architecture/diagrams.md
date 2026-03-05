@@ -437,3 +437,18 @@ stateDiagram-v2
   failed --> [*]: terminal when attempts exhausted
   succeeded --> [*]
 ```
+
+## Diagram 15: Admin Route Guard and Redirect Flow (ADMIN-01)
+
+```mermaid
+flowchart LR
+  USER[User opens /admin] --> GUARD[Frontend AdminGuard]
+  GUARD --> TOKEN{Access token present?}
+  TOKEN -->|No| R401[Redirect /access-denied?reason=unauthorized]
+  TOKEN -->|Yes| ROLE{Role == admin?}
+  ROLE -->|No| R403[Redirect /access-denied?reason=forbidden]
+  ROLE -->|Yes| ADMIN[Render Admin Shell]
+
+  GUARD --> TAGS[Sentry tags: workspace=admin, role, route]
+  TAGS --> SENTRY[Sentry]
+```

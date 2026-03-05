@@ -19,6 +19,9 @@ export function RootLayout() {
           <Button color="inherit" component={Link} to="/candidate">
             {t("candidateWorkspace")}
           </Button>
+          <Button color="inherit" component={Link} to="/admin">
+            {t("adminWorkspace")}
+          </Button>
           <Button
             color="inherit"
             onClick={() => void i18n.changeLanguage(currentLanguage === "ru" ? "en" : "ru")}
