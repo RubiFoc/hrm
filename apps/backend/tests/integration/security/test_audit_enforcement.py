@@ -164,14 +164,37 @@ def test_api_permission_decisions_are_audited(configured_app) -> None:
 
 def test_auth_login_is_audited(configured_app) -> None:
     """Verify auth login endpoint records successful audit event."""
-    configured, _, database_url = configured_app
+    configured, context_holder, database_url = configured_app
 
-    login_subject = str(uuid4())
+    login_identifier = f"hr-{uuid4().hex[:8]}"
+    login_password = "IntegrationPassword!123"
+    login_email = f"{login_identifier}@example.com"
     with TestClient(configured) as client:
+        context_holder["context"] = AuthContext(
+            subject_id=uuid4(),
+            role="admin",
+            session_id=uuid4(),
+            token_id=uuid4(),
+            expires_at=9999999999,
+        )
+        create_response = client.post(
+            "/api/v1/admin/staff",
+            headers={"X-Request-ID": "req-create-staff-1"},
+            json={
+                "login": login_identifier,
+                "email": login_email,
+                "password": login_password,
+                "role": "hr",
+                "is_active": True,
+            },
+        )
+        assert create_response.status_code == 200
+        created_staff_id = create_response.json()["staff_id"]
+
         response = client.post(
             "/api/v1/auth/login",
             headers={"X-Request-ID": "req-login-1"},
-            json={"subject_id": login_subject, "role": "hr"},
+            json={"identifier": login_identifier, "password": login_password},
         )
         assert response.status_code == 200
         assert response.headers.get("X-Request-ID") == "req-login-1"
@@ -180,7 +203,7 @@ def test_auth_login_is_audited(configured_app) -> None:
     login_events = [event for event in events if event.action == "auth.login"]
     assert len(login_events) == 1
     assert login_events[0].result == "success"
-    assert login_events[0].actor_sub == login_subject
+    assert login_events[0].actor_sub == created_staff_id
     assert login_events[0].actor_role == "hr"
     assert login_events[0].correlation_id == "req-login-1"
 
