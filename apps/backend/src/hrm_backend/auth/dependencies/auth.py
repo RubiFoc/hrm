@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import Depends, Request, Security
+from fastapi import Depends, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from redis import Redis
 from sqlalchemy.orm import Session
@@ -90,15 +90,6 @@ def get_bearer_token(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Security(_bearer_scheme)],
 ) -> str:
     """Extract bearer access token from OpenAPI-aware HTTPBearer security dependency."""
-    if isinstance(credentials, Request):  # compatibility for direct unit-test calls
-        raw_header = credentials.headers.get("Authorization")
-        if raw_header is None:
-            raise unauthorized("Missing Authorization header: use Bearer token")
-        scheme, _, token = raw_header.partition(" ")
-        if scheme.lower() != "bearer" or not token.strip():
-            raise unauthorized("Malformed Authorization header: use Bearer <token>")
-        return token.strip()
-
     if credentials is None:
         raise unauthorized("Missing Authorization header: use Bearer token")
     if credentials.scheme.lower() != "bearer" or not credentials.credentials.strip():

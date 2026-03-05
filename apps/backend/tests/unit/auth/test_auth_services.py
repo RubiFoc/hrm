@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest
 from fastapi import HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
 from redis.exceptions import RedisError
-from starlette.requests import Request
 
 from hrm_backend.auth.dependencies.auth import get_bearer_token
+from hrm_backend.auth.infra.security.password_service import PasswordService
 from hrm_backend.auth.services.auth_service import AuthService
 from hrm_backend.auth.services.denylist_service import DenylistService
 from hrm_backend.auth.services.token_service import TokenService
@@ -82,25 +85,113 @@ class FailingReadDenylistDAO(InMemoryDenylistDAO):
         raise RedisError("redis unavailable")
 
 
-def _request_with_headers(headers: dict[str, str]) -> Request:
-    """Build minimal Starlette request object with provided HTTP headers.
+@dataclass
+class _StaffAccountRow:
+    """In-memory staff account row for auth service tests."""
+
+    staff_id: str
+    login: str
+    email: str
+    password_hash: str
+    role: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class InMemoryStaffAccountDAO:
+    """Simple in-memory staff account DAO test double."""
+
+    def __init__(self) -> None:
+        """Initialize in-memory staff account storage."""
+        self._rows: dict[str, _StaffAccountRow] = {}
+
+    def create_account(
+        self,
+        *,
+        login: str,
+        email: str,
+        password_hash: str,
+        role: str,
+        is_active: bool = True,
+    ) -> _StaffAccountRow:
+        """Store and return one in-memory staff row."""
+        now = datetime.now(UTC)
+        row = _StaffAccountRow(
+            staff_id=f"00000000-0000-0000-0000-{len(self._rows) + 1:012d}",
+            login=login,
+            email=email,
+            password_hash=password_hash,
+            role=role,
+            is_active=is_active,
+            created_at=now,
+            updated_at=now,
+        )
+        self._rows[row.staff_id] = row
+        return row
+
+    def get_by_identifier(self, identifier: str) -> _StaffAccountRow | None:
+        """Find staff account by login/e-mail identifier."""
+        normalized = identifier.strip().lower()
+        return next(
+            (
+                row
+                for row in self._rows.values()
+                if row.login == normalized or row.email == normalized
+            ),
+            None,
+        )
+
+    def get_by_login(self, login: str) -> _StaffAccountRow | None:
+        """Find staff account by normalized login."""
+        return next((row for row in self._rows.values() if row.login == login), None)
+
+    def get_by_email(self, email: str) -> _StaffAccountRow | None:
+        """Find staff account by normalized e-mail."""
+        return next((row for row in self._rows.values() if row.email == email), None)
+
+    def get_by_id(self, staff_id: str) -> _StaffAccountRow | None:
+        """Find staff account by identifier."""
+        return self._rows.get(staff_id)
+
+
+class InMemoryRegistrationKeyDAO:
+    """No-op registration key DAO used for dependency completeness."""
+
+    def create_key(self, **kwargs):  # pragma: no cover - unused in this test module
+        raise NotImplementedError
+
+    def get_by_employee_key(self, employee_key: str):  # pragma: no cover - unused
+        raise NotImplementedError
+
+    def consume_key(self, **kwargs):  # pragma: no cover - unused
+        raise NotImplementedError
+
+
+def _seed_staff_account(
+    auth_service: AuthService,
+    *,
+    login: str,
+    email: str,
+    password: str,
+    role: str,
+) -> None:
+    """Create one staff account used for login/token lifecycle tests.
 
     Args:
-        headers: Header map represented as plain string pairs.
-
-    Returns:
-        Request: Request object suitable for dependency function testing.
+        auth_service: Auth service instance under test.
+        login: Staff login.
+        email: Staff e-mail.
+        password: Raw staff password.
+        role: Staff role.
     """
-    scope = {
-        "type": "http",
-        "method": "GET",
-        "path": "/",
-        "headers": [
-            (key.lower().encode("latin-1"), value.encode("latin-1"))
-            for key, value in headers.items()
-        ],
-    }
-    return Request(scope)
+    auth_service.create_staff_account(
+        login=login,
+        email=email,
+        password=password,
+        role=role,
+        is_active=True,
+    )
 
 
 def _build_settings() -> AppSettings:
@@ -135,9 +226,15 @@ def _build_auth_service(dao: InMemoryDenylistDAO | None = None) -> tuple[AuthSer
         dao=denylist_dao,
         refresh_token_ttl_seconds=settings.refresh_token_ttl_seconds,
     )
+    staff_account_dao = InMemoryStaffAccountDAO()
+    registration_key_dao = InMemoryRegistrationKeyDAO()
+    password_service = PasswordService()
     auth_service = AuthService(
         token_service=token_service,
         denylist_service=denylist_service,
+        staff_account_dao=staff_account_dao,  # type: ignore[arg-type]
+        registration_key_dao=registration_key_dao,  # type: ignore[arg-type]
+        password_service=password_service,
         settings=settings,
     )
     return auth_service, token_service
@@ -146,8 +243,16 @@ def _build_auth_service(dao: InMemoryDenylistDAO | None = None) -> tuple[AuthSer
 def test_login_returns_access_and_refresh_jwt_tokens() -> None:
     """Verify login issues valid JWT access/refresh pair with shared session id."""
     auth_service, token_service = _build_auth_service()
+    password = "StrongPassword!123"
+    _seed_staff_account(
+        auth_service,
+        login="hr-user-1",
+        email="hr-user-1@example.com",
+        password=password,
+        role="hr",
+    )
 
-    token_response = auth_service.login(subject_id="hr-user-1", role="hr")
+    token_response = auth_service.login(identifier="hr-user-1", password=password)
 
     access_claims = token_service.decode_access_token(token_response.access_token)
     refresh_claims = token_service.decode_refresh_token(token_response.refresh_token)
@@ -166,19 +271,35 @@ def test_login_returns_access_and_refresh_jwt_tokens() -> None:
 def test_access_token_validation_passes_when_not_denylisted() -> None:
     """Verify access token is valid when jti and sid are absent from denylist."""
     auth_service, _ = _build_auth_service()
-    token_response = auth_service.login(subject_id="candidate-1", role="candidate")
+    password = "StrongPassword!123"
+    _seed_staff_account(
+        auth_service,
+        login="employee-1",
+        email="employee-1@example.com",
+        password=password,
+        role="employee",
+    )
+    token_response = auth_service.login(identifier="employee-1", password=password)
 
     auth_context = auth_service.authenticate_access_token(token_response.access_token)
 
     assert isinstance(auth_context.subject_id, UUID)
-    assert auth_context.role == "candidate"
+    assert auth_context.role == "employee"
     assert auth_context.session_id == token_response.session_id
 
 
 def test_access_token_rejected_when_jti_is_denylisted() -> None:
     """Verify access token is rejected when its jti is denylisted."""
     auth_service, token_service = _build_auth_service()
-    token_response = auth_service.login(subject_id="candidate-2", role="candidate")
+    password = "StrongPassword!123"
+    _seed_staff_account(
+        auth_service,
+        login="manager-1",
+        email="manager-1@example.com",
+        password=password,
+        role="manager",
+    )
+    token_response = auth_service.login(identifier="manager-1", password=password)
     access_claims = token_service.decode_access_token(token_response.access_token)
 
     auth_service._denylist_service.deny_jti_until_exp(access_claims.jti, access_claims.exp)
@@ -194,7 +315,15 @@ def test_access_token_rejected_when_jti_is_denylisted() -> None:
 def test_access_token_rejected_when_sid_is_denylisted() -> None:
     """Verify access token is rejected when session id is denylisted."""
     auth_service, token_service = _build_auth_service()
-    token_response = auth_service.login(subject_id="employee-1", role="employee")
+    password = "StrongPassword!123"
+    _seed_staff_account(
+        auth_service,
+        login="employee-1",
+        email="employee-1@example.com",
+        password=password,
+        role="employee",
+    )
+    token_response = auth_service.login(identifier="employee-1", password=password)
     access_claims = token_service.decode_access_token(token_response.access_token)
 
     auth_service._denylist_service.deny_sid_for_refresh_window(access_claims.sid)
@@ -210,7 +339,15 @@ def test_access_token_rejected_when_sid_is_denylisted() -> None:
 def test_refresh_rotates_pair_and_rejects_old_refresh_token() -> None:
     """Verify refresh rotates token pair and rejects replay of old refresh token."""
     auth_service, _ = _build_auth_service()
-    initial_pair = auth_service.login(subject_id="hr-rot", role="hr")
+    password = "StrongPassword!123"
+    _seed_staff_account(
+        auth_service,
+        login="hr-rot",
+        email="hr-rot@example.com",
+        password=password,
+        role="hr",
+    )
+    initial_pair = auth_service.login(identifier="hr-rot", password=password)
 
     rotated_pair = auth_service.refresh(initial_pair.refresh_token)
 
@@ -228,7 +365,15 @@ def test_refresh_rotates_pair_and_rejects_old_refresh_token() -> None:
 def test_logout_invalidates_access_and_refresh_by_sid() -> None:
     """Verify logout denylists access jti and full sid refresh window."""
     auth_service, _ = _build_auth_service()
-    token_pair = auth_service.login(subject_id="leader-1", role="leader")
+    password = "StrongPassword!123"
+    _seed_staff_account(
+        auth_service,
+        login="leader-1",
+        email="leader-1@example.com",
+        password=password,
+        role="leader",
+    )
+    token_pair = auth_service.login(identifier="leader-1", password=password)
 
     auth_context = auth_service.authenticate_access_token(token_pair.access_token)
     auth_service.logout(auth_context)
@@ -247,7 +392,15 @@ def test_logout_invalidates_access_and_refresh_by_sid() -> None:
 def test_fail_closed_when_redis_denylist_is_unavailable() -> None:
     """Verify token validation fails closed when denylist backend is unavailable."""
     auth_service, _ = _build_auth_service(dao=FailingReadDenylistDAO())
-    token_pair = auth_service.login(subject_id="candidate-3", role="candidate")
+    password = "StrongPassword!123"
+    _seed_staff_account(
+        auth_service,
+        login="hr-2",
+        email="hr-2@example.com",
+        password=password,
+        role="hr",
+    )
+    token_pair = auth_service.login(identifier="hr-2", password=password)
 
     with pytest.raises(HTTPException) as exc_info:
         auth_service.authenticate_access_token(token_pair.access_token)
@@ -258,20 +411,19 @@ def test_fail_closed_when_redis_denylist_is_unavailable() -> None:
 
 def test_get_bearer_token_extracts_token_value() -> None:
     """Verify bearer dependency extracts token from authorization header."""
-    request = _request_with_headers({"Authorization": "Bearer token-value-123"})
+    credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials="token-value-123")
 
-    assert get_bearer_token(request) == "token-value-123"
+    assert get_bearer_token(credentials) == "token-value-123"
 
 
 def test_get_bearer_token_rejects_missing_and_malformed_headers() -> None:
     """Verify bearer dependency rejects missing and malformed auth headers."""
-    missing_header_request = _request_with_headers({})
-    malformed_header_request = _request_with_headers({"Authorization": "Basic abc123"})
+    malformed_credentials = HTTPAuthorizationCredentials(scheme="Basic", credentials="abc123")
 
     with pytest.raises(HTTPException) as missing_exc:
-        get_bearer_token(missing_header_request)
+        get_bearer_token(None)
     assert "Missing Authorization header" in str(missing_exc.value.detail)
 
     with pytest.raises(HTTPException) as malformed_exc:
-        get_bearer_token(malformed_header_request)
+        get_bearer_token(malformed_credentials)
     assert "Malformed Authorization header" in str(malformed_exc.value.detail)

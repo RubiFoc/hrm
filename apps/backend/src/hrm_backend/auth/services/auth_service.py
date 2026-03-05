@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
+from uuid import UUID, uuid4
 
 from fastapi import HTTPException, status
 
@@ -93,42 +93,25 @@ class AuthService:
     def login(
         self,
         *,
-        identifier: str | None = None,
-        password: str | None = None,
-        subject_id: str | UUID | None = None,
-        role: str | None = None,
+        identifier: str,
+        password: str,
     ) -> TokenResponse:
-        """Issue JWT token pair for staff account.
-
-        Supports both new login/password flow and legacy subject/role flow for compatibility.
-        """
-        if identifier is not None and password is not None:
-            self._require_account_dependencies()
-            account = self._staff_account_dao.get_by_identifier(identifier)
-            if account is None or not account.is_active:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid credentials",
-                )
-
-            if not self._password_service.verify_password(password, account.password_hash):
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Invalid credentials",
-                )
-
-            return self._issue_token_pair(staff_id=UUID(account.staff_id), role=account.role)
-
-        if subject_id is not None and role is not None:
-            return self._issue_token_pair(
-                staff_id=self._coerce_uuid(subject_id),
-                role=role,
+        """Issue JWT token pair for staff account by login or e-mail + password."""
+        self._require_account_dependencies()
+        account = self._staff_account_dao.get_by_identifier(identifier)
+        if account is None or not account.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
             )
 
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Login requires identifier/password or subject_id/role",
-        )
+        if not self._password_service.verify_password(password, account.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials",
+            )
+
+        return self._issue_token_pair(staff_id=UUID(account.staff_id), role=account.role)
 
     def create_staff_account(
         self,
@@ -268,19 +251,6 @@ class AuthService:
             expires_in=self._settings.access_token_ttl_seconds,
             session_id=session_id,
         )
-
-    @staticmethod
-    def _coerce_uuid(value: str | UUID) -> UUID:
-        """Normalize incoming identifier to UUID.
-
-        Legacy non-UUID subject ids are deterministically mapped with UUIDv5.
-        """
-        if isinstance(value, UUID):
-            return value
-        try:
-            return UUID(value)
-        except ValueError:
-            return uuid5(NAMESPACE_URL, value)
 
     def _require_account_dependencies(self) -> None:
         """Ensure account-backed dependencies are available."""
