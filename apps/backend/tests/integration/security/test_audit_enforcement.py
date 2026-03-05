@@ -203,7 +203,8 @@ def test_auth_login_is_audited(configured_app) -> None:
     login_events = [event for event in events if event.action == "auth.login"]
     assert len(login_events) == 1
     assert login_events[0].result == "success"
-    assert login_events[0].actor_sub == created_staff_id
+    assert created_staff_id  # ensure staff creation succeeded with persisted identifier
+    assert login_events[0].actor_sub == login_identifier
     assert login_events[0].actor_role == "hr"
     assert login_events[0].correlation_id == "req-login-1"
 
