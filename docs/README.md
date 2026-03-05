@@ -21,6 +21,7 @@ This folder is the single source of truth for project context required for deliv
 - `architecture/decomposition.md`: Architecture breakdown by domains, services, and modules
 - `architecture/decisions.md`: Decision log (ADR-lite)
 - `architecture/adr-template.md`: Template for major decisions
+- `api/openapi.frozen.json`: Frozen OpenAPI contract used for CI drift checks and frontend type generation
 - `engineering/best-practices.md`: Mandatory development best practices
 - `operations/runbook.md`: Operational procedures and incident basics
 - `operations/release-checklist.md`: Release readiness checks

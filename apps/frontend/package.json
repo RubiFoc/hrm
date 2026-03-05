@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test": "vitest"
+    "test": "vitest",
+    "api:types:generate": "npx --yes openapi-typescript@7.5.2 ../../docs/api/openapi.frozen.json -o src/api/generated/openapi-types.ts",
+    "api:types:check": "npm run api:types:generate && test -s src/api/generated/openapi-types.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
