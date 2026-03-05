@@ -39,6 +39,27 @@ class StaffResponse(BaseModel):
     updated_at: datetime
 
 
+class AdminStaffListItem(BaseModel):
+    """One staff record returned by admin staff list endpoint."""
+
+    staff_id: UUID
+    login: str
+    email: str
+    role: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class AdminStaffListResponse(BaseModel):
+    """Paginated response payload for admin staff list endpoint."""
+
+    items: list[AdminStaffListItem]
+    total: int
+    limit: int
+    offset: int
+
+
 class EmployeeRegistrationKeyResponse(BaseModel):
     """Issued employee registration key payload."""
 

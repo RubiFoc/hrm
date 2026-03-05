@@ -1,7 +1,7 @@
 # RBAC Role Matrix (Phase 1 Baseline)
 
 ## Last Updated
-- Date: 2026-03-04
+- Date: 2026-03-05
 - Updated by: backend-engineer
 
 This matrix is the access baseline for `TASK-01-01`, `TASK-01-02`, `TASK-01-03`,
@@ -24,6 +24,8 @@ Enforcement source of truth:
 | Permission | admin | hr | manager | employee | leader | accountant |
 | --- | --- | --- | --- | --- | --- | --- |
 | `admin:staff:create` | yes | no | no | no | no | no |
+| `admin:staff:list` | yes | no | no | no | no | no |
+| `admin:staff:update` | yes | no | no | no | no | no |
 | `admin:employee_key:create` | yes | yes | no | no | no | no |
 | `vacancy:read` | yes | yes | yes | no | yes | no |
 | `vacancy:create` | yes | yes | no | no | no | no |

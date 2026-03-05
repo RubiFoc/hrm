@@ -1,7 +1,7 @@
 # Frontend Requirements (React.js)
 
 ## Last Updated
-- Date: 2026-03-03
+- Date: 2026-03-05
 - Updated by: architect
 
 ## Fixed Technical Requirement
@@ -49,6 +49,16 @@
   - `role=<resolved_role_or_anonymous>`
   - `route=<pathname>`
 - Frontend API typing must consume artifacts generated from frozen OpenAPI contract.
+
+## ADMIN-02 Baseline
+- Add `/admin/staff` route under existing admin guard.
+- Deliver staff management screen with:
+  - server-driven pagination (`limit`, `offset`);
+  - filters (`search`, `role`, `is_active`);
+  - row update action limited to `role` and `is_active`.
+- Handle backend reason-code failures (`404/409/422`) with RU/EN user-readable messages.
+- Keep Sentry route tagging for admin workspace and ensure `/admin/staff` emits `route=/admin/staff`.
+- Keep frontend API layer typed against regenerated frozen OpenAPI artifacts.
 
 ## Library Baseline (Popular Ready-Made Stack)
 - UI components: Material UI (MUI).

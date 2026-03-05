@@ -3,6 +3,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { AdminGuard } from "./guards/AdminGuard";
 import { RootLayout } from "../components/RootLayout";
 import { AccessDeniedPage } from "../pages/AccessDeniedPage";
+import { AdminStaffManagementPage } from "../pages/AdminStaffManagementPage";
 import { AdminShellPage } from "../pages/AdminShellPage";
 import { CandidatePage } from "../pages/CandidatePage";
 import { HrDashboardPage } from "../pages/HrDashboardPage";
@@ -27,6 +28,10 @@ export const appRoutes = [
           {
             index: true,
             element: <AdminShellPage />,
+          },
+          {
+            path: "staff",
+            element: <AdminStaffManagementPage />,
           },
         ],
       },

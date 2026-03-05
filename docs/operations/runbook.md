@@ -1,8 +1,8 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-04
-- Updated by: devops-engineer + backend-engineer
+- Date: 2026-03-05
+- Updated by: devops-engineer + backend-engineer + frontend-engineer
 
 ## Local Environment (Docker Compose)
 ### Prerequisites
@@ -120,6 +120,25 @@ Shortcut wrappers:
   1. Reproduce with browser local storage state (`hrm_access_token`, `hrm_user_role`).
   2. Verify redirect reason query param (`unauthorized` or `forbidden`).
   3. Check Sentry events for required tags and route breadcrumbs.
+
+### Admin Staff Management Diagnostics (`/admin/staff`)
+- Endpoints:
+  - `GET /api/v1/admin/staff`
+  - `PATCH /api/v1/admin/staff/{staff_id}`
+- Expected guard/error behavior:
+  - `404` + `detail=staff_not_found`
+  - `409` + `detail=self_modification_forbidden`
+  - `409` + `detail=last_admin_protection`
+  - `422` + `detail=empty_patch|unsupported_role|validation_failed`
+- Audit actions:
+  - `admin.staff:list`
+  - `admin.staff:update`
+- Triage sequence:
+  1. Capture failing response with `X-Request-ID`.
+  2. Check `detail` reason-code and request payload (`role`, `is_active` patch semantics).
+  3. Query `audit_events` by `action in ('admin.staff:list','admin.staff:update')` and `correlation_id`.
+  4. For `last_admin_protection`, verify number of active admin rows in `staff_accounts`.
+  5. For `self_modification_forbidden`, verify actor `subject_id` equals target `staff_id`.
 
 ## Compliance Baseline (Dev Non-Blocking, Prod Blocking)
 This section defines provisional operational controls until final legal/security sign-off.

@@ -1,20 +1,57 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
 
 import "./i18n";
 import { appRoutes } from "./router";
 
+const fetchMock = vi.fn();
+vi.stubGlobal("fetch", fetchMock);
+
+const { setTagMock } = vi.hoisted(() => ({
+  setTagMock: vi.fn(),
+}));
+vi.mock("@sentry/react", () => ({
+  setTag: setTagMock,
+}));
+
 function renderWithPath(pathname: string) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
   const memoryRouter = createMemoryRouter(appRoutes, {
     initialEntries: [pathname],
   });
-  render(<RouterProvider router={memoryRouter} />);
+  render(
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={memoryRouter} />
+    </QueryClientProvider>,
+  );
 }
 
 describe("admin route guard", () => {
   beforeEach(() => {
     window.localStorage.clear();
+    fetchMock.mockReset();
+    setTagMock.mockReset();
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          items: [],
+          total: 0,
+          limit: 20,
+          offset: 0,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
   });
 
   it("redirects unauthorized user to access-denied", async () => {
@@ -36,5 +73,14 @@ describe("admin route guard", () => {
 
     renderWithPath("/admin");
     expect(await screen.findByRole("heading", { name: /админ пространство/i })).toBeDefined();
+  });
+
+  it("allows admin user into /admin/staff and sets sentry route tag", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "admin");
+
+    renderWithPath("/admin/staff");
+    expect(await screen.findByRole("heading", { name: /управление сотрудниками/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("route", "/admin/staff");
   });
 });

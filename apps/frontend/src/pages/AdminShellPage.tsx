@@ -1,10 +1,24 @@
-import { Card, CardContent, Grid2, Typography } from "@mui/material";
+import { Card, CardActions, CardContent, Grid2, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
 import type { ApiPath } from "../api";
 import { typedApiClient } from "../api";
 
-const adminCards = ["users", "audit", "settings"] as const;
+const adminCards = [
+  {
+    key: "users",
+    to: "/admin/staff",
+  },
+  {
+    key: "audit",
+    to: null,
+  },
+  {
+    key: "settings",
+    to: null,
+  },
+] as const;
 
 const adminContractPath: ApiPath = "/api/v1/admin/staff";
 void typedApiClient;
@@ -20,12 +34,23 @@ export function AdminShellPage() {
         <Typography variant="body2">{t("adminWorkspaceSubtitle")}</Typography>
       </Grid2>
       {adminCards.map((item) => (
-        <Grid2 size={{ xs: 12, sm: 4 }} key={item}>
+        <Grid2 size={{ xs: 12, sm: 4 }} key={item.key}>
           <Card>
             <CardContent>
-              <Typography variant="h6">{t(`adminCard.${item}.title`)}</Typography>
-              <Typography variant="body2">{t(`adminCard.${item}.description`)}</Typography>
+              <Typography variant="h6">{t(`adminCard.${item.key}.title`)}</Typography>
+              <Typography variant="body2">{t(`adminCard.${item.key}.description`)}</Typography>
             </CardContent>
+            {item.to ? (
+              <CardActions>
+                <Typography
+                  component={Link}
+                  to={item.to}
+                  sx={{ textDecoration: "none", fontWeight: 600, color: "primary.main" }}
+                >
+                  {t("adminCard.open")}
+                </Typography>
+              </CardActions>
+            ) : null}
           </Card>
         </Grid2>
       ))}

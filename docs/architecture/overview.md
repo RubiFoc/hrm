@@ -1,8 +1,8 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-04
-- Updated by: architect + backend-engineer
+- Date: 2026-03-05
+- Updated by: architect + backend-engineer + frontend-engineer
 
 ## System Context
 HRM platform for Belarus and Russia that supports candidate selection, fair interview workflows, onboarding, HR automation, and operational workflows for HR, managers, employees, leaders, and accountants.
@@ -62,6 +62,9 @@ flowchart LR
    anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue.
 6. Authentication Flow:
    staff key issuance -> staff register/login (login/email + password) -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
+7. Admin Staff Governance Flow:
+   admin opens `/admin/staff` -> paginated/filterable staff list -> patch `role`/`is_active` ->
+   strict guard (self-protection + last-active-admin protection) -> audit success/failure reason codes.
 
 ## Data Boundaries
 - Source of truth entities:

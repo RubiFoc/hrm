@@ -3,11 +3,14 @@
 from hrm_backend.auth.schemas.requests import (
     AdminCreateEmployeeKeyRequest,
     AdminCreateStaffRequest,
+    AdminStaffUpdateRequest,
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
 )
 from hrm_backend.auth.schemas.responses import (
+    AdminStaffListItem,
+    AdminStaffListResponse,
     EmployeeRegistrationKeyResponse,
     MeResponse,
     StaffResponse,
@@ -20,10 +23,13 @@ __all__ = [
     "LoginRequest",
     "RefreshRequest",
     "AdminCreateStaffRequest",
+    "AdminStaffUpdateRequest",
     "AdminCreateEmployeeKeyRequest",
     "TokenResponse",
     "MeResponse",
     "StaffResponse",
+    "AdminStaffListItem",
+    "AdminStaffListResponse",
     "EmployeeRegistrationKeyResponse",
     "TokenClaims",
     "AuthContext",

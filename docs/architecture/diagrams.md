@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-05
-- Updated by: architect + backend-engineer
+- Updated by: architect + backend-engineer + frontend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -451,4 +451,35 @@ flowchart LR
 
   GUARD --> TAGS[Sentry tags: workspace=admin, role, route]
   TAGS --> SENTRY[Sentry]
+```
+
+## Diagram 16: Admin Staff Management Flow (ADMIN-02)
+
+```mermaid
+sequenceDiagram
+  participant ADM as Admin User
+  participant UI as React Admin Staff Screen (/admin/staff)
+  participant API as Admin Router
+  participant AUTH as Auth Service
+  participant DAO as StaffAccountDAO
+  participant AUD as Audit Service
+
+  ADM->>UI: Open /admin/staff
+  UI->>API: GET /api/v1/admin/staff?limit&offset&search&role&is_active
+  API->>AUTH: list_staff_accounts(...)
+  AUTH->>DAO: list_accounts + count_accounts
+  DAO-->>AUTH: items + total
+  AUTH-->>API: AdminStaffListResponse
+  API->>AUD: admin.staff:list success/failure
+  API-->>UI: 200 list payload or 422
+
+  ADM->>UI: Update row role/is_active
+  UI->>API: PATCH /api/v1/admin/staff/{staff_id}
+  API->>AUTH: update_staff_account(...)
+  AUTH->>DAO: get_by_id + count_active_admins + update_account_fields
+  AUTH-->>API: StaffResponse or 404/409/422
+  API->>AUD: admin.staff:update success/failure + reason_code
+  API-->>UI: updated row or localized error message
+
+  Note over AUTH: Strict guard:\n- self-demotion/self-disable forbidden\n- last-active-admin demotion/disable forbidden
 ```

@@ -10,6 +10,8 @@ from hrm_backend.auth.infra.postgres.employee_registration_key_dao import Employ
 from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
 from hrm_backend.auth.infra.security.password_service import PasswordService
 from hrm_backend.auth.schemas.responses import (
+    AdminStaffListItem,
+    AdminStaffListResponse,
     EmployeeRegistrationKeyResponse,
     MeResponse,
     StaffResponse,
@@ -143,15 +145,133 @@ class AuthService:
             role=role,
             is_active=is_active,
         )
-        return StaffResponse(
-            staff_id=UUID(account.staff_id),
-            login=account.login,
-            email=account.email,
-            role=account.role,
-            is_active=account.is_active,
-            created_at=account.created_at,
-            updated_at=account.updated_at,
+        return self._to_staff_response(account)
+
+    def list_staff_accounts(
+        self,
+        *,
+        limit: int,
+        offset: int,
+        search: str | None = None,
+        role: str | None = None,
+        is_active: bool | None = None,
+    ) -> AdminStaffListResponse:
+        """List staff accounts with pagination and optional filters.
+
+        Args:
+            limit: Maximum number of rows to return.
+            offset: Number of rows to skip from ordered result.
+            search: Optional case-insensitive search term for login/e-mail.
+            role: Optional role filter.
+            is_active: Optional active-state filter.
+
+        Returns:
+            AdminStaffListResponse: Paginated staff list payload.
+
+        Raises:
+            HTTPException: If role filter value is unsupported.
+        """
+        dao = self._require_staff_account_dao()
+        if role is not None and role not in _STAFF_ROLES:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="unsupported_role",
+            )
+
+        entities = dao.list_accounts(
+            limit=limit,
+            offset=offset,
+            search=search,
+            role=role,
+            is_active=is_active,
         )
+        total = dao.count_accounts(search=search, role=role, is_active=is_active)
+        items = [
+            AdminStaffListItem(
+                staff_id=UUID(entity.staff_id),
+                login=entity.login,
+                email=entity.email,
+                role=entity.role,
+                is_active=entity.is_active,
+                created_at=entity.created_at,
+                updated_at=entity.updated_at,
+            )
+            for entity in entities
+        ]
+        return AdminStaffListResponse(items=items, total=total, limit=limit, offset=offset)
+
+    def update_staff_account(
+        self,
+        *,
+        staff_id: UUID,
+        role: str | None,
+        is_active: bool | None,
+        actor_subject_id: UUID,
+    ) -> StaffResponse:
+        """Update role and/or active-state for staff account with strict safety guard.
+
+        Args:
+            staff_id: Target staff account identifier.
+            role: Optional replacement role.
+            is_active: Optional replacement active-state.
+            actor_subject_id: Authenticated actor identifier.
+
+        Returns:
+            StaffResponse: Updated staff account payload.
+
+        Raises:
+            HTTPException: For missing account, unsupported role, empty patch payload,
+                forbidden self-modification, or last-admin protection.
+        """
+        dao = self._require_staff_account_dao()
+
+        if role is None and is_active is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="empty_patch",
+            )
+        if role is not None and role not in _STAFF_ROLES:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="unsupported_role",
+            )
+
+        entity = dao.get_by_id(str(staff_id))
+        if entity is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="staff_not_found",
+            )
+
+        resolved_role = role if role is not None else entity.role
+        resolved_is_active = is_active if is_active is not None else entity.is_active
+        actor_id = str(actor_subject_id)
+        if entity.staff_id == actor_id:
+            if entity.role == "admin" and resolved_role != "admin":
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="self_modification_forbidden",
+                )
+            if resolved_is_active is False:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="self_modification_forbidden",
+                )
+
+        if entity.role == "admin" and entity.is_active:
+            losing_admin_privilege = resolved_role != "admin" or resolved_is_active is False
+            if losing_admin_privilege and dao.count_active_admins() <= 1:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="last_admin_protection",
+                )
+
+        updated = dao.update_account_fields(
+            entity=entity,
+            role=role,
+            is_active=is_active,
+        )
+        return self._to_staff_response(updated)
 
     def create_employee_key(
         self,
@@ -251,6 +371,42 @@ class AuthService:
             expires_in=self._settings.access_token_ttl_seconds,
             session_id=session_id,
         )
+
+    @staticmethod
+    def _to_staff_response(account) -> StaffResponse:
+        """Map persistent staff account entity to API response schema.
+
+        Args:
+            account: Persistent staff account row/entity.
+
+        Returns:
+            StaffResponse: Serialized staff account payload.
+        """
+        return StaffResponse(
+            staff_id=UUID(account.staff_id),
+            login=account.login,
+            email=account.email,
+            role=account.role,
+            is_active=account.is_active,
+            created_at=account.created_at,
+            updated_at=account.updated_at,
+        )
+
+    def _require_staff_account_dao(self) -> StaffAccountDAO:
+        """Ensure staff account DAO dependency is configured.
+
+        Returns:
+            StaffAccountDAO: Configured DAO instance.
+
+        Raises:
+            HTTPException: If account storage dependency is not configured.
+        """
+        if self._staff_account_dao is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Account storage dependencies are not configured",
+            )
+        return self._staff_account_dao
 
     def _require_account_dependencies(self) -> None:
         """Ensure account-backed dependencies are available."""

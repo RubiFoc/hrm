@@ -87,6 +87,15 @@ class AdminCreateStaffRequest(BaseModel):
         return normalized
 
 
+class AdminStaffUpdateRequest(BaseModel):
+    """Input payload for admin-managed staff role/active-state updates."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    role: StaffRoleClaim | None = None
+    is_active: bool | None = None
+
+
 class AdminCreateEmployeeKeyRequest(BaseModel):
     """Input payload for employee registration key issuance."""
 
