@@ -97,7 +97,7 @@ apps/backend/tests/
 | Capability | Unit Coverage | Integration Coverage | Required Evidence |
 | --- | --- | --- | --- |
 | Password policy and hashing (`argon2`) | `tests/unit/auth/*` | `tests/integration/auth/test_auth_stack.py` | `register/login` happy and negative scenarios |
-| Employee key lifecycle (`valid/expired/used`) | `tests/unit/auth/*` | `tests/integration/auth/test_auth_stack.py` | `422` on invalid key paths |
+| Employee key lifecycle (`valid/expired/used/revoked`) | `tests/unit/auth/*` | `tests/integration/auth/test_auth_stack.py` | `422` on invalid key paths |
 | UUID claims and token contract | `tests/unit/auth/test_auth_services.py` | auth integration suite | `sub/sid/jti` are UUID-backed |
 | Login contract (`identifier + password` only) | `tests/unit/auth/test_auth_services.py` | `tests/integration/security/test_audit_enforcement.py` (`test_auth_login_is_audited`) | Login accepts canonical identifier/password payload |
 | Swagger bearer security scheme | N/A | OpenAPI contract check in auth integration suite | Swagger UI contains `Authorize` flow |
@@ -135,6 +135,18 @@ apps/backend/tests/
 | Admin audit events for list/update | N/A | `test_admin_staff_audit_events_capture_success_and_failure_reason_codes` | `admin.staff:list` and `admin.staff:update` success/failure with reason codes |
 | Frontend `/admin/staff` rendering and interactions | `apps/frontend/src/pages/AdminStaffManagementPage.test.tsx` | Route guard tests in `apps/frontend/src/app/router.admin.test.tsx` | filters, PATCH action, localized `404/409/422` error mapping |
 | Sentry route tag for admin staff screen | N/A | `apps/frontend/src/app/router.admin.test.tsx` + QA Sentry smoke | `route=/admin/staff` tag emitted by `AdminGuard` |
+
+## Employee Key Lifecycle Verification (ADMIN-03)
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Employee-key DAO list/count/revoke | `apps/backend/tests/unit/admin/test_employee_registration_key_dao.py` | Covered by admin employee-key integration API tests | `uv run --project apps/backend pytest -q` |
+| Employee-key service guard and status model | `apps/backend/tests/unit/admin/test_admin_employee_key_service.py` | `apps/backend/tests/integration/admin/test_admin_employee_key_management.py` (`404/409` reason-code paths) | reason codes `key_not_found`, `key_already_used`, `key_already_expired`, `key_already_revoked` |
+| Admin employee-key API contracts | N/A | `apps/backend/tests/integration/admin/test_admin_employee_key_management.py` | `GET /api/v1/admin/employee-keys`, `POST /api/v1/admin/employee-keys/{key_id}/revoke` |
+| RBAC for key lifecycle endpoints | `tests/unit/rbac/test_rbac.py` | `test_non_privileged_roles_get_403_for_employee_key_list_and_revoke` | `admin/hr` allowed, non-privileged roles denied |
+| Auth consume path rejects revoked keys | `apps/backend/tests/unit/auth/test_auth_employee_registration_key_dao.py` | Covered by auth stack invalid-key behavior | revoked keys are not consumable |
+| Frontend `/admin/employee-keys` rendering and interactions | `apps/frontend/src/pages/AdminEmployeeKeysManagementPage.test.tsx` | route guard tests in `apps/frontend/src/app/router.admin.test.tsx` | list/filter/pagination, create/revoke actions, localized errors |
+| Sentry route tag for employee-key screen | N/A | `apps/frontend/src/app/router.admin.test.tsx` + QA Sentry smoke | `route=/admin/employee-keys` tag emitted by `AdminGuard` |
 
 ## Baseline Verification Commands
 - `./scripts/check-docs-structure.sh`

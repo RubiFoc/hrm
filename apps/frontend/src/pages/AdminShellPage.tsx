@@ -7,8 +7,12 @@ import { typedApiClient } from "../api";
 
 const adminCards = [
   {
-    key: "users",
+    key: "staff",
     to: "/admin/staff",
+  },
+  {
+    key: "employeeKeys",
+    to: "/admin/employee-keys",
   },
   {
     key: "audit",
@@ -20,7 +24,7 @@ const adminCards = [
   },
 ] as const;
 
-const adminContractPath: ApiPath = "/api/v1/admin/staff";
+const adminContractPath: ApiPath = "/api/v1/admin/employee-keys";
 void typedApiClient;
 void adminContractPath;
 

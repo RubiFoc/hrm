@@ -20,6 +20,8 @@ class EmployeeRegistrationKey(Base):
         target_role: Role that can be registered with this key.
         expires_at: Key expiration timestamp.
         used_at: Consumption timestamp.
+        revoked_at: Revocation timestamp.
+        revoked_by_staff_id: Staff identifier that revoked the key.
         created_by_staff_id: Staff id that issued key.
         created_at: Issued timestamp.
     """
@@ -28,6 +30,7 @@ class EmployeeRegistrationKey(Base):
     __table_args__ = (
         Index("ix_employee_registration_keys_employee_key", "employee_key", unique=True),
         Index("ix_employee_registration_keys_expires_at", "expires_at"),
+        Index("ix_employee_registration_keys_revoked_at", "revoked_at"),
     )
 
     key_id: Mapped[str] = mapped_column(
@@ -39,6 +42,12 @@ class EmployeeRegistrationKey(Base):
     target_role: Mapped[str] = mapped_column(String(32), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_by_staff_id: Mapped[str | None] = mapped_column(
+        Uuid(as_uuid=False),
+        ForeignKey("staff_accounts.staff_id", ondelete="SET NULL"),
+        nullable=True,
+    )
     created_by_staff_id: Mapped[str] = mapped_column(
         Uuid(as_uuid=False),
         ForeignKey("staff_accounts.staff_id", ondelete="CASCADE"),

@@ -60,6 +60,21 @@
 - Keep Sentry route tagging for admin workspace and ensure `/admin/staff` emits `route=/admin/staff`.
 - Keep frontend API layer typed against regenerated frozen OpenAPI artifacts.
 
+## ADMIN-03 Baseline
+- Add `/admin/employee-keys` route under existing admin guard.
+- Deliver employee-key management screen with:
+  - server-driven pagination (`limit`, `offset`);
+  - filters (`search`, `target_role`, `status`, `created_by_staff_id`);
+  - create action (`target_role`, `ttl_seconds`);
+  - revoke action for active keys.
+- Handle backend reason-code failures (`404/409/422`) with RU/EN user-readable messages:
+  - `key_not_found`
+  - `key_already_used`
+  - `key_already_expired`
+  - `key_already_revoked`
+- Keep Sentry route tagging for admin workspace and ensure `/admin/employee-keys` emits `route=/admin/employee-keys`.
+- Keep frontend API layer typed against regenerated frozen OpenAPI artifacts.
+
 ## Library Baseline (Popular Ready-Made Stack)
 - UI components: Material UI (MUI).
 - Routing: React Router.

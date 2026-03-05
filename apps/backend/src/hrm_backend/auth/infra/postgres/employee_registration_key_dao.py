@@ -58,6 +58,7 @@ class EmployeeRegistrationKeyDAO:
                 EmployeeRegistrationKey.employee_key == employee_key,
                 EmployeeRegistrationKey.target_role == target_role,
                 EmployeeRegistrationKey.used_at.is_(None),
+                EmployeeRegistrationKey.revoked_at.is_(None),
                 EmployeeRegistrationKey.expires_at > now,
             )
             .first()

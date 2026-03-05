@@ -40,10 +40,17 @@ Source of truth package: `apps/backend/src/hrm_backend/auth/`.
 | `/api/v1/admin/staff` | `GET` | Admin staff list with pagination and filters | `admin:staff:list` |
 | `/api/v1/admin/staff/{staff_id}` | `PATCH` | Admin update for `role`/`is_active` with strict guard | `admin:staff:update` |
 | `/api/v1/admin/employee-keys` | `POST` | Issue one-time employee registration key | `admin`/`hr` permission |
+| `/api/v1/admin/employee-keys` | `GET` | List employee registration keys with filters and pagination | `admin`/`hr` permission |
+| `/api/v1/admin/employee-keys/{key_id}/revoke` | `POST` | Revoke active employee registration key | `admin`/`hr` permission |
 
 Bootstrap note:
 - first `admin` is created manually through CLI:
   `uv run --project apps/backend python -m hrm_backend.auth.cli.create_admin`.
+
+Employee registration key lifecycle baseline:
+- Status model: `active | used | expired | revoked`.
+- Register consume path accepts only `active` keys (`used_at is null`, `revoked_at is null`, `expires_at > now`).
+- Revoked keys are terminal and cannot be consumed by `/api/v1/auth/register`.
 
 ## JWT Claims
 - Common: `sub`, `sid`, `jti`, `iat`, `exp`, `typ`, `role`
@@ -94,6 +101,8 @@ Bootstrap note:
 | Admin list staff | `admin.staff:list` | `api` | `success` / `failure` | list filters + pagination, reason-codes on handler-level failures |
 | Admin update staff | `admin.staff:update` | `api` | `success` / `failure` | strict guard reason-codes: `staff_not_found`, `empty_patch`, `unsupported_role`, `self_modification_forbidden`, `last_admin_protection`, `validation_failed` |
 | Admin create employee key | `admin.employee_key:create` | `api` | `success` / `failure` | privileged action |
+| Admin list employee keys | `admin.employee_key:list` | `api` | `success` / `failure` | list filters + pagination |
+| Admin revoke employee key | `admin.employee_key:revoke` | `api` | `success` / `failure` | reason-codes: `key_not_found`, `key_already_used`, `key_already_expired`, `key_already_revoked`, `validation_failed` |
 | RBAC decision | `<permission>` (e.g. `vacancy:create`) | `api` / `job` | `allowed` / `denied` | Recorded for both API and background checks |
 
 Audit storage model:

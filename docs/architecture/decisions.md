@@ -27,6 +27,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0020 | 2026-03-05 | accepted | Introduce ADMIN-01 frontend route guard and admin shell with Sentry tags | architect + frontend-engineer | frontend routing, access control UX, observability |
 | ADR-0021 | 2026-03-05 | accepted | Add ADMIN-02 staff management list/update APIs with strict admin safety guard | architect + backend-engineer + frontend-engineer | admin API contracts, RBAC, audit trail, frontend admin workspace |
 | ADR-0022 | 2026-03-05 | accepted | Extract admin governance flows into dedicated `admin` backend package | architect + backend-engineer | backend package boundaries, maintainability, test topology |
+| ADR-0023 | 2026-03-05 | accepted | Add ADMIN-03 employee registration key lifecycle management (list/revoke + admin UI) | architect + backend-engineer + frontend-engineer | admin API contracts, auth key lifecycle, RBAC, audit trail, frontend admin workspace |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -318,3 +319,31 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Domain boundaries are explicit and consistent with engineering standards.
   - Admin feature development no longer couples to auth service internals.
   - Test topology now follows package flow (`tests/unit/admin`, `tests/integration/admin`).
+
+## ADR-0023
+- Context: `ADMIN-03` requires full lifecycle management for employee registration keys in one vertical slice (backend + frontend + contract + docs) while keeping `ADMIN-02` unchanged.
+- Decision:
+  - Extend admin API with:
+    - `GET /api/v1/admin/employee-keys` (pagination + filters: `target_role`, `status`, `created_by_staff_id`, `search`);
+    - `POST /api/v1/admin/employee-keys/{key_id}/revoke`.
+  - Keep `POST /api/v1/admin/employee-keys` backward-compatible.
+  - Extend employee key persistence model with revocation metadata:
+    - `revoked_at`
+    - `revoked_by_staff_id` (FK to `staff_accounts`).
+  - Standardize lifecycle statuses for admin list response:
+    - `active`
+    - `used`
+    - `expired`
+    - `revoked`.
+  - Use conflict-based revoke semantics with reason codes:
+    - `key_not_found` (`404`)
+    - `key_already_used` (`409`)
+    - `key_already_expired` (`409`)
+    - `key_already_revoked` (`409`)
+    - `validation_failed` (`422`).
+  - Extend RBAC with `admin:employee_key:list` and `admin:employee_key:revoke` granted to `admin` and `hr`.
+  - Extend frontend admin workspace with `/admin/employee-keys` screen (table, filters, pagination, create/revoke actions, RU/EN errors, Sentry route tag).
+- Consequences:
+  - Employee-key governance is now fully operational from admin APIs/UI without breaking existing create-key clients.
+  - Registration flow explicitly rejects revoked keys.
+  - Admin audit trail expands with `admin.employee_key:list` and `admin.employee_key:revoke` success/failure events and reason codes.

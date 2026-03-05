@@ -27,6 +27,8 @@ Enforcement source of truth:
 | `admin:staff:list` | yes | no | no | no | no | no |
 | `admin:staff:update` | yes | no | no | no | no | no |
 | `admin:employee_key:create` | yes | yes | no | no | no | no |
+| `admin:employee_key:list` | yes | yes | no | no | no | no |
+| `admin:employee_key:revoke` | yes | yes | no | no | no | no |
 | `vacancy:read` | yes | yes | yes | no | yes | no |
 | `vacancy:create` | yes | yes | no | no | no | no |
 | `vacancy:update` | yes | yes | no | no | no | no |

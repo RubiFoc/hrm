@@ -80,6 +80,132 @@
         "title": "AdminCreateStaffRequest",
         "type": "object"
       },
+      "AdminEmployeeKeyListItem": {
+        "description": "One employee registration key record returned by admin list endpoint.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_staff_id": {
+            "format": "uuid",
+            "title": "Created By Staff Id",
+            "type": "string"
+          },
+          "employee_key": {
+            "format": "uuid",
+            "title": "Employee Key",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "key_id": {
+            "format": "uuid",
+            "title": "Key Id",
+            "type": "string"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "revoked_by_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked By Staff Id"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "used",
+              "expired",
+              "revoked"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target_role": {
+            "title": "Target Role",
+            "type": "string"
+          },
+          "used_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Used At"
+          }
+        },
+        "required": [
+          "key_id",
+          "employee_key",
+          "target_role",
+          "status",
+          "expires_at",
+          "used_at",
+          "revoked_at",
+          "revoked_by_staff_id",
+          "created_by_staff_id",
+          "created_at"
+        ],
+        "title": "AdminEmployeeKeyListItem",
+        "type": "object"
+      },
+      "AdminEmployeeKeyListResponse": {
+        "description": "Paginated response payload for admin employee-key list endpoint.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdminEmployeeKeyListItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "AdminEmployeeKeyListResponse",
+        "type": "object"
+      },
       "AdminStaffListItem": {
         "description": "One staff record returned by admin staff list endpoint.",
         "properties": {
@@ -1398,6 +1524,145 @@
   "openapi": "3.1.0",
   "paths": {
     "/api/v1/admin/employee-keys": {
+      "get": {
+        "description": "List employee registration keys with pagination and optional filters.",
+        "operationId": "list_employee_keys_api_v1_admin_employee_keys_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "target_role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "admin",
+                    "hr",
+                    "manager",
+                    "employee",
+                    "leader",
+                    "accountant"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Target Role"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "active",
+                    "used",
+                    "expired",
+                    "revoked"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "created_by_staff_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created By Staff Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEmployeeKeyListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Employee Keys",
+        "tags": [
+          "admin"
+        ]
+      },
       "post": {
         "description": "Issue one-time employee registration key for self-registration.",
         "operationId": "create_employee_key_api_v1_admin_employee_keys_post",
@@ -1439,6 +1704,54 @@
           }
         ],
         "summary": "Create Employee Key",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/api/v1/admin/employee-keys/{key_id}/revoke": {
+      "post": {
+        "description": "Revoke active employee registration key.",
+        "operationId": "revoke_employee_key_api_v1_admin_employee_keys__key_id__revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Key Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminEmployeeKeyListItem"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Employee key not found"
+          },
+          "409": {
+            "description": "Employee key is not revocable"
+          },
+          "422": {
+            "description": "Validation failure"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Revoke Employee Key",
         "tags": [
           "admin"
         ]
