@@ -1,7 +1,7 @@
 # GitHub Workflow and Branch Protection
 
 ## Last Updated
-- Date: 2026-03-04
+- Date: 2026-03-05
 - Updated by: coordinator
 
 ## Branching Model
@@ -43,3 +43,27 @@
 - Commit scope: one concern per commit.
 - Commit message style: `type(scope): summary`.
 - PR description must include verification commands and risks.
+
+## GitHub CLI Operations (`gh`)
+- Always check auth state before PR automation: `gh auth status`.
+- If you see `error connecting to api.github.com`, rerun `gh` commands in network-enabled mode for the agent environment.
+- If `gh auth status` shows `token ... is invalid`, re-authenticate with `gh auth login -h github.com`.
+- Device login can fail with temporary `HTTP 503`; retry login instead of rotating workflow or branches.
+- Do not trust only CLI success text (`Logged in as ...`); re-check with `gh auth status` after login.
+
+## Chained PR Creation Order
+- Use this order for split delivery: `PR-A -> PR-B -> PR-C -> Stage4 -> PR-D`.
+- Use explicit `--base` and `--head` for each PR to keep review diffs clean.
+- Recommended mapping:
+  - `PR-A`: `feature/pr-a-auth-breaking -> main`
+  - `PR-B`: `feature/pr-b-public-apply-hardening -> feature/pr-a-auth-breaking`
+  - `PR-C`: `feature/pr-c-uuid-normalization -> feature/pr-b-public-apply-hardening`
+  - `Stage4`: `feature/stage4-openapi-freeze -> feature/pr-c-uuid-normalization`
+  - `PR-D`: `feature/pr-d-admin-01 -> feature/stage4-openapi-freeze`
+
+## `gh pr create` Body Safety
+- Avoid shell interpolation in PR body text (`$`, backticks, command substitution).
+- If body contains markdown code spans, prefer one of:
+  - Single-quoted plain text without backticks.
+  - `--body-file` with a prepared markdown file.
+  - Post-create patch via `gh api repos/<org>/<repo>/pulls/<n> -X PATCH -f body=...`.
