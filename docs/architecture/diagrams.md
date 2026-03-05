@@ -44,6 +44,7 @@ flowchart TB
   subgraph Core[Core Services]
     COREPKG[Core Shared Package]
     AUTH[Auth and Access Service]
+    ADMIN[Admin Governance Service]
     POLICY[Access Policy Evaluator]
     REC[Recruitment Services]
     EMPDOM[Employee Services]
@@ -68,6 +69,7 @@ flowchart TB
 
   UI --> API
   API --> AUTH
+  API --> ADMIN
   API --> POLICY
   API --> REC
   API --> EMPDOM
@@ -75,7 +77,9 @@ flowchart TB
   API --> ANALYTICS
   WORKERS --> POLICY
   AUTH --> REDISDNL
+  ADMIN --> DB
   AUTH -.imports.-> COREPKG
+  ADMIN -.imports.-> COREPKG
   POLICY -.imports.-> COREPKG
   REC -.imports.-> COREPKG
   EMPDOM -.imports.-> COREPKG
@@ -460,26 +464,26 @@ sequenceDiagram
   participant ADM as Admin User
   participant UI as React Admin Staff Screen (/admin/staff)
   participant API as Admin Router
-  participant AUTH as Auth Service
-  participant DAO as StaffAccountDAO
+  participant SRV as Admin Service
+  participant DAO as AdminStaffAccountDAO
   participant AUD as Audit Service
 
   ADM->>UI: Open /admin/staff
   UI->>API: GET /api/v1/admin/staff?limit&offset&search&role&is_active
-  API->>AUTH: list_staff_accounts(...)
-  AUTH->>DAO: list_accounts + count_accounts
-  DAO-->>AUTH: items + total
-  AUTH-->>API: AdminStaffListResponse
+  API->>SRV: list_staff_accounts(...)
+  SRV->>DAO: list_accounts + count_accounts
+  DAO-->>SRV: items + total
+  SRV-->>API: AdminStaffListResponse
   API->>AUD: admin.staff:list success/failure
   API-->>UI: 200 list payload or 422
 
   ADM->>UI: Update row role/is_active
   UI->>API: PATCH /api/v1/admin/staff/{staff_id}
-  API->>AUTH: update_staff_account(...)
-  AUTH->>DAO: get_by_id + count_active_admins + update_account_fields
-  AUTH-->>API: StaffResponse or 404/409/422
+  API->>SRV: update_staff_account(...)
+  SRV->>DAO: get_by_id + count_active_admins + update_account_fields
+  SRV-->>API: StaffResponse or 404/409/422
   API->>AUD: admin.staff:update success/failure + reason_code
   API-->>UI: updated row or localized error message
 
-  Note over AUTH: Strict guard:\n- self-demotion/self-disable forbidden\n- last-active-admin demotion/disable forbidden
+  Note over SRV: Strict guard:\n- self-demotion/self-disable forbidden\n- last-active-admin demotion/disable forbidden
 ```

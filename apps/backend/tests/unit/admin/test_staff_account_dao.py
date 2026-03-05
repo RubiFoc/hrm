@@ -1,4 +1,4 @@
-"""Unit tests for staff account DAO list/filter/update behavior."""
+"""Unit tests for admin staff account DAO list/filter/update behavior."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
+from hrm_backend.admin.dao.staff_account_dao import AdminStaffAccountDAO
 from hrm_backend.auth.models.staff_account import StaffAccount
 from hrm_backend.core.models.base import Base
 
@@ -94,7 +94,7 @@ def test_list_and_count_apply_filters_and_pagination(session: Session) -> None:
         created_at=now,
     )
 
-    dao = StaffAccountDAO(session=session)
+    dao = AdminStaffAccountDAO(session=session)
 
     paged = dao.list_accounts(limit=2, offset=0)
     assert [item.staff_id for item in paged] == [newest.staff_id, hr_disabled.staff_id]
@@ -120,7 +120,7 @@ def test_list_and_count_apply_filters_and_pagination(session: Session) -> None:
 
 def test_update_account_fields_mutates_updated_at(session: Session) -> None:
     """Verify mutable fields persist and `updated_at` is advanced after update."""
-    dao = StaffAccountDAO(session=session)
+    dao = AdminStaffAccountDAO(session=session)
     entity = dao.create_account(
         login="staff-user",
         email="staff-user@example.com",
@@ -169,6 +169,6 @@ def test_count_active_admins_counts_only_active_admin_rows(session: Session) -> 
         created_at=now,
     )
 
-    dao = StaffAccountDAO(session=session)
+    dao = AdminStaffAccountDAO(session=session)
 
     assert dao.count_active_admins() == 1

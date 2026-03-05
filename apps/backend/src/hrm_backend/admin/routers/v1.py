@@ -1,4 +1,4 @@
-"""Admin APIs for staff account and employee key management."""
+"""Version 1 admin APIs for staff account and employee key management."""
 
 from __future__ import annotations
 
@@ -7,26 +7,27 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
-from hrm_backend.audit.dependencies.audit import get_audit_service
-from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
-from hrm_backend.auth.dependencies.auth import get_auth_service, get_current_auth_context
-from hrm_backend.auth.schemas.requests import (
+from hrm_backend.admin.dependencies.admin import get_admin_service
+from hrm_backend.admin.schemas.requests import (
     AdminCreateEmployeeKeyRequest,
     AdminCreateStaffRequest,
     AdminStaffUpdateRequest,
     StaffRoleClaim,
 )
-from hrm_backend.auth.schemas.responses import (
+from hrm_backend.admin.schemas.responses import (
     AdminStaffListResponse,
     EmployeeRegistrationKeyResponse,
     StaffResponse,
 )
+from hrm_backend.admin.services.admin_service import AdminService
+from hrm_backend.audit.dependencies.audit import get_audit_service
+from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
+from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
-from hrm_backend.auth.services.auth_service import AuthService
 from hrm_backend.rbac import Role, require_permission
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin"])
-AuthServiceDependency = Annotated[AuthService, Depends(get_auth_service)]
+AdminServiceDependency = Annotated[AdminService, Depends(get_admin_service)]
 AuditServiceDependency = Annotated[AuditService, Depends(get_audit_service)]
 CurrentAuthContext = Annotated[AuthContext, Depends(get_current_auth_context)]
 AdminCreateStaffRole = Annotated[Role, Depends(require_permission("admin:staff:create"))]
@@ -44,13 +45,13 @@ def create_staff(
     request: Request,
     _: AdminCreateStaffRole,
     auth_context: CurrentAuthContext,
-    auth_service: AuthServiceDependency,
+    admin_service: AdminServiceDependency,
     audit_service: AuditServiceDependency,
 ) -> StaffResponse:
     """Create staff account directly via admin privileges."""
     actor_sub, actor_role = actor_from_auth_context(auth_context)
     try:
-        response = auth_service.create_staff_account(
+        response = admin_service.create_staff_account(
             login=payload.login,
             email=payload.email,
             password=payload.password,
@@ -86,7 +87,7 @@ def list_staff(
     request: Request,
     _: AdminStaffListRole,
     auth_context: CurrentAuthContext,
-    auth_service: AuthServiceDependency,
+    admin_service: AdminServiceDependency,
     audit_service: AuditServiceDependency,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
@@ -97,7 +98,7 @@ def list_staff(
     """List staff accounts with pagination and optional filters."""
     actor_sub, actor_role = actor_from_auth_context(auth_context)
     try:
-        response = auth_service.list_staff_accounts(
+        response = admin_service.list_staff_accounts(
             limit=limit,
             offset=offset,
             search=search,
@@ -142,13 +143,13 @@ def patch_staff(
     request: Request,
     _: AdminStaffUpdateRole,
     auth_context: CurrentAuthContext,
-    auth_service: AuthServiceDependency,
+    admin_service: AdminServiceDependency,
     audit_service: AuditServiceDependency,
 ) -> StaffResponse:
     """Patch staff account role and/or active-state through admin privileges."""
     actor_sub, actor_role = actor_from_auth_context(auth_context)
     try:
-        response = auth_service.update_staff_account(
+        response = admin_service.update_staff_account(
             staff_id=staff_id,
             role=payload.role,
             is_active=payload.is_active,
@@ -185,13 +186,13 @@ def create_employee_key(
     request: Request,
     _: AdminCreateEmployeeKeyRole,
     auth_context: CurrentAuthContext,
-    auth_service: AuthServiceDependency,
+    admin_service: AdminServiceDependency,
     audit_service: AuditServiceDependency,
 ) -> EmployeeRegistrationKeyResponse:
     """Issue one-time employee registration key for self-registration."""
     actor_sub, actor_role = actor_from_auth_context(auth_context)
     try:
-        response = auth_service.create_employee_key(
+        response = admin_service.create_employee_key(
             target_role=payload.target_role,
             created_by_staff_id=auth_context.subject_id,
             ttl_seconds=payload.ttl_seconds,

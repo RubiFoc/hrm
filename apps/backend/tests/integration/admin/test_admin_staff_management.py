@@ -1,4 +1,4 @@
-"""Integration tests for ADMIN-02 admin staff list/update APIs and audit hooks."""
+"""Integration tests for ADMIN-02 admin package staff APIs and audit hooks."""
 
 from __future__ import annotations
 

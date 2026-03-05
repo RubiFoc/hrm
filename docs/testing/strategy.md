@@ -25,11 +25,13 @@
 ```text
 apps/backend/tests/
   unit/
+    admin/
     auth/
     core/
     rbac/
     ...
   integration/
+    admin/
     auth/
     core/
     rbac/
@@ -126,9 +128,9 @@ apps/backend/tests/
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
 | --- | --- | --- | --- |
-| Staff DAO pagination/search/filter/count | `apps/backend/tests/unit/auth/test_staff_account_dao.py` | Covered indirectly by admin list integration API tests | `uv run --project apps/backend pytest -q` |
-| Staff update strict guard validation | `apps/backend/tests/unit/auth/test_admin_staff_service.py` (`empty_patch`, `unsupported_role`, self/last-admin protection) | `apps/backend/tests/integration/auth/test_admin_staff_management.py` (`409` guard paths) | reason codes `self_modification_forbidden`, `last_admin_protection` |
-| Admin list/update API contracts | N/A | `apps/backend/tests/integration/auth/test_admin_staff_management.py` | `GET /api/v1/admin/staff` and `PATCH /api/v1/admin/staff/{staff_id}` |
+| Staff DAO pagination/search/filter/count | `apps/backend/tests/unit/admin/test_staff_account_dao.py` | Covered indirectly by admin list integration API tests | `uv run --project apps/backend pytest -q` |
+| Staff update strict guard validation | `apps/backend/tests/unit/admin/test_admin_staff_service.py` (`empty_patch`, `unsupported_role`, self/last-admin protection) | `apps/backend/tests/integration/admin/test_admin_staff_management.py` (`409` guard paths) | reason codes `self_modification_forbidden`, `last_admin_protection` |
+| Admin list/update API contracts | N/A | `apps/backend/tests/integration/admin/test_admin_staff_management.py` | `GET /api/v1/admin/staff` and `PATCH /api/v1/admin/staff/{staff_id}` |
 | RBAC deny path for non-admin access | `tests/unit/rbac/test_rbac.py` | `test_non_admin_gets_403_for_staff_list_and_update` | explicit `403` behavior |
 | Admin audit events for list/update | N/A | `test_admin_staff_audit_events_capture_success_and_failure_reason_codes` | `admin.staff:list` and `admin.staff:update` success/failure with reason codes |
 | Frontend `/admin/staff` rendering and interactions | `apps/frontend/src/pages/AdminStaffManagementPage.test.tsx` | Route guard tests in `apps/frontend/src/app/router.admin.test.tsx` | filters, PATCH action, localized `404/409/422` error mapping |
