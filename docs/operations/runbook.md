@@ -107,6 +107,20 @@ Shortcut wrappers:
   3. Verify Redis availability and limiter key activity.
   4. Compare blocked volume with alert threshold (`PUBLIC_APPLY_BLOCKED_ALERT_THRESHOLD_PER_MINUTE`).
 
+### Admin Route Access Diagnostics (`/admin`)
+- Guard behavior:
+  - Missing auth token/session -> redirect to `/access-denied?reason=unauthorized`.
+  - Authenticated non-admin role -> redirect to `/access-denied?reason=forbidden`.
+  - Admin role -> allow route.
+- Frontend telemetry requirements on admin route:
+  - `workspace=admin`
+  - `role`
+  - `route`
+- Triage sequence:
+  1. Reproduce with browser local storage state (`hrm_access_token`, `hrm_user_role`).
+  2. Verify redirect reason query param (`unauthorized` or `forbidden`).
+  3. Check Sentry events for required tags and route breadcrumbs.
+
 ## Compliance Baseline (Dev Non-Blocking, Prod Blocking)
 This section defines provisional operational controls until final legal/security sign-off.
 

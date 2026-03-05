@@ -113,6 +113,15 @@ apps/backend/tests/
 | Async CV parsing lifecycle and retry-safe behavior (Celery executor) | `tests/unit/candidates/test_cv_parsing_worker.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` | `queued/running/succeeded/failed` with bounded retries |
 | RBAC + audit coverage for recruitment endpoints | `tests/unit/rbac/test_rbac.py` | `tests/integration/security/test_audit_enforcement.py` + recruitment integration suites | `allowed/denied/success/failure` audit records in `audit_events` |
 
+## Frontend Admin Verification (ADMIN-01)
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Admin guard decision logic | `apps/frontend/src/app/auth/session.test.ts` | N/A | `npm --prefix apps/frontend run test -- --run` |
+| Unauthorized/forbidden redirect flow | `apps/frontend/src/app/router.admin.test.tsx` | `/admin` route smoke in browser/CI preview | Redirects to `/access-denied` with reason query |
+| RU/EN admin shell rendering | `apps/frontend/src/app/router.admin.test.tsx` + i18n keys | UI smoke for `/admin` after language toggle | Admin shell strings are present in both locales |
+| Admin observability tags | N/A | Manual/automated capture in Sentry QA project | `workspace`, `role`, `route` tags set on admin route access |
+
 ## Baseline Verification Commands
 - `./scripts/check-docs-structure.sh`
 - `uv run --project apps/backend ruff check apps/backend/src apps/backend/tests apps/backend/alembic`

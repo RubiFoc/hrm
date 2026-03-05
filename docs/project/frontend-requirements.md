@@ -38,6 +38,18 @@
 | Mobile depth | No mobile app, responsive web only |
 | Frontend monitoring | Sentry |
 
+## ADMIN-01 Baseline
+- Add `/admin` route with role guard (`admin` only).
+- Redirect flow must distinguish:
+  - `401`-like state (missing auth session/token) -> access-denied flow.
+  - `403`-like state (authenticated non-admin role) -> access-denied flow.
+- Provide RU/EN admin shell layout with operational placeholders.
+- Set Sentry tags on admin route access:
+  - `workspace=admin`
+  - `role=<resolved_role_or_anonymous>`
+  - `route=<pathname>`
+- Frontend API typing must consume artifacts generated from frozen OpenAPI contract.
+
 ## Library Baseline (Popular Ready-Made Stack)
 - UI components: Material UI (MUI).
 - Routing: React Router.

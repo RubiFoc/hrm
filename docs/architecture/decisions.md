@@ -24,6 +24,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0017 | 2026-03-05 | accepted | Add layered anti-abuse controls for public vacancy application endpoint | architect + backend-engineer | recruitment API, observability, operations |
 | ADR-0018 | 2026-03-05 | accepted | Normalize API ID contracts to UUID at boundary level | architect + backend-engineer | candidate/vacancy/pipeline contracts, OpenAPI |
 | ADR-0019 | 2026-03-05 | accepted | Freeze OpenAPI contract and enforce drift checks in CI | architect + backend-engineer | API governance, CI/CD, frontend integration |
+| ADR-0020 | 2026-03-05 | accepted | Introduce ADMIN-01 frontend route guard and admin shell with Sentry tags | architect + frontend-engineer | frontend routing, access control UX, observability |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -270,3 +271,15 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Contract changes become explicit and reviewable.
   - CI fails early when runtime schema diverges from frozen contract.
   - Frontend typed API artifacts stay aligned with reviewed backend contract.
+
+## ADR-0020
+- Context: Admin workspace rollout requires minimum vertical slice with explicit deny behavior and route-level observability before wider admin feature development.
+- Decision:
+  - Add frontend `/admin` route guarded by role check (`admin` only).
+  - Implement redirect path for unauthorized (`unauthorized`) and forbidden (`forbidden`) access outcomes.
+  - Deliver RU/EN admin shell placeholder layout for ADMIN-01.
+  - Emit Sentry tags (`workspace`, `role`, `route`) on admin route access.
+- Consequences:
+  - Admin entry flow is deterministic and testable for both allowed and denied paths.
+  - Observability baseline exists before deeper admin features (ADMIN-02/03).
+  - Frontend routing contract expands with dedicated access-denied flow.

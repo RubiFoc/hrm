@@ -1,10 +1,13 @@
 import { createBrowserRouter } from "react-router-dom";
 
+import { AdminGuard } from "./guards/AdminGuard";
 import { RootLayout } from "../components/RootLayout";
+import { AccessDeniedPage } from "../pages/AccessDeniedPage";
+import { AdminShellPage } from "../pages/AdminShellPage";
 import { CandidatePage } from "../pages/CandidatePage";
 import { HrDashboardPage } from "../pages/HrDashboardPage";
 
-export const router = createBrowserRouter([
+export const appRoutes = [
   {
     path: "/",
     element: <RootLayout />,
@@ -17,6 +20,22 @@ export const router = createBrowserRouter([
         path: "candidate",
         element: <CandidatePage />,
       },
+      {
+        path: "admin",
+        element: <AdminGuard />,
+        children: [
+          {
+            index: true,
+            element: <AdminShellPage />,
+          },
+        ],
+      },
+      {
+        path: "access-denied",
+        element: <AccessDeniedPage />,
+      },
     ],
   },
-]);
+];
+
+export const router = createBrowserRouter(appRoutes);
