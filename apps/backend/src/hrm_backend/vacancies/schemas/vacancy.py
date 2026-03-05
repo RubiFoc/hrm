@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -32,7 +33,7 @@ class VacancyUpdateRequest(BaseModel):
 class VacancyResponse(BaseModel):
     """Vacancy API representation."""
 
-    vacancy_id: str
+    vacancy_id: UUID
     title: str
     description: str
     department: str

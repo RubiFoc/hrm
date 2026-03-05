@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from fastapi import HTTPException, Request, status
 
 from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
@@ -89,12 +91,12 @@ class VacancyService:
     def get_vacancy(
         self,
         *,
-        vacancy_id: str,
+        vacancy_id: UUID,
         auth_context: AuthContext,
         request: Request,
     ) -> VacancyResponse:
         """Load one vacancy or raise 404."""
-        entity = self._vacancy_dao.get_by_id(vacancy_id)
+        entity = self._vacancy_dao.get_by_id(str(vacancy_id))
         if entity is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vacancy not found")
 
@@ -113,13 +115,13 @@ class VacancyService:
     def update_vacancy(
         self,
         *,
-        vacancy_id: str,
+        vacancy_id: UUID,
         payload: VacancyUpdateRequest,
         auth_context: AuthContext,
         request: Request,
     ) -> VacancyResponse:
         """Patch vacancy row and emit audit event."""
-        entity = self._vacancy_dao.get_by_id(vacancy_id)
+        entity = self._vacancy_dao.get_by_id(str(vacancy_id))
         if entity is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vacancy not found")
         updated = self._vacancy_dao.update_vacancy(entity=entity, payload=payload)
@@ -143,17 +145,20 @@ class VacancyService:
         request: Request,
     ) -> PipelineTransitionResponse:
         """Append candidate pipeline transition if allowed by canonical matrix."""
-        vacancy = self._vacancy_dao.get_by_id(payload.vacancy_id)
+        vacancy_id = str(payload.vacancy_id)
+        candidate_id = str(payload.candidate_id)
+
+        vacancy = self._vacancy_dao.get_by_id(vacancy_id)
         if vacancy is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vacancy not found")
 
-        candidate = self._candidate_profile_dao.get_by_id(payload.candidate_id)
+        candidate = self._candidate_profile_dao.get_by_id(candidate_id)
         if candidate is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidate not found")
 
         previous = self._transition_dao.get_last_transition(
-            vacancy_id=payload.vacancy_id,
-            candidate_id=payload.candidate_id,
+            vacancy_id=vacancy_id,
+            candidate_id=candidate_id,
         )
         from_stage = None if previous is None else previous.to_stage
         if not is_transition_allowed(from_stage=from_stage, to_stage=payload.to_stage):
@@ -166,8 +171,8 @@ class VacancyService:
 
         actor_sub, actor_role = actor_from_auth_context(auth_context)
         transition = self._transition_dao.create_transition(
-            vacancy_id=payload.vacancy_id,
-            candidate_id=payload.candidate_id,
+            vacancy_id=vacancy_id,
+            candidate_id=candidate_id,
             from_stage=from_stage,
             to_stage=payload.to_stage,
             reason=payload.reason,
@@ -185,9 +190,9 @@ class VacancyService:
         )
 
         return PipelineTransitionResponse(
-            transition_id=transition.transition_id,
-            vacancy_id=transition.vacancy_id,
-            candidate_id=transition.candidate_id,
+            transition_id=UUID(transition.transition_id),
+            vacancy_id=UUID(transition.vacancy_id),
+            candidate_id=UUID(transition.candidate_id),
             from_stage=transition.from_stage,  # type: ignore[arg-type]
             to_stage=transition.to_stage,  # type: ignore[arg-type]
             reason=transition.reason,
@@ -207,7 +212,7 @@ def _to_vacancy_response(entity) -> VacancyResponse:
         VacancyResponse: API payload.
     """
     return VacancyResponse(
-        vacancy_id=entity.vacancy_id,
+        vacancy_id=UUID(entity.vacancy_id),
         title=entity.title,
         description=entity.description,
         department=entity.department,

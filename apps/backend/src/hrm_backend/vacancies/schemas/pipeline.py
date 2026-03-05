@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -23,8 +24,8 @@ class PipelineTransitionCreateRequest(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    vacancy_id: str = Field(min_length=1, max_length=36)
-    candidate_id: str = Field(min_length=1, max_length=36)
+    vacancy_id: UUID
+    candidate_id: UUID
     to_stage: PipelineStage
     reason: str | None = Field(default=None, max_length=2048)
 
@@ -32,9 +33,9 @@ class PipelineTransitionCreateRequest(BaseModel):
 class PipelineTransitionResponse(BaseModel):
     """Pipeline transition API representation."""
 
-    transition_id: str
-    vacancy_id: str
-    candidate_id: str
+    transition_id: UUID
+    vacancy_id: UUID
+    candidate_id: UUID
     from_stage: PipelineStage | None
     to_stage: PipelineStage
     reason: str | None

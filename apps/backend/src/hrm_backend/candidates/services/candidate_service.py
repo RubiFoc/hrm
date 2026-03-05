@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import HTTPException, Request, UploadFile, status
 
@@ -104,7 +104,7 @@ class CandidateService:
     def get_profile(
         self,
         *,
-        candidate_id: str,
+        candidate_id: UUID,
         auth_context: AuthContext,
         request: Request,
     ) -> CandidateResponse:
@@ -167,7 +167,7 @@ class CandidateService:
     def update_profile(
         self,
         *,
-        candidate_id: str,
+        candidate_id: UUID,
         payload: CandidateUpdateRequest,
         auth_context: AuthContext,
         request: Request,
@@ -206,7 +206,7 @@ class CandidateService:
     async def upload_cv(
         self,
         *,
-        candidate_id: str,
+        candidate_id: UUID,
         file: UploadFile,
         checksum_sha256: str,
         auth_context: AuthContext,
@@ -231,6 +231,7 @@ class CandidateService:
             request=request,
             action="candidate_cv:upload",
         )
+        candidate_id_str = str(candidate_id)
         payload = await file.read()
         validated = validate_cv_payload(
             filename=file.filename or "cv",
@@ -241,7 +242,9 @@ class CandidateService:
             max_size_bytes=self._settings.cv_max_size_bytes,
         )
 
-        object_key = f"candidates/{candidate_id}/cv/{uuid4().hex}-{(file.filename or 'cv').strip()}"
+        object_key = (
+            f"candidates/{candidate_id_str}/cv/{uuid4().hex}-{(file.filename or 'cv').strip()}"
+        )
         self._storage.put_object(
             object_key=object_key,
             data=validated.content,
@@ -249,9 +252,9 @@ class CandidateService:
             enable_sse=self._settings.object_storage_sse_enabled,
         )
 
-        self._document_dao.deactivate_active_documents(candidate_id)
+        self._document_dao.deactivate_active_documents(candidate_id_str)
         doc = self._document_dao.create_document(
-            candidate_id=candidate_id,
+            candidate_id=candidate_id_str,
             object_key=object_key,
             filename=file.filename or "cv",
             mime_type=validated.mime_type,
@@ -260,7 +263,7 @@ class CandidateService:
             is_active=True,
         )
         parsing_job = self._parsing_job_dao.create_queued_job(
-            candidate_id=candidate_id,
+            candidate_id=candidate_id_str,
             document_id=doc.document_id,
         )
         enqueue_cv_parsing(job_id=parsing_job.job_id)
@@ -277,8 +280,8 @@ class CandidateService:
         )
 
         return CandidateCVUploadResponse(
-            document_id=doc.document_id,
-            candidate_id=doc.candidate_id,
+            document_id=UUID(doc.document_id),
+            candidate_id=UUID(doc.candidate_id),
             filename=doc.filename,
             mime_type=doc.mime_type,
             size_bytes=doc.size_bytes,
@@ -289,7 +292,7 @@ class CandidateService:
     def download_cv(
         self,
         *,
-        candidate_id: str,
+        candidate_id: UUID,
         auth_context: AuthContext,
         request: Request,
     ) -> CandidateCVDownloadPayload:
@@ -332,7 +335,7 @@ class CandidateService:
     def get_parsing_status(
         self,
         *,
-        candidate_id: str,
+        candidate_id: UUID,
         auth_context: AuthContext,
         request: Request,
     ) -> CVParsingStatusResponse:
@@ -365,9 +368,9 @@ class CandidateService:
             resource_id=job.job_id,
         )
         return CVParsingStatusResponse(
-            candidate_id=job.candidate_id,
-            document_id=job.document_id,
-            job_id=job.job_id,
+            candidate_id=UUID(job.candidate_id),
+            document_id=UUID(job.document_id),
+            job_id=UUID(job.job_id),
             status=job.status,  # type: ignore[arg-type]
             attempt_count=job.attempt_count,
             last_error=job.last_error,
@@ -393,7 +396,7 @@ class CandidateService:
             return requested_owner.strip()
         return str(auth_context.subject_id)
 
-    def _get_profile_or_404(self, candidate_id: str) -> CandidateProfile:
+    def _get_profile_or_404(self, candidate_id: UUID) -> CandidateProfile:
         """Load profile or raise 404.
 
         Args:
@@ -402,12 +405,12 @@ class CandidateService:
         Returns:
             CandidateProfile: Loaded profile entity.
         """
-        entity = self._profile_dao.get_by_id(candidate_id)
+        entity = self._profile_dao.get_by_id(str(candidate_id))
         if entity is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidate not found")
         return entity
 
-    def _get_active_document_or_404(self, candidate_id: str) -> CandidateDocument:
+    def _get_active_document_or_404(self, candidate_id: UUID) -> CandidateDocument:
         """Load active candidate CV row or raise 404.
 
         Args:
@@ -416,7 +419,7 @@ class CandidateService:
         Returns:
             CandidateDocument: Active CV metadata row.
         """
-        entity = self._document_dao.get_active_document(candidate_id)
+        entity = self._document_dao.get_active_document(str(candidate_id))
         if entity is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -424,7 +427,7 @@ class CandidateService:
             )
         return entity
 
-    def _get_latest_job_or_404(self, candidate_id: str) -> CVParsingJob:
+    def _get_latest_job_or_404(self, candidate_id: UUID) -> CVParsingJob:
         """Load latest parsing job row or raise 404.
 
         Args:
@@ -433,7 +436,7 @@ class CandidateService:
         Returns:
             CVParsingJob: Latest parsing job entity.
         """
-        job = self._parsing_job_dao.get_latest_by_candidate(candidate_id)
+        job = self._parsing_job_dao.get_latest_by_candidate(str(candidate_id))
         if job is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -512,7 +515,7 @@ def _to_candidate_response(entity: CandidateProfile) -> CandidateResponse:
         CandidateResponse: API response payload.
     """
     return CandidateResponse(
-        candidate_id=entity.candidate_id,
+        candidate_id=UUID(entity.candidate_id),
         owner_subject_id=entity.owner_subject_id,
         first_name=entity.first_name,
         last_name=entity.last_name,
