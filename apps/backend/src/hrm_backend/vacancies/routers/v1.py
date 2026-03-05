@@ -108,6 +108,30 @@ def create_pipeline_transition(
 @router.post(
     "/api/v1/vacancies/{vacancy_id}/applications",
     response_model=PublicVacancyApplicationResponse,
+    responses={
+        409: {"description": "Duplicate submission or active cooldown"},
+        429: {
+            "description": "Too many requests",
+            "headers": {
+                "Retry-After": {
+                    "description": "Seconds before next retry",
+                    "schema": {"type": "string"},
+                },
+                "X-RateLimit-Limit": {
+                    "description": "Bucket limit",
+                    "schema": {"type": "string"},
+                },
+                "X-RateLimit-Remaining": {
+                    "description": "Remaining requests in current window",
+                    "schema": {"type": "string"},
+                },
+                "X-RateLimit-Reset": {
+                    "description": "Unix epoch timestamp for limit reset",
+                    "schema": {"type": "string"},
+                },
+            },
+        },
+    },
 )
 async def apply_to_vacancy_public(
     vacancy_id: str,
@@ -122,6 +146,7 @@ async def apply_to_vacancy_public(
     location: Annotated[str | None, Form(max_length=256)] = None,
     current_title: Annotated[str | None, Form(max_length=256)] = None,
     extra_data: Annotated[str | None, Form()] = None,
+    website: Annotated[str | None, Form(max_length=256)] = None,
 ) -> PublicVacancyApplicationResponse:
     """Submit public candidate application with CV to target vacancy."""
     return await service.apply_public(
@@ -135,5 +160,6 @@ async def apply_to_vacancy_public(
         extra_data_raw=extra_data,
         file=file,
         checksum_sha256=checksum_sha256,
+        website=website,
         request=request,
     )

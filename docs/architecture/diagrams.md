@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-04
+- Date: 2026-03-05
 - Updated by: architect + backend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
@@ -227,18 +227,25 @@ sequenceDiagram
   participant UI as React.js + TypeScript UI
   participant API as API Gateway
   participant VAC as Vacancy Application Service
+  participant RL as Redis Rate Limiter
   participant DB as PostgreSQL
   participant OBJ as MinIO
   participant Q as Celery/Redis
+  participant AUD as Audit/Monitoring
 
   C->>UI: Fill contacts + upload CV
   UI->>API: POST /api/v1/vacancies/{vacancy_id}/applications
-  API->>VAC: validate vacancy + cv payload
+  API->>VAC: validate anti-abuse + vacancy + cv payload
+  VAC->>RL: check buckets (ip, ip+vacancy, email+vacancy)
+  RL-->>VAC: allow / reject(429)
+  VAC->>DB: check honeypot + dedup + cooldown guards
+  DB-->>VAC: allow / reject(409|422)
+  VAC->>AUD: write success/failure reason code + counters
   VAC->>DB: upsert candidate_profiles
   VAC->>OBJ: put CV object (SSE-S3)
   VAC->>DB: insert candidate_documents + pipeline_transitions (None->applied) + cv_parsing_jobs(queued)
   VAC->>Q: enqueue process_cv_parsing_job(job_id)
-  API-->>UI: 201 Created (candidate_id, document_id, job_id)
+  API-->>UI: 201 Created or 409/422/429 with diagnostics
 ```
 
 ## Diagram 8: Delivery Pipeline (GitHub + CI)
