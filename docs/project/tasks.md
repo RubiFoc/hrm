@@ -1,13 +1,21 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-04
-- Updated by: architect
+- Date: 2026-03-05
+- Updated by: coordinator
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
 - `P1`: important for completing full business flows.
 - `P2`: later optimization/expansion tasks.
+
+## Execution Status Snapshot
+
+| Track | Status | Evidence |
+| --- | --- | --- |
+| ADMIN-01 | done | Merged in `main` via PR #48 |
+| ADMIN-02 | done/closed | GitHub issue #53 closed; merged in `main` via PR #51 (`bd96d86`) |
+| ADMIN-03 | opened | GitHub issue #52 |
 
 ## Task Breakdown by Epic
 
