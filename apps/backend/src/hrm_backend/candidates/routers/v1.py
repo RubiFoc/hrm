@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from io import BytesIO
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import StreamingResponse
@@ -59,7 +60,7 @@ def create_candidate_profile(
 
 @router.get("/{candidate_id}", response_model=CandidateResponse)
 def get_candidate_profile(
-    candidate_id: str,
+    candidate_id: UUID,
     request: Request,
     _: CandidateReadRole,
     auth_context: CurrentAuthContext,
@@ -75,7 +76,7 @@ def get_candidate_profile(
 
 @router.patch("/{candidate_id}", response_model=CandidateResponse)
 def patch_candidate_profile(
-    candidate_id: str,
+    candidate_id: UUID,
     payload: CandidateUpdateRequest,
     request: Request,
     _: CandidateUpdateRole,
@@ -104,7 +105,7 @@ def list_candidate_profiles(
 
 @router.post("/{candidate_id}/cv", response_model=CandidateCVUploadResponse)
 async def upload_candidate_cv(
-    candidate_id: str,
+    candidate_id: UUID,
     request: Request,
     checksum_sha256: Annotated[str, Form(min_length=64, max_length=64)],
     file: Annotated[UploadFile, File(...)],
@@ -124,7 +125,7 @@ async def upload_candidate_cv(
 
 @router.get("/{candidate_id}/cv")
 def download_candidate_cv(
-    candidate_id: str,
+    candidate_id: UUID,
     request: Request,
     _: CandidateCVReadRole,
     auth_context: CurrentAuthContext,
@@ -143,7 +144,7 @@ def download_candidate_cv(
 
 @router.get("/{candidate_id}/cv/parsing-status", response_model=CVParsingStatusResponse)
 def get_candidate_cv_parsing_status(
-    candidate_id: str,
+    candidate_id: UUID,
     request: Request,
     _: CandidateCVStatusRole,
     auth_context: CurrentAuthContext,

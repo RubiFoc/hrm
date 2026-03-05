@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 
@@ -65,7 +66,7 @@ def list_vacancies(
 
 @router.get("/api/v1/vacancies/{vacancy_id}", response_model=VacancyResponse)
 def get_vacancy(
-    vacancy_id: str,
+    vacancy_id: UUID,
     request: Request,
     _: VacancyReadRole,
     auth_context: CurrentAuthContext,
@@ -77,7 +78,7 @@ def get_vacancy(
 
 @router.patch("/api/v1/vacancies/{vacancy_id}", response_model=VacancyResponse)
 def patch_vacancy(
-    vacancy_id: str,
+    vacancy_id: UUID,
     payload: VacancyUpdateRequest,
     request: Request,
     _: VacancyUpdateRole,
@@ -134,7 +135,7 @@ def create_pipeline_transition(
     },
 )
 async def apply_to_vacancy_public(
-    vacancy_id: str,
+    vacancy_id: UUID,
     request: Request,
     first_name: Annotated[str, Form(min_length=1, max_length=128)],
     last_name: Annotated[str, Form(min_length=1, max_length=128)],

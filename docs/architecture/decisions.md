@@ -22,6 +22,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0015 | 2026-03-04 | accepted | Use Celery as execution engine for CV parsing with DB job table as source of truth | architect + backend-engineer | async runtime, operations, reliability |
 | ADR-0016 | 2026-03-04 | accepted | Remove legacy auth login payload and temporary settings compatibility shims | architect + backend-engineer | auth API contract, backend shared config imports |
 | ADR-0017 | 2026-03-05 | accepted | Add layered anti-abuse controls for public vacancy application endpoint | architect + backend-engineer | recruitment API, observability, operations |
+| ADR-0018 | 2026-03-05 | accepted | Normalize API ID contracts to UUID at boundary level | architect + backend-engineer | candidate/vacancy/pipeline contracts, OpenAPI |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -245,3 +246,14 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Public apply path gains deterministic abuse controls and clearer diagnostics.
   - Endpoint contract now includes `409/429` paths and rate-limit headers.
   - Operations must monitor blocked-rate anomalies and maintain Redis availability.
+
+## ADR-0018
+- Context: Remaining API contracts still represented entity identifiers as plain strings, which allowed non-UUID payloads on boundary paths and produced inconsistent OpenAPI typing.
+- Decision:
+  - Normalize candidate/vacancy/pipeline/CV-status API schemas and route boundaries to UUID types.
+  - Accept UUID in path/body contracts and return `422` for invalid non-UUID identifiers.
+  - Keep storage layer unchanged (string UUID columns) and convert UUID -> string only at DAO/model boundary.
+- Consequences:
+  - OpenAPI now exposes uniform `format: uuid` for normalized ID fields.
+  - Contract validation becomes stricter for clients still sending legacy non-UUID values.
+  - Service signatures become type-safe without forcing DB storage migration in this phase.

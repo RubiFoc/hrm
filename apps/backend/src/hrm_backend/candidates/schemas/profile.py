@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -71,7 +72,7 @@ class CandidateUpdateRequest(BaseModel):
 class CandidateResponse(BaseModel):
     """Candidate profile API representation."""
 
-    candidate_id: str
+    candidate_id: UUID
     owner_subject_id: str
     first_name: str
     last_name: str

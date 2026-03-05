@@ -73,7 +73,7 @@ class VacancyApplicationService:
     async def apply_public(
         self,
         *,
-        vacancy_id: str,
+        vacancy_id: UUID,
         first_name: str,
         last_name: str,
         email: str,
@@ -207,7 +207,7 @@ class VacancyApplicationService:
                 vacancy_id=vacancy_id_str,
             )
             return PublicVacancyApplicationResponse(
-                vacancy_id=UUID(vacancy_id),
+                vacancy_id=vacancy_id,
                 candidate_id=UUID(candidate.candidate_id),
                 document_id=UUID(document.document_id),
                 parsing_job_id=UUID(parsing_job.job_id),

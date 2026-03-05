@@ -7,7 +7,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -22,6 +22,8 @@ from hrm_backend.candidates.services.cv_parsing_worker_service import CVParsingW
 from hrm_backend.core.models.base import Base
 from hrm_backend.main import app
 from hrm_backend.settings import AppSettings, get_settings
+
+pytestmark = pytest.mark.anyio
 
 
 class InMemoryCandidateStorage:
@@ -117,68 +119,82 @@ def _run_worker_once(
         engine.dispose()
 
 
-def test_parsing_job_success_and_status_tracking(configured_app) -> None:
+@pytest.fixture()
+async def api_client(configured_app) -> AsyncClient:
+    """Provide async API client for parsing integration tests."""
+    configured, *_ = configured_app
+    async with AsyncClient(
+        transport=ASGITransport(app=configured),
+        base_url="http://testserver",
+    ) as client:
+        yield client
+
+
+async def test_parsing_job_success_and_status_tracking(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
     """Verify queued job moves to succeeded state after worker iteration."""
-    configured, settings, _, storage, database_url = configured_app
+    _, settings, _, storage, database_url = configured_app
 
-    with TestClient(configured) as client:
-        candidate_response = client.post(
-            "/api/v1/candidates",
-            json={
-                "first_name": "Nina",
-                "last_name": "Stone",
-                "email": "nina@example.com",
-                "extra_data": {},
-            },
-        )
-        candidate_id = candidate_response.json()["candidate_id"]
+    candidate_response = await api_client.post(
+        "/api/v1/candidates",
+        json={
+            "first_name": "Nina",
+            "last_name": "Stone",
+            "email": "nina@example.com",
+            "extra_data": {},
+        },
+    )
+    candidate_id = candidate_response.json()["candidate_id"]
 
-        content = b"normal-parse-content"
-        checksum = hashlib.sha256(content).hexdigest()
-        upload_response = client.post(
-            f"/api/v1/candidates/{candidate_id}/cv",
-            data={"checksum_sha256": checksum},
-            files={"file": ("cv.pdf", content, "application/pdf")},
-        )
-        assert upload_response.status_code == 200
+    content = b"normal-parse-content"
+    checksum = hashlib.sha256(content).hexdigest()
+    upload_response = await api_client.post(
+        f"/api/v1/candidates/{candidate_id}/cv",
+        data={"checksum_sha256": checksum},
+        files={"file": ("cv.pdf", content, "application/pdf")},
+    )
+    assert upload_response.status_code == 200
 
-        pre_status = client.get(f"/api/v1/candidates/{candidate_id}/cv/parsing-status")
-        assert pre_status.status_code == 200
-        assert pre_status.json()["status"] == "queued"
+    pre_status = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/parsing-status")
+    assert pre_status.status_code == 200
+    assert pre_status.json()["status"] == "queued"
 
     first_worker_result = _run_worker_once(database_url, settings, storage)
     assert first_worker_result == "succeeded"
 
-    with TestClient(configured) as client:
-        post_status = client.get(f"/api/v1/candidates/{candidate_id}/cv/parsing-status")
-        assert post_status.status_code == 200
-        assert post_status.json()["status"] == "succeeded"
+    post_status = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/parsing-status")
+    assert post_status.status_code == 200
+    assert post_status.json()["status"] == "succeeded"
 
 
-def test_parsing_job_failure_path_and_retry_limit(configured_app) -> None:
+async def test_parsing_job_failure_path_and_retry_limit(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
     """Verify failure path retries up to configured limit and then stops."""
-    configured, settings, _, storage, database_url = configured_app
+    _, settings, _, storage, database_url = configured_app
 
-    with TestClient(configured) as client:
-        candidate_response = client.post(
-            "/api/v1/candidates",
-            json={
-                "first_name": "Tom",
-                "last_name": "Green",
-                "email": "tom@example.com",
-                "extra_data": {},
-            },
-        )
-        candidate_id = candidate_response.json()["candidate_id"]
+    candidate_response = await api_client.post(
+        "/api/v1/candidates",
+        json={
+            "first_name": "Tom",
+            "last_name": "Green",
+            "email": "tom@example.com",
+            "extra_data": {},
+        },
+    )
+    candidate_id = candidate_response.json()["candidate_id"]
 
-        content = b"FAIL_PARSE deterministic-failure"
-        checksum = hashlib.sha256(content).hexdigest()
-        upload_response = client.post(
-            f"/api/v1/candidates/{candidate_id}/cv",
-            data={"checksum_sha256": checksum},
-            files={"file": ("cv.pdf", content, "application/pdf")},
-        )
-        assert upload_response.status_code == 200
+    content = b"FAIL_PARSE deterministic-failure"
+    checksum = hashlib.sha256(content).hexdigest()
+    upload_response = await api_client.post(
+        f"/api/v1/candidates/{candidate_id}/cv",
+        data={"checksum_sha256": checksum},
+        files={"file": ("cv.pdf", content, "application/pdf")},
+    )
+    assert upload_response.status_code == 200
 
     first_worker_result = _run_worker_once(database_url, settings, storage)
     second_worker_result = _run_worker_once(database_url, settings, storage)
@@ -188,10 +204,9 @@ def test_parsing_job_failure_path_and_retry_limit(configured_app) -> None:
     assert second_worker_result == "failed"
     assert third_worker_result == "idle"
 
-    with TestClient(configured) as client:
-        status_response = client.get(f"/api/v1/candidates/{candidate_id}/cv/parsing-status")
-        assert status_response.status_code == 200
-        payload = status_response.json()
-        assert payload["status"] == "failed"
-        assert payload["attempt_count"] == 2
-        assert payload["last_error"] is not None
+    status_response = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/parsing-status")
+    assert status_response.status_code == 200
+    payload = status_response.json()
+    assert payload["status"] == "failed"
+    assert payload["attempt_count"] == 2
+    assert payload["last_error"] is not None

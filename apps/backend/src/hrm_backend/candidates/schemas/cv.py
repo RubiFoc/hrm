@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -10,8 +11,8 @@ from pydantic import BaseModel
 class CandidateCVUploadResponse(BaseModel):
     """Metadata payload returned after successful CV upload."""
 
-    document_id: str
-    candidate_id: str
+    document_id: UUID
+    candidate_id: UUID
     filename: str
     mime_type: str
     size_bytes: int
