@@ -85,6 +85,28 @@ Shortcut wrappers:
 - Auth validation is fail-closed when Redis denylist is unavailable.
 - Expected behavior during Redis outage: protected auth checks return `503`.
 
+### Public Apply Abuse Diagnostics
+- Endpoint: `POST /api/v1/vacancies/{vacancy_id}/applications`.
+- Expected anti-abuse responses:
+  - `429 Too Many Requests` with headers:
+    - `Retry-After`
+    - `X-RateLimit-Limit`
+    - `X-RateLimit-Remaining`
+    - `X-RateLimit-Reset`
+  - `409 Conflict` for duplicate submission and active cooldown.
+  - `422` for honeypot trigger or validation failure.
+- Audit failure reason codes (`action=vacancy:apply_public`):
+  - `rate_limited`
+  - `honeypot_triggered`
+  - `duplicate_submission`
+  - `cooldown_active`
+  - `validation_failed`
+- Triage sequence:
+  1. Check API response status and reason code.
+  2. Query `audit_events` by `action=vacancy:apply_public` and recent `correlation_id`.
+  3. Verify Redis availability and limiter key activity.
+  4. Compare blocked volume with alert threshold (`PUBLIC_APPLY_BLOCKED_ALERT_THRESHOLD_PER_MINUTE`).
+
 ## Compliance Baseline (Dev Non-Blocking, Prod Blocking)
 This section defines provisional operational controls until final legal/security sign-off.
 
