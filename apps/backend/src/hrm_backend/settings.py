@@ -6,6 +6,7 @@ Domain packages should consume `AppSettings` / `get_settings` from here.
 
 from __future__ import annotations
 
+import json
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -247,6 +248,32 @@ class AppSettings(BaseSettings):
                 _dotenv_settings_source,
                 file_secret_settings,
             )
+
+        @classmethod
+        def parse_env_var(cls, field_name: str, raw_val: str) -> Any:
+            """Parse selected env vars before model-level validation.
+
+            Args:
+                field_name: Target settings field name.
+                raw_val: Raw scalar environment value.
+
+            Returns:
+                Any: Parsed value passed to pydantic field validation.
+            """
+            if field_name != "cv_allowed_mime_types":
+                return super().parse_env_var(field_name, raw_val)
+
+            normalized = raw_val.strip()
+            if not normalized:
+                return []
+
+            if normalized.startswith("["):
+                try:
+                    return json.loads(normalized)
+                except json.JSONDecodeError:
+                    return [item for item in normalized.split(",")]
+
+            return [item for item in normalized.split(",")]
 
 
 @lru_cache(maxsize=1)
