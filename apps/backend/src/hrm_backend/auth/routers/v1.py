@@ -69,8 +69,6 @@ def login(
         token_response = auth_service.login(
             identifier=request.identifier,
             password=request.password,
-            subject_id=request.subject_id,
-            role=request.role,
         )
     except HTTPException as exc:
         audit_service.record_api_event(
@@ -78,11 +76,7 @@ def login(
             resource_type="auth_session",
             result="failure",
             request=http_request,
-            actor_sub=(
-                request.identifier
-                or (str(request.subject_id) if request.subject_id else None)
-            ),
-            actor_role=request.role,
+            actor_sub=request.identifier,
             reason=str(exc.detail),
         )
         raise
@@ -92,8 +86,7 @@ def login(
         resource_type="auth_session",
         result="success",
         request=http_request,
-        actor_sub=request.identifier or (str(request.subject_id) if request.subject_id else None),
-        actor_role=request.role,
+        actor_sub=request.identifier,
         resource_id=str(token_response.session_id),
     )
     return token_response

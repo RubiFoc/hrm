@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-04
-- Updated by: backend-engineer
+- Updated by: backend-engineer + codex
 
 This document defines the Phase-1 authentication baseline for backend APIs.
 Source of truth package: `apps/backend/src/hrm_backend/auth/`.
@@ -42,9 +42,6 @@ Source of truth package: `apps/backend/src/hrm_backend/auth/`.
 Bootstrap note:
 - first `admin` is created manually through CLI:
   `uv run --project apps/backend python -m hrm_backend.auth.cli.create_admin`.
-
-Temporary compatibility:
-- `POST /api/v1/auth/login` still accepts legacy `subject_id + role` payload for backward compatibility.
 
 ## JWT Claims
 - Common: `sub`, `sid`, `jti`, `iat`, `exp`, `typ`, `role`

@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 from pydantic.v1 import ValidationError
 
-from hrm_backend.auth.utils.settings import AuthSettings, get_auth_settings
 from hrm_backend.settings import AppSettings, get_settings
 
 
@@ -48,9 +47,3 @@ def test_app_settings_rejects_non_positive_numeric_values() -> None:
 
     with pytest.raises(ValidationError):
         AppSettings(access_token_ttl_seconds=0)
-
-
-def test_auth_shim_points_to_canonical_settings() -> None:
-    """Verify auth compatibility shim points to canonical app settings."""
-    assert AuthSettings is AppSettings
-    assert get_auth_settings is get_settings

@@ -20,6 +20,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0013 | 2026-03-04 | accepted | Move to staff-only password authentication with employee registration keys and `admin` role | architect + backend-engineer | auth, RBAC, API contracts |
 | ADR-0014 | 2026-03-04 | accepted | Replace candidate auth flow with public vacancy application endpoint | architect + backend-engineer | recruitment API, RBAC, audit model |
 | ADR-0015 | 2026-03-04 | accepted | Use Celery as execution engine for CV parsing with DB job table as source of truth | architect + backend-engineer | async runtime, operations, reliability |
+| ADR-0016 | 2026-03-04 | accepted | Remove legacy auth login payload and temporary settings compatibility shims | architect + backend-engineer | auth API contract, backend shared config imports |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -186,7 +187,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 - Consequences:
   - Staff identity lifecycle becomes auditable and centrally managed.
   - Registration/login contracts are changed and require client updates.
-  - Backward compatibility path exists temporarily for legacy login payload.
+  - Legacy compatibility layer is removed in ADR-0016.
 
 ## ADR-0014
 - Context: candidate role-based authentication was removed from backend scope; candidates should be able to apply without account creation.
@@ -211,3 +212,17 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Async execution gains standard queue controls (routing, timeout, retries, worker scaling).
   - Compose/runtime must include dedicated `backend-worker` service.
   - Operational runbook and smoke checks must cover worker health path.
+
+## ADR-0016
+- Context: The temporary auth backward-compatibility layer (`subject_id + role` login and settings shim paths) kept non-canonical contracts alive after staff-account migration.
+- Decision:
+  - Remove `subject_id + role` legacy mode from `POST /api/v1/auth/login`.
+  - Keep only `identifier + password` login payload and account-backed authentication path.
+  - Remove deprecated settings shim modules:
+    - `hrm_backend.auth.utils.settings`
+    - `hrm_backend.core.config.settings`
+  - Keep canonical settings entrypoint `hrm_backend.settings`.
+- Consequences:
+  - Login API contract is simplified and explicit.
+  - Internal imports are normalized to one settings source of truth.
+  - Legacy clients that still send `subject_id + role` must migrate before upgrade.
