@@ -31,7 +31,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Staff
+         * @description List staff accounts with pagination and optional filters.
+         */
+        get: operations["list_staff_api_v1_admin_staff_get"];
         put?: never;
         /**
          * Create Staff
@@ -42,6 +46,26 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/staff/{staff_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Patch Staff
+         * @description Patch staff account role and/or active-state through admin privileges.
+         */
+        patch: operations["patch_staff_api_v1_admin_staff__staff_id__patch"];
         trace?: never;
     };
     "/api/v1/auth/login": {
@@ -421,6 +445,59 @@ export interface components {
              * @enum {string}
              */
             role: "admin" | "hr" | "manager" | "employee" | "leader" | "accountant";
+        };
+        /**
+         * AdminStaffListItem
+         * @description One staff record returned by admin staff list endpoint.
+         */
+        AdminStaffListItem: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Email */
+            email: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Login */
+            login: string;
+            /** Role */
+            role: string;
+            /**
+             * Staff Id
+             * Format: uuid
+             */
+            staff_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * AdminStaffListResponse
+         * @description Paginated response payload for admin staff list endpoint.
+         */
+        AdminStaffListResponse: {
+            /** Items */
+            items: components["schemas"]["AdminStaffListItem"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * AdminStaffUpdateRequest
+         * @description Input payload for admin-managed staff role/active-state updates.
+         */
+        AdminStaffUpdateRequest: {
+            /** Is Active */
+            is_active?: boolean | null;
+            /** Role */
+            role?: ("admin" | "hr" | "manager" | "employee" | "leader" | "accountant") | null;
         };
         /** Body_apply_to_vacancy_public_api_v1_vacancies__vacancy_id__applications_post */
         Body_apply_to_vacancy_public_api_v1_vacancies__vacancy_id__applications_post: {
@@ -994,6 +1071,41 @@ export interface operations {
             };
         };
     };
+    list_staff_api_v1_admin_staff_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                search?: string | null;
+                role?: ("admin" | "hr" | "manager" | "employee" | "leader" | "accountant") | null;
+                is_active?: boolean | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminStaffListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_staff_api_v1_admin_staff_post: {
         parameters: {
             query?: never;
@@ -1024,6 +1136,53 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    patch_staff_api_v1_admin_staff__staff_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                staff_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminStaffUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffResponse"];
+                };
+            };
+            /** @description Staff account not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Strict safety guard conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failure */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

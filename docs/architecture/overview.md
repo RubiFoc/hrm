@@ -1,8 +1,8 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-04
-- Updated by: architect + backend-engineer
+- Date: 2026-03-05
+- Updated by: architect + backend-engineer + frontend-engineer
 
 ## System Context
 HRM platform for Belarus and Russia that supports candidate selection, fair interview workflows, onboarding, HR automation, and operational workflows for HR, managers, employees, leaders, and accountants.
@@ -41,6 +41,7 @@ flowchart LR
 | API Gateway | AuthN/AuthZ entrypoint and request routing | HTTPS requests | Routed calls, access decisions | platform |
 | Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
 | Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
+| Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key issuance, audit hooks | platform |
 | Recruitment Domain | Vacancies, candidates, pipeline, interview lifecycle | Candidate and vacancy data | Match scores, pipeline states | hr-tech |
 | Employee Domain | Employee profile and onboarding workflows | Hire decisions, profile data | Employee records, onboarding tasks | hr-tech |
 | HR Operations Domain | HR process automation and workflow execution | Rules and triggers | Automated tasks, status updates | hr-ops |
@@ -62,6 +63,9 @@ flowchart LR
    anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue.
 6. Authentication Flow:
    staff key issuance -> staff register/login (login/email + password) -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
+7. Admin Staff Governance Flow:
+   admin opens `/admin/staff` -> paginated/filterable staff list -> patch `role`/`is_active` ->
+   strict guard (self-protection + last-active-admin protection) -> audit success/failure reason codes.
 
 ## Data Boundaries
 - Source of truth entities:
@@ -75,6 +79,8 @@ flowchart LR
 ## Deployment View
 - Runtime style: modular monolith first, with clear domain modules and async workers.
 - Shared backend primitives are centralized in `hrm_backend/core` to prevent domain duplication.
+- Package boundary baseline:
+  `hrm_backend/auth` handles auth/session lifecycle; `hrm_backend/admin` handles admin governance APIs.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
 - Compose baseline services: `frontend`, `backend`, `postgres`, `redis`, `minio`, `minio-init`.
 - Async runtime baseline: dedicated `backend-worker` (Celery) processing DB-backed jobs.

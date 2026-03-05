@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from fastapi import FastAPI, Request
 
-from hrm_backend.auth.routers.admin_v1 import router as admin_router
+from hrm_backend.admin.routers.v1 import router as admin_router
 from hrm_backend.auth.routers.v1 import router as auth_router
 from hrm_backend.candidates.routers.v1 import router as candidate_router
 from hrm_backend.rbac import ROLE_PERMISSION_MATRIX

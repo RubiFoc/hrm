@@ -25,6 +25,8 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0018 | 2026-03-05 | accepted | Normalize API ID contracts to UUID at boundary level | architect + backend-engineer | candidate/vacancy/pipeline contracts, OpenAPI |
 | ADR-0019 | 2026-03-05 | accepted | Freeze OpenAPI contract and enforce drift checks in CI | architect + backend-engineer | API governance, CI/CD, frontend integration |
 | ADR-0020 | 2026-03-05 | accepted | Introduce ADMIN-01 frontend route guard and admin shell with Sentry tags | architect + frontend-engineer | frontend routing, access control UX, observability |
+| ADR-0021 | 2026-03-05 | accepted | Add ADMIN-02 staff management list/update APIs with strict admin safety guard | architect + backend-engineer + frontend-engineer | admin API contracts, RBAC, audit trail, frontend admin workspace |
+| ADR-0022 | 2026-03-05 | accepted | Extract admin governance flows into dedicated `admin` backend package | architect + backend-engineer | backend package boundaries, maintainability, test topology |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -283,3 +285,36 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Admin entry flow is deterministic and testable for both allowed and denied paths.
   - Observability baseline exists before deeper admin features (ADMIN-02/03).
   - Frontend routing contract expands with dedicated access-denied flow.
+
+## ADR-0021
+- Context: `ADMIN-02` requires operational staff governance from admin workspace while preventing lock-out and privilege-loss incidents.
+- Decision:
+  - Add admin staff management endpoints:
+    - `GET /api/v1/admin/staff` with server-driven pagination and filters (`search`, `role`, `is_active`).
+    - `PATCH /api/v1/admin/staff/{staff_id}` with partial updates limited to `role` and `is_active`.
+  - Extend RBAC with `admin:staff:list` and `admin:staff:update` permissions granted to `admin` only.
+  - Enforce strict guard in service layer:
+    - forbid self-demotion and self-disable;
+    - forbid deactivation/demotion of the last active `admin`.
+  - Standardize failure reason-code contract in API error details:
+    `staff_not_found`, `empty_patch`, `unsupported_role`,
+    `self_modification_forbidden`, `last_admin_protection`, `validation_failed`.
+  - Extend frontend admin workspace with `/admin/staff` route, server-driven table, filters, update actions, and localized error mapping for `404/409/422`.
+- Consequences:
+  - Staff role/activity governance is available as one vertical slice (backend + frontend + contract).
+  - Admin safety invariants are enforced centrally in business logic.
+  - Audit evidence is expanded with `admin.staff:list` and `admin.staff:update` success/failure traces.
+  - `ADMIN-03` (employee key lifecycle UI/API expansion) remains isolated as next phase.
+
+## ADR-0022
+- Context: Admin governance flows were implemented in `hrm_backend/auth`, which broke bounded-context separation and conflicted with the package structure baseline used by other domains (for example `candidates`).
+- Decision:
+  - Extract admin HTTP/business/persistence layers to dedicated package `hrm_backend/admin`.
+  - Keep package structure aligned with extraction-ready baseline:
+    `models`, `schemas`, `services`, `dao`, `routers`, `utils`, `dependencies`, plus explicit `infra` adapters.
+  - Keep API contracts unchanged (`/api/v1/admin/*`, reason-code behavior, RBAC requirements), but route orchestration through `admin` service/DAO layers.
+  - Keep `hrm_backend/auth` scoped to auth/session lifecycle only (`register/login/refresh/logout/me`).
+- Consequences:
+  - Domain boundaries are explicit and consistent with engineering standards.
+  - Admin feature development no longer couples to auth service internals.
+  - Test topology now follows package flow (`tests/unit/admin`, `tests/integration/admin`).

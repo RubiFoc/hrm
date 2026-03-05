@@ -185,10 +185,11 @@ def _seed_staff_account(
         password: Raw staff password.
         role: Staff role.
     """
-    auth_service.create_staff_account(
+    password_hash = auth_service._password_service.hash_password(password)
+    auth_service._staff_account_dao.create_account(
         login=login,
         email=email,
-        password=password,
+        password_hash=password_hash,
         role=role,
         is_active=True,
     )

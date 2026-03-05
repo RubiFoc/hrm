@@ -20,6 +20,8 @@ from hrm_backend.auth.schemas.token_claims import AuthContext
 Role = Literal["admin", "hr", "manager", "employee", "leader", "accountant"]
 Permission = Literal[
     "admin:staff:create",
+    "admin:staff:list",
+    "admin:staff:update",
     "admin:employee_key:create",
     "vacancy:read",
     "vacancy:create",
@@ -45,6 +47,8 @@ Permission = Literal[
 ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
     "admin": {
         "admin:staff:create",
+        "admin:staff:list",
+        "admin:staff:update",
         "admin:employee_key:create",
         "vacancy:read",
         "vacancy:create",

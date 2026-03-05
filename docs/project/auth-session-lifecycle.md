@@ -1,7 +1,7 @@
 # Authentication and Session Lifecycle (TASK-01-02, TASK-01-04, staff auth extension)
 
 ## Last Updated
-- Date: 2026-03-04
+- Date: 2026-03-05
 - Updated by: backend-engineer + codex
 
 This document defines the Phase-1 authentication baseline for backend APIs.
@@ -37,6 +37,8 @@ Source of truth package: `apps/backend/src/hrm_backend/auth/`.
 | `/api/v1/auth/logout` | `POST` | Revoke current access token and session (`sid`) | access token |
 | `/api/v1/auth/me` | `GET` | Return current identity claims | access token |
 | `/api/v1/admin/staff` | `POST` | Admin direct staff account creation | admin permission |
+| `/api/v1/admin/staff` | `GET` | Admin staff list with pagination and filters | `admin:staff:list` |
+| `/api/v1/admin/staff/{staff_id}` | `PATCH` | Admin update for `role`/`is_active` with strict guard | `admin:staff:update` |
 | `/api/v1/admin/employee-keys` | `POST` | Issue one-time employee registration key | `admin`/`hr` permission |
 
 Bootstrap note:
@@ -89,6 +91,8 @@ Bootstrap note:
 | Logout | `auth.logout` | `api` | `success` / `failure` | Bound to authenticated actor/session |
 | Identity read | `auth.me.read` | `api` | `success` | Read of authenticated identity |
 | Admin create staff | `admin.staff:create` | `api` | `success` / `failure` | privileged action |
+| Admin list staff | `admin.staff:list` | `api` | `success` / `failure` | list filters + pagination, reason-codes on handler-level failures |
+| Admin update staff | `admin.staff:update` | `api` | `success` / `failure` | strict guard reason-codes: `staff_not_found`, `empty_patch`, `unsupported_role`, `self_modification_forbidden`, `last_admin_protection`, `validation_failed` |
 | Admin create employee key | `admin.employee_key:create` | `api` | `success` / `failure` | privileged action |
 | RBAC decision | `<permission>` (e.g. `vacancy:create`) | `api` / `job` | `allowed` / `denied` | Recorded for both API and background checks |
 

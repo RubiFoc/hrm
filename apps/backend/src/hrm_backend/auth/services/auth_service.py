@@ -10,17 +10,13 @@ from hrm_backend.auth.infra.postgres.employee_registration_key_dao import Employ
 from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
 from hrm_backend.auth.infra.security.password_service import PasswordService
 from hrm_backend.auth.schemas.responses import (
-    EmployeeRegistrationKeyResponse,
     MeResponse,
-    StaffResponse,
     TokenResponse,
 )
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.auth.services.denylist_service import DenylistService
 from hrm_backend.auth.services.token_service import TokenService
 from hrm_backend.settings import AppSettings
-
-_STAFF_ROLES = {"admin", "hr", "manager", "employee", "leader", "accountant"}
 
 
 class AuthService:
@@ -112,76 +108,6 @@ class AuthService:
             )
 
         return self._issue_token_pair(staff_id=UUID(account.staff_id), role=account.role)
-
-    def create_staff_account(
-        self,
-        *,
-        login: str,
-        email: str,
-        password: str,
-        role: str,
-        is_active: bool,
-    ) -> StaffResponse:
-        """Create staff account directly through admin API."""
-        self._require_account_dependencies()
-        if role not in _STAFF_ROLES:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="Unsupported staff role",
-            )
-
-        if self._staff_account_dao.get_by_login(login) is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Login already exists")
-        if self._staff_account_dao.get_by_email(email) is not None:
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already exists")
-
-        password_hash = self._password_service.hash_password(password)
-        account = self._staff_account_dao.create_account(
-            login=login,
-            email=email,
-            password_hash=password_hash,
-            role=role,
-            is_active=is_active,
-        )
-        return StaffResponse(
-            staff_id=UUID(account.staff_id),
-            login=account.login,
-            email=account.email,
-            role=account.role,
-            is_active=account.is_active,
-            created_at=account.created_at,
-            updated_at=account.updated_at,
-        )
-
-    def create_employee_key(
-        self,
-        *,
-        target_role: str,
-        created_by_staff_id: UUID,
-        ttl_seconds: int,
-    ) -> EmployeeRegistrationKeyResponse:
-        """Issue one-time employee registration key."""
-        self._require_account_dependencies()
-        if target_role not in _STAFF_ROLES or target_role == "admin":
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail="Target role is not allowed for employee key",
-            )
-
-        key_row = self._registration_key_dao.create_key(
-            target_role=target_role,
-            created_by_staff_id=str(created_by_staff_id),
-            ttl_seconds=ttl_seconds,
-        )
-        return EmployeeRegistrationKeyResponse(
-            key_id=UUID(key_row.key_id),
-            employee_key=UUID(key_row.employee_key),
-            target_role=key_row.target_role,
-            expires_at=key_row.expires_at,
-            used_at=key_row.used_at,
-            created_by_staff_id=UUID(key_row.created_by_staff_id),
-            created_at=key_row.created_at,
-        )
 
     def refresh(self, refresh_token: str) -> TokenResponse:
         """Rotate token pair using refresh token."""
