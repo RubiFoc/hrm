@@ -35,6 +35,6 @@ describe("admin route guard", () => {
     window.localStorage.setItem("hrm_user_role", "admin");
 
     renderWithPath("/admin");
-    expect(await screen.findByText(/админ пространство/i)).toBeDefined();
+    expect(await screen.findByRole("heading", { name: /админ пространство/i })).toBeDefined();
   });
 });
