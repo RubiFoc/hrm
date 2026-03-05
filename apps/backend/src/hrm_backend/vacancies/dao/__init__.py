@@ -1,6 +1,7 @@
 """Data-access objects for vacancy domain."""
 
 from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransitionDAO
+from hrm_backend.vacancies.dao.public_apply_guard_dao import PublicApplyGuardDAO
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
 
-__all__ = ["VacancyDAO", "PipelineTransitionDAO"]
+__all__ = ["VacancyDAO", "PipelineTransitionDAO", "PublicApplyGuardDAO"]

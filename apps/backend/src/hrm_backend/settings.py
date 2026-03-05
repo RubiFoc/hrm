@@ -36,6 +36,18 @@ class AppSettings(BaseSettings):
         object_storage_sse_enabled: Whether uploads use SSE-S3 headers.
         cv_parsing_max_attempts: Maximum worker retries for CV parsing.
         employee_key_ttl_seconds: Default ttl for one-time employee registration keys.
+        public_apply_rate_limit_redis_prefix: Redis key prefix for public apply rate limits.
+        public_apply_rate_limit_ip: Rate limit threshold for IP bucket.
+        public_apply_rate_limit_ip_window_seconds: Time window for IP bucket.
+        public_apply_rate_limit_ip_vacancy: Rate limit threshold for IP+vacancy bucket.
+        public_apply_rate_limit_ip_vacancy_window_seconds: Time window for IP+vacancy bucket.
+        public_apply_rate_limit_email_vacancy: Rate limit threshold for email+vacancy bucket.
+        public_apply_rate_limit_email_vacancy_window_seconds: Time window for email+vacancy bucket.
+        public_apply_dedup_window_seconds:
+            Deduplication window for vacancy+checksum anti-spam check.
+        public_apply_email_cooldown_seconds: Cooldown between submissions by one email per vacancy.
+        public_apply_blocked_alert_threshold_per_minute:
+            Anomaly threshold for blocked submissions per minute.
         celery_broker_url: Celery broker URL.
         celery_result_backend: Celery result backend URL.
         celery_task_default_queue: Default Celery queue name.
@@ -92,6 +104,51 @@ class AppSettings(BaseSettings):
         env="EMPLOYEE_KEY_TTL_SECONDS",
         gt=0,
     )
+    public_apply_rate_limit_redis_prefix: str = Field(
+        default="vacancy:apply_public:rl",
+        env="PUBLIC_APPLY_RATE_LIMIT_REDIS_PREFIX",
+    )
+    public_apply_rate_limit_ip: int = Field(default=10, env="PUBLIC_APPLY_RATE_LIMIT_IP", gt=0)
+    public_apply_rate_limit_ip_window_seconds: int = Field(
+        default=15 * 60,
+        env="PUBLIC_APPLY_RATE_LIMIT_IP_WINDOW_SECONDS",
+        gt=0,
+    )
+    public_apply_rate_limit_ip_vacancy: int = Field(
+        default=5,
+        env="PUBLIC_APPLY_RATE_LIMIT_IP_VACANCY",
+        gt=0,
+    )
+    public_apply_rate_limit_ip_vacancy_window_seconds: int = Field(
+        default=15 * 60,
+        env="PUBLIC_APPLY_RATE_LIMIT_IP_VACANCY_WINDOW_SECONDS",
+        gt=0,
+    )
+    public_apply_rate_limit_email_vacancy: int = Field(
+        default=8,
+        env="PUBLIC_APPLY_RATE_LIMIT_EMAIL_VACANCY",
+        gt=0,
+    )
+    public_apply_rate_limit_email_vacancy_window_seconds: int = Field(
+        default=24 * 60 * 60,
+        env="PUBLIC_APPLY_RATE_LIMIT_EMAIL_VACANCY_WINDOW_SECONDS",
+        gt=0,
+    )
+    public_apply_dedup_window_seconds: int = Field(
+        default=24 * 60 * 60,
+        env="PUBLIC_APPLY_DEDUP_WINDOW_SECONDS",
+        ge=0,
+    )
+    public_apply_email_cooldown_seconds: int = Field(
+        default=60,
+        env="PUBLIC_APPLY_EMAIL_COOLDOWN_SECONDS",
+        ge=0,
+    )
+    public_apply_blocked_alert_threshold_per_minute: int = Field(
+        default=30,
+        env="PUBLIC_APPLY_BLOCKED_ALERT_THRESHOLD_PER_MINUTE",
+        gt=0,
+    )
     celery_broker_url: str = Field(default="redis://redis:6379/0", env="CELERY_BROKER_URL")
     celery_result_backend: str = Field(default="redis://redis:6379/0", env="CELERY_RESULT_BACKEND")
     celery_task_default_queue: str = Field(default="cv_parsing", env="CELERY_TASK_DEFAULT_QUEUE")
@@ -113,6 +170,7 @@ class AppSettings(BaseSettings):
         "jwt_secret",
         "jwt_algorithm",
         "redis_prefix",
+        "public_apply_rate_limit_redis_prefix",
         "celery_broker_url",
         "celery_result_backend",
         "celery_task_default_queue",

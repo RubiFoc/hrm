@@ -21,6 +21,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0014 | 2026-03-04 | accepted | Replace candidate auth flow with public vacancy application endpoint | architect + backend-engineer | recruitment API, RBAC, audit model |
 | ADR-0015 | 2026-03-04 | accepted | Use Celery as execution engine for CV parsing with DB job table as source of truth | architect + backend-engineer | async runtime, operations, reliability |
 | ADR-0016 | 2026-03-04 | accepted | Remove legacy auth login payload and temporary settings compatibility shims | architect + backend-engineer | auth API contract, backend shared config imports |
+| ADR-0017 | 2026-03-05 | accepted | Add layered anti-abuse controls for public vacancy application endpoint | architect + backend-engineer | recruitment API, observability, operations |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -226,3 +227,21 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Login API contract is simplified and explicit.
   - Internal imports are normalized to one settings source of truth.
   - Legacy clients that still send `subject_id + role` must migrate before upgrade.
+
+## ADR-0017
+- Context: Public vacancy application endpoint is anonymous and vulnerable to spam and abuse without explicit guardrails.
+- Decision:
+  - Add Redis-backed rate limiting on three scopes:
+    - `ip`
+    - `ip+vacancy`
+    - `email+vacancy`
+  - Add anti-spam policy checks:
+    - honeypot field (`website`)
+    - duplicate checksum detection (`vacancy_id + checksum_sha256`)
+    - cooldown window for repeated submissions per `email+vacancy`.
+  - Extend audit failure reason codes for `vacancy:apply_public`.
+  - Emit structured monitoring signals for success/blocked outcomes.
+- Consequences:
+  - Public apply path gains deterministic abuse controls and clearer diagnostics.
+  - Endpoint contract now includes `409/429` paths and rate-limit headers.
+  - Operations must monitor blocked-rate anomalies and maintain Redis availability.

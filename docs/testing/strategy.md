@@ -36,6 +36,18 @@ apps/backend/tests/
     ...
 ```
 
+## Integration Harness Stability Rules
+- Canonical HTTP integration harness: `pytest-anyio` + `httpx.AsyncClient` + `ASGITransport`.
+- Do not use `starlette.testclient.TestClient` in backend integration tests.
+- Keep integration runtime pinned to `anyio_backend = "asyncio"` in `apps/backend/tests/integration/conftest.py`.
+- Keep `inline_threadpool_patch` integration-only; it exists to avoid environment-specific deadlocks in `anyio.to_thread` during in-process ASGI runs.
+- Integration tests should override external adapters (Redis/object storage/auth context) through FastAPI dependency overrides to keep runs deterministic.
+
+### Mandatory Pre-PR Smoke Gate (Security/Auth Integration)
+- Run before PR-B/PR-C/PR-D style contract-sensitive backend changes:
+  - `uv run --project apps/backend pytest -q apps/backend/tests/integration/security/test_audit_enforcement.py apps/backend/tests/integration/auth/test_auth_stack.py`
+- The gate must pass in two consecutive runs when harness-level changes are introduced.
+
 ## Change-Based Verification Matrix
 | Change Type | Required Checks |
 | --- | --- |
