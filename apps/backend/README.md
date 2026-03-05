@@ -51,8 +51,6 @@
 - Settings loading policy:
   - Use `pydantic BaseSettings` models for all runtime config.
   - Canonical settings module: `hrm_backend/settings.py` (`AppSettings`, `get_settings`).
-  - Compatibility shims are temporary:
-    `hrm_backend.auth.utils.settings` and `hrm_backend.core.config.settings`.
 
 ## Alembic
 - Create revision: `uv run --project . alembic -c alembic.ini revision -m \"<message>\"`

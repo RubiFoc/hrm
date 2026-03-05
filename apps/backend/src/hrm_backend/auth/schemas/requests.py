@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 StaffRoleClaim = Literal["admin", "hr", "manager", "employee", "leader", "accountant"]
 
@@ -39,34 +39,19 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     """Input payload for staff login.
 
-    Supports:
-    - identifier/password (new staff password flow)
-    - subject_id/role (legacy compatibility flow)
+    Supports identifier/password staff password flow.
     """
 
     model_config = ConfigDict(extra="forbid")
 
-    identifier: str | None = Field(default=None, min_length=3, max_length=256)
-    password: str | None = Field(default=None, min_length=12, max_length=256)
-    subject_id: UUID | None = None
-    role: StaffRoleClaim | None = None
+    identifier: str = Field(min_length=3, max_length=256)
+    password: str = Field(min_length=12, max_length=256)
 
     @field_validator("identifier")
     @classmethod
-    def normalize_identifier(cls, value: str | None) -> str | None:
+    def normalize_identifier(cls, value: str) -> str:
         """Normalize login/email identifier for account lookup."""
-        if value is None:
-            return None
         return value.strip().lower()
-
-    @model_validator(mode="after")
-    def validate_login_modes(self) -> LoginRequest:
-        """Enforce one of two supported login payload shapes."""
-        new_mode = self.identifier is not None and self.password is not None
-        legacy_mode = self.subject_id is not None and self.role is not None
-        if not new_mode and not legacy_mode:
-            raise ValueError("Provide identifier/password or subject_id/role")
-        return self
 
 
 class RefreshRequest(BaseModel):

@@ -44,8 +44,8 @@ These practices are mandatory for development and documentation.
 - Load environment configuration from `.env` and environment variables only through
   `pydantic BaseSettings` models (domain settings can inherit from shared `core` settings base).
 - Canonical backend settings entrypoint is `hrm_backend/settings.py`.
-- Legacy settings paths (`auth.utils.settings`, `core.config.settings`) are temporary shims and
-  must be removed in a dedicated follow-up refactor.
+- Do not introduce compatibility aliases for settings imports
+  (for example `auth.utils.settings`, `core.config.settings`); use canonical settings directly.
 - Add retries with backoff only for safe idempotent operations.
 - Add circuit-breaker/fallback behavior for external integrations.
 
