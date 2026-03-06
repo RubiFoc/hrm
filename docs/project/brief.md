@@ -1,7 +1,7 @@
 # Project Brief
 
 ## Last Updated
-- Date: 2026-03-03
+- Date: 2026-03-06
 - Updated by: architect
 
 ## Problem Statement
@@ -39,8 +39,10 @@ Metric formula:
 - Mandatory integrations: Ollama and Google Calendar.
 - Mandatory technical stack requirement: frontend on React.js + TypeScript.
 - Preferred rollout if full scope does not fit one cycle:
-  1. HR + Candidates
-  2. Managers + Employees + Accountants + Leaders
+  1. Admin control plane (staff governance + registration key lifecycle)
+  2. Candidate module (CV upload/intake/parsing baseline)
+  3. HR module (vacancies/pipeline/interview operations)
+  4. Managers + Employees + Accountants + Leaders
 
 ### Out of Scope
 - Explicitly out-of-scope items are not yet defined.
@@ -66,6 +68,14 @@ Metric formula:
 - Frontend monitoring stack: Sentry.
 - Mobile application is out of scope.
 - Delivery expectation: as fast as possible, without fixed deadline.
+- Current milestone target: stable end-to-end operation on the current device (local environment).
+- Production rollout is out of scope for the current stage.
+- CV analysis baseline:
+  - input formats: PDF and DOCX,
+  - bilingual processing: RU and EN,
+  - explainability: output must include evidence snippets from source CV fragments,
+  - quality control metrics: precision/recall, NDCG/MRR, robustness checks.
 
 ## Open Questions
-- No blocking product-level questions at this stage.
+- No blocking product-level questions.
+- Compliance article-level mapping is tracked as planned delivery scope (`EPIC-13` / `TASK-13-*`) rather than open discovery.

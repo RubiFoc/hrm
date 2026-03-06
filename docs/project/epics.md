@@ -1,7 +1,7 @@
 # Product Epics
 
 ## Last Updated
-- Date: 2026-03-04
+- Date: 2026-03-06
 - Updated by: architect
 
 ## Planning Baseline
@@ -13,7 +13,9 @@
 - Frontend browser target for v1: Google Chrome.
 - Frontend monitoring: Sentry.
 - Mobile application is out of scope.
-- Delivery order: Phase 1 (HR + Candidates), then Phase 2 (Managers + Employees + Accountants + Leaders).
+- Delivery order inside Phase 1: Admin control plane -> Candidate CV intake -> HR module.
+- Current stage acceptance target: stable local runtime on the current device.
+- Production rollout is out of scope for the current stage and gated by `EPIC-13` completion.
 - KPI target for v1: share of automated HR operations = 70%.
 
 ## Epic Portfolio
@@ -22,11 +24,12 @@
 | --- | --- | --- | --- | --- | --- |
 | EPIC-12 | Platform Infrastructure and Environment Standardization | Provide deterministic runtime for development, QA, and release pipelines | Engineering team | Phase 1 | P0 |
 | EPIC-01 | Identity, Roles, and Data Compliance Foundation | Protect sensitive data and enable controlled access | All roles | Phase 1 | P0 |
+| EPIC-13 | Compliance Control Mapping and Legal Evidence Pack | Prevent legal rework by mapping article-level obligations to implemented controls early | Legal, Architect, Security, HR Ops | Phase 1-2 | P0 |
 | EPIC-11 | React.js Frontend Foundation and Role UX | Deliver consistent and secure role-based user experience | All roles | Phase 1-2 | P0 |
 | ADMIN-EPIC-01 | Admin Control Plane and Staff Governance | Provide privileged operations for staff lifecycle and platform control | Admin, HR | Phase 1-2 | P0 |
-| EPIC-02 | Vacancy and Recruitment Pipeline Management | Standardize and accelerate candidate flow | HR, Managers | Phase 1 | P0 |
 | EPIC-03 | Candidate Profile and CV Intake | Centralize candidate data and documents | HR, Candidates | Phase 1 | P0 |
 | EPIC-04 | AI CV Analysis and Match Scoring (Ollama) | Improve shortlist quality and speed | HR, Managers | Phase 1 | P0 |
+| EPIC-02 | Vacancy and Recruitment Pipeline Management | Standardize and accelerate candidate flow | HR, Managers | Phase 1 | P1 |
 | EPIC-05 | Interview Scheduling and Fairness Controls | Reduce scheduling friction and interview bias | HR, Candidates, Managers | Phase 1 | P0 |
 | EPIC-06 | Offer-to-Hire and Employee Profile Creation | Convert accepted candidates into employees cleanly | HR, Employees | Phase 2 | P1 |
 | EPIC-07 | Onboarding Workflows and Progress Tracking | Simplify onboarding and reduce manual follow-up | HR, Employees, Managers | Phase 2 | P1 |
@@ -40,6 +43,7 @@
 | --- | --- |
 | EPIC-12 | - |
 | EPIC-11 | EPIC-01, EPIC-12 |
+| EPIC-13 | EPIC-01, EPIC-12 |
 | ADMIN-EPIC-01 | EPIC-01, EPIC-11 |
 | EPIC-02 | EPIC-01, EPIC-11 |
 | EPIC-03 | EPIC-01, EPIC-11 |
@@ -67,10 +71,16 @@
 ### EPIC-11: React.js Frontend Foundation and Role UX
 - Frontend is implemented with React.js + TypeScript and shared architecture conventions.
 - Role-based navigation and protected routes are implemented.
-- Candidate self-service v1 flows are implemented (CV upload, profile confirmation, interview registration).
+- Candidate self-service baseline is implemented (CV upload, profile confirmation) with interview registration delivered as dedicated follow-up flow.
 - Core phase workspaces are delivered with consistent form/error behavior.
 - Frontend observability through Sentry and accessibility baseline are in place.
 - RU/EN localization and Chrome support are verified for critical v1 journeys.
+
+### EPIC-13: Compliance Control Mapping and Legal Evidence Pack
+- Article-level obligations for Belarus/Russia NPAs are mapped to concrete controls.
+- Every critical control has owner, status, and verifiable evidence link.
+- Legal controls matrix is maintained with release-gate readiness states.
+- Production gate includes legal/security sign-off packet assembled from evidence.
 
 ### ADMIN-EPIC-01: Admin Control Plane and Staff Governance
 - Admin-only shell and route guard are implemented.
@@ -85,12 +95,17 @@
 
 ### EPIC-03: Candidate Profile and CV Intake
 - Candidate profile schema is stable and validated.
+- Candidate can upload CV in PDF and DOCX formats.
 - CV files are stored securely with metadata and parsing status.
+- Parsing pipeline supports RU/EN resumes and outputs canonical normalized profile.
+- Extracted facts are linked to source fragments (sentence/paragraph evidence traceability).
 - HR can search/filter candidates by vacancy-relevant criteria.
 
 ### EPIC-04: AI CV Analysis and Match Scoring (Ollama)
 - CV-to-vacancy scoring runs asynchronously through Ollama.
-- Score output includes confidence and explainable fields.
+- Score output includes confidence and explainable fields with evidence snippets.
+- Explainability includes matched requirements and explicit skill/experience gaps.
+- Quality gates include extraction precision/recall, ranking quality (NDCG/MRR), and robustness checks.
 - Low-confidence cases are routed to manual HR review.
 
 ### EPIC-05: Interview Scheduling and Fairness Controls
@@ -128,15 +143,16 @@
 2. EPIC-01
 3. EPIC-11
 4. ADMIN-EPIC-01
-5. EPIC-02
+5. EPIC-13 (run in parallel with candidate and HR feature tracks)
 6. EPIC-03
 7. EPIC-04
-8. EPIC-05
-9. EPIC-08 (core set)
-10. EPIC-06
-11. EPIC-07
-12. EPIC-09
-13. EPIC-10 (full scope)
+8. EPIC-02
+9. EPIC-05
+10. EPIC-08 (core set)
+11. EPIC-06
+12. EPIC-07
+13. EPIC-09
+14. EPIC-10 (full scope)
 
 ## Execution Mapping
 - Task-level decomposition, dependencies, and global priority queue are documented in `docs/project/tasks.md`.
