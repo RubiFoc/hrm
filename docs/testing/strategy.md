@@ -121,12 +121,14 @@ apps/backend/tests/
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
 | --- | --- | --- | --- |
+| Typed API client honors `VITE_API_BASE_URL` and trims trailing slash | `apps/frontend/src/api/typedClient.test.ts` | N/A | browser auth requests target backend origin instead of relative frontend origin |
 | Session storage contract (`access/refresh/role`) and admin-guard compatibility | `apps/frontend/src/app/auth/session.test.ts` | N/A | write/read/clear behavior and invalid role handling |
 | Auth API client request shape and `ApiError` mapping | `apps/frontend/src/api/auth.test.ts` | N/A | login/me/logout request contract and `401/422/http_*` handling |
 | Login page submit flow (`login -> me -> redirect`) | `apps/frontend/src/pages/LoginPage.test.tsx` | Manual smoke on `/login` | session is persisted and redirect follows resolved role |
 | Login error states (`401`, `422`, generic) with RU/EN-readable messaging | `apps/frontend/src/pages/LoginPage.test.tsx` | Manual smoke on `/login` with locale toggle | localized error messaging for all required states |
 | Router behavior for `/login` and pre-authenticated bootstrap redirect | `apps/frontend/src/app/router.auth.test.tsx` | Browser route smoke | login route render, authenticated redirect, broken session cleanup |
 | Admin guard non-regression | `apps/frontend/src/app/router.admin.test.tsx` | Browser `/admin` smoke | unauthorized/forbidden redirects continue to work unchanged |
+| Backend CORS preflight allows local Vite dev origin | `apps/backend/tests/unit/test_cors.py` + `apps/backend/tests/unit/auth/test_auth_settings.py` | Manual browser `/login` smoke | `OPTIONS /api/v1/auth/login` returns `200` with expected `Access-Control-Allow-*` headers |
 
 ## Frontend Admin Verification (ADMIN-01)
 
@@ -169,6 +171,7 @@ apps/backend/tests/
 - `uv run --project apps/backend pytest -q apps/backend/tests/unit/candidates/test_cv_parsing_normalization.py apps/backend/tests/integration/candidates/test_candidate_api.py apps/backend/tests/integration/candidates/test_cv_parsing_jobs.py`
 - `npm --prefix apps/frontend run lint`
 - `npm --prefix apps/frontend run test -- --run`
+- `uv run --project apps/backend pytest apps/backend/tests/unit/test_cors.py apps/backend/tests/unit/auth/test_auth_settings.py -q`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic upgrade head`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic downgrade -1`
 - `DATABASE_URL=postgresql+psycopg://hrm:hrm@localhost:5432/<test_db> uv run --project apps/backend alembic upgrade head && ... downgrade -1 && ... upgrade head`
