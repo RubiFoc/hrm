@@ -15,7 +15,7 @@
 - Every change goes through PR with linked `TASK-*`.
 - Current repository mode: solo delivery (`0` required approving reviews).
 - Team-target policy (when multiple maintainers are active): minimum 2 reviewers (tech owner + domain owner).
-- Required CI checks: `docs-check`, `backend`, `frontend`.
+- Required CI checks: `docs-check`, `backend`, `frontend`, `browser-smoke`.
 - Squash merge by default to keep history clean.
 
 ## Protected Branch Setup (GitHub)

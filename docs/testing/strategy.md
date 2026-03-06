@@ -77,6 +77,9 @@ apps/backend/tests/
   - frontend HTTP response;
   - MinIO live health endpoint;
   - backend auth login response contract.
+  - headless Chrome browser auth path `/login -> login -> me -> logout -> /login`;
+  - browser auth requests use `VITE_API_BASE_URL` backend origin rather than relative frontend origin;
+  - browser-triggered CORS preflight succeeds for auth endpoints.
 
 ## Evidence Format
 - Command
@@ -124,11 +127,12 @@ apps/backend/tests/
 | Typed API client honors `VITE_API_BASE_URL` and trims trailing slash | `apps/frontend/src/api/typedClient.test.ts` | N/A | browser auth requests target backend origin instead of relative frontend origin |
 | Session storage contract (`access/refresh/role`) and admin-guard compatibility | `apps/frontend/src/app/auth/session.test.ts` | N/A | write/read/clear behavior and invalid role handling |
 | Auth API client request shape and `ApiError` mapping | `apps/frontend/src/api/auth.test.ts` | N/A | login/me/logout request contract and `401/422/http_*` handling |
-| Login page submit flow (`login -> me -> redirect`) | `apps/frontend/src/pages/LoginPage.test.tsx` | Manual smoke on `/login` | session is persisted and redirect follows resolved role |
+| Login page submit flow (`login -> me -> redirect`) | `apps/frontend/src/pages/LoginPage.test.tsx` | `./scripts/smoke-compose.sh` | session is persisted and redirect follows resolved role |
 | Login error states (`401`, `422`, generic) with RU/EN-readable messaging | `apps/frontend/src/pages/LoginPage.test.tsx` | Manual smoke on `/login` with locale toggle | localized error messaging for all required states |
-| Router behavior for `/login` and pre-authenticated bootstrap redirect | `apps/frontend/src/app/router.auth.test.tsx` | Browser route smoke | login route render, authenticated redirect, broken session cleanup |
-| Admin guard non-regression | `apps/frontend/src/app/router.admin.test.tsx` | Browser `/admin` smoke | unauthorized/forbidden redirects continue to work unchanged |
-| Backend CORS preflight allows local Vite dev origin | `apps/backend/tests/unit/test_cors.py` + `apps/backend/tests/unit/auth/test_auth_settings.py` | Manual browser `/login` smoke | `OPTIONS /api/v1/auth/login` returns `200` with expected `Access-Control-Allow-*` headers |
+| Router behavior for `/login` and pre-authenticated bootstrap redirect | `apps/frontend/src/app/router.auth.test.tsx` | `./scripts/smoke-compose.sh` | login route render, authenticated redirect, broken session cleanup |
+| Admin guard non-regression | `apps/frontend/src/app/router.admin.test.tsx` | `./scripts/smoke-compose.sh` | unauthorized/forbidden redirects continue to work unchanged |
+| Browser login/logout roundtrip against compose stack | N/A | `scripts/browser_auth_smoke.py` via `./scripts/smoke-compose.sh` and CI `browser-smoke` job | browser reaches `/admin`, persists session, calls backend auth origin, logs out, and returns to `/login` |
+| Backend CORS preflight allows local Vite dev origin | `apps/backend/tests/unit/test_cors.py` + `apps/backend/tests/unit/auth/test_auth_settings.py` | `./scripts/smoke-compose.sh` | `OPTIONS /api/v1/auth/login` returns `200` with expected `Access-Control-Allow-*` headers |
 
 ## Frontend Admin Verification (ADMIN-01)
 
@@ -172,6 +176,7 @@ apps/backend/tests/
 - `npm --prefix apps/frontend run lint`
 - `npm --prefix apps/frontend run test -- --run`
 - `uv run --project apps/backend pytest apps/backend/tests/unit/test_cors.py apps/backend/tests/unit/auth/test_auth_settings.py -q`
+- `python3 scripts/browser_auth_smoke.py --frontend-url http://localhost:5173/login --api-origin http://localhost:8000 --login <login> --password <password>`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic upgrade head`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic downgrade -1`
 - `DATABASE_URL=postgresql+psycopg://hrm:hrm@localhost:5432/<test_db> uv run --project apps/backend alembic upgrade head && ... downgrade -1 && ... upgrade head`

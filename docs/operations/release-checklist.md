@@ -11,6 +11,7 @@
 ## Release
 - [ ] Deploy steps executed in order.
 - [ ] Smoke checks passed.
+- [ ] Browser auth smoke verified (`/login -> login -> me -> logout -> /login` against compose stack).
 - [ ] Monitoring and alerts verified.
 - [ ] Container baseline check passed (`docker compose config` + service health checks).
 - [ ] Public apply anti-abuse checks verified (`409/429` paths, rate-limit headers, audit reason codes).
