@@ -1,7 +1,7 @@
 # Frontend Requirements (React.js)
 
 ## Last Updated
-- Date: 2026-03-05
+- Date: 2026-03-06
 - Updated by: architect
 
 ## Fixed Technical Requirement
@@ -11,8 +11,14 @@
 - Role-based UI for: HR, Candidate, Manager, Employee, Leader, Accountant.
 - Secure authentication flow with protected routes and session handling.
 - Integration with backend APIs via typed/stable API client.
+- Current stage target: frontend must run stably in local environment on the current device.
 - Candidate self-service in v1:
-  CV upload, profile information submission with confirmation, interview registration.
+  CV upload and profile information submission with confirmation.
+- Candidate interview registration UI is delivered as a dedicated flow after candidate intake baseline.
+- Delivery priority inside phase-1 frontend:
+  1. Admin workspace,
+  2. Candidate CV upload and parsing visibility,
+  3. HR vacancy/pipeline workspace.
 - Interview scheduling UX with Google Calendar sync status visibility.
 - Consistent UI components and validation behavior across modules.
 - Accessibility baseline for forms, tables, and primary workflows.
@@ -34,9 +40,15 @@
 | UI framework/design system | Popular ready-made libraries |
 | Localization | `ru` + `en` in v1 |
 | Browser support | Google Chrome |
-| Candidate portal scope | CV upload + self information confirmation + interview registration |
+| Candidate portal scope | CV upload + self information confirmation (interview registration via dedicated follow-up flow) |
 | Mobile depth | No mobile app, responsive web only |
 | Frontend monitoring | Sentry |
+
+## Candidate CV Analysis UX Requirements
+- Candidate upload flow supports PDF and DOCX validation feedback.
+- Parsing status must surface RU/EN processing progress and failure reason.
+- Match explanation UI must reference evidence snippets from source CV fragments.
+- Candidate and HR views must keep clear separation of sensitive fields by role.
 
 ## ADMIN-01 Baseline
 - Add `/admin` route with role guard (`admin` only).
@@ -84,6 +96,7 @@
 - Monitoring: @sentry/react.
 
 ## Acceptance Gate for Frontend Work
+- Current stage local run on the current device is verified with documented startup commands.
 - React.js + TypeScript architecture and folder conventions documented.
 - Core role journeys implemented for current phase.
 - API errors and validation failures handled with user-readable feedback.

@@ -1,7 +1,7 @@
 # Legal Framework (Belarus + Russia)
 
 ## Last Updated
-- Date: 2026-03-04
+- Date: 2026-03-06
 - Updated by: architect
 
 This list contains core legal acts for HRM processing of personal data and information security.
@@ -9,6 +9,8 @@ This list contains core legal acts for HRM processing of personal data and infor
 ## Belarus: Priority NPAs
 - Law of the Republic of Belarus dated 07.05.2021 No. 99-З "On Personal Data Protection".
 - Law of the Republic of Belarus dated 10.11.2008 No. 455-З "On Information, Informatization and Information Protection".
+- Order of the Operational and Analytical Center under the President of the Republic of Belarus dated 12.11.2021 No. 195 "On technical and cryptographic protection of personal data".
+- National Center for Personal Data Protection guidance on legal bases for personal data processing.
 
 ## Russia: Priority NPAs
 - Federal Law dated 27.07.2006 No. 152-ФЗ "On Personal Data".
