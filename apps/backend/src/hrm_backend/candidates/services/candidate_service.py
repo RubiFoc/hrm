@@ -18,7 +18,11 @@ from hrm_backend.candidates.models.document import CandidateDocument
 from hrm_backend.candidates.models.parsing_job import CVParsingJob
 from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.candidates.schemas.cv import CandidateCVDownloadPayload, CandidateCVUploadResponse
-from hrm_backend.candidates.schemas.parsing import CVParsingStatusResponse
+from hrm_backend.candidates.schemas.parsing import (
+    CVAnalysisResponse,
+    CVParsingStatusResponse,
+    DetectedCVLanguage,
+)
 from hrm_backend.candidates.schemas.profile import (
     CandidateCreateRequest,
     CandidateListResponse,
@@ -357,6 +361,16 @@ class CandidateService:
             action="candidate_cv:parsing_status",
         )
         job = self._get_latest_job_or_404(candidate_id)
+        document = self._document_dao.get_by_id(job.document_id)
+        analysis_ready = bool(
+            document is not None
+            and document.parsed_profile_json is not None
+            and document.evidence_json is not None
+            and document.parsed_at is not None
+        )
+        detected_language = "unknown"
+        if document is not None:
+            detected_language = _normalize_detected_language(document.detected_language)
         actor_sub, actor_role = actor_from_auth_context(auth_context)
         self._audit_service.record_api_event(
             action="candidate_cv:parsing_status",
@@ -378,6 +392,62 @@ class CandidateService:
             started_at=job.started_at,
             finished_at=job.finished_at,
             updated_at=job.updated_at,
+            analysis_ready=analysis_ready,
+            detected_language=detected_language,
+        )
+
+    def get_cv_analysis(
+        self,
+        *,
+        candidate_id: UUID,
+        auth_context: AuthContext,
+        request: Request,
+    ) -> CVAnalysisResponse:
+        """Return parsed CV analysis for latest active candidate document.
+
+        Args:
+            candidate_id: Candidate identifier.
+            auth_context: Authenticated actor context.
+            request: HTTP request context.
+
+        Returns:
+            CVAnalysisResponse: Structured profile and field-level evidence payload.
+        """
+        entity = self._get_profile_or_404(candidate_id)
+        self._ensure_access(
+            profile=entity,
+            auth_context=auth_context,
+            request=request,
+            action="candidate_cv:parsing_status",
+        )
+        document = self._get_active_document_or_404(candidate_id)
+        if (
+            document.parsed_profile_json is None
+            or document.evidence_json is None
+            or document.parsed_at is None
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="CV analysis is not ready",
+            )
+
+        actor_sub, actor_role = actor_from_auth_context(auth_context)
+        self._audit_service.record_api_event(
+            action="candidate_cv:analysis_read",
+            resource_type="candidate_document",
+            result="success",
+            request=request,
+            actor_sub=actor_sub,
+            actor_role=actor_role,
+            resource_id=document.document_id,
+        )
+        return CVAnalysisResponse(
+            candidate_id=UUID(document.candidate_id),
+            document_id=UUID(document.document_id),
+            detected_language=_normalize_detected_language(document.detected_language),
+            parsed_at=document.parsed_at,
+            parsed_profile=document.parsed_profile_json,
+            evidence=document.evidence_json,
         )
 
     def _resolve_owner(self, requested_owner: str | None, auth_context: AuthContext) -> str:
@@ -527,3 +597,20 @@ def _to_candidate_response(entity: CandidateProfile) -> CandidateResponse:
         created_at=entity.created_at,
         updated_at=entity.updated_at,
     )
+
+
+def _normalize_detected_language(raw_value: str | None) -> DetectedCVLanguage:
+    """Normalize stored language marker to supported API enum values.
+
+    Args:
+        raw_value: Raw persisted language marker.
+
+    Returns:
+        str: One of `ru`, `en`, `mixed`, `unknown`.
+    """
+    if raw_value is None:
+        return "unknown"
+    normalized = raw_value.strip().lower()
+    if normalized in {"ru", "en", "mixed", "unknown"}:
+        return normalized
+    return "unknown"

@@ -1,7 +1,7 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-05
+- Date: 2026-03-06
 - Updated by: architect + backend-engineer + frontend-engineer
 
 ## System Context
@@ -52,7 +52,8 @@ flowchart LR
 
 ## Key Flows
 1. Candidate Screening Flow:
-   candidate profile + CV -> CV parsing -> AI scoring via Ollama -> recruiter review -> shortlist.
+   candidate profile + CV -> CV parsing -> RU/EN normalization + evidence extraction ->
+   parsed profile + explainability evidence -> AI scoring via Ollama -> recruiter review -> shortlist.
 2. Interview Scheduling Flow:
    pipeline stage change -> interview request -> Google Calendar sync -> participant notifications.
 3. Onboarding Flow:
@@ -73,6 +74,8 @@ flowchart LR
 ## Data Boundaries
 - Source of truth entities:
   vacancies, candidates, CV metadata, interview records, employee profiles, onboarding tasks, HR operations, audit events.
+- CV analysis artifacts:
+  `parsed_profile_json`, `evidence_json`, `detected_language`, `parsed_at` stored per active candidate document.
 - Auth revocation artifacts:
   denylisted token ids (`jti`) and session ids (`sid`) in Redis.
 - External integrations: Ollama, Google Calendar

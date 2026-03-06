@@ -440,9 +440,105 @@
         "title": "Body_upload_candidate_cv_api_v1_candidates__candidate_id__cv_post",
         "type": "object"
       },
+      "CVAnalysisEvidenceItem": {
+        "description": "Evidence link from one extracted field to CV source snippet.",
+        "properties": {
+          "end_offset": {
+            "title": "End Offset",
+            "type": "integer"
+          },
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "snippet": {
+            "title": "Snippet",
+            "type": "string"
+          },
+          "start_offset": {
+            "title": "Start Offset",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "field",
+          "snippet",
+          "start_offset",
+          "end_offset"
+        ],
+        "title": "CVAnalysisEvidenceItem",
+        "type": "object"
+      },
+      "CVAnalysisResponse": {
+        "description": "Canonical CV analysis payload for latest active candidate document.",
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "detected_language": {
+            "enum": [
+              "ru",
+              "en",
+              "mixed",
+              "unknown"
+            ],
+            "title": "Detected Language",
+            "type": "string"
+          },
+          "document_id": {
+            "format": "uuid",
+            "title": "Document Id",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/CVAnalysisEvidenceItem"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "parsed_at": {
+            "format": "date-time",
+            "title": "Parsed At",
+            "type": "string"
+          },
+          "parsed_profile": {
+            "additionalProperties": true,
+            "title": "Parsed Profile",
+            "type": "object"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "document_id",
+          "detected_language",
+          "parsed_at",
+          "parsed_profile",
+          "evidence"
+        ],
+        "title": "CVAnalysisResponse",
+        "type": "object"
+      },
       "CVParsingStatusResponse": {
         "description": "Current parsing job status for candidate CV.",
         "properties": {
+          "analysis_ready": {
+            "title": "Analysis Ready",
+            "type": "boolean"
+          },
           "attempt_count": {
             "title": "Attempt Count",
             "type": "integer"
@@ -450,6 +546,16 @@
           "candidate_id": {
             "format": "uuid",
             "title": "Candidate Id",
+            "type": "string"
+          },
+          "detected_language": {
+            "enum": [
+              "ru",
+              "en",
+              "mixed",
+              "unknown"
+            ],
+            "title": "Detected Language",
             "type": "string"
           },
           "document_id": {
@@ -528,7 +634,9 @@
           "queued_at",
           "started_at",
           "finished_at",
-          "updated_at"
+          "updated_at",
+          "analysis_ready",
+          "detected_language"
         ],
         "title": "CVParsingStatusResponse",
         "type": "object"
@@ -2428,6 +2536,55 @@
           }
         ],
         "summary": "Upload Candidate Cv",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
+    "/api/v1/candidates/{candidate_id}/cv/analysis": {
+      "get": {
+        "description": "Return structured CV analysis with evidence for latest active CV.",
+        "operationId": "get_candidate_cv_analysis_api_v1_candidates__candidate_id__cv_analysis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CVAnalysisResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Candidate Cv Analysis",
         "tags": [
           "candidates"
         ]

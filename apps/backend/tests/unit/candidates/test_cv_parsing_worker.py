@@ -23,6 +23,10 @@ class _Document:
     document_id: str
     object_key: str
     mime_type: str
+    parsed_profile_json: dict[str, object] | None = None
+    evidence_json: list[dict[str, object]] | None = None
+    detected_language: str = "unknown"
+    parsed_at: object | None = None
 
 
 class _FakeParsingJobDAO:
@@ -54,6 +58,20 @@ class _FakeDocumentDAO:
 
     def get_by_id(self, document_id: str) -> _Document | None:
         return self._documents.get(document_id)
+
+    def mark_document_parsed(
+        self,
+        document: _Document,
+        *,
+        parsed_profile: dict[str, object],
+        evidence: list[dict[str, object]],
+        detected_language: str,
+    ) -> _Document:
+        document.parsed_profile_json = parsed_profile
+        document.evidence_json = evidence
+        document.detected_language = detected_language
+        document.parsed_at = "now"
+        return document
 
 
 class _FakeStorage:
@@ -137,6 +155,9 @@ def test_worker_marks_job_succeeded_and_is_retry_safe() -> None:
     assert first.processed_job_id == "job-1"
     assert second.status == "idle"
     assert jobs[0].status == "succeeded"
+    assert documents["doc-1"].parsed_profile_json is not None
+    assert documents["doc-1"].evidence_json is not None
+    assert documents["doc-1"].detected_language == "en"
     assert len(audit_service.events) == 1
     assert audit_service.events[0]["result"] == "success"
 

@@ -88,7 +88,13 @@ class CVParsingWorkerService:
 
         try:
             payload = self._storage.get_object(object_key=doc.object_key)
-            parse_cv_document(content=payload, mime_type=doc.mime_type)
+            parse_result = parse_cv_document(content=payload, mime_type=doc.mime_type)
+            self._document_dao.mark_document_parsed(
+                doc,
+                parsed_profile=parse_result.parsed_profile,
+                evidence=parse_result.evidence,
+                detected_language=parse_result.detected_language,
+            )
         except Exception as exc:  # noqa: BLE001
             failed = self._parsing_job_dao.mark_failed(job, error_text=str(exc))
             self._audit_service.record_background_event(

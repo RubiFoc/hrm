@@ -1,5 +1,6 @@
 export { ApiError, apiRequest } from "./httpClient";
 export { listAdminStaff, updateAdminStaff } from "./adminStaff";
+export { getCandidateCvAnalysis, getCandidateCvParsingStatus } from "./candidateAnalysis";
 export {
   createAdminEmployeeKey,
   listAdminEmployeeKeys,
@@ -20,5 +21,9 @@ export type {
   EmployeeKeyStatus,
   EmployeeRegistrationKeyResponse,
 } from "./adminEmployeeKeys";
+export type {
+  CandidateCvAnalysisResponse,
+  CandidateCvParsingStatusResponse,
+} from "./candidateAnalysis";
 export { createTypedApiClient, typedApiClient } from "./typedClient";
 export type { ApiPath } from "./typedClient";

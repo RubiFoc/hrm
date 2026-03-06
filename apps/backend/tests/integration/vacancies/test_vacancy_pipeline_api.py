@@ -313,6 +313,8 @@ async def test_openapi_exposes_uuid_format_for_normalized_id_contracts(
     assert schemas["CVParsingStatusResponse"]["properties"]["candidate_id"]["format"] == "uuid"
     assert schemas["CVParsingStatusResponse"]["properties"]["document_id"]["format"] == "uuid"
     assert schemas["CVParsingStatusResponse"]["properties"]["job_id"]["format"] == "uuid"
+    assert schemas["CVAnalysisResponse"]["properties"]["candidate_id"]["format"] == "uuid"
+    assert schemas["CVAnalysisResponse"]["properties"]["document_id"]["format"] == "uuid"
     assert schemas["VacancyResponse"]["properties"]["vacancy_id"]["format"] == "uuid"
     assert (
         schemas["PipelineTransitionCreateRequest"]["properties"]["vacancy_id"]["format"] == "uuid"
@@ -329,6 +331,9 @@ async def test_openapi_exposes_uuid_format_for_normalized_id_contracts(
     candidate_get_parameters = spec["paths"]["/api/v1/candidates/{candidate_id}"]["get"][
         "parameters"
     ]
+    candidate_analysis_get_parameters = spec["paths"][
+        "/api/v1/candidates/{candidate_id}/cv/analysis"
+    ]["get"]["parameters"]
     assert any(
         parameter["name"] == "vacancy_id"
         and parameter["schema"].get("format") == "uuid"
@@ -338,4 +343,9 @@ async def test_openapi_exposes_uuid_format_for_normalized_id_contracts(
         parameter["name"] == "candidate_id"
         and parameter["schema"].get("format") == "uuid"
         for parameter in candidate_get_parameters
+    )
+    assert any(
+        parameter["name"] == "candidate_id"
+        and parameter["schema"].get("format") == "uuid"
+        for parameter in candidate_analysis_get_parameters
     )

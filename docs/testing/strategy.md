@@ -113,6 +113,8 @@ apps/backend/tests/
 | Public vacancy apply flow (anonymous) | `tests/unit/vacancies/test_pipeline_validator.py` + candidate validation units | `tests/integration/vacancies/test_vacancy_pipeline_api.py` | Apply creates candidate/doc/transition/parsing job |
 | Vacancy lifecycle and canonical pipeline transitions | `tests/unit/vacancies/test_pipeline_validator.py` | `tests/integration/vacancies/test_vacancy_pipeline_api.py` | Valid chain passes, invalid chain returns `422` |
 | Async CV parsing lifecycle and retry-safe behavior (Celery executor) | `tests/unit/candidates/test_cv_parsing_worker.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` | `queued/running/succeeded/failed` with bounded retries |
+| RU/EN CV normalization and language detection (`TASK-03-05`) | `tests/unit/candidates/test_cv_parsing_normalization.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` | `detected_language` and canonical profile fields are persisted after worker success |
+| Evidence traceability + analysis read contract (`TASK-03-06`) | `tests/unit/candidates/test_cv_parsing_normalization.py` (field-level evidence snippets/offsets) | `tests/integration/candidates/test_candidate_api.py` + `tests/integration/candidates/test_cv_parsing_jobs.py` | `GET /api/v1/candidates/{candidate_id}/cv/analysis` returns structured profile + evidence; pre-ready path returns `409` |
 | RBAC + audit coverage for recruitment endpoints | `tests/unit/rbac/test_rbac.py` | `tests/integration/security/test_audit_enforcement.py` + recruitment integration suites | `allowed/denied/success/failure` audit records in `audit_events` |
 
 ## Frontend Admin Verification (ADMIN-01)
@@ -152,5 +154,8 @@ apps/backend/tests/
 - `./scripts/check-docs-structure.sh`
 - `uv run --project apps/backend ruff check apps/backend/src apps/backend/tests apps/backend/alembic`
 - `uv run --project apps/backend pytest -q`
+- `uv run --project apps/backend pytest -q apps/backend/tests/unit/candidates/test_cv_parsing_normalization.py apps/backend/tests/integration/candidates/test_candidate_api.py apps/backend/tests/integration/candidates/test_cv_parsing_jobs.py`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic upgrade head`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic downgrade -1`
+- `DATABASE_URL=postgresql+psycopg://hrm:hrm@localhost:5432/<test_db> uv run --project apps/backend alembic upgrade head && ... downgrade -1 && ... upgrade head`
+- `npm --prefix apps/frontend run lint && npm --prefix apps/frontend run test -- --run`

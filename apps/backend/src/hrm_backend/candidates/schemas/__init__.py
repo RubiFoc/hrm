@@ -4,7 +4,7 @@ from hrm_backend.candidates.schemas.cv import (
     CandidateCVDownloadPayload,
     CandidateCVUploadResponse,
 )
-from hrm_backend.candidates.schemas.parsing import CVParsingStatusResponse
+from hrm_backend.candidates.schemas.parsing import CVAnalysisResponse, CVParsingStatusResponse
 from hrm_backend.candidates.schemas.profile import (
     CandidateCreateRequest,
     CandidateListResponse,
@@ -19,5 +19,6 @@ __all__ = [
     "CandidateListResponse",
     "CandidateCVUploadResponse",
     "CandidateCVDownloadPayload",
+    "CVAnalysisResponse",
     "CVParsingStatusResponse",
 ]

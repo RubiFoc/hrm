@@ -28,6 +28,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0021 | 2026-03-05 | accepted | Add ADMIN-02 staff management list/update APIs with strict admin safety guard | architect + backend-engineer + frontend-engineer | admin API contracts, RBAC, audit trail, frontend admin workspace |
 | ADR-0022 | 2026-03-05 | accepted | Extract admin governance flows into dedicated `admin` backend package | architect + backend-engineer | backend package boundaries, maintainability, test topology |
 | ADR-0023 | 2026-03-05 | accepted | Add ADMIN-03 employee registration key lifecycle management (list/revoke + admin UI) | architect + backend-engineer + frontend-engineer | admin API contracts, auth key lifecycle, RBAC, audit trail, frontend admin workspace |
+| ADR-0024 | 2026-03-06 | accepted | Persist RU/EN-normalized CV analysis with evidence traceability and expose analysis API | architect + backend-engineer + frontend-engineer | candidate domain model, parsing pipeline, API contract, frontend candidate workspace |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -347,3 +348,25 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Employee-key governance is now fully operational from admin APIs/UI without breaking existing create-key clients.
   - Registration flow explicitly rejects revoked keys.
   - Admin audit trail expands with `admin.employee_key:list` and `admin.employee_key:revoke` success/failure events and reason codes.
+
+## ADR-0024
+- Context: `TASK-03-05` and `TASK-03-06` require bilingual RU/EN CV normalization and explainable traceability from extracted facts to source CV fragments, while preserving existing candidate API compatibility.
+- Decision:
+  - Extend `candidate_documents` storage model with analysis artifacts:
+    - `parsed_profile_json`
+    - `evidence_json`
+    - `detected_language`
+    - `parsed_at`.
+  - Expand parsing pipeline (`parse_cv_document`) to return:
+    - canonical normalized profile;
+    - detected language (`ru`, `en`, `mixed`, `unknown`);
+    - evidence objects (`field`, `snippet`, `start_offset`, `end_offset`, `page`).
+  - Persist parse result atomically in worker success path before marking parsing job as `succeeded`.
+  - Keep existing endpoints backward-compatible and extend contracts with:
+    - `GET /api/v1/candidates/{candidate_id}/cv/analysis`
+    - extra fields in `CVParsingStatusResponse` (`analysis_ready`, `detected_language`).
+  - Extend frontend candidate workspace with CV Analysis block (status, detected language, evidence snippets) and RU/EN localization for analysis states/errors.
+- Consequences:
+  - Candidate CV parsing output is now explainable and queryable without re-parsing raw documents.
+  - API consumers can poll readiness and fetch analysis payload in a backward-compatible flow.
+  - Data retention scope increases for CV-derived artifacts, requiring alignment with compliance retention policy before production rollout.
