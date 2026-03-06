@@ -35,3 +35,5 @@
 - Impacted documentation is updated in the same task.
 - Architecture diagrams are updated for relevant changes.
 - Best practices from `docs/engineering/best-practices.md` are explicitly followed.
+- Latest application version is started locally via Docker (`docker compose up -d --build`) after implementation.
+- Final handoff includes a concise operator note: what changed and how to use/verify the updated functionality.
