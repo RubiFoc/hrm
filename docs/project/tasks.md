@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-06
-- Updated by: coordinator
+- Updated by: coordinator + frontend-engineer
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -18,6 +18,7 @@
 | ADMIN-01 | done | Merged in `main` via PR #48 |
 | ADMIN-02 | done/closed | GitHub issue #53 closed; merged in `main` via PR #51 (`bd96d86`) |
 | ADMIN-03 | done/closed | GitHub issue #52 closed; merged in `main` via PR #55 (`2c9c5b5`) |
+| TASK-11-13 | planned | GitHub issue #67 opened with `P0` priority for login UX unblocking |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## Task Breakdown by Epic
@@ -46,6 +47,7 @@
 | TASK-11-10 | EPIC-11 | Implement frontend observability with Sentry (error tracking, performance metrics, release markers) | Phase 1-2 | P1 | TASK-11-02 |
 | TASK-11-11 | EPIC-11 | Implement Chrome compatibility checks and regression verification for critical v1 journeys | Phase 1 | P1 | TASK-11-05, TASK-11-06, TASK-11-08 |
 | TASK-11-12 | EPIC-11 | Implement phase-2 role workspaces (manager, employee, accountant, leader) | Phase 2 | P1 | TASK-06-03, TASK-07-04, TASK-09-01 |
+| TASK-11-13 | EPIC-11 | Implement staff login window and session bootstrap UX | Phase 1 | P0 | TASK-01-02, TASK-11-03 |
 | ADMIN-01 | ADMIN-EPIC-01 | Implement admin auth guard and admin shell (frontend/backend contract) | Phase 1 | P0 | TASK-01-02, TASK-11-03 |
 | ADMIN-02 | ADMIN-EPIC-01 | Implement staff management APIs/UI (create/update/disable) | Phase 1 | P0 | ADMIN-01 |
 | ADMIN-03 | ADMIN-EPIC-01 | Implement employee registration key management APIs/UI (generate/revoke/list) | Phase 1 | P0 | ADMIN-01 |
@@ -104,47 +106,48 @@
 | 5 | ADMIN-01 | Admin shell unblocks privileged control plane work |
 | 6 | ADMIN-02 | Staff lifecycle must be operationalized early |
 | 7 | ADMIN-03 | Employee key lifecycle is required for staff self-registration |
-| 8 | TASK-03-01 | Candidate domain base model immediately after admin baseline |
-| 9 | TASK-03-02 | Candidate must be able to upload CV early (PDF/DOCX intake) |
-| 10 | TASK-03-03 | Async parsing status is required for candidate self-service UX |
-| 11 | TASK-03-05 | RU/EN canonical normalization is required by CV-analysis scope |
-| 12 | TASK-03-06 | Evidence traceability is required for explainable hiring decisions |
-| 13 | TASK-04-01 | Mandatory Ollama adapter for AI scoring module |
-| 14 | TASK-04-02 | Scoring execution pipeline on parsed candidate profile |
-| 15 | TASK-04-03 | Confidence + explanation schema for HR decision support |
-| 16 | TASK-04-05 | Match/mismatch explainability with evidence snippets |
-| 17 | TASK-04-06 | Quality harness for extraction/ranking and robustness |
-| 18 | TASK-02-01 | HR vacancy module starts after candidate CV intake baseline |
-| 19 | TASK-02-02 | Pipeline control for HR operations |
-| 20 | TASK-02-03 | Timeline/history for recruiting decisions |
-| 21 | TASK-03-04 | HR productivity via candidate filtering |
-| 22 | TASK-05-01 | Interview orchestration start point |
-| 23 | TASK-05-02 | Mandatory Google Calendar integration |
-| 24 | TASK-05-03 | Structured interview quality control |
-| 25 | TASK-05-04 | Fairness gate before hiring decision |
-| 26 | TASK-08-01 | Start automation to hit KPI target |
-| 27 | TASK-08-02 | Reliable automation execution |
-| 28 | TASK-08-03 | Operational support and troubleshooting |
-| 29 | TASK-08-04 | Automation KPI telemetry |
-| 30 | TASK-10-01 | KPI data layer foundation |
-| 31 | TASK-10-02 | Automation KPI report for target tracking |
-| 32 | TASK-01-04 | Complete auditability of sensitive actions |
-| 33 | TASK-04-04 | Human fallback for low AI confidence |
-| 34 | TASK-02-04 | Manager visibility enrichment |
-| 35 | TASK-06-01 | Offer lifecycle for conversion to employees |
-| 36 | TASK-06-02 | Candidate to employee state transition |
-| 37 | TASK-06-03 | Employee profile initialization |
-| 38 | TASK-06-04 | Onboarding flow trigger |
-| 39 | TASK-07-01 | Onboarding template baseline |
-| 40 | TASK-07-02 | Task execution tracking |
-| 41 | TASK-07-03 | Employee self-service onboarding |
-| 42 | TASK-07-04 | HR/manager onboarding control |
-| 43 | TASK-10-03 | Compliance and audit read interfaces |
-| 44 | TASK-09-01 | Manager workspace full rollout |
-| 45 | TASK-09-03 | Accountant workspace rollout |
-| 46 | TASK-10-04 | Reporting export package |
-| 47 | TASK-09-02 | Leader workspace finalization |
-| 48 | TASK-09-04 | Notification optimization |
+| 8 | TASK-11-13 | Immediate frontend login UX needed for local/day-to-day staff workflow validation |
+| 9 | TASK-03-01 | Candidate domain base model immediately after admin baseline |
+| 10 | TASK-03-02 | Candidate must be able to upload CV early (PDF/DOCX intake) |
+| 11 | TASK-03-03 | Async parsing status is required for candidate self-service UX |
+| 12 | TASK-03-05 | RU/EN canonical normalization is required by CV-analysis scope |
+| 13 | TASK-03-06 | Evidence traceability is required for explainable hiring decisions |
+| 14 | TASK-04-01 | Mandatory Ollama adapter for AI scoring module |
+| 15 | TASK-04-02 | Scoring execution pipeline on parsed candidate profile |
+| 16 | TASK-04-03 | Confidence + explanation schema for HR decision support |
+| 17 | TASK-04-05 | Match/mismatch explainability with evidence snippets |
+| 18 | TASK-04-06 | Quality harness for extraction/ranking and robustness |
+| 19 | TASK-02-01 | HR vacancy module starts after candidate CV intake baseline |
+| 20 | TASK-02-02 | Pipeline control for HR operations |
+| 21 | TASK-02-03 | Timeline/history for recruiting decisions |
+| 22 | TASK-03-04 | HR productivity via candidate filtering |
+| 23 | TASK-05-01 | Interview orchestration start point |
+| 24 | TASK-05-02 | Mandatory Google Calendar integration |
+| 25 | TASK-05-03 | Structured interview quality control |
+| 26 | TASK-05-04 | Fairness gate before hiring decision |
+| 27 | TASK-08-01 | Start automation to hit KPI target |
+| 28 | TASK-08-02 | Reliable automation execution |
+| 29 | TASK-08-03 | Operational support and troubleshooting |
+| 30 | TASK-08-04 | Automation KPI telemetry |
+| 31 | TASK-10-01 | KPI data layer foundation |
+| 32 | TASK-10-02 | Automation KPI report for target tracking |
+| 33 | TASK-01-04 | Complete auditability of sensitive actions |
+| 34 | TASK-04-04 | Human fallback for low AI confidence |
+| 35 | TASK-02-04 | Manager visibility enrichment |
+| 36 | TASK-06-01 | Offer lifecycle for conversion to employees |
+| 37 | TASK-06-02 | Candidate to employee state transition |
+| 38 | TASK-06-03 | Employee profile initialization |
+| 39 | TASK-06-04 | Onboarding flow trigger |
+| 40 | TASK-07-01 | Onboarding template baseline |
+| 41 | TASK-07-02 | Task execution tracking |
+| 42 | TASK-07-03 | Employee self-service onboarding |
+| 43 | TASK-07-04 | HR/manager onboarding control |
+| 44 | TASK-10-03 | Compliance and audit read interfaces |
+| 45 | TASK-09-01 | Manager workspace full rollout |
+| 46 | TASK-09-03 | Accountant workspace rollout |
+| 47 | TASK-10-04 | Reporting export package |
+| 48 | TASK-09-02 | Leader workspace finalization |
+| 49 | TASK-09-04 | Notification optimization |
 
 ## Parallel Compliance Queue (No Change to Feature Sequence)
 This queue must be executed in parallel while preserving feature rollout order:
@@ -162,23 +165,24 @@ Use this queue together with the global queue when planning phase implementation
 
 | Frontend Order | Task ID | Why Now |
 | --- | --- | --- |
-| FE-1 | TASK-11-01 | Mandatory React.js foundation for all user-facing flows |
-| FE-2 | TASK-11-02 | Engineering baseline prevents frontend quality drift |
-| FE-3 | TASK-11-03 | Security and role boundaries must be enforced in UI early |
-| FE-4 | TASK-11-04 | Shared components and accessibility reduce rework |
-| FE-5 | ADMIN-01 | Admin shell baseline for privileged workspace |
-| FE-6 | ADMIN-02 | Staff management UI for operational onboarding |
-| FE-7 | ADMIN-03 | Employee key management UI for staff registration flow |
-| FE-8 | TASK-11-06 | Candidate self-service CV upload must be available before HR workspace |
-| FE-9 | TASK-11-09 | RU/EN localization for candidate/admin critical flows |
-| FE-10 | TASK-11-07 | Match review UI for explainable scoring rollout |
-| FE-11 | TASK-11-05 | HR vacancy/pipeline workspace after candidate baseline |
-| FE-12 | TASK-11-08 | Interview scheduling and registration UI |
-| FE-13 | TASK-11-10 | Sentry observability needed for reliable production support |
-| FE-14 | TASK-11-11 | Chrome compatibility gate for v1 rollout |
-| FE-15 | ADMIN-04 | Unified admin CRUD consoles |
-| FE-16 | ADMIN-05 | Admin observability and audit dashboards |
-| FE-17 | TASK-11-12 | Phase-2 role workspace rollout |
+| FE-1 | TASK-11-13 | Critical login window for local verification and daily staff workflow entry |
+| FE-2 | TASK-11-01 | Mandatory React.js foundation for all user-facing flows |
+| FE-3 | TASK-11-02 | Engineering baseline prevents frontend quality drift |
+| FE-4 | TASK-11-03 | Security and role boundaries must be enforced in UI early |
+| FE-5 | TASK-11-04 | Shared components and accessibility reduce rework |
+| FE-6 | ADMIN-01 | Admin shell baseline for privileged workspace |
+| FE-7 | ADMIN-02 | Staff management UI for operational onboarding |
+| FE-8 | ADMIN-03 | Employee key management UI for staff registration flow |
+| FE-9 | TASK-11-06 | Candidate self-service CV upload must be available before HR workspace |
+| FE-10 | TASK-11-09 | RU/EN localization for candidate/admin critical flows |
+| FE-11 | TASK-11-07 | Match review UI for explainable scoring rollout |
+| FE-12 | TASK-11-05 | HR vacancy/pipeline workspace after candidate baseline |
+| FE-13 | TASK-11-08 | Interview scheduling and registration UI |
+| FE-14 | TASK-11-10 | Sentry observability needed for reliable production support |
+| FE-15 | TASK-11-11 | Chrome compatibility gate for v1 rollout |
+| FE-16 | ADMIN-04 | Unified admin CRUD consoles |
+| FE-17 | ADMIN-05 | Admin observability and audit dashboards |
+| FE-18 | TASK-11-12 | Phase-2 role workspace rollout |
 
 ## Milestone Cut Suggestion
 - `M1` (Phase 1 MVP): infra/security + ADMIN-01/02/03 + candidate CV intake/parsing/normalization + candidate self-service upload.
@@ -190,7 +194,7 @@ Use this queue together with the global queue when planning phase implementation
 ## M1 Sprint Start Approval
 - Date: 2026-03-04
 - Approved by: coordinator, architect, business-analyst
-- Scope: `M1` (tasks 1-24 + TASK-12-01 + FE-1..FE-9)
+- Scope: `M1` (tasks 1-24 + TASK-12-01 + FE-1..FE-10)
 - Ownership matrix: `docs/project/sprint-m1-plan.md`
 - Note: on 2026-03-06 backlog priority was refined to admin -> candidate CV intake -> HR module; active planning should follow the updated global/frontend queues above.
 
@@ -201,6 +205,6 @@ Use this queue together with the global queue when planning phase implementation
 - backend-engineer: TASK-03-01, TASK-02-01, TASK-02-02, TASK-02-03, TASK-05-01, TASK-05-02, TASK-05-03, TASK-05-04, TASK-08-01, TASK-08-02, TASK-08-03, TASK-08-04, TASK-10-01
 - backend-engineer + data-ml-engineer: TASK-03-02, TASK-03-03, TASK-10-02
 - data-ml-engineer + backend-engineer: TASK-04-01, TASK-04-02, TASK-04-03
-- frontend-engineer: TASK-11-01, TASK-11-02, TASK-11-03, TASK-11-04, TASK-11-05, TASK-11-06, TASK-11-07, TASK-11-08, TASK-11-09
+- frontend-engineer: TASK-11-13, TASK-11-01, TASK-11-02, TASK-11-03, TASK-11-04, TASK-11-05, TASK-11-06, TASK-11-07, TASK-11-08, TASK-11-09
 - qa-engineer: quality gates and test coverage for all M1 TASK-*
 - devops-engineer: CI/CD and environment readiness for all M1 TASK-*

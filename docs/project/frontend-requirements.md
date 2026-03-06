@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-06
-- Updated by: architect
+- Updated by: architect + frontend-engineer
 
 ## Fixed Technical Requirement
 - Frontend must be implemented using `React.js` + `TypeScript`.
@@ -10,6 +10,7 @@
 ## Baseline Frontend Requirements
 - Role-based UI for: HR, Candidate, Manager, Employee, Leader, Accountant.
 - Secure authentication flow with protected routes and session handling.
+- Staff login window (`/login`) must be available for local verification and daily staff workspace entry without manual `localStorage` edits.
 - Integration with backend APIs via typed/stable API client.
 - Current stage target: frontend must run stably in local environment on the current device.
 - Candidate self-service in v1:
@@ -86,6 +87,24 @@
   - `key_already_revoked`
 - Keep Sentry route tagging for admin workspace and ensure `/admin/employee-keys` emits `route=/admin/employee-keys`.
 - Keep frontend API layer typed against regenerated frozen OpenAPI artifacts.
+
+## TASK-11-13 Baseline
+- Add dedicated `/login` route/page for staff authentication UX.
+- Login flow must use existing backend API contracts:
+  - `POST /api/v1/auth/login` (`identifier`, `password`);
+  - `GET /api/v1/auth/me` for identity/role bootstrap.
+- Persist client session baseline in `localStorage`:
+  - `hrm_access_token`
+  - `hrm_refresh_token`
+  - `hrm_user_role`
+- Post-login redirect rules:
+  - `admin` -> `/admin`
+  - `hr`, `manager`, `leader`, `accountant`, `employee` -> `/`
+  - unknown role -> `/access-denied?reason=forbidden`
+- `/login` behavior rules:
+  - already-authenticated valid session -> redirect to role workspace;
+  - broken session (`me` check fails) -> clear session and render login form.
+- Login UI must expose RU/EN user-readable error states for `401`, `422`, and generic HTTP failures.
 
 ## Library Baseline (Popular Ready-Made Stack)
 - UI components: Material UI (MUI).
