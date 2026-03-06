@@ -1,4 +1,5 @@
 export { ApiError, apiRequest } from "./httpClient";
+export { getMe, login, logout } from "./auth";
 export { listAdminStaff, updateAdminStaff } from "./adminStaff";
 export { getCandidateCvAnalysis, getCandidateCvParsingStatus } from "./candidateAnalysis";
 export {
@@ -6,6 +7,7 @@ export {
   listAdminEmployeeKeys,
   revokeAdminEmployeeKey,
 } from "./adminEmployeeKeys";
+export type { LoginRequest, MeResponse, TokenResponse } from "./auth";
 export type {
   AdminStaffListItem,
   AdminStaffListQuery,

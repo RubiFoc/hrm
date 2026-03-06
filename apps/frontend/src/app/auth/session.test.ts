@@ -1,20 +1,77 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
-import { resolveAdminGuardDecision } from "./session";
+import {
+  clearAuthSession,
+  readAuthSession,
+  resolveAdminGuardDecision,
+  writeAuthSession,
+} from "./session";
+
+describe("auth session storage", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("writes and reads access token, refresh token, and role", () => {
+    writeAuthSession({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      role: "hr",
+    });
+
+    expect(readAuthSession()).toEqual({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      role: "hr",
+    });
+  });
+
+  it("clears all session keys", () => {
+    writeAuthSession({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      role: "admin",
+    });
+
+    clearAuthSession();
+
+    expect(readAuthSession()).toEqual({
+      accessToken: null,
+      refreshToken: null,
+      role: null,
+    });
+  });
+
+  it("treats unknown role as invalid", () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_refresh_token", "refresh-token");
+    window.localStorage.setItem("hrm_user_role", "unknown-role");
+
+    expect(readAuthSession()).toEqual({
+      accessToken: "access-token",
+      refreshToken: "refresh-token",
+      role: null,
+    });
+  });
+});
 
 describe("resolveAdminGuardDecision", () => {
   it("returns unauthorized when access token is missing", () => {
-    const decision = resolveAdminGuardDecision({ accessToken: null, role: null });
+    const decision = resolveAdminGuardDecision({ accessToken: null, refreshToken: null, role: null });
     expect(decision).toEqual({ allow: false, reason: "unauthorized" });
   });
 
   it("returns forbidden when role is not admin", () => {
-    const decision = resolveAdminGuardDecision({ accessToken: "token", role: "hr" });
+    const decision = resolveAdminGuardDecision({ accessToken: "token", refreshToken: null, role: "hr" });
     expect(decision).toEqual({ allow: false, reason: "forbidden" });
   });
 
   it("returns allow for admin role with token", () => {
-    const decision = resolveAdminGuardDecision({ accessToken: "token", role: "admin" });
+    const decision = resolveAdminGuardDecision({
+      accessToken: "token",
+      refreshToken: "refresh-token",
+      role: "admin",
+    });
     expect(decision).toEqual({ allow: true, role: "admin" });
   });
 });

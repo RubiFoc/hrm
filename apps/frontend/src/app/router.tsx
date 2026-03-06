@@ -8,6 +8,7 @@ import { AdminStaffManagementPage } from "../pages/AdminStaffManagementPage";
 import { AdminShellPage } from "../pages/AdminShellPage";
 import { CandidatePage } from "../pages/CandidatePage";
 import { HrDashboardPage } from "../pages/HrDashboardPage";
+import { LoginPage } from "../pages/LoginPage";
 
 export const appRoutes = [
   {
@@ -21,6 +22,10 @@ export const appRoutes = [
       {
         path: "candidate",
         element: <CandidatePage />,
+      },
+      {
+        path: "login",
+        element: <LoginPage />,
       },
       {
         path: "admin",
