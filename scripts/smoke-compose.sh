@@ -41,6 +41,18 @@ post_json_with_retry() {
   return 1
 }
 
+create_smoke_admin() {
+  local login="$1"
+  local email="$2"
+  local password="$3"
+
+  docker compose exec -T backend \
+    uv run --no-dev python -m hrm_backend.auth.cli.create_admin \
+    --login "${login}" \
+    --email "${email}" \
+    --password "${password}" >/dev/null
+}
+
 echo "[smoke] validating docker compose service status..."
 COMPOSE_PS_JSON="$(docker compose ps --all --format json)"
 python3 - "${COMPOSE_PS_JSON}" <<'PY'
@@ -104,10 +116,22 @@ wait_http "http://localhost:5173"
 wait_http "http://localhost:9000/minio/health/live"
 
 echo "[smoke] checking auth login endpoint..."
+SMOKE_ADMIN_LOGIN="smoke-admin-$(date +%s)-$RANDOM"
+SMOKE_ADMIN_EMAIL="${SMOKE_ADMIN_LOGIN}@local.test"
+SMOKE_ADMIN_PASSWORD="SmokePassword!123"
+create_smoke_admin "${SMOKE_ADMIN_LOGIN}" "${SMOKE_ADMIN_EMAIL}" "${SMOKE_ADMIN_PASSWORD}"
+
+LOGIN_REQUEST_BODY="$(python3 - "${SMOKE_ADMIN_LOGIN}" "${SMOKE_ADMIN_PASSWORD}" <<'PY'
+import json
+import sys
+
+print(json.dumps({"identifier": sys.argv[1], "password": sys.argv[2]}))
+PY
+)"
 LOGIN_PAYLOAD="$(post_json_with_retry \
   "http://localhost:8000/api/v1/auth/login" \
-  '{"subject_id":"smoke-hr","role":"hr"}')"
-python3 - "${LOGIN_PAYLOAD}" <<'PY'
+  "${LOGIN_REQUEST_BODY}")"
+ACCESS_TOKEN="$(python3 - "${LOGIN_PAYLOAD}" <<'PY'
 import json
 import sys
 
@@ -124,6 +148,28 @@ if missing:
     raise SystemExit(f"login response missing keys: {', '.join(missing)}")
 if payload.get("token_type") != "bearer":
     raise SystemExit(f"unexpected token_type: {payload.get('token_type')}")
+print(payload["access_token"])
+PY
+)"
+
+ME_PAYLOAD="$(curl -fsS "http://localhost:8000/api/v1/auth/me" \
+  -H "Authorization: Bearer ${ACCESS_TOKEN}")"
+python3 - "${ME_PAYLOAD}" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+required_keys = {
+    "subject_id",
+    "role",
+    "session_id",
+    "access_token_expires_at",
+}
+missing = sorted(required_keys - payload.keys())
+if missing:
+    raise SystemExit(f"/me response missing keys: {', '.join(missing)}")
+if payload.get("role") != "admin":
+    raise SystemExit(f"unexpected /me role: {payload.get('role')}")
 PY
 
 echo "[smoke] all docker-compose smoke checks passed."
