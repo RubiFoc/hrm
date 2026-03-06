@@ -117,6 +117,17 @@ apps/backend/tests/
 | Evidence traceability + analysis read contract (`TASK-03-06`) | `tests/unit/candidates/test_cv_parsing_normalization.py` (field-level evidence snippets/offsets) | `tests/integration/candidates/test_candidate_api.py` + `tests/integration/candidates/test_cv_parsing_jobs.py` | `GET /api/v1/candidates/{candidate_id}/cv/analysis` returns structured profile + evidence; pre-ready path returns `409` |
 | RBAC + audit coverage for recruitment endpoints | `tests/unit/rbac/test_rbac.py` | `tests/integration/security/test_audit_enforcement.py` + recruitment integration suites | `allowed/denied/success/failure` audit records in `audit_events` |
 
+## Frontend Login UX Verification (TASK-11-13)
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Session storage contract (`access/refresh/role`) and admin-guard compatibility | `apps/frontend/src/app/auth/session.test.ts` | N/A | write/read/clear behavior and invalid role handling |
+| Auth API client request shape and `ApiError` mapping | `apps/frontend/src/api/auth.test.ts` | N/A | login/me/logout request contract and `401/422/http_*` handling |
+| Login page submit flow (`login -> me -> redirect`) | `apps/frontend/src/pages/LoginPage.test.tsx` | Manual smoke on `/login` | session is persisted and redirect follows resolved role |
+| Login error states (`401`, `422`, generic) with RU/EN-readable messaging | `apps/frontend/src/pages/LoginPage.test.tsx` | Manual smoke on `/login` with locale toggle | localized error messaging for all required states |
+| Router behavior for `/login` and pre-authenticated bootstrap redirect | `apps/frontend/src/app/router.auth.test.tsx` | Browser route smoke | login route render, authenticated redirect, broken session cleanup |
+| Admin guard non-regression | `apps/frontend/src/app/router.admin.test.tsx` | Browser `/admin` smoke | unauthorized/forbidden redirects continue to work unchanged |
+
 ## Frontend Admin Verification (ADMIN-01)
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
@@ -152,9 +163,12 @@ apps/backend/tests/
 
 ## Baseline Verification Commands
 - `./scripts/check-docs-structure.sh`
+- `./scripts/check-openapi-freeze.sh`
 - `uv run --project apps/backend ruff check apps/backend/src apps/backend/tests apps/backend/alembic`
 - `uv run --project apps/backend pytest -q`
 - `uv run --project apps/backend pytest -q apps/backend/tests/unit/candidates/test_cv_parsing_normalization.py apps/backend/tests/integration/candidates/test_candidate_api.py apps/backend/tests/integration/candidates/test_cv_parsing_jobs.py`
+- `npm --prefix apps/frontend run lint`
+- `npm --prefix apps/frontend run test -- --run`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic upgrade head`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic downgrade -1`
 - `DATABASE_URL=postgresql+psycopg://hrm:hrm@localhost:5432/<test_db> uv run --project apps/backend alembic upgrade head && ... downgrade -1 && ... upgrade head`
