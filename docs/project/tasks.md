@@ -18,7 +18,7 @@
 | ADMIN-01 | done | Merged in `main` via PR #48 |
 | ADMIN-02 | done/closed | GitHub issue #53 closed; merged in `main` via PR #51 (`bd96d86`) |
 | ADMIN-03 | done/closed | GitHub issue #52 closed; merged in `main` via PR #55 (`2c9c5b5`) |
-| TASK-11-13 | planned | GitHub issue #67 opened with `P0` priority for login UX unblocking |
+| TASK-11-13 | done/closed | GitHub issue #67 closed; merged in `main` via PR #68 and PR #69 (`d8ea39e`) |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## Task Breakdown by Epic
