@@ -79,3 +79,22 @@ def test_get_settings_parses_cv_allowed_mime_types_from_json_env(
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
     get_settings.cache_clear()
+
+
+def test_get_settings_parses_cors_allowed_origins_from_csv_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify CSV-style CORS origins env variable is normalized by settings loader."""
+    monkeypatch.setenv(
+        "HRM_CORS_ALLOWED_ORIGINS",
+        " http://localhost:5173/ , http://127.0.0.1:5173 ",
+    )
+
+    get_settings.cache_clear()
+    settings = get_settings()
+
+    assert settings.cors_allowed_origins == (
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    )
+    get_settings.cache_clear()

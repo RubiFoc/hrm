@@ -1,4 +1,3 @@
-import { apiRequest } from "./httpClient";
 import { typedApiClient } from "./typedClient";
 import type { components } from "./generated/openapi-types";
 
@@ -28,8 +27,7 @@ export function getMe(accessToken: string): Promise<MeResponse> {
  * Invalidate current access token/session on backend side.
  */
 export function logout(accessToken: string): Promise<void> {
-  return apiRequest<void>("/api/v1/auth/logout", {
-    method: "POST",
+  return typedApiClient.post<void>("/api/v1/auth/logout", undefined, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },

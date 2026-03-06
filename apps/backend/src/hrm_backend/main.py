@@ -5,14 +5,24 @@ from __future__ import annotations
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 
 from hrm_backend.admin.routers.v1 import router as admin_router
 from hrm_backend.auth.routers.v1 import router as auth_router
 from hrm_backend.candidates.routers.v1 import router as candidate_router
 from hrm_backend.rbac import ROLE_PERMISSION_MATRIX
+from hrm_backend.settings import get_settings
 from hrm_backend.vacancies.routers.v1 import router as vacancy_router
 
+settings = get_settings()
 app = FastAPI(title="HRM Backend", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=list(settings.cors_allowed_origins),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(candidate_router)

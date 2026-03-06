@@ -14,31 +14,56 @@ export function createTypedApiClient(baseUrl = "") {
       });
     },
     post<TResponse>(path: string, body: unknown, init?: RequestInit) {
-      return apiRequest<TResponse>(`${baseUrl}${path}`, {
-        ...init,
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(init?.headers ?? {}),
-        },
-        body: JSON.stringify(body),
-      });
+      return apiRequest<TResponse>(
+        `${baseUrl}${path}`,
+        withJsonRequestInit("POST", body, init),
+      );
     },
     patch<TResponse>(path: string, body: unknown, init?: RequestInit) {
-      return apiRequest<TResponse>(`${baseUrl}${path}`, {
-        ...init,
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          ...(init?.headers ?? {}),
-        },
-        body: JSON.stringify(body),
-      });
+      return apiRequest<TResponse>(
+        `${baseUrl}${path}`,
+        withJsonRequestInit("PATCH", body, init),
+      );
     },
   };
 }
 
-export const typedApiClient = createTypedApiClient();
+function resolveApiBaseUrl(): string {
+  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  if (typeof configuredBaseUrl !== "string") {
+    return "";
+  }
+  const normalized = configuredBaseUrl.trim();
+  if (!normalized) {
+    return "";
+  }
+  return normalized.replace(/\/+$/, "");
+}
+
+export const typedApiClient = createTypedApiClient(resolveApiBaseUrl());
+
+function withJsonRequestInit(
+  method: "POST" | "PATCH",
+  body: unknown,
+  init?: RequestInit,
+): RequestInit {
+  if (body === undefined) {
+    return {
+      ...init,
+      method,
+    };
+  }
+
+  return {
+    ...init,
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+    body: JSON.stringify(body),
+  };
+}
 
 function appendQuery(path: string, query?: QueryParams): string {
   if (!query) {

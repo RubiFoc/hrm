@@ -1,7 +1,7 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-05
+- Date: 2026-03-06
 - Updated by: devops-engineer + backend-engineer + frontend-engineer
 
 ## Local Environment (Docker Compose)
@@ -37,6 +37,10 @@ Shortcut wrappers:
   - `http://localhost:8000/api/v1/auth/login`
 - MinIO API: `http://localhost:9000`
 - MinIO Console: `http://localhost:9001`
+
+Runtime auth/browser integration settings:
+- Frontend browser API base URL: `VITE_API_BASE_URL` (compose default: `http://localhost:8000`).
+- Backend credentialed CORS allow list: `HRM_CORS_ALLOWED_ORIGINS` (compose default: `http://localhost:5173,http://127.0.0.1:5173`).
 
 ### Stop and Cleanup
 - Stop stack: `docker compose down`
@@ -80,6 +84,25 @@ Shortcut wrappers:
    - `docker compose down`
    - `docker compose up -d --build`
    - `./scripts/smoke-compose.sh`
+
+### Login Browser Integration Diagnostics (`/login`)
+- Symptoms:
+  - login page loads, but browser submit/bootstrap requests fail while direct `curl` to backend succeeds;
+  - browser console shows CORS or wrong-origin request failures for `/api/v1/auth/login`, `/api/v1/auth/me`, or `/api/v1/auth/logout`.
+- Expected local config:
+  - frontend `VITE_API_BASE_URL=http://localhost:8000`
+  - backend `HRM_CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173`
+- Preflight verification command:
+  - `curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login -H 'Origin: http://localhost:5173' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type'`
+- Expected preflight response:
+  - `HTTP/1.1 200 OK`
+  - `Access-Control-Allow-Origin: http://localhost:5173`
+  - `Access-Control-Allow-Credentials: true`
+- Triage sequence:
+  1. Inspect browser Network tab and confirm auth requests target `http://localhost:8000`, not relative `/api/...` on `localhost:5173`.
+  2. Verify frontend env was rebuilt/restarted after changing `VITE_API_BASE_URL`.
+  3. Verify backend response to preflight contains the expected `Access-Control-Allow-*` headers.
+  4. If origin differs from default Vite dev host, add it to `HRM_CORS_ALLOWED_ORIGINS` and restart backend.
 
 ### Auth Denylist Failure Policy
 - Auth validation is fail-closed when Redis denylist is unavailable.

@@ -37,6 +37,7 @@ class AppSettings(BaseSettings):
         object_storage_sse_enabled: Whether uploads use SSE-S3 headers.
         cv_parsing_max_attempts: Maximum worker retries for CV parsing.
         employee_key_ttl_seconds: Default ttl for one-time employee registration keys.
+        cors_allowed_origins: Allowed browser origins for credentialed API CORS requests.
         public_apply_rate_limit_redis_prefix: Redis key prefix for public apply rate limits.
         public_apply_rate_limit_ip: Rate limit threshold for IP bucket.
         public_apply_rate_limit_ip_window_seconds: Time window for IP bucket.
@@ -104,6 +105,13 @@ class AppSettings(BaseSettings):
         default=7 * 24 * 60 * 60,
         env="EMPLOYEE_KEY_TTL_SECONDS",
         gt=0,
+    )
+    cors_allowed_origins: tuple[str, ...] = Field(
+        default=(
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+        ),
+        env="HRM_CORS_ALLOWED_ORIGINS",
     )
     public_apply_rate_limit_redis_prefix: str = Field(
         default="vacancy:apply_public:rl",
@@ -222,6 +230,35 @@ class AppSettings(BaseSettings):
             raise ValueError("CV allowed MIME types must contain at least one value")
         return tuple(normalized)
 
+    @validator("cors_allowed_origins", pre=True)
+    def _parse_cors_allowed_origins(cls, value: object) -> tuple[str, ...]:
+        """Parse configured CORS origins from env string/list into normalized tuple.
+
+        Args:
+            value: Raw value loaded from environment.
+
+        Returns:
+            tuple[str, ...]: Normalized non-empty origin list preserving order.
+        """
+        if isinstance(value, tuple):
+            raw_items = list(value)
+        elif isinstance(value, list):
+            raw_items = value
+        elif isinstance(value, str):
+            raw_items = value.split(",")
+        else:
+            raise ValueError("CORS allowed origins must be list/tuple/comma-separated string")
+
+        normalized: list[str] = []
+        for raw_item in raw_items:
+            item = str(raw_item).strip().rstrip("/")
+            if item and item not in normalized:
+                normalized.append(item)
+
+        if not normalized:
+            raise ValueError("CORS allowed origins must contain at least one value")
+        return tuple(normalized)
+
     class Config:
         """Base settings config with local `.env` support.
 
@@ -260,7 +297,7 @@ class AppSettings(BaseSettings):
             Returns:
                 Any: Parsed value passed to pydantic field validation.
             """
-            if field_name != "cv_allowed_mime_types":
+            if field_name not in {"cv_allowed_mime_types", "cors_allowed_origins"}:
                 return super().parse_env_var(field_name, raw_val)
 
             normalized = raw_val.strip()
