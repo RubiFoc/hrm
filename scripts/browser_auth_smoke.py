@@ -398,7 +398,10 @@ def start_headless_chrome(chrome_binary: str) -> tuple[subprocess.Popen[bytes], 
             Running Chrome process, temporary profile directory wrapper, and debugging port.
     """
     debugging_port = reserve_tcp_port()
-    profile_dir = tempfile.TemporaryDirectory(prefix="hrm-browser-auth-smoke-")
+    profile_dir = tempfile.TemporaryDirectory(
+        prefix="hrm-browser-auth-smoke-",
+        ignore_cleanup_errors=True,
+    )
     process = subprocess.Popen(
         [
             chrome_binary,
@@ -594,6 +597,11 @@ def run_browser_auth_smoke(args: argparse.Namespace) -> None:
             "window.localStorage.getItem('hrm_user_role') === 'admin'",
             "persisted auth session in localStorage",
         )
+        session.wait_for_condition(
+            "Array.from(document.querySelectorAll('button')).some((node) => "
+            "/^(logout|logging out\\.\\.\\.|выйти|выход\\.\\.\\.)$/i.test((node.textContent || '').trim()))",
+            "logout button in app shell",
+        )
 
         print("[browser-smoke] submitting logout through app shell...")
         session.evaluate(build_logout_expression())
@@ -634,7 +642,10 @@ def run_browser_auth_smoke(args: argparse.Namespace) -> None:
         except subprocess.TimeoutExpired:
             chrome_process.kill()
             chrome_process.wait(timeout=5.0)
-        profile_dir.cleanup()
+        try:
+            profile_dir.cleanup()
+        except OSError:
+            pass
 
 
 def main() -> None:
