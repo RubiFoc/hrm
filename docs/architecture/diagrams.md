@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-05
+- Date: 2026-03-06
 - Updated by: architect + backend-engineer + frontend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
@@ -155,7 +155,12 @@ sequenceDiagram
   UI->>API: Create/Update candidate profile
   API->>CAND: Persist candidate and CV metadata
   CAND-->>CV: Emit cv_parsing_requested
-  CV-->>CAND: Store parsed CV structure
+  CV-->>CAND: Parse CV + normalize RU/EN profile + store evidence snippets
+  HR->>UI: Open candidate CV parsing status
+  UI->>API: GET /api/v1/candidates/{candidate_id}/cv/parsing-status
+  API->>CAND: Read job status + analysis readiness + detected language
+  UI->>API: GET /api/v1/candidates/{candidate_id}/cv/analysis (when ready)
+  API->>CAND: Return structured profile + evidence links
   CAND-->>SCORE: Emit match_scoring_requested
   SCORE->>OLL: Request score and explanation
   OLL-->>SCORE: Return match result

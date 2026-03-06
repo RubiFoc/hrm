@@ -225,7 +225,13 @@ async def test_cv_upload_download_status_and_validation_failures(
 
     status_response = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/parsing-status")
     assert status_response.status_code == 200
-    assert status_response.json()["status"] == "queued"
+    status_payload = status_response.json()
+    assert status_payload["status"] == "queued"
+    assert status_payload["analysis_ready"] is False
+    assert status_payload["detected_language"] == "unknown"
+
+    analysis_not_ready = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/analysis")
+    assert analysis_not_ready.status_code == 409
 
     bad_mime_content = b"plain-text"
     bad_mime_checksum = hashlib.sha256(bad_mime_content).hexdigest()
@@ -261,6 +267,8 @@ async def test_cv_upload_download_status_and_validation_failures(
     )
     denied_status = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/parsing-status")
     assert denied_status.status_code == 403
+    denied_analysis = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/analysis")
+    assert denied_analysis.status_code == 403
 
 
 async def test_candidate_uuid_boundaries_reject_invalid_ids(
@@ -283,3 +291,6 @@ async def test_candidate_uuid_boundaries_reject_invalid_ids(
 
     status_response = await api_client.get(f"/api/v1/candidates/{invalid_id}/cv/parsing-status")
     assert status_response.status_code == 422
+
+    analysis_response = await api_client.get(f"/api/v1/candidates/{invalid_id}/cv/analysis")
+    assert analysis_response.status_code == 422

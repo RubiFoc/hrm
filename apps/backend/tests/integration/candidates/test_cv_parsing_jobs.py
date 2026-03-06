@@ -159,14 +159,28 @@ async def test_parsing_job_success_and_status_tracking(
 
     pre_status = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/parsing-status")
     assert pre_status.status_code == 200
-    assert pre_status.json()["status"] == "queued"
+    pre_payload = pre_status.json()
+    assert pre_payload["status"] == "queued"
+    assert pre_payload["analysis_ready"] is False
+    assert pre_payload["detected_language"] == "unknown"
 
     first_worker_result = _run_worker_once(database_url, settings, storage)
     assert first_worker_result == "succeeded"
 
     post_status = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/parsing-status")
     assert post_status.status_code == 200
-    assert post_status.json()["status"] == "succeeded"
+    post_payload = post_status.json()
+    assert post_payload["status"] == "succeeded"
+    assert post_payload["analysis_ready"] is True
+    assert post_payload["detected_language"] == "en"
+
+    analysis_response = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/analysis")
+    assert analysis_response.status_code == 200
+    analysis_payload = analysis_response.json()
+    assert analysis_payload["detected_language"] == "en"
+    assert analysis_payload["parsed_profile"]["document"]["mime_type"] == "application/pdf"
+    assert isinstance(analysis_payload["evidence"], list)
+    assert analysis_payload["evidence"]
 
 
 async def test_parsing_job_failure_path_and_retry_limit(
@@ -210,3 +224,5 @@ async def test_parsing_job_failure_path_and_retry_limit(
     assert payload["status"] == "failed"
     assert payload["attempt_count"] == 2
     assert payload["last_error"] is not None
+    assert payload["analysis_ready"] is False
+    assert payload["detected_language"] == "unknown"

@@ -13,7 +13,7 @@ from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.candidates.dependencies.candidates import get_candidate_service
 from hrm_backend.candidates.schemas.cv import CandidateCVUploadResponse
-from hrm_backend.candidates.schemas.parsing import CVParsingStatusResponse
+from hrm_backend.candidates.schemas.parsing import CVAnalysisResponse, CVParsingStatusResponse
 from hrm_backend.candidates.schemas.profile import (
     CandidateCreateRequest,
     CandidateListResponse,
@@ -152,6 +152,22 @@ def get_candidate_cv_parsing_status(
 ) -> CVParsingStatusResponse:
     """Return latest asynchronous CV parsing status."""
     return service.get_parsing_status(
+        candidate_id=candidate_id,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@router.get("/{candidate_id}/cv/analysis", response_model=CVAnalysisResponse)
+def get_candidate_cv_analysis(
+    candidate_id: UUID,
+    request: Request,
+    _: CandidateCVStatusRole,
+    auth_context: CurrentAuthContext,
+    service: CandidateServiceDependency,
+) -> CVAnalysisResponse:
+    """Return structured CV analysis with evidence for latest active CV."""
+    return service.get_cv_analysis(
         candidate_id=candidate_id,
         auth_context=auth_context,
         request=request,

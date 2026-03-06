@@ -274,6 +274,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/candidates/{candidate_id}/cv/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Candidate Cv Analysis
+         * @description Return structured CV analysis with evidence for latest active CV.
+         */
+        get: operations["get_candidate_cv_analysis_api_v1_candidates__candidate_id__cv_analysis_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/candidates/{candidate_id}/cv/parsing-status": {
         parameters: {
             query?: never;
@@ -612,10 +632,60 @@ export interface components {
             file: string;
         };
         /**
+         * CVAnalysisEvidenceItem
+         * @description Evidence link from one extracted field to CV source snippet.
+         */
+        CVAnalysisEvidenceItem: {
+            /** End Offset */
+            end_offset: number;
+            /** Field */
+            field: string;
+            /** Page */
+            page?: number | null;
+            /** Snippet */
+            snippet: string;
+            /** Start Offset */
+            start_offset: number;
+        };
+        /**
+         * CVAnalysisResponse
+         * @description Canonical CV analysis payload for latest active candidate document.
+         */
+        CVAnalysisResponse: {
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /**
+             * Detected Language
+             * @enum {string}
+             */
+            detected_language: "ru" | "en" | "mixed" | "unknown";
+            /**
+             * Document Id
+             * Format: uuid
+             */
+            document_id: string;
+            /** Evidence */
+            evidence: components["schemas"]["CVAnalysisEvidenceItem"][];
+            /**
+             * Parsed At
+             * Format: date-time
+             */
+            parsed_at: string;
+            /** Parsed Profile */
+            parsed_profile: {
+                [key: string]: unknown;
+            };
+        };
+        /**
          * CVParsingStatusResponse
          * @description Current parsing job status for candidate CV.
          */
         CVParsingStatusResponse: {
+            /** Analysis Ready */
+            analysis_ready: boolean;
             /** Attempt Count */
             attempt_count: number;
             /**
@@ -623,6 +693,11 @@ export interface components {
              * Format: uuid
              */
             candidate_id: string;
+            /**
+             * Detected Language
+             * @enum {string}
+             */
+            detected_language: "ru" | "en" | "mixed" | "unknown";
             /**
              * Document Id
              * Format: uuid
@@ -1656,6 +1731,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CandidateCVUploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_candidate_cv_analysis_api_v1_candidates__candidate_id__cv_analysis_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CVAnalysisResponse"];
                 };
             };
             /** @description Validation Error */

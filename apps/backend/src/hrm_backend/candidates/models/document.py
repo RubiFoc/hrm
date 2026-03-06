@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from hrm_backend.core.models.base import Base
@@ -23,6 +23,10 @@ class CandidateDocument(Base):
         size_bytes: Uploaded file size in bytes.
         checksum_sha256: SHA-256 digest in hex form.
         is_active: Whether this row is the current active CV.
+        parsed_profile_json: Canonical normalized profile extracted from CV.
+        evidence_json: Evidence links from extracted fields to source snippets.
+        detected_language: Detected CV language (`ru`, `en`, `mixed`, `unknown`).
+        parsed_at: Timestamp when parsing and normalization succeeded.
         created_at: Upload timestamp.
     """
 
@@ -31,6 +35,8 @@ class CandidateDocument(Base):
         Index("ix_candidate_documents_candidate_id", "candidate_id"),
         Index("ix_candidate_documents_object_key", "object_key", unique=True),
         Index("ix_candidate_documents_candidate_active", "candidate_id", "is_active"),
+        Index("ix_candidate_documents_parsed_at", "parsed_at"),
+        Index("ix_candidate_documents_candidate_parsed_at", "candidate_id", "parsed_at"),
     )
 
     document_id: Mapped[str] = mapped_column(
@@ -49,6 +55,10 @@ class CandidateDocument(Base):
     size_bytes: Mapped[int] = mapped_column(nullable=False)
     checksum_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    parsed_profile_json: Mapped[dict[str, object] | None] = mapped_column(JSON, nullable=True)
+    evidence_json: Mapped[list[dict[str, object]] | None] = mapped_column(JSON, nullable=True)
+    detected_language: Mapped[str] = mapped_column(String(16), nullable=False, default="unknown")
+    parsed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

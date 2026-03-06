@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from sqlalchemy.orm import Session
 
 from hrm_backend.candidates.models.document import CandidateDocument
@@ -98,3 +100,31 @@ class CandidateDocumentDAO:
             CandidateDocument | None: Matched document row or `None`.
         """
         return self._session.get(CandidateDocument, document_id)
+
+    def mark_document_parsed(
+        self,
+        document: CandidateDocument,
+        *,
+        parsed_profile: dict[str, object],
+        evidence: list[dict[str, object]],
+        detected_language: str,
+    ) -> CandidateDocument:
+        """Persist successful parsing output for one candidate CV.
+
+        Args:
+            document: Candidate document metadata row.
+            parsed_profile: Canonical normalized candidate profile extracted from CV.
+            evidence: Field-to-source evidence mapping payload.
+            detected_language: Detected CV language marker.
+
+        Returns:
+            CandidateDocument: Updated document metadata with parse artifacts.
+        """
+        document.parsed_profile_json = parsed_profile
+        document.evidence_json = evidence
+        document.detected_language = detected_language
+        document.parsed_at = datetime.now(UTC)
+        self._session.add(document)
+        self._session.commit()
+        self._session.refresh(document)
+        return document
