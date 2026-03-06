@@ -1,7 +1,7 @@
 # Legal Controls Matrix (Belarus + Russia)
 
 ## Last Updated
-- Date: 2026-03-04
+- Date: 2026-03-06
 - Updated by: business-analyst + backend-engineer
 
 ## Status Legend
@@ -37,7 +37,13 @@
 | CTRL-RU-05 | Apply organizational/technical ISPDn safeguards | Control checklist by class + periodic control attestations | Security checklist (planned) | External/internal security audit |
 
 ## Delivery Gate
+- Current stage delivery target is local runtime on the current device; production launch is not in scope for this stage.
 - Development environment is non-blocking for controls in `planned` or `in-progress` status.
 - Production release is blocked until all critical controls (`CTRL-BY-03`, `CTRL-RU-02`, `CTRL-RU-03`, `CTRL-RU-04`, `CTRL-RU-05`) reach at least `implemented`.
 - Production release is additionally blocked until legal sign-off confirms `verified` status and attached evidence for critical controls.
+- Execution tracking for this matrix is formalized under `EPIC-13` in:
+  - `TASK-13-01` (article-level mapping),
+  - `TASK-13-02` (evidence ownership model),
+  - `TASK-13-03` (release-gate checklist),
+  - `TASK-13-04` (production legal evidence package).
 - TODO(owner: business-analyst + legal, due_trigger: before first production release): approve final status and evidence completeness for all critical controls.

@@ -6,6 +6,7 @@
 
 ## Sprint Goal
 Deliver Phase 1 MVP baseline (global queue items 0-24 + FE-1..FE-9) with working technical foundations, containerized platform bootstrap, core HR + candidate flows, and compliance baseline.
+Current sprint acceptance target is stable local end-to-end operation on the current device (production rollout is out of scope for this stage).
 
 ## Team Roles
 - architect
@@ -23,6 +24,7 @@ Deliver Phase 1 MVP baseline (global queue items 0-24 + FE-1..FE-9) with working
 | Platform containerization baseline | devops-engineer + backend-engineer + frontend-engineer | TASK-12-01 |
 | Security and access baseline | architect + backend-engineer | TASK-01-01, TASK-01-02, TASK-01-03, TASK-01-04 |
 | Compliance baseline | business-analyst + architect | TASK-01-05 |
+| Compliance article-level mapping and evidence model | business-analyst + legal + architect | TASK-13-01, TASK-13-02 |
 | Candidate and vacancy core domain | backend-engineer | TASK-03-01, TASK-02-01, TASK-02-02, TASK-02-03 |
 | CV ingestion and parsing | backend-engineer + data-ml-engineer | TASK-03-02, TASK-03-03 |
 | Ollama scoring pipeline | data-ml-engineer + backend-engineer | TASK-04-01, TASK-04-02, TASK-04-03 |
@@ -43,3 +45,4 @@ Deliver Phase 1 MVP baseline (global queue items 0-24 + FE-1..FE-9) with working
 - Legal controls matrix must progress in parallel for production readiness.
 - External integrations (Ollama, Google Calendar) require stable staging credentials.
 - Frontend localization (RU/EN) must be built into base routing and content model from first iteration.
+- Production legal sign-off (`TASK-13-04`) is not a blocker for current local-stage acceptance, but remains mandatory before first production release.
