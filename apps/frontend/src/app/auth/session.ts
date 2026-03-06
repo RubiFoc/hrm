@@ -2,7 +2,14 @@ export type AuthRole = "admin" | "hr" | "manager" | "employee" | "leader" | "acc
 
 export type AuthSessionState = {
   accessToken: string | null;
+  refreshToken: string | null;
   role: AuthRole | null;
+};
+
+export type WritableAuthSession = {
+  accessToken: string;
+  refreshToken: string | null;
+  role: AuthRole;
 };
 
 export type AdminGuardDecision =
@@ -10,6 +17,7 @@ export type AdminGuardDecision =
   | { allow: false; reason: "unauthorized" | "forbidden" };
 
 const AUTH_TOKEN_KEY = "hrm_access_token";
+const AUTH_REFRESH_TOKEN_KEY = "hrm_refresh_token";
 const AUTH_ROLE_KEY = "hrm_user_role";
 
 const KNOWN_ROLES: ReadonlySet<string> = new Set([
@@ -21,13 +29,64 @@ const KNOWN_ROLES: ReadonlySet<string> = new Set([
   "accountant",
 ]);
 
-export function readAuthSession(): AuthSessionState {
-  const accessToken = window.localStorage.getItem(AUTH_TOKEN_KEY);
-  const rawRole = window.localStorage.getItem(AUTH_ROLE_KEY);
-  const role = rawRole && KNOWN_ROLES.has(rawRole) ? (rawRole as AuthRole) : null;
-  return { accessToken, role };
+/**
+ * Resolve raw string role value from transport/storage into known role union.
+ */
+export function resolveAuthRole(rawRole: string | null | undefined): AuthRole | null {
+  if (!rawRole || !KNOWN_ROLES.has(rawRole)) {
+    return null;
+  }
+  return rawRole as AuthRole;
 }
 
+/**
+ * Read authentication session from browser local storage.
+ */
+export function readAuthSession(): AuthSessionState {
+  const accessToken = normalizeStoredToken(window.localStorage.getItem(AUTH_TOKEN_KEY));
+  const refreshToken = normalizeStoredToken(window.localStorage.getItem(AUTH_REFRESH_TOKEN_KEY));
+  const role = resolveAuthRole(window.localStorage.getItem(AUTH_ROLE_KEY));
+  return { accessToken, refreshToken, role };
+}
+
+/**
+ * Persist auth session to local storage.
+ */
+export function writeAuthSession(session: WritableAuthSession): void {
+  window.localStorage.setItem(AUTH_TOKEN_KEY, session.accessToken);
+  if (session.refreshToken) {
+    window.localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, session.refreshToken);
+  } else {
+    window.localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
+  }
+  window.localStorage.setItem(AUTH_ROLE_KEY, session.role);
+}
+
+/**
+ * Remove all auth session keys from local storage.
+ */
+export function clearAuthSession(): void {
+  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  window.localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
+  window.localStorage.removeItem(AUTH_ROLE_KEY);
+}
+
+/**
+ * Resolve target workspace path by authenticated role.
+ */
+export function resolveWorkspaceRoute(role: AuthRole | null): string {
+  if (!role) {
+    return "/access-denied?reason=forbidden";
+  }
+  if (role === "admin") {
+    return "/admin";
+  }
+  return "/";
+}
+
+/**
+ * Evaluate `/admin` route access using current session snapshot.
+ */
 export function resolveAdminGuardDecision(session: AuthSessionState): AdminGuardDecision {
   if (!session.accessToken) {
     return { allow: false, reason: "unauthorized" };
@@ -36,4 +95,9 @@ export function resolveAdminGuardDecision(session: AuthSessionState): AdminGuard
     return { allow: false, reason: "forbidden" };
   }
   return { allow: true, role: session.role };
+}
+
+function normalizeStoredToken(value: string | null): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
 }
