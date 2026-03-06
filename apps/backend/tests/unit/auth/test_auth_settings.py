@@ -47,3 +47,35 @@ def test_app_settings_rejects_non_positive_numeric_values() -> None:
 
     with pytest.raises(ValidationError):
         AppSettings(access_token_ttl_seconds=0)
+
+
+def test_get_settings_parses_cv_allowed_mime_types_from_csv_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify CSV-style MIME types env variable is accepted by settings loader."""
+    monkeypatch.setenv("CV_ALLOWED_MIME_TYPES", "application/pdf, application/msword")
+
+    get_settings.cache_clear()
+    settings = get_settings()
+
+    assert settings.cv_allowed_mime_types == ("application/pdf", "application/msword")
+    get_settings.cache_clear()
+
+
+def test_get_settings_parses_cv_allowed_mime_types_from_json_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify JSON-array MIME types env variable remains supported."""
+    monkeypatch.setenv(
+        "CV_ALLOWED_MIME_TYPES",
+        '["application/pdf","application/vnd.openxmlformats-officedocument.wordprocessingml.document"]',
+    )
+
+    get_settings.cache_clear()
+    settings = get_settings()
+
+    assert settings.cv_allowed_mime_types == (
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+    get_settings.cache_clear()
