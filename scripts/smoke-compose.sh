@@ -172,4 +172,11 @@ if payload.get("role") != "admin":
     raise SystemExit(f"unexpected /me role: {payload.get('role')}")
 PY
 
+echo "[smoke] checking browser auth flow..."
+python3 scripts/browser_auth_smoke.py \
+  --frontend-url "http://localhost:5173/login" \
+  --api-origin "http://localhost:8000" \
+  --login "${SMOKE_ADMIN_LOGIN}" \
+  --password "${SMOKE_ADMIN_PASSWORD}"
+
 echo "[smoke] all docker-compose smoke checks passed."

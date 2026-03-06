@@ -7,6 +7,7 @@
 ## Local Environment (Docker Compose)
 ### Prerequisites
 - Docker Engine 24+ with Docker Compose plugin.
+- Local Google Chrome/Chromium binary for browser smoke checks (`google-chrome`, `google-chrome-stable`, `chromium-browser`, `chromium`, or `CHROME_BIN` override).
 - Available local ports: `5173`, `8000`, `5432`, `6379`, `9000`, `9001`.
 
 ### Bootstrap
@@ -80,6 +81,9 @@ Runtime auth/browser integration settings:
    - backend health endpoint returns `{"status":"ok"}`;
    - frontend and MinIO health endpoints respond successfully;
    - auth login endpoint returns token payload (`access_token`, `refresh_token`, `token_type`, `expires_in`, `session_id`).
+   - headless Chrome completes `/login -> /api/v1/auth/login -> /api/v1/auth/me -> logout -> /login`;
+   - browser auth requests target `http://localhost:8000` rather than relative `/api/...` on the frontend origin;
+   - browser CORS preflight succeeds for cross-origin auth requests during login/logout.
 3. For reproducibility checks, run one teardown/restart cycle:
    - `docker compose down`
    - `docker compose up -d --build`
@@ -94,15 +98,20 @@ Runtime auth/browser integration settings:
   - backend `HRM_CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173`
 - Preflight verification command:
   - `curl -i -X OPTIONS http://localhost:8000/api/v1/auth/login -H 'Origin: http://localhost:5173' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type'`
+- Browser verification command:
+  - `python3 scripts/browser_auth_smoke.py --frontend-url http://localhost:5173/login --api-origin http://localhost:8000 --login <login> --password <password>`
 - Expected preflight response:
   - `HTTP/1.1 200 OK`
   - `Access-Control-Allow-Origin: http://localhost:5173`
   - `Access-Control-Allow-Credentials: true`
+- Browser smoke failure artifact:
+  - screenshot path defaults to `/tmp/hrm-browser-auth-smoke/browser-auth-smoke-failure.png`
 - Triage sequence:
   1. Inspect browser Network tab and confirm auth requests target `http://localhost:8000`, not relative `/api/...` on `localhost:5173`.
   2. Verify frontend env was rebuilt/restarted after changing `VITE_API_BASE_URL`.
   3. Verify backend response to preflight contains the expected `Access-Control-Allow-*` headers.
-  4. If origin differs from default Vite dev host, add it to `HRM_CORS_ALLOWED_ORIGINS` and restart backend.
+  4. Run `python3 scripts/browser_auth_smoke.py ...` with a known-good staff account to reproduce the browser path outside manual DevTools.
+  5. If origin differs from default Vite dev host, add it to `HRM_CORS_ALLOWED_ORIGINS` and restart backend.
 
 ### Auth Denylist Failure Policy
 - Auth validation is fail-closed when Redis denylist is unavailable.
