@@ -68,11 +68,26 @@ apps/backend/tests/
 | Refactor | Unit non-regression + integration non-regression |
 | Runtime/Platform | Compose config validation + deterministic smoke cycle (`up -> smoke`, `down -> up -> smoke`) |
 
+## Phase 1 Baseline Merge Gate
+- Use this exact acceptance set before merging the current local baseline slice:
+  - `./scripts/check-docs-structure.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/candidates/test_candidate_api.py apps/backend/tests/integration/candidates/test_cv_parsing_jobs.py apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest apps/backend/tests/unit/test_cors.py apps/backend/tests/unit/auth/test_auth_settings.py -q`
+  - `docker compose up -d --build`
+  - `./scripts/smoke-compose.sh`
+- This gate applies to the cohesive baseline PR only; do not add more feature scope before it lands.
+
 ## Infrastructure Smoke Baseline (`TASK-12-01`)
 - Canonical command: `./scripts/smoke-compose.sh`.
 - The smoke script must verify:
   - compose service status and health for `backend`, `postgres`, `redis`, `minio`;
-  - compose bootstrap prerequisites (`postgres-init`, `backend-migrate`) complete successfully before API checks;
+  - compose runtime state for `frontend` and `backend-worker`;
+  - compose bootstrap prerequisites (`postgres-init`, `backend-migrate`, `minio-init`) complete successfully before API checks;
   - backend `GET /health`;
   - frontend HTTP response;
   - MinIO live health endpoint;
@@ -80,6 +95,10 @@ apps/backend/tests/
   - headless Chrome browser auth path `/login -> login -> me -> logout -> /login`;
   - browser auth requests use `VITE_API_BASE_URL` backend origin rather than relative frontend origin;
   - browser-triggered CORS preflight succeeds for auth endpoints.
+  - staff API creates one deterministic open vacancy fixture for the public browser scenario;
+  - headless Chrome public candidate path `/candidate?vacancyId=...&vacancyTitle=... -> POST /api/v1/vacancies/{vacancy_id}/applications -> GET /api/v1/public/cv-parsing-jobs/{job_id} -> optional GET /analysis`;
+  - browser public candidate requests use `VITE_API_BASE_URL` backend origin rather than relative frontend origin;
+  - smoke passes when the public tracking status reaches at least `queued`/`running`; `analysis_ready=true` is preferred but not mandatory for compose success.
 
 ## Evidence Format
 - Command
@@ -113,11 +132,11 @@ apps/backend/tests/
 | Candidate profile schema and ownership guards | `tests/unit/candidates/test_cv_validation.py` + role checks in `tests/unit/rbac/test_rbac.py` | `tests/integration/candidates/test_candidate_api.py` | `uv run --project apps/backend pytest -q` |
 | UUID boundary validation for candidate/vacancy/pipeline contracts | Candidate/vacancy schema parsing via unit-level model validation | `tests/integration/candidates/test_candidate_api.py` + `tests/integration/vacancies/test_vacancy_pipeline_api.py` (invalid UUID -> `422`) | OpenAPI IDs expose `format: uuid` and boundary negatives are covered |
 | CV upload validation (mime/size/checksum) | `tests/unit/candidates/test_cv_validation.py` | `test_cv_upload_download_status_and_validation_failures` | Validation negative paths return `415/422/413` |
-| Public vacancy apply flow (anonymous) | `tests/unit/vacancies/test_pipeline_validator.py` + candidate validation units | `tests/integration/vacancies/test_vacancy_pipeline_api.py` | Apply creates candidate/doc/transition/parsing job |
-| Vacancy lifecycle and canonical pipeline transitions | `tests/unit/vacancies/test_pipeline_validator.py` | `tests/integration/vacancies/test_vacancy_pipeline_api.py` | Valid chain passes, invalid chain returns `422` |
-| Async CV parsing lifecycle and retry-safe behavior (Celery executor) | `tests/unit/candidates/test_cv_parsing_worker.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` | `queued/running/succeeded/failed` with bounded retries |
+| Public vacancy apply flow (anonymous) | `tests/unit/vacancies/test_pipeline_validator.py` + candidate validation units | `tests/integration/vacancies/test_vacancy_pipeline_api.py` | Apply creates candidate/doc/transition/parsing job and returns `parsing_job_id` for browser tracking |
+| Vacancy lifecycle and canonical pipeline transitions | `tests/unit/vacancies/test_pipeline_validator.py` | `tests/integration/vacancies/test_vacancy_pipeline_api.py` | Valid chain passes, invalid chain returns `422`, and ordered history read returns append-only timeline |
+| Async CV parsing lifecycle and retry-safe behavior (Celery executor) | `tests/unit/candidates/test_cv_parsing_worker.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` | `queued/running/succeeded/failed` with bounded retries and public tracking-by-job-id contract |
 | RU/EN CV normalization and language detection (`TASK-03-05`) | `tests/unit/candidates/test_cv_parsing_normalization.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` | `detected_language` and canonical profile fields are persisted after worker success |
-| Evidence traceability + analysis read contract (`TASK-03-06`) | `tests/unit/candidates/test_cv_parsing_normalization.py` (field-level evidence snippets/offsets) | `tests/integration/candidates/test_candidate_api.py` + `tests/integration/candidates/test_cv_parsing_jobs.py` | `GET /api/v1/candidates/{candidate_id}/cv/analysis` returns structured profile + evidence; pre-ready path returns `409` |
+| Evidence traceability + analysis read contract (`TASK-03-06`) | `tests/unit/candidates/test_cv_parsing_normalization.py` (field-level evidence snippets/offsets) | `tests/integration/candidates/test_candidate_api.py` + `tests/integration/candidates/test_cv_parsing_jobs.py` | `GET /api/v1/candidates/{candidate_id}/cv/analysis` and `GET /api/v1/public/cv-parsing-jobs/{job_id}/analysis` return structured profile + evidence; pre-ready path returns `409` |
 | RBAC + audit coverage for recruitment endpoints | `tests/unit/rbac/test_rbac.py` | `tests/integration/security/test_audit_enforcement.py` + recruitment integration suites | `allowed/denied/success/failure` audit records in `audit_events` |
 
 ## Frontend Login UX Verification (TASK-11-13)
@@ -133,6 +152,51 @@ apps/backend/tests/
 | Admin guard non-regression | `apps/frontend/src/app/router.admin.test.tsx` | `./scripts/smoke-compose.sh` | unauthorized/forbidden redirects continue to work unchanged |
 | Browser login/logout roundtrip against compose stack | N/A | `scripts/browser_auth_smoke.py` via `./scripts/smoke-compose.sh` and CI `browser-smoke` job | browser reaches `/admin`, persists session, calls backend auth origin, logs out, and returns to `/login` |
 | Backend CORS preflight allows local Vite dev origin | `apps/backend/tests/unit/test_cors.py` + `apps/backend/tests/unit/auth/test_auth_settings.py` | `./scripts/smoke-compose.sh` | `OPTIONS /api/v1/auth/login` returns `200` with expected `Access-Control-Allow-*` headers |
+
+## Frontend Candidate Workspace Verification (`TASK-11-06`, `TASK-11-09`, `TASK-11-11`)
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Deep-link candidate route contract (`/candidate?vacancyId=...&vacancyTitle=...`) and diagnostic fallback | `apps/frontend/src/pages/CandidatePage.test.tsx` | `./scripts/smoke-compose.sh` | candidate page accepts deep link, falls back to manual vacancy ID only when query param is absent |
+| Browser SHA-256 checksum + multipart public apply submission | `apps/frontend/src/pages/CandidatePage.test.tsx` + `apps/frontend/src/api/typedClient.test.ts` | `./scripts/smoke-compose.sh` | browser submit hits `POST /api/v1/vacancies/{vacancy_id}/applications` and persists returned tracking context |
+| Session storage tracking contract (`hrm_candidate_application_context`) | `apps/frontend/src/pages/CandidatePage.test.tsx` | `./scripts/smoke-compose.sh` | stored payload contains `vacancyId`, `candidateId`, and `parsingJobId` |
+| Public tracking and analysis polling by `parsing_job_id` | `apps/frontend/src/pages/CandidatePage.test.tsx` | `./scripts/smoke-compose.sh` | browser reaches at least `queued/running`; analysis/evidence render when ready |
+| Localized candidate apply/tracking errors (`409`, `429`, `422`, generic) | `apps/frontend/src/pages/CandidatePage.test.tsx` | manual smoke or compose browser smoke with fixture variations | localized RU/EN mapping for duplicate/cooldown/validation/network failures |
+| Browser origin correctness for public candidate requests | N/A | `scripts/browser_candidate_apply_smoke.py` via `./scripts/smoke-compose.sh` and CI `browser-smoke` job | apply/tracking requests target backend origin instead of relative frontend origin |
+
+## Frontend HR Workspace Verification (`TASK-11-05`, `TASK-11-09`)
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Vacancy list/create/edit UI on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | `./scripts/smoke-compose.sh` creates vacancy through staff API for downstream browser use | staff user can create and update vacancy through typed API wrappers |
+| Candidate selection and pipeline transition append | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration: `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | valid transition appends and invalid transition returns localized `422` |
+| Ordered transition history/timeline render | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration: `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | timeline reflects append-only transition history for selected vacancy + candidate |
+| Localized HR workspace errors (`403`, `404`, `422`, generic) | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | manual role smoke with expired/forbidden session variants | recruiter-facing failures remain readable in RU/EN |
+
+## Scoring and Shortlist Review Verification (`TASK-04-01/02/03`, `TASK-11-07`)
+
+### Backend
+| Capability | Unit Coverage | Integration Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Ollama adapter mapping and score schema validation | `apps/backend/tests/unit/scoring/*` | N/A | model response mapping is deterministic and score payload validates against schema |
+| Worker/job state transitions and retry behavior | `apps/backend/tests/unit/scoring/test_match_scoring_worker.py` | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | `queued/running/succeeded/failed` lifecycle is persisted correctly |
+| Reject scoring when parsed CV analysis is not ready | N/A | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | `POST /api/v1/vacancies/{vacancy_id}/match-scores` returns `409` without silent fallback |
+| Score payload shape and evidence propagation | schema unit tests | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | latest score response includes `score`, `confidence`, `summary`, requirements, evidence, model metadata, and `scored_at` |
+
+### Frontend
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Run score -> polling -> success render | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | shortlist review block renders state transitions and final score card |
+| Failed scoring job render | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | failed state is visible and recoverable in UI |
+| Localized `409` when CV analysis is not ready | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | RU/EN-readable not-ready error is rendered |
+| Confidence/explanation rendering | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | confidence, summary, matched requirements, missing requirements, and evidence sections are rendered |
+
+### Acceptance Rules
+- Freeze OpenAPI and update generated frontend types in the same change.
+- Keep the current compose smoke green.
+- Do not regress auth or CORS behavior.
+- Keep scoring verification at unit/integration level; do not extend compose browser smoke to scoring until runtime nondeterminism is addressed.
+- Shortlist review must work against the real backend scoring contract, not mock-only placeholder data.
 
 ## Frontend Admin Verification (ADMIN-01)
 
@@ -172,11 +236,13 @@ apps/backend/tests/
 - `./scripts/check-openapi-freeze.sh`
 - `uv run --project apps/backend ruff check apps/backend/src apps/backend/tests apps/backend/alembic`
 - `uv run --project apps/backend pytest -q`
-- `uv run --project apps/backend pytest -q apps/backend/tests/unit/candidates/test_cv_parsing_normalization.py apps/backend/tests/integration/candidates/test_candidate_api.py apps/backend/tests/integration/candidates/test_cv_parsing_jobs.py`
+- `uv run --project apps/backend pytest -q apps/backend/tests/unit/candidates/test_cv_parsing_normalization.py apps/backend/tests/integration/candidates/test_candidate_api.py apps/backend/tests/integration/candidates/test_cv_parsing_jobs.py apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py`
 - `npm --prefix apps/frontend run lint`
 - `npm --prefix apps/frontend run test -- --run`
 - `uv run --project apps/backend pytest apps/backend/tests/unit/test_cors.py apps/backend/tests/unit/auth/test_auth_settings.py -q`
 - `python3 scripts/browser_auth_smoke.py --frontend-url http://localhost:5173/login --api-origin http://localhost:8000 --login <login> --password <password>`
+- `python3 scripts/browser_candidate_apply_smoke.py --frontend-url http://localhost:5173/candidate --api-origin http://localhost:8000 --vacancy-id <vacancy_id> --vacancy-title <title>`
+- `./scripts/smoke-compose.sh`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic upgrade head`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic downgrade -1`
 - `DATABASE_URL=postgresql+psycopg://hrm:hrm@localhost:5432/<test_db> uv run --project apps/backend alembic upgrade head && ... downgrade -1 && ... upgrade head`

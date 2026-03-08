@@ -321,13 +321,57 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * List Pipeline Transitions
+         * @description Return ordered pipeline transition history for one vacancy+candidate pair.
+         */
+        get: operations["list_pipeline_transitions_api_v1_pipeline_transitions_get"];
         put?: never;
         /**
          * Create Pipeline Transition
          * @description Append one candidate pipeline transition event.
          */
         post: operations["create_pipeline_transition_api_v1_pipeline_transitions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/cv-parsing-jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Public Candidate Cv Parsing Status
+         * @description Return public parsing status for one anonymous candidate application.
+         */
+        get: operations["get_public_candidate_cv_parsing_status_api_v1_public_cv_parsing_jobs__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/cv-parsing-jobs/{job_id}/analysis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Public Candidate Cv Analysis
+         * @description Return public CV analysis for one anonymous candidate application.
+         */
+        get: operations["get_public_candidate_cv_analysis_api_v1_public_cv_parsing_jobs__job_id__analysis_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -956,6 +1000,14 @@ export interface components {
              * Format: uuid
              */
             vacancy_id: string;
+        };
+        /**
+         * PipelineTransitionListResponse
+         * @description Ordered pipeline transition history payload for one vacancy+candidate pair.
+         */
+        PipelineTransitionListResponse: {
+            /** Items */
+            items: components["schemas"]["PipelineTransitionResponse"][];
         };
         /**
          * PipelineTransitionResponse
@@ -1806,6 +1858,38 @@ export interface operations {
             };
         };
     };
+    list_pipeline_transitions_api_v1_pipeline_transitions_get: {
+        parameters: {
+            query: {
+                vacancy_id: string;
+                candidate_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineTransitionListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_pipeline_transition_api_v1_pipeline_transitions_post: {
         parameters: {
             query?: never;
@@ -1826,6 +1910,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PipelineTransitionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_public_candidate_cv_parsing_status_api_v1_public_cv_parsing_jobs__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CVParsingStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_public_candidate_cv_analysis_api_v1_public_cv_parsing_jobs__job_id__analysis_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CVAnalysisResponse"];
                 };
             };
             /** @description Validation Error */

@@ -42,3 +42,9 @@ class PipelineTransitionResponse(BaseModel):
     changed_by_sub: str
     changed_by_role: str
     transitioned_at: datetime
+
+
+class PipelineTransitionListResponse(BaseModel):
+    """Ordered pipeline transition history payload for one vacancy+candidate pair."""
+
+    items: list[PipelineTransitionResponse]

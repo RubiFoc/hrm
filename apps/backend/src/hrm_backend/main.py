@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from hrm_backend.admin.routers.v1 import router as admin_router
 from hrm_backend.auth.routers.v1 import router as auth_router
+from hrm_backend.candidates.routers.v1 import public_router as candidate_public_router
 from hrm_backend.candidates.routers.v1 import router as candidate_router
 from hrm_backend.rbac import ROLE_PERMISSION_MATRIX
 from hrm_backend.settings import get_settings
@@ -26,6 +27,7 @@ app.add_middleware(
 app.include_router(auth_router)
 app.include_router(admin_router)
 app.include_router(candidate_router)
+app.include_router(candidate_public_router)
 app.include_router(vacancy_router)
 
 

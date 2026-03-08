@@ -43,4 +43,26 @@ describe("typedApiClient", () => {
     const [input] = fetchMock.mock.calls[0] as [RequestInfo | URL, RequestInit];
     expect(String(input)).toBe("/api/v1/auth/me");
   });
+
+  it("sends FormData payloads without forcing JSON headers", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "http://localhost:8000");
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const { typedApiClient } = await import("./typedClient");
+    const formData = new FormData();
+    formData.set("file", new Blob(["file-content"], { type: "text/plain" }), "note.txt");
+
+    await typedApiClient.postForm<{ ok: boolean }>("/api/v1/upload", formData);
+
+    const [input, init] = fetchMock.mock.calls[0] as [RequestInfo | URL, RequestInit];
+    expect(String(input)).toBe("http://localhost:8000/api/v1/upload");
+    expect(init.method).toBe("POST");
+    expect(init.body).toBe(formData);
+    expect(init.headers).toBeUndefined();
+  });
 });

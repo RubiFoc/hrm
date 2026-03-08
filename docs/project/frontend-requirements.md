@@ -1,7 +1,7 @@
 # Frontend Requirements (React.js)
 
 ## Last Updated
-- Date: 2026-03-06
+- Date: 2026-03-09
 - Updated by: architect + frontend-engineer
 
 ## Fixed Technical Requirement
@@ -15,12 +15,14 @@
 - Current stage target: frontend must run stably in local environment on the current device.
 - Candidate self-service in v1:
   CV upload and profile information submission with confirmation.
-- Candidate interview registration UI is delivered as a dedicated flow after candidate intake baseline.
+- Candidate interview registration UI is delivered as a dedicated follow-up flow after the scoring slice and a separate interview-planning pass.
 - Delivery priority inside phase-1 frontend:
   1. Admin workspace,
   2. Candidate CV upload and parsing visibility,
-  3. HR vacancy/pipeline workspace.
-- Interview scheduling UX with Google Calendar sync status visibility.
+  3. HR vacancy/pipeline workspace,
+  4. shortlist review inside the existing HR workspace on `/`,
+  5. interview scheduling/registration only after a dedicated planning pass.
+- Interview scheduling UX with Google Calendar sync status visibility remains required, but it is not the next implementation slice.
 - Consistent UI components and validation behavior across modules.
 - Accessibility baseline for forms, tables, and primary workflows.
 - Responsive web for desktop-first usage.
@@ -105,6 +107,25 @@
   - already-authenticated valid session -> redirect to role workspace;
   - broken session (`me` check fails) -> clear session and render login form.
 - Login UI must expose RU/EN user-readable error states for `401`, `422`, and generic HTTP failures.
+
+## TASK-11-07 Baseline
+- Do not add a new route. Extend the current HR workspace on `/`.
+- In `HrDashboardPage`, add a shortlist review block that becomes active only when both a vacancy and a candidate are selected.
+- Required UX elements:
+  - `Run score` action;
+  - `queued`, `running`, `succeeded`, and `failed` state rendering;
+  - score card with `score`, `confidence`, and `summary`;
+  - matched requirements, missing requirements, and evidence snippet sections.
+- Frontend error handling must provide RU/EN-readable messages for `403`, `404`, `409`, `422`, and generic HTTP failures.
+- Typed frontend API wrappers must consume only artifacts generated from frozen OpenAPI.
+- Browser smoke must not be expanded to cover scoring; keep scoring verification on unit/integration level.
+
+## TASK-11-08 Planning Gate
+- Do not start implementation until a short planning pass defines:
+  - interview entity and lifecycle rules;
+  - candidate registration token/identity model;
+  - reschedule and cancel semantics;
+  - Google Calendar sync conflict behavior.
 
 ## Library Baseline (Popular Ready-Made Stack)
 - UI components: Material UI (MUI).

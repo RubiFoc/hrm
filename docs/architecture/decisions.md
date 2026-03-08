@@ -29,6 +29,8 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0022 | 2026-03-05 | accepted | Extract admin governance flows into dedicated `admin` backend package | architect + backend-engineer | backend package boundaries, maintainability, test topology |
 | ADR-0023 | 2026-03-05 | accepted | Add ADMIN-03 employee registration key lifecycle management (list/revoke + admin UI) | architect + backend-engineer + frontend-engineer | admin API contracts, auth key lifecycle, RBAC, audit trail, frontend admin workspace |
 | ADR-0024 | 2026-03-06 | accepted | Persist RU/EN-normalized CV analysis with evidence traceability and expose analysis API | architect + backend-engineer + frontend-engineer | candidate domain model, parsing pipeline, API contract, frontend candidate workspace |
+| ADR-0025 | 2026-03-06 | accepted | Track public candidate parsing by job ID and make browser smoke validate the full Phase 1 intake baseline | architect + backend-engineer + frontend-engineer | candidate workflow, compose runtime, browser verification, API contract |
+| ADR-0026 | 2026-03-09 | accepted | Land the Phase 1 baseline as one PR and make scoring the next vertical slice | architect + backend-engineer + frontend-engineer | delivery sequencing, scoring package boundary, API contracts, testing scope |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -370,3 +372,50 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Candidate CV parsing output is now explainable and queryable without re-parsing raw documents.
   - API consumers can poll readiness and fetch analysis payload in a backward-compatible flow.
   - Data retention scope increases for CV-derived artifacts, requiring alignment with compliance retention policy before production rollout.
+
+## ADR-0025
+- Context: Candidate authentication is intentionally out of scope for Phase 1, but the frontend still needs a real self-service journey with browser-level regression protection. Polling protected candidate endpoints by `candidate_id` was incompatible with the anonymous public apply model.
+- Decision:
+  - Keep the candidate flow anonymous and use the public deep-link contract:
+    `/candidate?vacancyId=<uuid>&vacancyTitle=<display-only>`.
+  - Expose anonymous read endpoints keyed by `parsing_job_id`:
+    - `GET /api/v1/public/cv-parsing-jobs/{job_id}`
+    - `GET /api/v1/public/cv-parsing-jobs/{job_id}/analysis`
+  - Persist browser tracking context in `sessionStorage` under `hrm_candidate_application_context`.
+  - Treat compose runtime as Phase 1 verification baseline by including `backend-worker` and expanding `./scripts/smoke-compose.sh` to validate:
+    - staff login browser flow;
+    - deterministic open-vacancy creation through staff API;
+    - public candidate apply browser flow through the real React UI.
+- Consequences:
+  - Anonymous candidate tracking no longer depends on staff-only candidate endpoints or a resurrected candidate auth model.
+  - Browser smoke now catches regressions in deep-link routing, `VITE_API_BASE_URL` wiring, public apply submission, and job-based tracking before merge.
+  - Compose smoke depends on local Chrome/Chromium availability; parsing completion is best-effort, but submit plus successful public status read is the minimum required success signal.
+
+## ADR-0026
+- Context: The current repository diff already forms a coherent local baseline slice. Expanding that diff further would blur acceptance scope, while starting interview scheduling next would force implementation against under-specified product rules. The next safe increment is the handoff from parsed CV analysis into recruiter-facing shortlist review.
+- Decision:
+  - Land the current Phase 1 baseline as one PR with fixed scope:
+    - public candidate apply/tracking by `parsing_job_id`;
+    - HR vacancy/pipeline workspace on `/`;
+    - browser smoke for staff login + public candidate apply;
+    - local compose MinIO dev exception with `OBJECT_STORAGE_SSE_ENABLED=false`;
+    - backlog/architecture/testing/runbook synchronization.
+  - Use the documented Phase 1 merge gate in `docs/testing/strategy.md` before merge, then sync local `main` before the next increment starts.
+  - Make the next implementation slice one vertical delivery unit: `TASK-04-01`, `TASK-04-02`, `TASK-04-03`, and `TASK-11-07`.
+  - Create a dedicated backend scoring package (`hrm_backend/scoring`) with extraction-ready subpackages instead of mixing scoring logic into `candidates` or `vacancies`.
+  - Add DB-backed async scoring lifecycle through `match_scoring_jobs` with states:
+    `queued`, `running`, `succeeded`, `failed`.
+  - Persist a score artifact keyed by `vacancy_id + candidate_id + active_document_id`.
+  - Freeze the minimal API contract for the slice:
+    - `POST /api/v1/vacancies/{vacancy_id}/match-scores`
+    - `GET /api/v1/vacancies/{vacancy_id}/match-scores`
+    - `GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}`
+  - Reject score enqueue with `409` when parsed CV analysis is not ready; do not add silent fallbacks.
+  - Extend the existing HR workspace on `/` with a shortlist review block; do not add a new scoring route.
+  - Keep compose browser smoke limited to login + public candidate apply. Scoring verification stays at unit/integration level until Ollama/runtime nondeterminism is isolated.
+  - Defer `TASK-11-08` until a dedicated planning pass resolves interview entity boundaries, registration/identity model, reschedule/cancel semantics, and calendar sync conflict behavior.
+- Consequences:
+  - The current local baseline can merge without scope creep.
+  - Scoring contracts, storage, and package boundaries become explicit before UI work is wired.
+  - Auth, CORS, public-candidate transport, and compose smoke assumptions remain stable across the next slice.
+  - Interview scheduling remains intentionally blocked on unresolved product decisions instead of being implemented on guesswork.

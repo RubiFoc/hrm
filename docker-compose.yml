@@ -19,7 +19,7 @@ services:
       OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-minioadmin}
       OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-minioadmin}
       OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-hrm-documents}
-      OBJECT_STORAGE_SSE_ENABLED: ${OBJECT_STORAGE_SSE_ENABLED:-true}
+      OBJECT_STORAGE_SSE_ENABLED: ${OBJECT_STORAGE_SSE_ENABLED:-false}
       CV_ALLOWED_MIME_TYPES: ${CV_ALLOWED_MIME_TYPES:-application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document}
       CV_MAX_SIZE_BYTES: ${CV_MAX_SIZE_BYTES:-10485760}
       CV_PARSING_MAX_ATTEMPTS: ${CV_PARSING_MAX_ATTEMPTS:-3}
@@ -52,6 +52,61 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    restart: unless-stopped
+
+  backend-worker:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    environment:
+      BACKEND_PORT: ${BACKEND_PORT:-8000}
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://hrm:hrm@postgres:5432/hrm}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      HRM_JWT_SECRET: ${HRM_JWT_SECRET:-hrm-dev-secret-change-me}
+      HRM_JWT_ALGORITHM: ${HRM_JWT_ALGORITHM:-HS256}
+      HRM_ACCESS_TOKEN_TTL_SECONDS: ${HRM_ACCESS_TOKEN_TTL_SECONDS:-900}
+      HRM_REFRESH_TOKEN_TTL_SECONDS: ${HRM_REFRESH_TOKEN_TTL_SECONDS:-604800}
+      HRM_AUTH_REDIS_PREFIX: ${HRM_AUTH_REDIS_PREFIX:-auth:deny}
+      HRM_CORS_ALLOWED_ORIGINS: ${HRM_CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      OBJECT_STORAGE_ENDPOINT: ${OBJECT_STORAGE_ENDPOINT:-http://minio:9000}
+      OBJECT_STORAGE_ACCESS_KEY: ${OBJECT_STORAGE_ACCESS_KEY:-minioadmin}
+      OBJECT_STORAGE_SECRET_KEY: ${OBJECT_STORAGE_SECRET_KEY:-minioadmin}
+      OBJECT_STORAGE_BUCKET: ${OBJECT_STORAGE_BUCKET:-hrm-documents}
+      OBJECT_STORAGE_SSE_ENABLED: ${OBJECT_STORAGE_SSE_ENABLED:-false}
+      CV_ALLOWED_MIME_TYPES: ${CV_ALLOWED_MIME_TYPES:-application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document}
+      CV_MAX_SIZE_BYTES: ${CV_MAX_SIZE_BYTES:-10485760}
+      CV_PARSING_MAX_ATTEMPTS: ${CV_PARSING_MAX_ATTEMPTS:-3}
+      EMPLOYEE_KEY_TTL_SECONDS: ${EMPLOYEE_KEY_TTL_SECONDS:-604800}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
+      CELERY_TASK_DEFAULT_QUEUE: ${CELERY_TASK_DEFAULT_QUEUE:-cv_parsing}
+      CELERY_TASK_TIME_LIMIT_SECONDS: ${CELERY_TASK_TIME_LIMIT_SECONDS:-120}
+      CELERY_TASK_ALWAYS_EAGER: ${CELERY_TASK_ALWAYS_EAGER:-false}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      GOOGLE_CALENDAR_ENABLED: ${GOOGLE_CALENDAR_ENABLED:-false}
+    command:
+      - uv
+      - run
+      - --no-dev
+      - celery
+      - -A
+      - hrm_backend.candidates.infra.celery.app:celery_app
+      - worker
+      - --loglevel=INFO
+      - --queues=cv_parsing
+    depends_on:
+      postgres-init:
+        condition: service_completed_successfully
+      backend-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   backend-migrate:
