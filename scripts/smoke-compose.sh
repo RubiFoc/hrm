@@ -41,6 +41,29 @@ post_json_with_retry() {
   return 1
 }
 
+post_json_with_auth_retry() {
+  local url="$1"
+  local body="$2"
+  local bearer_token="$3"
+  local attempts="${4:-20}"
+  local delay_seconds="${5:-1}"
+  local try
+
+  for try in $(seq 1 "${attempts}"); do
+    if response="$(curl -fsS -X POST "${url}" \
+      -H 'Content-Type: application/json' \
+      -H "Authorization: Bearer ${bearer_token}" \
+      -d "${body}" 2>/dev/null)"; then
+      printf '%s' "${response}"
+      return 0
+    fi
+    sleep "${delay_seconds}"
+  done
+
+  echo "POST endpoint did not become ready: ${url}" >&2
+  return 1
+}
+
 create_smoke_admin() {
   local login="$1"
   local email="$2"
@@ -59,8 +82,9 @@ python3 - "${COMPOSE_PS_JSON}" <<'PY'
 import json
 import sys
 
-required_services = ("backend", "postgres", "redis", "minio")
-bootstrap_services = ("postgres-init", "backend-migrate")
+healthy_services = ("backend", "postgres", "redis", "minio")
+running_services = ("frontend", "backend-worker")
+bootstrap_services = ("postgres-init", "backend-migrate", "minio-init")
 raw = sys.argv[1].strip()
 
 if not raw:
@@ -72,11 +96,11 @@ else:
     payload = [json.loads(line) for line in raw.splitlines() if line.strip()]
 
 services = {row.get("Service"): row for row in payload if isinstance(row, dict)}
-missing = [service for service in required_services if service not in services]
+missing = [service for service in (*healthy_services, *running_services) if service not in services]
 if missing:
     raise SystemExit(f"missing services in compose status: {', '.join(missing)}")
 
-for service in required_services:
+for service in healthy_services:
     row = services[service]
     state = (row.get("State") or "").lower()
     health = (row.get("Health") or "").lower()
@@ -84,6 +108,12 @@ for service in required_services:
         raise SystemExit(f"{service} must be running, got state={state or 'unknown'}")
     if health != "healthy":
         raise SystemExit(f"{service} must be healthy, got health={health or 'unknown'}")
+
+for service in running_services:
+    row = services[service]
+    state = (row.get("State") or "").lower()
+    if state != "running":
+        raise SystemExit(f"{service} must be running, got state={state or 'unknown'}")
 
 for service in bootstrap_services:
     row = services.get(service)
@@ -178,5 +208,53 @@ python3 scripts/browser_auth_smoke.py \
   --api-origin "http://localhost:8000" \
   --login "${SMOKE_ADMIN_LOGIN}" \
   --password "${SMOKE_ADMIN_PASSWORD}"
+
+echo "[smoke] creating deterministic open vacancy for public browser flow..."
+SMOKE_VACANCY_TITLE="Browser Smoke Vacancy"
+SMOKE_VACANCY_REQUEST_BODY="$(python3 - "${SMOKE_VACANCY_TITLE}" <<'PY'
+import json
+import sys
+
+print(
+    json.dumps(
+        {
+            "title": sys.argv[1],
+            "description": "Compose browser smoke vacancy for public apply regression checks.",
+            "department": "QA",
+            "status": "open",
+        }
+    )
+)
+PY
+)"
+SMOKE_VACANCY_PAYLOAD="$(post_json_with_auth_retry \
+  "http://localhost:8000/api/v1/vacancies" \
+  "${SMOKE_VACANCY_REQUEST_BODY}" \
+  "${ACCESS_TOKEN}")"
+SMOKE_VACANCY_ID="$(python3 - "${SMOKE_VACANCY_PAYLOAD}" <<'PY'
+import json
+import sys
+
+payload = json.loads(sys.argv[1])
+required_keys = {
+    "vacancy_id",
+    "title",
+    "status",
+}
+missing = sorted(required_keys - payload.keys())
+if missing:
+    raise SystemExit(f"vacancy create response missing keys: {', '.join(missing)}")
+if payload.get("status") != "open":
+    raise SystemExit(f"unexpected vacancy status: {payload.get('status')}")
+print(payload["vacancy_id"])
+PY
+)"
+
+echo "[smoke] checking browser public candidate apply flow..."
+python3 scripts/browser_candidate_apply_smoke.py \
+  --frontend-url "http://localhost:5173/candidate" \
+  --api-origin "http://localhost:8000" \
+  --vacancy-id "${SMOKE_VACANCY_ID}" \
+  --vacancy-title "${SMOKE_VACANCY_TITLE}"
 
 echo "[smoke] all docker-compose smoke checks passed."

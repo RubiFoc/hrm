@@ -58,7 +58,7 @@ describe("login route", () => {
 
     renderWithPath("/login");
 
-    expect(await screen.findByText("Vacancies")).toBeDefined();
+    expect(await screen.findByRole("heading", { name: /recruitment workspace/i })).toBeDefined();
   });
 
   it("clears broken session and keeps /login open when me bootstrap fails", async () => {

@@ -85,3 +85,31 @@ class PipelineTransitionDAO:
             )
             .first()
         )
+
+    def list_transitions(
+        self,
+        *,
+        vacancy_id: str,
+        candidate_id: str,
+    ) -> list[PipelineTransition]:
+        """Load ordered transition history for one vacancy+candidate pair.
+
+        Args:
+            vacancy_id: Vacancy identifier.
+            candidate_id: Candidate identifier.
+
+        Returns:
+            list[PipelineTransition]: Ordered transition history.
+        """
+        return list(
+            self._session.query(PipelineTransition)
+            .filter(
+                PipelineTransition.vacancy_id == vacancy_id,
+                PipelineTransition.candidate_id == candidate_id,
+            )
+            .order_by(
+                PipelineTransition.transitioned_at.asc(),
+                PipelineTransition.transition_id.asc(),
+            )
+            .all()
+        )

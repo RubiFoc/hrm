@@ -1,7 +1,7 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-06
+- Date: 2026-03-09
 - Updated by: architect + backend-engineer + frontend-engineer
 
 ## System Context
@@ -42,26 +42,30 @@ flowchart LR
 | Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
 | Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
 | Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key lifecycle (issue/list/revoke), audit hooks | platform |
-| Recruitment Domain | Vacancies, candidates, pipeline, interview lifecycle | Candidate and vacancy data | Match scores, pipeline states | hr-tech |
+| Recruitment Domain | Vacancies, candidates, pipeline, active CV document state | Candidate and vacancy data | Vacancy/pipeline state, active-document readiness, candidate context | hr-tech |
+| Match Scoring Domain | Async scoring jobs and explainable score artifacts keyed by vacancy, candidate, and active document | Scoring requests, parsed CV analysis, vacancy snapshot | UI-ready score/status payloads for shortlist review | ai-platform |
 | Employee Domain | Employee profile and onboarding workflows | Hire decisions, profile data | Employee records, onboarding tasks | hr-tech |
 | HR Operations Domain | HR process automation and workflow execution | Rules and triggers | Automated tasks, status updates | hr-ops |
 | Finance Domain Adapter | Accounting-facing data exchange | Payroll/accounting requests | Exported records and statuses | finance-tech |
-| AI Adapter | CV analysis and recommendation orchestration | CV files, vacancy profiles | Structured candidate insights | ai-platform |
+| AI Adapter | External model integration for CV analysis and match scoring | CV files, vacancy profiles, scoring prompts | Structured candidate insights and score responses | ai-platform |
 | Integration Layer | External connector abstraction | Internal events/commands | Google Calendar actions | platform |
 | Reporting and Audit | KPI tracking and compliance evidence | Domain events | Dashboards, audit logs | data-platform |
 
 ## Key Flows
 1. Candidate Screening Flow:
    candidate profile + CV -> CV parsing -> RU/EN normalization + evidence extraction ->
-   parsed profile + explainability evidence -> AI scoring via Ollama -> recruiter review -> shortlist.
+   recruiter selects vacancy + candidate in `/` -> explicit scoring request ->
+   `409` if parsed CV analysis is not ready, otherwise async scoring via Ollama ->
+   persisted score artifact -> recruiter review -> shortlist.
 2. Interview Scheduling Flow:
    pipeline stage change -> interview request -> Google Calendar sync -> participant notifications.
+   Implementation is planning-blocked until interview product rules are finalized.
 3. Onboarding Flow:
    accepted candidate -> employee profile creation -> onboarding checklist -> completion tracking.
 4. HR Automation Flow:
    rule trigger -> workflow engine -> task creation/assignment -> status update and reporting.
 5. Public Candidate Apply Flow:
-   anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue.
+   anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
 6. Authentication Flow:
    staff key issuance -> staff register/login (login/email + password) -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
 7. Admin Staff Governance Flow:
@@ -76,6 +80,10 @@ flowchart LR
   vacancies, candidates, CV metadata, interview records, employee profiles, onboarding tasks, HR operations, audit events.
 - CV analysis artifacts:
   `parsed_profile_json`, `evidence_json`, `detected_language`, `parsed_at` stored per active candidate document.
+- Match scoring artifacts:
+  `match_scoring_jobs` (`queued`, `running`, `succeeded`, `failed`) and score payloads keyed by
+  `vacancy_id + candidate_id + active_document_id`, including `score`, `confidence`, `summary`,
+  `matched_requirements`, `missing_requirements`, `evidence`, `model_name`, `model_version`, and `scored_at`.
 - Auth revocation artifacts:
   denylisted token ids (`jti`) and session ids (`sid`) in Redis.
 - External integrations: Ollama, Google Calendar
@@ -87,8 +95,10 @@ flowchart LR
 - Shared backend primitives are centralized in `hrm_backend/core` to prevent domain duplication.
 - Package boundary baseline:
   `hrm_backend/auth` handles auth/session lifecycle; `hrm_backend/admin` handles admin governance APIs.
+- Approved next package boundary:
+  `hrm_backend/scoring` handles scoring jobs, score artifacts, Ollama integration, and scoring API contracts without mixing this logic into `candidates` or `vacancies`.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
-- Compose baseline services: `frontend`, `backend`, `postgres`, `redis`, `minio`, `minio-init`.
+- Compose baseline services: `frontend`, `backend`, `backend-worker`, `postgres`, `postgres-init`, `backend-migrate`, `redis`, `minio`, `minio-init`.
 - Async runtime baseline: dedicated `backend-worker` (Celery) processing DB-backed jobs.
 - Frontend style: React.js + TypeScript SPA with role-based route guards and shared component system.
 - Frontend libraries: MUI, React Router, TanStack Query, React Hook Form, Zod, i18next.
@@ -117,11 +127,16 @@ flowchart LR
 ## Known Technical Risks
 - Scope risk from broad v1 expectation.
 - AI output quality variance across candidate domains and CV formats.
+- Interview workflow remains under-specified for safe implementation without a planning pass.
 - Integration instability risk with calendar sync edge cases.
 - Compliance risk if country-specific legal acts are not mapped early.
 
 ## Delivery Phases
-1. Phase 1 (priority):
-   HR + Candidate capabilities, recruitment pipeline, CV analysis, interview scheduling.
-2. Phase 2:
+1. Phase 1 baseline:
+   admin control plane, public candidate intake/tracking, HR vacancy/pipeline workspace, and browser smoke.
+2. Phase 1 scoring slice:
+   dedicated scoring backend package + async scoring lifecycle + shortlist review in the existing HR workspace.
+3. Phase 1 interview planning gate:
+   finalize interview/registration/sync rules before `TASK-11-08` implementation starts.
+4. Phase 2:
    Manager/Employee/Accountant/Leader capabilities, expanded automation and reporting.

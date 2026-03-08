@@ -183,6 +183,63 @@ async def test_parsing_job_success_and_status_tracking(
     assert analysis_payload["evidence"]
 
 
+async def test_public_tracking_endpoints_follow_job_lifecycle(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify anonymous tracking endpoints expose status and analysis by parsing job id."""
+    _, settings, _, storage, database_url = configured_app
+
+    candidate_response = await api_client.post(
+        "/api/v1/candidates",
+        json={
+            "first_name": "Ira",
+            "last_name": "Lane",
+            "email": "ira@example.com",
+            "extra_data": {},
+        },
+    )
+    candidate_id = candidate_response.json()["candidate_id"]
+
+    content = b"public-tracking-success"
+    checksum = hashlib.sha256(content).hexdigest()
+    upload_response = await api_client.post(
+        f"/api/v1/candidates/{candidate_id}/cv",
+        data={"checksum_sha256": checksum},
+        files={"file": ("cv.pdf", content, "application/pdf")},
+    )
+    assert upload_response.status_code == 200
+
+    staff_status_response = await api_client.get(
+        f"/api/v1/candidates/{candidate_id}/cv/parsing-status"
+    )
+    assert staff_status_response.status_code == 200
+    job_id = staff_status_response.json()["job_id"]
+
+    public_status_response = await api_client.get(f"/api/v1/public/cv-parsing-jobs/{job_id}")
+    assert public_status_response.status_code == 200
+    assert public_status_response.json()["status"] == "queued"
+
+    public_analysis_before_ready = await api_client.get(
+        f"/api/v1/public/cv-parsing-jobs/{job_id}/analysis"
+    )
+    assert public_analysis_before_ready.status_code == 409
+
+    worker_result = _run_worker_once(database_url, settings, storage)
+    assert worker_result == "succeeded"
+
+    public_status_after_worker = await api_client.get(f"/api/v1/public/cv-parsing-jobs/{job_id}")
+    assert public_status_after_worker.status_code == 200
+    assert public_status_after_worker.json()["status"] == "succeeded"
+    assert public_status_after_worker.json()["analysis_ready"] is True
+
+    public_analysis_response = await api_client.get(
+        f"/api/v1/public/cv-parsing-jobs/{job_id}/analysis"
+    )
+    assert public_analysis_response.status_code == 200
+    assert public_analysis_response.json()["candidate_id"] == candidate_id
+
+
 async def test_parsing_job_failure_path_and_retry_limit(
     configured_app,
     api_client: AsyncClient,

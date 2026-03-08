@@ -24,6 +24,7 @@ from hrm_backend.candidates.services.candidate_service import CandidateService
 from hrm_backend.rbac import Role, require_permission
 
 router = APIRouter(prefix="/api/v1/candidates", tags=["candidates"])
+public_router = APIRouter(prefix="/api/v1/public/cv-parsing-jobs", tags=["candidates"])
 CandidateServiceDependency = Annotated[CandidateService, Depends(get_candidate_service)]
 CurrentAuthContext = Annotated[AuthContext, Depends(get_current_auth_context)]
 CandidateCreateRole = Annotated[Role, Depends(require_permission("candidate_profile:create"))]
@@ -172,3 +173,23 @@ def get_candidate_cv_analysis(
         auth_context=auth_context,
         request=request,
     )
+
+
+@public_router.get("/{job_id}", response_model=CVParsingStatusResponse)
+def get_public_candidate_cv_parsing_status(
+    job_id: UUID,
+    request: Request,
+    service: CandidateServiceDependency,
+) -> CVParsingStatusResponse:
+    """Return public parsing status for one anonymous candidate application."""
+    return service.get_public_parsing_status(job_id=job_id, request=request)
+
+
+@public_router.get("/{job_id}/analysis", response_model=CVAnalysisResponse)
+def get_public_candidate_cv_analysis(
+    job_id: UUID,
+    request: Request,
+    service: CandidateServiceDependency,
+) -> CVAnalysisResponse:
+    """Return public CV analysis for one anonymous candidate application."""
+    return service.get_public_cv_analysis(job_id=job_id, request=request)

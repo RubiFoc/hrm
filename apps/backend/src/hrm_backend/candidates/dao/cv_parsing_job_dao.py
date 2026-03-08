@@ -57,6 +57,17 @@ class CVParsingJobDAO:
             .first()
         )
 
+    def get_by_id(self, job_id: str) -> CVParsingJob | None:
+        """Fetch parsing job by identifier.
+
+        Args:
+            job_id: Parsing job identifier.
+
+        Returns:
+            CVParsingJob | None: Matched job row or `None`.
+        """
+        return self._session.get(CVParsingJob, job_id)
+
     def claim_next_job(self, *, max_attempts: int) -> CVParsingJob | None:
         """Claim one queued/failed job and move it to `running`.
 

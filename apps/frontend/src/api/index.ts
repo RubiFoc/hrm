@@ -1,12 +1,26 @@
 export { ApiError, apiRequest } from "./httpClient";
 export { getMe, login, logout } from "./auth";
 export { listAdminStaff, updateAdminStaff } from "./adminStaff";
-export { getCandidateCvAnalysis, getCandidateCvParsingStatus } from "./candidateAnalysis";
+export {
+  getCandidateCvAnalysis,
+  getCandidateCvParsingStatus,
+  getPublicCandidateCvAnalysis,
+  getPublicCandidateCvParsingStatus,
+} from "./candidateAnalysis";
+export { applyToVacancyPublic } from "./candidateApplications";
+export { listCandidateProfiles } from "./candidateProfiles";
 export {
   createAdminEmployeeKey,
   listAdminEmployeeKeys,
   revokeAdminEmployeeKey,
 } from "./adminEmployeeKeys";
+export {
+  createPipelineTransition,
+  createVacancy,
+  listPipelineTransitions,
+  listVacancies,
+  updateVacancy,
+} from "./vacancies";
 export type { LoginRequest, MeResponse, TokenResponse } from "./auth";
 export type {
   AdminStaffListItem,
@@ -27,5 +41,19 @@ export type {
   CandidateCvAnalysisResponse,
   CandidateCvParsingStatusResponse,
 } from "./candidateAnalysis";
+export type {
+  PublicVacancyApplicationRequest,
+  PublicVacancyApplicationResponse,
+} from "./candidateApplications";
+export type { CandidateListResponse, CandidateResponse } from "./candidateProfiles";
 export { createTypedApiClient, typedApiClient } from "./typedClient";
 export type { ApiPath } from "./typedClient";
+export type {
+  PipelineTransitionCreateRequest,
+  PipelineTransitionListResponse,
+  PipelineTransitionResponse,
+  VacancyCreateRequest,
+  VacancyListResponse,
+  VacancyResponse,
+  VacancyUpdateRequest,
+} from "./vacancies";

@@ -361,16 +361,6 @@ class CandidateService:
             action="candidate_cv:parsing_status",
         )
         job = self._get_latest_job_or_404(candidate_id)
-        document = self._document_dao.get_by_id(job.document_id)
-        analysis_ready = bool(
-            document is not None
-            and document.parsed_profile_json is not None
-            and document.evidence_json is not None
-            and document.parsed_at is not None
-        )
-        detected_language = "unknown"
-        if document is not None:
-            detected_language = _normalize_detected_language(document.detected_language)
         actor_sub, actor_role = actor_from_auth_context(auth_context)
         self._audit_service.record_api_event(
             action="candidate_cv:parsing_status",
@@ -381,20 +371,7 @@ class CandidateService:
             actor_role=actor_role,
             resource_id=job.job_id,
         )
-        return CVParsingStatusResponse(
-            candidate_id=UUID(job.candidate_id),
-            document_id=UUID(job.document_id),
-            job_id=UUID(job.job_id),
-            status=job.status,  # type: ignore[arg-type]
-            attempt_count=job.attempt_count,
-            last_error=job.last_error,
-            queued_at=job.queued_at,
-            started_at=job.started_at,
-            finished_at=job.finished_at,
-            updated_at=job.updated_at,
-            analysis_ready=analysis_ready,
-            detected_language=detected_language,
-        )
+        return self._build_parsing_status_response(job)
 
     def get_cv_analysis(
         self,
@@ -439,6 +416,78 @@ class CandidateService:
             request=request,
             actor_sub=actor_sub,
             actor_role=actor_role,
+            resource_id=document.document_id,
+        )
+        return CVAnalysisResponse(
+            candidate_id=UUID(document.candidate_id),
+            document_id=UUID(document.document_id),
+            detected_language=_normalize_detected_language(document.detected_language),
+            parsed_at=document.parsed_at,
+            parsed_profile=document.parsed_profile_json,
+            evidence=document.evidence_json,
+        )
+
+    def get_public_parsing_status(
+        self,
+        *,
+        job_id: UUID,
+        request: Request,
+    ) -> CVParsingStatusResponse:
+        """Return public parsing status for one application tracking job.
+
+        Args:
+            job_id: Tracking parsing job identifier returned by public apply flow.
+            request: HTTP request context.
+
+        Returns:
+            CVParsingStatusResponse: Current parsing status payload.
+        """
+        job = self._get_job_by_id_or_404(job_id)
+        self._audit_service.record_api_event(
+            action="candidate_cv:public_parsing_status",
+            resource_type="candidate_document",
+            result="success",
+            request=request,
+            actor_sub="public",
+            actor_role="public",
+            resource_id=job.job_id,
+        )
+        return self._build_parsing_status_response(job)
+
+    def get_public_cv_analysis(
+        self,
+        *,
+        job_id: UUID,
+        request: Request,
+    ) -> CVAnalysisResponse:
+        """Return public CV analysis for one application tracking job.
+
+        Args:
+            job_id: Tracking parsing job identifier returned by public apply flow.
+            request: HTTP request context.
+
+        Returns:
+            CVAnalysisResponse: Structured profile and evidence payload.
+        """
+        job = self._get_job_by_id_or_404(job_id)
+        document = self._get_document_by_id_or_404(job.document_id)
+        if (
+            document.parsed_profile_json is None
+            or document.evidence_json is None
+            or document.parsed_at is None
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="CV analysis is not ready",
+            )
+
+        self._audit_service.record_api_event(
+            action="candidate_cv:public_analysis_read",
+            resource_type="candidate_document",
+            result="success",
+            request=request,
+            actor_sub="public",
+            actor_role="public",
             resource_id=document.document_id,
         )
         return CVAnalysisResponse(
@@ -513,6 +562,74 @@ class CandidateService:
                 detail="CV parsing job is not available",
             )
         return job
+
+    def _get_job_by_id_or_404(self, job_id: UUID) -> CVParsingJob:
+        """Load parsing job by identifier or raise 404.
+
+        Args:
+            job_id: Parsing job identifier.
+
+        Returns:
+            CVParsingJob: Matched parsing job entity.
+        """
+        job = self._parsing_job_dao.get_by_id(str(job_id))
+        if job is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="CV parsing job is not available",
+            )
+        return job
+
+    def _get_document_by_id_or_404(self, document_id: str) -> CandidateDocument:
+        """Load candidate document row by identifier or raise 404.
+
+        Args:
+            document_id: Candidate document identifier.
+
+        Returns:
+            CandidateDocument: Matched document entity.
+        """
+        document = self._document_dao.get_by_id(document_id)
+        if document is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Candidate CV not found",
+            )
+        return document
+
+    def _build_parsing_status_response(self, job: CVParsingJob) -> CVParsingStatusResponse:
+        """Map one parsing job row into public/staff status payload.
+
+        Args:
+            job: Parsing job entity.
+
+        Returns:
+            CVParsingStatusResponse: Current parsing status payload.
+        """
+        document = self._document_dao.get_by_id(job.document_id)
+        analysis_ready = bool(
+            document is not None
+            and document.parsed_profile_json is not None
+            and document.evidence_json is not None
+            and document.parsed_at is not None
+        )
+        detected_language = "unknown"
+        if document is not None:
+            detected_language = _normalize_detected_language(document.detected_language)
+        return CVParsingStatusResponse(
+            candidate_id=UUID(job.candidate_id),
+            document_id=UUID(job.document_id),
+            job_id=UUID(job.job_id),
+            status=job.status,  # type: ignore[arg-type]
+            attempt_count=job.attempt_count,
+            last_error=job.last_error,
+            queued_at=job.queued_at,
+            started_at=job.started_at,
+            finished_at=job.finished_at,
+            updated_at=job.updated_at,
+            analysis_ready=analysis_ready,
+            detected_language=detected_language,
+        )
 
     def _ensure_access(
         self,

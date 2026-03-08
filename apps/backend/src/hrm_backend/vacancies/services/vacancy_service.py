@@ -13,6 +13,7 @@ from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransition
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
 from hrm_backend.vacancies.schemas.pipeline import (
     PipelineTransitionCreateRequest,
+    PipelineTransitionListResponse,
     PipelineTransitionResponse,
 )
 from hrm_backend.vacancies.schemas.vacancy import (
@@ -200,6 +201,53 @@ class VacancyService:
             changed_by_role=transition.changed_by_role,
             transitioned_at=transition.transitioned_at,
         )
+
+    def list_pipeline_transitions(
+        self,
+        *,
+        vacancy_id: UUID,
+        candidate_id: UUID,
+        auth_context: AuthContext,
+        request: Request,
+    ) -> PipelineTransitionListResponse:
+        """Return ordered pipeline transition history for one candidate on one vacancy."""
+        vacancy = self._vacancy_dao.get_by_id(str(vacancy_id))
+        if vacancy is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vacancy not found")
+
+        candidate = self._candidate_profile_dao.get_by_id(str(candidate_id))
+        if candidate is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidate not found")
+
+        items = [
+            PipelineTransitionResponse(
+                transition_id=UUID(item.transition_id),
+                vacancy_id=UUID(item.vacancy_id),
+                candidate_id=UUID(item.candidate_id),
+                from_stage=item.from_stage,  # type: ignore[arg-type]
+                to_stage=item.to_stage,  # type: ignore[arg-type]
+                reason=item.reason,
+                changed_by_sub=item.changed_by_sub,
+                changed_by_role=item.changed_by_role,
+                transitioned_at=item.transitioned_at,
+            )
+            for item in self._transition_dao.list_transitions(
+                vacancy_id=str(vacancy_id),
+                candidate_id=str(candidate_id),
+            )
+        ]
+
+        actor_sub, actor_role = actor_from_auth_context(auth_context)
+        self._audit_service.record_api_event(
+            action="pipeline:read",
+            resource_type="pipeline",
+            result="success",
+            request=request,
+            actor_sub=actor_sub,
+            actor_role=actor_role,
+            resource_id=f"{vacancy_id}:{candidate_id}",
+        )
+        return PipelineTransitionListResponse(items=items)
 
 
 def _to_vacancy_response(entity) -> VacancyResponse:

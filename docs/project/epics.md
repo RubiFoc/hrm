@@ -1,7 +1,7 @@
 # Product Epics
 
 ## Last Updated
-- Date: 2026-03-06
+- Date: 2026-03-09
 - Updated by: architect
 
 ## Planning Baseline
@@ -17,6 +17,13 @@
 - Current stage acceptance target: stable local runtime on the current device.
 - Production rollout is out of scope for the current stage and gated by `EPIC-13` completion.
 - KPI target for v1: share of automated HR operations = 70%.
+
+## Implementation Reality (2026-03-09)
+- `EPIC-03` backend scope is materially implemented for Phase 1 local baseline: public apply, CV upload, async parsing, RU/EN normalization, evidence traceability, and anonymous tracking by `parsing_job_id`.
+- `EPIC-02` backend scope is materially implemented for Phase 1 local baseline: vacancy CRUD, canonical pipeline transitions, and ordered transition history.
+- `EPIC-11` local baseline now includes candidate self-service, HR vacancy/pipeline workspace, RU/EN strings for critical flows, and browser smoke for login + public candidate apply.
+- The immediate next epic gap is the handoff from parsed candidate data into `EPIC-04` recruiter-facing scoring review.
+- `EPIC-05` remains deliberately deferred until a short planning pass resolves interview entity, candidate registration, reschedule/cancel, and calendar sync conflict rules.
 
 ## Epic Portfolio
 
@@ -71,10 +78,10 @@
 ### EPIC-11: React.js Frontend Foundation and Role UX
 - Frontend is implemented with React.js + TypeScript and shared architecture conventions.
 - Role-based navigation and protected routes are implemented.
-- Candidate self-service baseline is implemented (CV upload, profile confirmation) with interview registration delivered as dedicated follow-up flow.
-- Core phase workspaces are delivered with consistent form/error behavior.
+- Candidate self-service baseline is implemented through public deep links (`/candidate?vacancyId=...&vacancyTitle=...`), browser checksum upload, and tracking-by-job-id with interview registration delivered as dedicated follow-up flow.
+- Core phase workspaces are delivered with consistent form/error behavior, including HR vacancy/pipeline controls on `/`.
 - Frontend observability through Sentry and accessibility baseline are in place.
-- RU/EN localization and Chrome support are verified for critical v1 journeys.
+- RU/EN localization and Chrome support are verified for critical v1 journeys, with browser smoke covering staff login and public candidate apply.
 
 ### EPIC-13: Compliance Control Mapping and Legal Evidence Pack
 - Article-level obligations for Belarus/Russia NPAs are mapped to concrete controls.
@@ -103,12 +110,14 @@
 
 ### EPIC-04: AI CV Analysis and Match Scoring (Ollama)
 - CV-to-vacancy scoring runs asynchronously through Ollama.
+- Scoring contract is frozen in OpenAPI and consumed by frontend typed clients in the same change.
 - Score output includes confidence and explainable fields with evidence snippets.
 - Explainability includes matched requirements and explicit skill/experience gaps.
 - Quality gates include extraction precision/recall, ranking quality (NDCG/MRR), and robustness checks.
 - Low-confidence cases are routed to manual HR review.
 
 ### EPIC-05: Interview Scheduling and Fairness Controls
+- Implementation starts only after a dedicated planning pass closes interview product rules and sync semantics.
 - Interview slots sync with Google Calendar.
 - Structured feedback form is mandatory before decision stage.
 - Interview rubric enforces consistent evaluation criteria.
@@ -156,3 +165,4 @@
 
 ## Execution Mapping
 - Task-level decomposition, dependencies, and global priority queue are documented in `docs/project/tasks.md`.
+- Immediate sequencing rule after the current baseline merge: finish the `EPIC-04` scoring/shortlist-review slice first, then run the `EPIC-05` planning pass before interview implementation starts.

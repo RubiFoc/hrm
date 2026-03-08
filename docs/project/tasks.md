@@ -1,8 +1,8 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-06
-- Updated by: coordinator + frontend-engineer
+- Date: 2026-03-09
+- Updated by: coordinator + architect
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -19,7 +19,41 @@
 | ADMIN-02 | done/closed | GitHub issue #53 closed; merged in `main` via PR #51 (`bd96d86`) |
 | ADMIN-03 | done/closed | GitHub issue #52 closed; merged in `main` via PR #55 (`2c9c5b5`) |
 | TASK-11-13 | done/closed | GitHub issue #67 closed; merged in `main` via PR #68 and PR #69 (`d8ea39e`) |
+| TASK-03-01/02/03/05/06 | implemented/local-baseline | Backend candidate profile, public apply, async parsing, RU/EN normalization, evidence traceability, and public tracking endpoints are present in repo with integration coverage |
+| TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
+| TASK-11-06 | implemented/local-baseline | `/candidate` now supports public deep-link apply, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling |
+| TASK-11-05 | implemented/local-baseline | `/` now exposes staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
+| TASK-11-09 | implemented/local-baseline | RU/EN strings cover login, candidate apply/tracking/analysis, admin, and HR workspace critical flows |
+| TASK-11-11 | implemented/local-baseline | Compose browser smoke covers both staff login and public candidate apply journeys through headless Chrome |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
+
+## 2026-03-09 Delivery Control Notes
+- Backend implementation is ahead of the original planning docs for `TASK-03-01/02/03/05/06` and `TASK-02-01/02/03`; these items are no longer backlog-only work.
+- The main remaining frontend gaps after the login/browser hotfix were `TASK-11-06` and `TASK-11-05`; the current repository now contains a local acceptance baseline for both flows.
+- The current local diff must be landed as one cohesive PR without further feature creep. Fixed merge scope is limited to:
+  - public candidate apply/tracking by `parsing_job_id`;
+  - HR vacancy/pipeline workspace on `/`;
+  - browser smoke for staff login and public candidate apply;
+  - local compose MinIO baseline with `OBJECT_STORAGE_SSE_ENABLED=false`;
+  - backlog/architecture/testing/runbook synchronization.
+- The next implementation slice after that merge is one vertical slice: `TASK-04-01`, `TASK-04-02`, `TASK-04-03`, and `TASK-11-07`.
+- `TASK-11-08` is explicitly deferred until a separate planning pass resolves interview entity boundaries, candidate registration/identity rules, reschedule/cancel semantics, and calendar sync conflict behavior.
+- Existing auth/CORS/public candidate transport assumptions stay unchanged for both the merge gate and the next scoring slice.
+
+## Active Queue After Current Local Baseline
+
+| Order | Task ID | Why Now |
+| --- | --- | --- |
+| A-1 | TASK-04-01 | Start the post-baseline slice by isolating Ollama/model configuration behind a dedicated scoring package boundary |
+| A-2 | TASK-04-02 | Add DB-backed async scoring jobs and persisted artifacts before any shortlist UI wiring |
+| A-3 | TASK-04-03 | Freeze the recruiter-facing score payload so frontend/UI work consumes a stable contract |
+| A-4 | TASK-11-07 | Extend the existing `/` HR workspace with shortlist review against the real scoring API, not placeholders |
+| A-5 | TASK-11-10 | Complete Sentry hardening after scoring lands, without changing the routing model |
+| A-6 | TASK-13-01 | Compliance mapping can now point to real admin/candidate/HR/scoring controls |
+| A-7 | TASK-13-02 | Evidence ownership can attach to real tests, OpenAPI artifacts, and smoke outputs |
+| A-8 | TASK-11-08 | Deferred until a short planning pass closes interview workflow/product gaps after the scoring slice |
+
+- Execution rule: implement `TASK-04-01/02/03 + TASK-11-07` as one backend+frontend change set, freeze OpenAPI in the same PR, and regenerate typed frontend artifacts from the frozen contract.
 
 ## Task Breakdown by Epic
 
@@ -41,11 +75,11 @@
 | TASK-11-04 | EPIC-11 | Implement shared UI component system, forms, validation, and accessibility baseline | Phase 1 | P0 | TASK-11-01 |
 | TASK-11-05 | EPIC-11 | Implement HR vacancy and pipeline workspace UI (after candidate intake baseline) | Phase 1 | P0 | TASK-11-03, TASK-02-02 |
 | TASK-11-06 | EPIC-11 | Implement candidate self-service workspace UI (CV upload, profile confirmation) | Phase 1 | P0 | TASK-11-03, TASK-03-02 |
-| TASK-11-07 | EPIC-11 | Implement shortlist and match-scoring review UI with confidence visualization | Phase 1 | P0 | TASK-11-06, TASK-04-03 |
-| TASK-11-08 | EPIC-11 | Implement interview scheduling and candidate interview-registration UI with Google Calendar sync status | Phase 1 | P0 | TASK-11-05, TASK-11-06, TASK-05-02 |
+| TASK-11-07 | EPIC-11 | Implement shortlist and match-scoring review UI inside the existing HR workspace on `/` with confidence visualization | Phase 1 | P0 | TASK-11-06, TASK-04-03 |
+| TASK-11-08 | EPIC-11 | Implement interview scheduling and candidate interview-registration UI with Google Calendar sync status after a dedicated planning pass for interview product rules | Phase 1 | P0 | TASK-11-05, TASK-11-06, TASK-05-02 |
 | TASK-11-09 | EPIC-11 | Implement RU/EN localization infrastructure and translations for critical v1 flows | Phase 1 | P0 | TASK-11-02, TASK-11-05, TASK-11-06 |
 | TASK-11-10 | EPIC-11 | Implement frontend observability with Sentry (error tracking, performance metrics, release markers) | Phase 1-2 | P1 | TASK-11-02 |
-| TASK-11-11 | EPIC-11 | Implement Chrome compatibility checks and regression verification for critical v1 journeys | Phase 1 | P1 | TASK-11-05, TASK-11-06, TASK-11-08 |
+| TASK-11-11 | EPIC-11 | Implement Chrome compatibility checks and regression verification for critical v1 journeys | Phase 1 | P1 | TASK-11-05, TASK-11-06 |
 | TASK-11-12 | EPIC-11 | Implement phase-2 role workspaces (manager, employee, accountant, leader) | Phase 2 | P1 | TASK-06-03, TASK-07-04, TASK-09-01 |
 | TASK-11-13 | EPIC-11 | Implement staff login window and session bootstrap UX | Phase 1 | P0 | TASK-01-02, TASK-11-03 |
 | ADMIN-01 | ADMIN-EPIC-01 | Implement admin auth guard and admin shell (frontend/backend contract) | Phase 1 | P0 | TASK-01-02, TASK-11-03 |
@@ -63,9 +97,9 @@
 | TASK-03-05 | EPIC-03 | Implement bilingual RU/EN CV normalization into canonical candidate profile schema | Phase 1 | P0 | TASK-03-03 |
 | TASK-03-06 | EPIC-03 | Persist evidence links from extracted facts to source CV fragments (sentence/paragraph) | Phase 1 | P0 | TASK-03-05 |
 | TASK-03-04 | EPIC-03 | Implement candidate search and filter API for HR | Phase 1 | P1 | TASK-03-01 |
-| TASK-04-01 | EPIC-04 | Implement Ollama adapter with model/version configuration | Phase 1 | P0 | TASK-03-03 |
-| TASK-04-02 | EPIC-04 | Implement async match scoring pipeline (queue + worker) | Phase 1 | P0 | TASK-04-01 |
-| TASK-04-03 | EPIC-04 | Implement score schema with confidence and explanation fields | Phase 1 | P0 | TASK-04-02 |
+| TASK-04-01 | EPIC-04 | Implement Ollama adapter with model/version configuration for the dedicated scoring package | Phase 1 | P0 | TASK-03-03 |
+| TASK-04-02 | EPIC-04 | Implement async match scoring pipeline (`match_scoring_jobs` + worker + persisted score artifact) | Phase 1 | P0 | TASK-04-01 |
+| TASK-04-03 | EPIC-04 | Implement recruiter-facing score schema with confidence, summary, requirement deltas, and evidence fields | Phase 1 | P0 | TASK-04-02 |
 | TASK-04-05 | EPIC-04 | Implement explainable match output with matched requirements, missing competencies, and evidence snippets | Phase 1 | P0 | TASK-04-03, TASK-03-06 |
 | TASK-04-06 | EPIC-04 | Implement AI quality harness (precision/recall, NDCG/MRR, paraphrase robustness checks) | Phase 1 | P1 | TASK-04-05 |
 | TASK-04-04 | EPIC-04 | Implement low-confidence fallback to manual HR review | Phase 1 | P1 | TASK-04-03 |
@@ -173,21 +207,22 @@ Use this queue together with the global queue when planning phase implementation
 | FE-6 | ADMIN-01 | Admin shell baseline for privileged workspace |
 | FE-7 | ADMIN-02 | Staff management UI for operational onboarding |
 | FE-8 | ADMIN-03 | Employee key management UI for staff registration flow |
-| FE-9 | TASK-11-06 | Candidate self-service CV upload must be available before HR workspace |
-| FE-10 | TASK-11-09 | RU/EN localization for candidate/admin critical flows |
-| FE-11 | TASK-11-07 | Match review UI for explainable scoring rollout |
-| FE-12 | TASK-11-05 | HR vacancy/pipeline workspace after candidate baseline |
-| FE-13 | TASK-11-08 | Interview scheduling and registration UI |
-| FE-14 | TASK-11-10 | Sentry observability needed for reliable production support |
-| FE-15 | TASK-11-11 | Chrome compatibility gate for v1 rollout |
+| FE-9 | TASK-11-06 | Delivered in local baseline: candidate deep-link apply, tracking, and analysis read UX |
+| FE-10 | TASK-11-09 | Delivered in local baseline for login/admin/candidate/HR critical flows |
+| FE-11 | TASK-11-05 | Delivered in local baseline: staff vacancy CRUD and pipeline workspace on `/` |
+| FE-12 | TASK-11-11 | Delivered in local baseline: Chrome browser smoke for login + public candidate apply |
+| FE-13 | TASK-11-07 | Next active frontend gap: shortlist review block inside the existing `/` HR workspace after parsed-profile baseline |
+| FE-14 | TASK-11-10 | Immediate follow-on after scoring: Sentry observability hardening without route changes |
+| FE-15 | TASK-11-08 | Deferred until a short planning pass after scoring clarifies interview entity, registration, and sync behavior |
 | FE-16 | ADMIN-04 | Unified admin CRUD consoles |
 | FE-17 | ADMIN-05 | Admin observability and audit dashboards |
 | FE-18 | TASK-11-12 | Phase-2 role workspace rollout |
 
 ## Milestone Cut Suggestion
-- `M1` (Phase 1 MVP): infra/security + ADMIN-01/02/03 + candidate CV intake/parsing/normalization + candidate self-service upload.
-- `M2` (Phase 1 hardening): explainable scoring quality harness + HR module (vacancy/pipeline) + interview scheduling + localization/observability hardening + compliance release-gate checklist.
-- `M3` (Phase 2 core): offer-to-hire + onboarding workflows + phase-2 role workspace baseline.
+- `M1` (Phase 1 MVP): infra/security + ADMIN-01/02/03 + candidate CV intake/parsing/normalization + candidate self-service upload/tracking + HR vacancy/pipeline workspace baseline + RU/EN critical flows + browser smoke.
+- `M2` (Immediate post-baseline slice): `TASK-04-01/02/03 + TASK-11-07` as one scoring/shortlist-review deliverable, with `TASK-11-10` and `TASK-13-01/02` proceeding immediately after or in parallel.
+- `M2` planning gate: run a short dedicated planning pass for `TASK-11-08` before interview scheduling/registration implementation.
+- `M3` (Phase 2 core): interview scheduling/fairness controls + offer-to-hire + onboarding workflows + phase-2 role workspace baseline.
 - `M4` (Phase 2 expansion): manager/leader/accountant rollout + reporting exports + notification optimization + final legal sign-off package.
 - Note: until first production launch planning starts, acceptance focus is local end-to-end operation on the current device.
 
@@ -196,7 +231,7 @@ Use this queue together with the global queue when planning phase implementation
 - Approved by: coordinator, architect, business-analyst
 - Scope: `M1` (tasks 1-24 + TASK-12-01 + FE-1..FE-10)
 - Ownership matrix: `docs/project/sprint-m1-plan.md`
-- Note: on 2026-03-06 backlog priority was refined to admin -> candidate CV intake -> HR module; active planning should follow the updated global/frontend queues above.
+- Note: on 2026-03-09 the next queue was further constrained to: land the current baseline as one PR, then implement `TASK-04-01/02/03 + TASK-11-07` as a single slice; `TASK-11-08` remains planning-blocked until after scoring.
 
 ### M1 Owners (Grouped by TASK-*)
 - architect + backend-engineer: TASK-01-01, TASK-01-02, TASK-01-03, TASK-01-04

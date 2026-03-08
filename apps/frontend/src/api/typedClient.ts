@@ -7,6 +7,9 @@ type QueryParams = Record<string, QueryValue>;
 
 export function createTypedApiClient(baseUrl = "") {
   return {
+    request<TResponse>(path: string, init: RequestInit) {
+      return apiRequest<TResponse>(`${baseUrl}${path}`, init);
+    },
     get<TResponse>(path: string, query?: QueryParams, init?: RequestInit) {
       return apiRequest<TResponse>(`${baseUrl}${appendQuery(path, query)}`, {
         ...init,
@@ -24,6 +27,13 @@ export function createTypedApiClient(baseUrl = "") {
         `${baseUrl}${path}`,
         withJsonRequestInit("PATCH", body, init),
       );
+    },
+    postForm<TResponse>(path: string, body: FormData, init?: RequestInit) {
+      return apiRequest<TResponse>(`${baseUrl}${path}`, {
+        ...init,
+        method: "POST",
+        body,
+      });
     },
   };
 }

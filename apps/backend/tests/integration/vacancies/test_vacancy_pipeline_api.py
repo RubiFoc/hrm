@@ -174,6 +174,17 @@ async def test_vacancy_crud_and_pipeline_transitions(
         )
         assert transition.status_code == 200
 
+    history_response = await api_client.get(
+        "/api/v1/pipeline/transitions",
+        params={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_1_id,
+        },
+    )
+    assert history_response.status_code == 200
+    history_payload = history_response.json()
+    assert [item["to_stage"] for item in history_payload["items"]] == stages
+
     invalid_transition = await api_client.post(
         "/api/v1/pipeline/transitions",
         json={
@@ -298,6 +309,15 @@ async def test_vacancy_and_pipeline_uuid_boundaries_reject_invalid_ids(
         },
     )
     assert invalid_candidate_transition.status_code == 422
+
+    invalid_history_response = await api_client.get(
+        "/api/v1/pipeline/transitions",
+        params={
+            "vacancy_id": vacancy_id,
+            "candidate_id": "candidate-not-uuid",
+        },
+    )
+    assert invalid_history_response.status_code == 422
 
 
 async def test_openapi_exposes_uuid_format_for_normalized_id_contracts(

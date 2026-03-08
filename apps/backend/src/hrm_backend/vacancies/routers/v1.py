@@ -17,6 +17,7 @@ from hrm_backend.vacancies.dependencies.vacancies import (
 from hrm_backend.vacancies.schemas.application import PublicVacancyApplicationResponse
 from hrm_backend.vacancies.schemas.pipeline import (
     PipelineTransitionCreateRequest,
+    PipelineTransitionListResponse,
     PipelineTransitionResponse,
 )
 from hrm_backend.vacancies.schemas.vacancy import (
@@ -39,6 +40,7 @@ VacancyCreateRole = Annotated[Role, Depends(require_permission("vacancy:create")
 VacancyReadRole = Annotated[Role, Depends(require_permission("vacancy:read"))]
 VacancyUpdateRole = Annotated[Role, Depends(require_permission("vacancy:update"))]
 PipelineTransitionRole = Annotated[Role, Depends(require_permission("pipeline:transition"))]
+PipelineReadRole = Annotated[Role, Depends(require_permission("pipeline:read"))]
 
 
 @router.post("/api/v1/vacancies", response_model=VacancyResponse)
@@ -104,6 +106,24 @@ def create_pipeline_transition(
 ) -> PipelineTransitionResponse:
     """Append one candidate pipeline transition event."""
     return service.transition_pipeline(payload=payload, auth_context=auth_context, request=request)
+
+
+@router.get("/api/v1/pipeline/transitions", response_model=PipelineTransitionListResponse)
+def list_pipeline_transitions(
+    vacancy_id: UUID,
+    candidate_id: UUID,
+    request: Request,
+    _: PipelineReadRole,
+    auth_context: CurrentAuthContext,
+    service: VacancyServiceDependency,
+) -> PipelineTransitionListResponse:
+    """Return ordered pipeline transition history for one vacancy+candidate pair."""
+    return service.list_pipeline_transitions(
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+        auth_context=auth_context,
+        request=request,
+    )
 
 
 @router.post(

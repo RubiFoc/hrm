@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-06
+- Date: 2026-03-09
 - Updated by: architect + backend-engineer + frontend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
@@ -47,6 +47,7 @@ flowchart TB
     ADMIN[Admin Governance Service]
     POLICY[Access Policy Evaluator]
     REC[Recruitment Services]
+    SCOREDOM[Match Scoring Service]
     EMPDOM[Employee Services]
     HROPS[HR Automation Services]
     WORKERS[Background Workers]
@@ -72,6 +73,7 @@ flowchart TB
   API --> ADMIN
   API --> POLICY
   API --> REC
+  API --> SCOREDOM
   API --> EMPDOM
   API --> HROPS
   API --> ANALYTICS
@@ -82,11 +84,13 @@ flowchart TB
   ADMIN -.imports.-> COREPKG
   POLICY -.imports.-> COREPKG
   REC -.imports.-> COREPKG
+  SCOREDOM -.imports.-> COREPKG
   EMPDOM -.imports.-> COREPKG
   HROPS -.imports.-> COREPKG
   ANALYTICS -.imports.-> COREPKG
 
   REC --> DB
+  SCOREDOM --> DB
   EMPDOM --> DB
   HROPS --> DB
   ANALYTICS --> DB
@@ -94,14 +98,17 @@ flowchart TB
 
   REC --> OBJ
   REC --> QUEUE
+  SCOREDOM --> QUEUE
   HROPS --> QUEUE
   ANALYTICS --> QUEUE
 
   REC --> OLLAMA
+  SCOREDOM --> OLLAMA
   REC <--> GCALSYNC
   API --> AUDIT
   POLICY --> AUDIT
   WORKERS --> AUDIT
+  WORKERS --> SCOREDOM
   UI --> SENTRY
 ```
 
@@ -139,7 +146,7 @@ flowchart LR
   AUTO --> KPI
 ```
 
-## Diagram 4: Candidate Screening Sequence
+## Diagram 4: Candidate Screening and Shortlist Review Sequence
 
 ```mermaid
 sequenceDiagram
@@ -147,26 +154,29 @@ sequenceDiagram
   participant UI as React.js + TypeScript UI
   participant API as API Gateway
   participant CAND as Candidate Service
-  participant CV as CV Processing Worker
   participant SCORE as Match Scoring Worker
   participant OLL as Ollama
 
-  HR->>UI: Upload CV and assign vacancy
-  UI->>API: Create/Update candidate profile
-  API->>CAND: Persist candidate and CV metadata
-  CAND-->>CV: Emit cv_parsing_requested
-  CV-->>CAND: Parse CV + normalize RU/EN profile + store evidence snippets
-  HR->>UI: Open candidate CV parsing status
-  UI->>API: GET /api/v1/candidates/{candidate_id}/cv/parsing-status
-  API->>CAND: Read job status + analysis readiness + detected language
-  UI->>API: GET /api/v1/candidates/{candidate_id}/cv/analysis (when ready)
-  API->>CAND: Return structured profile + evidence links
-  CAND-->>SCORE: Emit match_scoring_requested
-  SCORE->>OLL: Request score and explanation
-  OLL-->>SCORE: Return match result
-  SCORE-->>CAND: Save score + confidence
-  CAND-->>API: Candidate ready for review
-  API-->>UI: Show shortlist recommendation
+  HR->>UI: Select vacancy + candidate on `/`
+  UI->>API: GET candidate context / parsed-analysis readiness
+  API->>CAND: Read active document + parsed analysis status
+  CAND-->>API: Ready or not-ready state
+  UI->>API: POST /api/v1/vacancies/{vacancy_id}/match-scores {candidate_id}
+  API->>SCORE: Validate scoring preconditions
+  alt Parsed CV analysis is not ready
+    SCORE-->>API: Reject with 409
+    API-->>UI: Render localized retry guidance
+  else Parsed CV analysis is ready
+    SCORE-->>API: Return active/latest job or enqueue new one
+    API-->>UI: queued/running payload
+    SCORE->>OLL: Score vacancy against parsed CV evidence
+    OLL-->>SCORE: score + confidence + summary + evidence
+    SCORE-->>API: Persist job state + score artifact
+    UI->>API: GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}
+    API->>SCORE: Read latest job + score artifact
+    SCORE-->>API: UI-ready score/status payload
+    API-->>UI: Render shortlist review block
+  end
 ```
 
 ## Diagram 5: Interview Scheduling Sequence
@@ -190,6 +200,8 @@ sequenceDiagram
   INT-->>API: Interview scheduled
   API-->>UI: Confirm schedule and invitations
 ```
+
+Interview scheduling implementation remains deferred until a dedicated planning pass closes interview entity, registration, reschedule/cancel, and calendar sync conflict rules.
 
 ## Diagram 6: Deployment and Trust Boundaries
 
@@ -254,7 +266,12 @@ sequenceDiagram
   VAC->>OBJ: put CV object (SSE-S3)
   VAC->>DB: insert candidate_documents + pipeline_transitions (None->applied) + cv_parsing_jobs(queued)
   VAC->>Q: enqueue process_cv_parsing_job(job_id)
-  API-->>UI: 201 Created or 409/422/429 with diagnostics
+  API-->>UI: 200/201 with candidate_id + parsing_job_id or 409/422/429 with diagnostics
+  UI->>UI: persist sessionStorage tracking context
+  UI->>API: GET /api/v1/public/cv-parsing-jobs/{job_id}
+  API-->>UI: status (queued/running/succeeded/failed)
+  UI->>API: GET /api/v1/public/cv-parsing-jobs/{job_id}/analysis (when ready)
+  API-->>UI: parsed profile + evidence snippets
 ```
 
 ## Diagram 8: Delivery Pipeline (GitHub + CI)
@@ -271,6 +288,7 @@ flowchart LR
     FE[frontend lint+test]
     OAPI[openapi freeze check]
     FECG[frontend api typegen check]
+    BSMOKE[compose browser smoke]
   end
 
   CI --> DOCS
@@ -278,12 +296,14 @@ flowchart LR
   CI --> FE
   CI --> OAPI
   CI --> FECG
+  CI --> BSMOKE
 
   DOCS --> MERGE[Squash Merge]
   BE --> MERGE
   FE --> MERGE
   OAPI --> MERGE
   FECG --> MERGE
+  BSMOKE --> MERGE
   MERGE --> MAIN[Protected main]
 ```
 

@@ -1,7 +1,7 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-06
+- Date: 2026-03-09
 - Updated by: devops-engineer + backend-engineer + frontend-engineer
 
 ## Local Environment (Docker Compose)
@@ -19,6 +19,7 @@
 Compose bootstrap notes:
 - `postgres-init` ensures `${POSTGRES_DB}` exists even when reusing an old data volume.
 - `backend-migrate` runs `alembic upgrade head` before backend starts.
+- `backend-worker` runs the Celery `cv_parsing` queue consumer against the same compose dependencies as `backend`.
 - Backend container starts only after DB bootstrap and migrations complete successfully.
 
 Shortcut wrappers:
@@ -42,6 +43,7 @@ Shortcut wrappers:
 Runtime auth/browser integration settings:
 - Frontend browser API base URL: `VITE_API_BASE_URL` (compose default: `http://localhost:8000`).
 - Backend credentialed CORS allow list: `HRM_CORS_ALLOWED_ORIGINS` (compose default: `http://localhost:5173,http://127.0.0.1:5173`).
+- Local object-storage encryption flag: `OBJECT_STORAGE_SSE_ENABLED=false` in compose/.env.example because the bundled MinIO dev stack does not provide KMS-backed SSE-S3; production/staging encryption remains a separate release control.
 
 ### Stop and Cleanup
 - Stop stack: `docker compose down`
@@ -78,12 +80,18 @@ Runtime auth/browser integration settings:
 1. Run canonical smoke script: `./scripts/smoke-compose.sh`.
 2. Script validation scope:
    - `docker compose ps` contains `running + healthy` for `backend`, `postgres`, `redis`, `minio`;
+   - `docker compose ps` contains `running` for `frontend` and `backend-worker`;
    - backend health endpoint returns `{"status":"ok"}`;
    - frontend and MinIO health endpoints respond successfully;
    - auth login endpoint returns token payload (`access_token`, `refresh_token`, `token_type`, `expires_in`, `session_id`).
    - headless Chrome completes `/login -> /api/v1/auth/login -> /api/v1/auth/me -> logout -> /login`;
    - browser auth requests target `http://localhost:8000` rather than relative `/api/...` on the frontend origin;
    - browser CORS preflight succeeds for cross-origin auth requests during login/logout.
+   - staff API creates one deterministic `open` vacancy for browser candidate smoke;
+   - headless Chrome completes `/candidate?vacancyId=...&vacancyTitle=... -> /api/v1/vacancies/{vacancy_id}/applications -> /api/v1/public/cv-parsing-jobs/{job_id}`;
+   - candidate browser requests target `http://localhost:8000` rather than relative `/api/...` on the frontend origin;
+   - candidate smoke succeeds when public tracking reaches at least `queued` or `running`; `analysis_ready=true` is preferred but not required.
+   - scoring/Ollama verification is intentionally excluded from compose smoke; validate the scoring slice through targeted unit and integration suites to avoid nondeterministic browser smoke failures.
 3. For reproducibility checks, run one teardown/restart cycle:
    - `docker compose down`
    - `docker compose up -d --build`
@@ -112,6 +120,28 @@ Runtime auth/browser integration settings:
   3. Verify backend response to preflight contains the expected `Access-Control-Allow-*` headers.
   4. Run `python3 scripts/browser_auth_smoke.py ...` with a known-good staff account to reproduce the browser path outside manual DevTools.
   5. If origin differs from default Vite dev host, add it to `HRM_CORS_ALLOWED_ORIGINS` and restart backend.
+
+### Candidate Browser Integration Diagnostics (`/candidate`)
+- Canonical deep link:
+  - `/candidate?vacancyId=<uuid>&vacancyTitle=<display-only>`
+- Tracking storage contract:
+  - `sessionStorage["hrm_candidate_application_context"] = {"vacancyId": "...", "candidateId": "...", "parsingJobId": "...", "vacancyTitle": "..."}`
+- Expected public API path sequence:
+  - `POST /api/v1/vacancies/{vacancy_id}/applications`
+  - `GET /api/v1/public/cv-parsing-jobs/{job_id}`
+  - optional `GET /api/v1/public/cv-parsing-jobs/{job_id}/analysis`
+- Browser verification command:
+  - `python3 scripts/browser_candidate_apply_smoke.py --frontend-url http://localhost:5173/candidate --api-origin http://localhost:8000 --vacancy-id <vacancy_id> --vacancy-title <title>`
+- Expected minimal success signal:
+  - application submit returns `200/201`
+  - `hrm_candidate_application_context` is present in session storage
+  - public parsing status returns `queued`, `running`, or `succeeded`
+- Triage sequence:
+  1. Confirm the page was opened with a real `vacancyId` query param and not only the diagnostic fallback field.
+  2. Inspect browser Network tab and confirm apply/tracking requests target `http://localhost:8000`, not relative `/api/...` on `localhost:5173`.
+  3. Verify the staff-created smoke vacancy is still `status=open`.
+  4. Check `sessionStorage["hrm_candidate_application_context"]` for `vacancyId`, `candidateId`, and `parsingJobId`.
+  5. If status never moves past `queued`, inspect `backend-worker` logs; compose smoke still treats `queued/running` as acceptable minimum.
 
 ### Auth Denylist Failure Policy
 - Auth validation is fail-closed when Redis denylist is unavailable.

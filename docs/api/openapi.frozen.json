@@ -1147,6 +1147,23 @@
         "title": "PipelineTransitionCreateRequest",
         "type": "object"
       },
+      "PipelineTransitionListResponse": {
+        "description": "Ordered pipeline transition history payload for one vacancy+candidate pair.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PipelineTransitionResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "PipelineTransitionListResponse",
+        "type": "object"
+      },
       "PipelineTransitionResponse": {
         "description": "Pipeline transition API representation.",
         "properties": {
@@ -2640,6 +2657,63 @@
       }
     },
     "/api/v1/pipeline/transitions": {
+      "get": {
+        "description": "Return ordered pipeline transition history for one vacancy+candidate pair.",
+        "operationId": "list_pipeline_transitions_api_v1_pipeline_transitions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineTransitionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Pipeline Transitions",
+        "tags": [
+          "vacancies"
+        ]
+      },
       "post": {
         "description": "Append one candidate pipeline transition event.",
         "operationId": "create_pipeline_transition_api_v1_pipeline_transitions_post",
@@ -2683,6 +2757,94 @@
         "summary": "Create Pipeline Transition",
         "tags": [
           "vacancies"
+        ]
+      }
+    },
+    "/api/v1/public/cv-parsing-jobs/{job_id}": {
+      "get": {
+        "description": "Return public parsing status for one anonymous candidate application.",
+        "operationId": "get_public_candidate_cv_parsing_status_api_v1_public_cv_parsing_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CVParsingStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Public Candidate Cv Parsing Status",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
+    "/api/v1/public/cv-parsing-jobs/{job_id}/analysis": {
+      "get": {
+        "description": "Return public CV analysis for one anonymous candidate application.",
+        "operationId": "get_public_candidate_cv_analysis_api_v1_public_cv_parsing_jobs__job_id__analysis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CVAnalysisResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Public Candidate Cv Analysis",
+        "tags": [
+          "candidates"
         ]
       }
     },
