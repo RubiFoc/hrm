@@ -19,5 +19,6 @@ celery_app.conf.update(
     imports=(
         "hrm_backend.candidates.infra.celery.tasks",
         "hrm_backend.scoring.infra.celery.tasks",
+        "hrm_backend.interviews.infra.celery.tasks",
     ),
 )

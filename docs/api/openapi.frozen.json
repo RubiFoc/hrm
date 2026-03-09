@@ -1031,6 +1031,240 @@
         "title": "EmployeeRegistrationKeyResponse",
         "type": "object"
       },
+      "HRInterviewListResponse": {
+        "description": "List payload for HR-facing interview reads.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HRInterviewResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "HRInterviewListResponse",
+        "type": "object"
+      },
+      "HRInterviewResponse": {
+        "description": "Canonical HR-facing interview payload.",
+        "properties": {
+          "calendar_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calendar Event Id"
+          },
+          "calendar_sync_status": {
+            "enum": [
+              "queued",
+              "running",
+              "synced",
+              "conflict",
+              "failed"
+            ],
+            "title": "Calendar Sync Status",
+            "type": "string"
+          },
+          "cancel_reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Reason Code"
+          },
+          "cancelled_by": {
+            "anyOf": [
+              {
+                "enum": [
+                  "staff",
+                  "candidate"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled By"
+          },
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "candidate_invite_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Invite Url"
+          },
+          "candidate_response_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Response Note"
+          },
+          "candidate_response_status": {
+            "enum": [
+              "pending",
+              "confirmed",
+              "reschedule_requested",
+              "declined"
+            ],
+            "title": "Candidate Response Status",
+            "type": "string"
+          },
+          "candidate_token_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Token Expires At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "interview_id": {
+            "format": "uuid",
+            "title": "Interview Id",
+            "type": "string"
+          },
+          "interviewer_staff_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Interviewer Staff Ids",
+            "type": "array"
+          },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Synced At"
+          },
+          "location_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Details"
+          },
+          "location_kind": {
+            "enum": [
+              "google_meet",
+              "onsite",
+              "phone"
+            ],
+            "title": "Location Kind",
+            "type": "string"
+          },
+          "schedule_version": {
+            "title": "Schedule Version",
+            "type": "integer"
+          },
+          "scheduled_end_at": {
+            "format": "date-time",
+            "title": "Scheduled End At",
+            "type": "string"
+          },
+          "scheduled_start_at": {
+            "format": "date-time",
+            "title": "Scheduled Start At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending_sync",
+              "awaiting_candidate_confirmation",
+              "confirmed",
+              "reschedule_requested",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "interview_id",
+          "vacancy_id",
+          "candidate_id",
+          "status",
+          "calendar_sync_status",
+          "schedule_version",
+          "scheduled_start_at",
+          "scheduled_end_at",
+          "timezone",
+          "location_kind",
+          "location_details",
+          "interviewer_staff_ids",
+          "candidate_response_status",
+          "candidate_response_note",
+          "candidate_token_expires_at",
+          "candidate_invite_url",
+          "calendar_event_id",
+          "last_synced_at",
+          "cancelled_by",
+          "cancel_reason_code",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "HRInterviewResponse",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1042,6 +1276,153 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "InterviewCancelRequest": {
+        "additionalProperties": false,
+        "description": "Input payload for staff-triggered interview cancellation.",
+        "properties": {
+          "cancel_reason_code": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Cancel Reason Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cancel_reason_code"
+        ],
+        "title": "InterviewCancelRequest",
+        "type": "object"
+      },
+      "InterviewCreateRequest": {
+        "additionalProperties": false,
+        "description": "Input payload for creating one interview schedule proposal.",
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "interviewer_staff_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 16,
+            "minItems": 1,
+            "title": "Interviewer Staff Ids",
+            "type": "array"
+          },
+          "location_details": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Details"
+          },
+          "location_kind": {
+            "enum": [
+              "google_meet",
+              "onsite",
+              "phone"
+            ],
+            "title": "Location Kind",
+            "type": "string"
+          },
+          "scheduled_end_local": {
+            "format": "date-time",
+            "title": "Scheduled End Local",
+            "type": "string"
+          },
+          "scheduled_start_local": {
+            "format": "date-time",
+            "title": "Scheduled Start Local",
+            "type": "string"
+          },
+          "timezone": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "scheduled_start_local",
+          "scheduled_end_local",
+          "timezone",
+          "location_kind",
+          "interviewer_staff_ids"
+        ],
+        "title": "InterviewCreateRequest",
+        "type": "object"
+      },
+      "InterviewRescheduleRequest": {
+        "additionalProperties": false,
+        "description": "Input payload for replacing one existing interview schedule.",
+        "properties": {
+          "interviewer_staff_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 16,
+            "minItems": 1,
+            "title": "Interviewer Staff Ids",
+            "type": "array"
+          },
+          "location_details": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Details"
+          },
+          "location_kind": {
+            "enum": [
+              "google_meet",
+              "onsite",
+              "phone"
+            ],
+            "title": "Location Kind",
+            "type": "string"
+          },
+          "scheduled_end_local": {
+            "format": "date-time",
+            "title": "Scheduled End Local",
+            "type": "string"
+          },
+          "scheduled_start_local": {
+            "format": "date-time",
+            "title": "Scheduled Start Local",
+            "type": "string"
+          },
+          "timezone": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scheduled_start_local",
+          "scheduled_end_local",
+          "timezone",
+          "location_kind",
+          "interviewer_staff_ids"
+        ],
+        "title": "InterviewRescheduleRequest",
         "type": "object"
       },
       "LoginRequest": {
@@ -1438,6 +1819,190 @@
           "transitioned_at"
         ],
         "title": "PipelineTransitionResponse",
+        "type": "object"
+      },
+      "PublicInterviewActionRequest": {
+        "additionalProperties": false,
+        "description": "Optional note payload for public candidate interview actions.",
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "title": "PublicInterviewActionRequest",
+        "type": "object"
+      },
+      "PublicInterviewRegistrationResponse": {
+        "description": "Public candidate-facing interview registration payload.",
+        "properties": {
+          "calendar_sync_status": {
+            "enum": [
+              "queued",
+              "running",
+              "synced",
+              "conflict",
+              "failed"
+            ],
+            "title": "Calendar Sync Status",
+            "type": "string"
+          },
+          "cancel_reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancel Reason Code"
+          },
+          "cancelled_by": {
+            "anyOf": [
+              {
+                "enum": [
+                  "staff",
+                  "candidate"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelled By"
+          },
+          "candidate_response_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Response Note"
+          },
+          "candidate_response_status": {
+            "enum": [
+              "pending",
+              "confirmed",
+              "reschedule_requested",
+              "declined"
+            ],
+            "title": "Candidate Response Status",
+            "type": "string"
+          },
+          "candidate_token_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Token Expires At"
+          },
+          "interview_id": {
+            "format": "uuid",
+            "title": "Interview Id",
+            "type": "string"
+          },
+          "location_details": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Details"
+          },
+          "location_kind": {
+            "enum": [
+              "google_meet",
+              "onsite",
+              "phone"
+            ],
+            "title": "Location Kind",
+            "type": "string"
+          },
+          "schedule_version": {
+            "title": "Schedule Version",
+            "type": "integer"
+          },
+          "scheduled_end_at": {
+            "format": "date-time",
+            "title": "Scheduled End At",
+            "type": "string"
+          },
+          "scheduled_start_at": {
+            "format": "date-time",
+            "title": "Scheduled Start At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending_sync",
+              "awaiting_candidate_confirmation",
+              "confirmed",
+              "reschedule_requested",
+              "cancelled"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          },
+          "vacancy_title": {
+            "title": "Vacancy Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "interview_id",
+          "vacancy_id",
+          "vacancy_title",
+          "status",
+          "calendar_sync_status",
+          "schedule_version",
+          "scheduled_start_at",
+          "scheduled_end_at",
+          "timezone",
+          "location_kind",
+          "location_details",
+          "candidate_response_status",
+          "candidate_response_note",
+          "candidate_token_expires_at",
+          "cancelled_by",
+          "cancel_reason_code",
+          "updated_at"
+        ],
+        "title": "PublicInterviewRegistrationResponse",
         "type": "object"
       },
       "PublicVacancyApplicationResponse": {
@@ -3034,6 +3599,198 @@
         ]
       }
     },
+    "/api/v1/public/interview-registrations/{token}": {
+      "get": {
+        "description": "Load current public interview registration payload for one token.",
+        "operationId": "get_public_registration_api_v1_public_interview_registrations__token__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInterviewRegistrationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Public Registration",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/public/interview-registrations/{token}/cancel": {
+      "post": {
+        "description": "Decline interview via public token.",
+        "operationId": "cancel_public_registration_api_v1_public_interview_registrations__token__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicInterviewActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInterviewRegistrationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Public Registration",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/public/interview-registrations/{token}/confirm": {
+      "post": {
+        "description": "Confirm attendance for current token-bound schedule.",
+        "operationId": "confirm_public_registration_api_v1_public_interview_registrations__token__confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInterviewRegistrationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Public Registration",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/public/interview-registrations/{token}/request-reschedule": {
+      "post": {
+        "description": "Request interview reschedule via public token.",
+        "operationId": "request_public_reschedule_api_v1_public_interview_registrations__token__request_reschedule_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "title": "Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicInterviewActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInterviewRegistrationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Public Reschedule",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
     "/api/v1/vacancies": {
       "get": {
         "description": "List vacancy resources.",
@@ -3295,6 +4052,408 @@
         "summary": "Apply To Vacancy Public",
         "tags": [
           "vacancies"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/interviews": {
+      "get": {
+        "description": "List interviews for one vacancy with optional candidate/status filters.",
+        "operationId": "list_interviews_api_v1_vacancies__vacancy_id__interviews_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "candidate_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Candidate Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending_sync",
+                    "awaiting_candidate_confirmation",
+                    "confirmed",
+                    "reschedule_requested",
+                    "cancelled"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HRInterviewListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Interviews",
+        "tags": [
+          "interviews"
+        ]
+      },
+      "post": {
+        "description": "Create one active interview and enqueue calendar sync.",
+        "operationId": "create_interview_api_v1_vacancies__vacancy_id__interviews_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterviewCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HRInterviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Interview",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}": {
+      "get": {
+        "description": "Read one interview by vacancy-scoped identifier.",
+        "operationId": "get_interview_api_v1_vacancies__vacancy_id__interviews__interview_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HRInterviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Interview",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/cancel": {
+      "post": {
+        "description": "Cancel one interview and remove public access immediately.",
+        "operationId": "cancel_interview_api_v1_vacancies__vacancy_id__interviews__interview_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterviewCancelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HRInterviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Cancel Interview",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/reschedule": {
+      "post": {
+        "description": "Replace schedule window and enqueue new sync.",
+        "operationId": "reschedule_interview_api_v1_vacancies__vacancy_id__interviews__interview_id__reschedule_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterviewRescheduleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HRInterviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reschedule Interview",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/resend-invite": {
+      "post": {
+        "description": "Reissue a fresh public token for the current synchronized schedule.",
+        "operationId": "resend_invite_api_v1_vacancies__vacancy_id__interviews__interview_id__resend_invite_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HRInterviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Resend Invite",
+        "tags": [
+          "interviews"
         ]
       }
     },

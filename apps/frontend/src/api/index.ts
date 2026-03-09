@@ -16,6 +16,18 @@ export {
 } from "./adminEmployeeKeys";
 export { createMatchScore, getMatchScore, listMatchScores } from "./matchScores";
 export {
+  cancelInterview,
+  cancelPublicInterviewRegistration,
+  confirmPublicInterviewRegistration,
+  createInterview,
+  getInterview,
+  getPublicInterviewRegistration,
+  listInterviews,
+  requestPublicInterviewReschedule,
+  resendInterviewInvite,
+  rescheduleInterview,
+} from "./interviews";
+export {
   createPipelineTransition,
   createVacancy,
   listPipelineTransitions,
@@ -47,6 +59,17 @@ export type {
   PublicVacancyApplicationResponse,
 } from "./candidateApplications";
 export type { CandidateListResponse, CandidateResponse } from "./candidateProfiles";
+export type {
+  CalendarSyncStatus,
+  HRInterviewListResponse,
+  HRInterviewResponse,
+  InterviewCancelRequest,
+  InterviewCreateRequest,
+  InterviewRescheduleRequest,
+  InterviewStatus,
+  PublicInterviewActionRequest,
+  PublicInterviewRegistrationResponse,
+} from "./interviews";
 export type {
   MatchScoreCreateRequest,
   MatchScoreEvidenceResponse,

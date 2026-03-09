@@ -202,7 +202,7 @@ sequenceDiagram
   UI->>API: POST /api/v1/vacancies/{vacancy_id}/interviews
   API->>INT: Validate stage, one-active-interview rule, and staff participants
   INT->>GCA: Enqueue calendar sync
-  GCA->>GCAL: Create/Update staff calendar event
+  GCA->>GCAL: Create/Update event in calendars manually shared with the service account
   GCAL-->>GCA: synced | conflict | failed
   GCA-->>INT: Persist sync result
   INT-->>API: status + calendar_sync_status + invite metadata
@@ -219,7 +219,7 @@ sequenceDiagram
   API-->>UI: Updated candidate-facing status
 ```
 
-The planning baseline for this flow is now frozen in `docs/project/interview-planning-pass.md`. The next implementation slice must follow that document without adding candidate auth or a new route tree.
+The interview flow is now implemented from `docs/project/interview-planning-pass.md` without adding candidate auth or a new route tree. In the current free-mode runtime, Google Calendar access is service-account based, each interviewer calendar is shared manually with that service account, and candidate delivery still uses `candidate_invite_url` instead of Google guest invitations.
 
 ## Diagram 6: Deployment and Trust Boundaries
 

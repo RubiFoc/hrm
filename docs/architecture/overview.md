@@ -141,7 +141,7 @@ flowchart LR
 ## Known Technical Risks
 - Scope risk from broad v1 expectation.
 - AI output quality variance across candidate domains and CV formats.
-- Interview workflow is now decision-complete in `docs/project/interview-planning-pass.md`, but implementation still carries calendar-integration and manual-invite delivery risk.
+- Interview workflow is implemented from `docs/project/interview-planning-pass.md`, but runtime still carries calendar-integration and manual-invite delivery risk because the free Google Calendar mode depends on manually shared interviewer calendars.
 - Integration instability risk with calendar sync edge cases.
 - Compliance risk if country-specific legal acts are not mapped early.
 
@@ -151,6 +151,6 @@ flowchart LR
 2. Phase 1 scoring slice:
    dedicated scoring backend package + async scoring lifecycle + shortlist review in the existing HR workspace.
 3. Phase 1 interview scheduling slice:
-   implement the planning baseline from `docs/project/interview-planning-pass.md` without changing candidate auth or route topology.
+   implemented from the planning baseline in `docs/project/interview-planning-pass.md` without changing candidate auth or route topology; Google Calendar sync uses a service-account key plus manually shared interviewer calendars, while candidate delivery remains a manual invite-link flow.
 4. Phase 2:
    Manager/Employee/Accountant/Leader capabilities, expanded automation and reporting.

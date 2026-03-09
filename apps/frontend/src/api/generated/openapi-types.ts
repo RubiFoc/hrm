@@ -378,6 +378,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/interview-registrations/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Public Registration
+         * @description Load current public interview registration payload for one token.
+         */
+        get: operations["get_public_registration_api_v1_public_interview_registrations__token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/interview-registrations/{token}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Public Registration
+         * @description Decline interview via public token.
+         */
+        post: operations["cancel_public_registration_api_v1_public_interview_registrations__token__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/interview-registrations/{token}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Public Registration
+         * @description Confirm attendance for current token-bound schedule.
+         */
+        post: operations["confirm_public_registration_api_v1_public_interview_registrations__token__confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/interview-registrations/{token}/request-reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request Public Reschedule
+         * @description Request interview reschedule via public token.
+         */
+        post: operations["request_public_reschedule_api_v1_public_interview_registrations__token__request_reschedule_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vacancies": {
         parameters: {
             query?: never;
@@ -440,6 +520,110 @@ export interface paths {
          * @description Submit public candidate application with CV to target vacancy.
          */
         post: operations["apply_to_vacancy_public_api_v1_vacancies__vacancy_id__applications_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancies/{vacancy_id}/interviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Interviews
+         * @description List interviews for one vacancy with optional candidate/status filters.
+         */
+        get: operations["list_interviews_api_v1_vacancies__vacancy_id__interviews_get"];
+        put?: never;
+        /**
+         * Create Interview
+         * @description Create one active interview and enqueue calendar sync.
+         */
+        post: operations["create_interview_api_v1_vacancies__vacancy_id__interviews_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Interview
+         * @description Read one interview by vacancy-scoped identifier.
+         */
+        get: operations["get_interview_api_v1_vacancies__vacancy_id__interviews__interview_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel Interview
+         * @description Cancel one interview and remove public access immediately.
+         */
+        post: operations["cancel_interview_api_v1_vacancies__vacancy_id__interviews__interview_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/reschedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reschedule Interview
+         * @description Replace schedule window and enqueue new sync.
+         */
+        post: operations["reschedule_interview_api_v1_vacancies__vacancy_id__interviews__interview_id__reschedule_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/resend-invite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resend Invite
+         * @description Reissue a fresh public token for the current synchronized schedule.
+         */
+        post: operations["resend_invite_api_v1_vacancies__vacancy_id__interviews__interview_id__resend_invite_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -985,10 +1169,168 @@ export interface components {
             /** Used At */
             used_at: string | null;
         };
+        /**
+         * HRInterviewListResponse
+         * @description List payload for HR-facing interview reads.
+         */
+        HRInterviewListResponse: {
+            /** Items */
+            items: components["schemas"]["HRInterviewResponse"][];
+        };
+        /**
+         * HRInterviewResponse
+         * @description Canonical HR-facing interview payload.
+         */
+        HRInterviewResponse: {
+            /** Calendar Event Id */
+            calendar_event_id: string | null;
+            /**
+             * Calendar Sync Status
+             * @enum {string}
+             */
+            calendar_sync_status: "queued" | "running" | "synced" | "conflict" | "failed";
+            /** Cancel Reason Code */
+            cancel_reason_code: string | null;
+            /** Cancelled By */
+            cancelled_by: ("staff" | "candidate") | null;
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /** Candidate Invite Url */
+            candidate_invite_url: string | null;
+            /** Candidate Response Note */
+            candidate_response_note: string | null;
+            /**
+             * Candidate Response Status
+             * @enum {string}
+             */
+            candidate_response_status: "pending" | "confirmed" | "reschedule_requested" | "declined";
+            /** Candidate Token Expires At */
+            candidate_token_expires_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Interview Id
+             * Format: uuid
+             */
+            interview_id: string;
+            /** Interviewer Staff Ids */
+            interviewer_staff_ids: string[];
+            /** Last Synced At */
+            last_synced_at: string | null;
+            /** Location Details */
+            location_details: string | null;
+            /**
+             * Location Kind
+             * @enum {string}
+             */
+            location_kind: "google_meet" | "onsite" | "phone";
+            /** Schedule Version */
+            schedule_version: number;
+            /**
+             * Scheduled End At
+             * Format: date-time
+             */
+            scheduled_end_at: string;
+            /**
+             * Scheduled Start At
+             * Format: date-time
+             */
+            scheduled_start_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending_sync" | "awaiting_candidate_confirmation" | "confirmed" | "reschedule_requested" | "cancelled";
+            /** Timezone */
+            timezone: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * InterviewCancelRequest
+         * @description Input payload for staff-triggered interview cancellation.
+         */
+        InterviewCancelRequest: {
+            /** Cancel Reason Code */
+            cancel_reason_code: string;
+        };
+        /**
+         * InterviewCreateRequest
+         * @description Input payload for creating one interview schedule proposal.
+         */
+        InterviewCreateRequest: {
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /** Interviewer Staff Ids */
+            interviewer_staff_ids: string[];
+            /** Location Details */
+            location_details?: string | null;
+            /**
+             * Location Kind
+             * @enum {string}
+             */
+            location_kind: "google_meet" | "onsite" | "phone";
+            /**
+             * Scheduled End Local
+             * Format: date-time
+             */
+            scheduled_end_local: string;
+            /**
+             * Scheduled Start Local
+             * Format: date-time
+             */
+            scheduled_start_local: string;
+            /** Timezone */
+            timezone: string;
+        };
+        /**
+         * InterviewRescheduleRequest
+         * @description Input payload for replacing one existing interview schedule.
+         */
+        InterviewRescheduleRequest: {
+            /** Interviewer Staff Ids */
+            interviewer_staff_ids: string[];
+            /** Location Details */
+            location_details?: string | null;
+            /**
+             * Location Kind
+             * @enum {string}
+             */
+            location_kind: "google_meet" | "onsite" | "phone";
+            /**
+             * Scheduled End Local
+             * Format: date-time
+             */
+            scheduled_end_local: string;
+            /**
+             * Scheduled Start Local
+             * Format: date-time
+             */
+            scheduled_start_local: string;
+            /** Timezone */
+            timezone: string;
         };
         /**
          * LoginRequest
@@ -1161,6 +1503,81 @@ export interface components {
              * Format: uuid
              */
             vacancy_id: string;
+        };
+        /**
+         * PublicInterviewActionRequest
+         * @description Optional note payload for public candidate interview actions.
+         */
+        PublicInterviewActionRequest: {
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * PublicInterviewRegistrationResponse
+         * @description Public candidate-facing interview registration payload.
+         */
+        PublicInterviewRegistrationResponse: {
+            /**
+             * Calendar Sync Status
+             * @enum {string}
+             */
+            calendar_sync_status: "queued" | "running" | "synced" | "conflict" | "failed";
+            /** Cancel Reason Code */
+            cancel_reason_code: string | null;
+            /** Cancelled By */
+            cancelled_by: ("staff" | "candidate") | null;
+            /** Candidate Response Note */
+            candidate_response_note: string | null;
+            /**
+             * Candidate Response Status
+             * @enum {string}
+             */
+            candidate_response_status: "pending" | "confirmed" | "reschedule_requested" | "declined";
+            /** Candidate Token Expires At */
+            candidate_token_expires_at: string | null;
+            /**
+             * Interview Id
+             * Format: uuid
+             */
+            interview_id: string;
+            /** Location Details */
+            location_details: string | null;
+            /**
+             * Location Kind
+             * @enum {string}
+             */
+            location_kind: "google_meet" | "onsite" | "phone";
+            /** Schedule Version */
+            schedule_version: number;
+            /**
+             * Scheduled End At
+             * Format: date-time
+             */
+            scheduled_end_at: string;
+            /**
+             * Scheduled Start At
+             * Format: date-time
+             */
+            scheduled_start_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending_sync" | "awaiting_candidate_confirmation" | "confirmed" | "reschedule_requested" | "cancelled";
+            /** Timezone */
+            timezone: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+            /** Vacancy Title */
+            vacancy_title: string;
         };
         /**
          * PublicVacancyApplicationResponse
@@ -2099,6 +2516,138 @@ export interface operations {
             };
         };
     };
+    get_public_registration_api_v1_public_interview_registrations__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicInterviewRegistrationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_public_registration_api_v1_public_interview_registrations__token__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublicInterviewActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicInterviewRegistrationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_public_registration_api_v1_public_interview_registrations__token__confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicInterviewRegistrationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_public_reschedule_api_v1_public_interview_registrations__token__request_reschedule_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublicInterviewActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicInterviewRegistrationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_vacancies_api_v1_vacancies_get: {
         parameters: {
             query?: never;
@@ -2272,6 +2821,211 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    list_interviews_api_v1_vacancies__vacancy_id__interviews_get: {
+        parameters: {
+            query?: {
+                candidate_id?: string | null;
+                status?: ("pending_sync" | "awaiting_candidate_confirmation" | "confirmed" | "reschedule_requested" | "cancelled") | null;
+            };
+            header?: never;
+            path: {
+                vacancy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HRInterviewListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_interview_api_v1_vacancies__vacancy_id__interviews_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HRInterviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_interview_api_v1_vacancies__vacancy_id__interviews__interview_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HRInterviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_interview_api_v1_vacancies__vacancy_id__interviews__interview_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewCancelRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HRInterviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reschedule_interview_api_v1_vacancies__vacancy_id__interviews__interview_id__reschedule_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewRescheduleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HRInterviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resend_invite_api_v1_vacancies__vacancy_id__interviews__interview_id__resend_invite_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HRInterviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };

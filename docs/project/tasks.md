@@ -29,7 +29,7 @@
 | TASK-11-07 | implemented/local-scoring-slice | `/` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
 | TASK-11-10 | implemented/local-observability-slice | Frontend Sentry now tags `/`, `/candidate`, `/login`, `/admin`, `/admin/staff`, and `/admin/employee-keys`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
 | TASK-13-01/02 | implemented/local-compliance-slice | Legal-controls matrix now maps article-level obligations to current repo-backed controls and evidence registry entries with owners, verification sources, and update triggers |
-| TASK-11-08 | planned/spec-complete | Interview scheduling and candidate registration now have a decision-complete planning baseline in `docs/project/interview-planning-pass.md`; implementation is not started yet |
+| TASK-11-08 | implemented/local-interview-slice | Interview scheduling and candidate registration are implemented against `docs/project/interview-planning-pass.md`, with HR controls on `/`, public token registration on `/candidate`, and free-mode Google Calendar sync via service account + shared interviewer calendars |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-09 Delivery Control Notes
@@ -37,17 +37,17 @@
 - The main remaining frontend gaps after the login/browser hotfix were `TASK-11-06` and `TASK-11-05`; the current repository now contains a local acceptance baseline for both flows.
 - The scoring/shortlist-review slice (`TASK-04-01/02/03 + TASK-11-07`) is now implemented in repo as one vertical delivery unit.
 - The compliance follow-on slice (`TASK-13-01/02`) is now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
-- The dedicated planning pass for `TASK-11-08` is now written down in `docs/project/interview-planning-pass.md`.
-- The next active workstream is implementation of `TASK-11-08` against that planning baseline without reopening auth, CORS, or the public candidate transport model.
+- The dedicated planning pass for `TASK-11-08` is implemented in repo as one backend+frontend interview slice without reopening auth, CORS, or the public candidate transport model.
+- The remaining follow-on work for interview domain is limited to out-of-scope items such as notifications and structured feedback, not baseline scheduling/registration.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
 ## Active Queue After Planning Pass
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-11-08 | Planning risk is closed; next slice is implementation of interview scheduling and candidate registration against the frozen planning spec |
+| A-1 | TASK-05-03/04 | Interview baseline scheduling/registration is in repo; the next interview follow-on work is structured feedback and fairness controls outside this slice |
 
-- Execution rule: implement `TASK-11-08` only from `docs/project/interview-planning-pass.md`; do not reopen candidate auth, CORS, or route-topology scope during that slice.
+- Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 
 ## Task Breakdown by Epic
 
@@ -225,7 +225,7 @@ Use this queue together with the global queue when planning phase implementation
 - Approved by: coordinator, architect, business-analyst
 - Scope: `M1` (tasks 1-24 + TASK-12-01 + FE-1..FE-10)
 - Ownership matrix: `docs/project/sprint-m1-plan.md`
-- Note: on 2026-03-09 the next queue was further constrained to: land the current baseline as one PR, then implement `TASK-04-01/02/03 + TASK-11-07` as a single slice; `TASK-11-08` remains planning-blocked even after scoring until a dedicated planning pass is approved.
+- Note: on 2026-03-09 the queue constraint that kept `TASK-11-08` planning-blocked was resolved by the dedicated planning pass and this implementation slice; further interview work must stay outside the accepted scheduling/registration scope of this change.
 
 ### M1 Owners (Grouped by TASK-*)
 - architect + backend-engineer: TASK-01-01, TASK-01-02, TASK-01-03, TASK-01-04

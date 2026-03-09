@@ -23,7 +23,7 @@
 - `EPIC-02` backend scope is materially implemented for Phase 1 local baseline: vacancy CRUD, canonical pipeline transitions, and ordered transition history.
 - `EPIC-11` local baseline now includes candidate self-service, HR vacancy/pipeline workspace, RU/EN strings for critical flows, and browser smoke for login + public candidate apply.
 - The immediate next epic gap is the handoff from parsed candidate data into `EPIC-04` recruiter-facing scoring review.
-- `EPIC-05` now has a decision-complete planning baseline in `docs/project/interview-planning-pass.md`; implementation is still deferred until a dedicated slice follows that spec.
+- `EPIC-05` interview scheduling baseline is now implemented in repo from `docs/project/interview-planning-pass.md`; remaining interview backlog starts after scheduling/registration and must not reopen auth, routing, or public token transport.
 
 ## Epic Portfolio
 

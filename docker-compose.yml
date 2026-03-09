@@ -28,6 +28,11 @@ services:
       MATCH_SCORING_REQUEST_TIMEOUT_SECONDS: ${MATCH_SCORING_REQUEST_TIMEOUT_SECONDS:-90}
       MATCH_SCORING_QUEUE_NAME: ${MATCH_SCORING_QUEUE_NAME:-match_scoring}
       EMPLOYEE_KEY_TTL_SECONDS: ${EMPLOYEE_KEY_TTL_SECONDS:-604800}
+      GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_PATH: ${GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_PATH:-}
+      INTERVIEW_STAFF_CALENDAR_MAP_JSON: ${INTERVIEW_STAFF_CALENDAR_MAP_JSON:-}
+      INTERVIEW_SYNC_QUEUE_NAME: ${INTERVIEW_SYNC_QUEUE_NAME:-interview_sync}
+      INTERVIEW_PUBLIC_TOKEN_SECRET: ${INTERVIEW_PUBLIC_TOKEN_SECRET:-}
+      PUBLIC_FRONTEND_BASE_URL: ${PUBLIC_FRONTEND_BASE_URL:-http://localhost:5173}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
       CELERY_TASK_DEFAULT_QUEUE: ${CELERY_TASK_DEFAULT_QUEUE:-cv_parsing}
@@ -37,6 +42,8 @@ services:
       GOOGLE_CALENDAR_ENABLED: ${GOOGLE_CALENDAR_ENABLED:-false}
     ports:
       - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./secrets:/run/hrm-secrets:ro
     depends_on:
       postgres-init:
         condition: service_completed_successfully
@@ -85,6 +92,11 @@ services:
       MATCH_SCORING_REQUEST_TIMEOUT_SECONDS: ${MATCH_SCORING_REQUEST_TIMEOUT_SECONDS:-90}
       MATCH_SCORING_QUEUE_NAME: ${MATCH_SCORING_QUEUE_NAME:-match_scoring}
       EMPLOYEE_KEY_TTL_SECONDS: ${EMPLOYEE_KEY_TTL_SECONDS:-604800}
+      GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_PATH: ${GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_PATH:-}
+      INTERVIEW_STAFF_CALENDAR_MAP_JSON: ${INTERVIEW_STAFF_CALENDAR_MAP_JSON:-}
+      INTERVIEW_SYNC_QUEUE_NAME: ${INTERVIEW_SYNC_QUEUE_NAME:-interview_sync}
+      INTERVIEW_PUBLIC_TOKEN_SECRET: ${INTERVIEW_PUBLIC_TOKEN_SECRET:-}
+      PUBLIC_FRONTEND_BASE_URL: ${PUBLIC_FRONTEND_BASE_URL:-http://localhost:5173}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/0}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/0}
       CELERY_TASK_DEFAULT_QUEUE: ${CELERY_TASK_DEFAULT_QUEUE:-cv_parsing}
@@ -101,7 +113,9 @@ services:
       - hrm_backend.candidates.infra.celery.app:celery_app
       - worker
       - --loglevel=INFO
-      - --queues=cv_parsing,match_scoring
+      - --queues=cv_parsing,match_scoring,interview_sync
+    volumes:
+      - ./secrets:/run/hrm-secrets:ro
     depends_on:
       postgres-init:
         condition: service_completed_successfully
