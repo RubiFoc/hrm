@@ -120,6 +120,32 @@
 - Typed frontend API wrappers must consume only artifacts generated from frozen OpenAPI.
 - Browser smoke must not be expanded to cover scoring; keep scoring verification on unit/integration level.
 
+## TASK-11-10 Baseline
+- Do not add or restructure routes. Keep the current topology:
+  - `/`
+  - `/candidate`
+  - `/login`
+  - `/admin`
+  - `/admin/staff`
+  - `/admin/employee-keys`
+- Emit canonical Sentry tags on critical-route access:
+  - `workspace`
+  - `role`
+  - `route`
+- Required route/workspace mapping:
+  - `/` -> `workspace=hr`, `route=/`
+  - `/candidate` -> `workspace=candidate`, `route=/candidate`
+  - `/login` -> `workspace=auth`, `route=/login`
+  - `/admin`, `/admin/staff`, `/admin/employee-keys` -> `workspace=admin` with the matching canonical route
+- Capture frontend HTTP failures in the shared HTTP client with current route tags plus request metadata (`http_method`, `http_status`, request path).
+- Wrap the app shell in a localized render-failure boundary that reports the exception to Sentry and shows RU/EN fallback UI.
+- Configure release/environment/tracing through frontend env variables:
+  - `VITE_SENTRY_DSN`
+  - `VITE_SENTRY_ENVIRONMENT`
+  - `VITE_SENTRY_RELEASE`
+  - `VITE_SENTRY_TRACES_SAMPLE_RATE`
+- Do not change typed API wrappers, OpenAPI artifacts, auth flow, or CORS behavior in this slice.
+
 ## TASK-11-08 Planning Gate
 - Do not start implementation until a short planning pass defines:
   - interview entity and lifecycle rules;

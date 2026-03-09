@@ -42,6 +42,11 @@ Shortcut wrappers:
 
 Runtime auth/browser integration settings:
 - Frontend browser API base URL: `VITE_API_BASE_URL` (compose default: `http://localhost:8000`).
+- Frontend Sentry envs:
+  - `VITE_SENTRY_DSN`
+  - `VITE_SENTRY_ENVIRONMENT` (compose default: `local-compose`)
+  - `VITE_SENTRY_RELEASE` (compose default: `local-dev`)
+  - `VITE_SENTRY_TRACES_SAMPLE_RATE` (compose default: `0.2`)
 - Backend credentialed CORS allow list: `HRM_CORS_ALLOWED_ORIGINS` (compose default: `http://localhost:5173,http://127.0.0.1:5173`).
 - Local object-storage encryption flag: `OBJECT_STORAGE_SSE_ENABLED=false` in compose/.env.example because the bundled MinIO dev stack does not provide KMS-backed SSE-S3; production/staging encryption remains a separate release control.
 
@@ -218,6 +223,22 @@ Runtime auth/browser integration settings:
   1. Reproduce with browser local storage state (`hrm_access_token`, `hrm_user_role`).
   2. Verify redirect reason query param (`unauthorized` or `forbidden`).
   3. Check Sentry events for required tags and route breadcrumbs.
+
+### Frontend Sentry Diagnostics (`TASK-11-10`)
+- Critical routes covered by the baseline:
+  - `/` -> `workspace=hr`, `route=/`
+  - `/candidate` -> `workspace=candidate`, `route=/candidate`
+  - `/login` -> `workspace=auth`, `route=/login`
+  - `/admin`, `/admin/staff`, `/admin/employee-keys` -> `workspace=admin` with canonical route tags
+- Expected capture paths:
+  - route entry emits `workspace`, `role`, `route`
+  - shared HTTP client captures request failures with `http_method`, optional `http_status`, and request path metadata
+  - top-level render boundary captures React render failures and shows localized fallback UI
+- Triage sequence:
+  1. Verify frontend was rebuilt after changing any `VITE_SENTRY_*` environment variables.
+  2. Open a critical route and confirm the Sentry event carries the expected `workspace`, `role`, and `route` tags.
+  3. Trigger a known failing API request and confirm the Sentry event includes HTTP metadata.
+  4. Check that release/environment values on the event match `VITE_SENTRY_RELEASE` and `VITE_SENTRY_ENVIRONMENT`.
 
 ### Admin Staff Management Diagnostics (`/admin/staff`)
 - Endpoints:

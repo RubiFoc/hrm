@@ -39,6 +39,7 @@ import {
   type VacancyUpdateRequest,
 } from "../api";
 import { readAuthSession } from "../app/auth/session";
+import { useSentryRouteTags } from "../app/observability/sentry";
 
 const PIPELINE_STAGE_OPTIONS: PipelineTransitionCreateRequest["to_stage"][] = [
   "applied",
@@ -71,6 +72,7 @@ const DEFAULT_VACANCY_DRAFT: VacancyDraft = {
  */
 export function HrDashboardPage() {
   const { t } = useTranslation();
+  useSentryRouteTags("/");
   const queryClient = useQueryClient();
   const session = readAuthSession();
   const accessToken = session.accessToken;

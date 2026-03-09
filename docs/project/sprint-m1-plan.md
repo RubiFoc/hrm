@@ -18,17 +18,16 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 | `TASK-11-05` | implemented/local-baseline | `/` now provides staff vacancy CRUD, editing, candidate selection, transition append, and history timeline UX |
 | `TASK-11-09` | implemented/local-baseline | RU/EN critical-flow strings are in place for login/admin/candidate/HR routes |
 | `TASK-11-11` | implemented/local-baseline | Compose browser smoke covers both staff login and public candidate apply journeys |
-| current baseline PR | next/merge-gate | Land the existing local diff as one cohesive PR with fixed scope and no additional feature creep |
-| `TASK-04-01/02/03 + TASK-11-07` | next after merge | One vertical slice: dedicated scoring backend + shortlist review inside the current HR workspace |
-| `TASK-11-10` | next after scoring | Finish Sentry baseline without changing route topology or auth/CORS behavior |
-| `TASK-13-01/02` | parallel next | Compliance mapping/evidence ownership should progress now that the controls, tests, and smoke evidence exist |
+| `TASK-04-01/02/03 + TASK-11-07` | implemented/local-scoring-slice | Dedicated scoring backend and shortlist review block are present in repo with frozen contract and compose/runtime wiring |
+| `TASK-11-10` | implemented/local-observability-slice | Critical-route Sentry tags, shared HTTP failure capture, render boundary, and release/env tracing config are present in repo |
+| `TASK-13-01/02` | next | Compliance mapping/evidence ownership should progress now that the controls, tests, smoke outputs, and observability baseline exist |
 | `TASK-11-08` | deferred/planning-blocked | Requires a dedicated planning pass for interview entity, registration, reschedule/cancel, and sync-conflict rules |
 
 ## Scope Normalization
 - The original M1 sprint text stopped at FE-9, but the repo now contains a broader local acceptance baseline: `TASK-11-05`, `TASK-11-06`, `TASK-11-09`, and `TASK-11-11` are no longer future-only scope.
-- Immediate follow-on work must not reopen auth, CORS, or transport architecture.
-- The current local baseline is the merge target; do not expand scope before it lands.
-- The next approved implementation track is explainable scoring + shortlist review as one backend+frontend slice.
+- Immediate follow-on work must not reopen auth, CORS, routing topology, or transport architecture.
+- The scoring/shortlist-review track is now implemented in repo as one backend+frontend slice.
+- The current approved local diff is limited to `TASK-11-10` Sentry hardening.
 - Interview scheduling (`TASK-11-08`) is deliberately deferred until after a short planning pass.
 
 ## Phase 0 Merge Gate
@@ -52,16 +51,17 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 - After merge, sync local `main` before starting the next implementation increment.
 
 ## Approved Immediate Follow-On Slice
-- Implement `TASK-04-01`, `TASK-04-02`, `TASK-04-03`, and `TASK-11-07` as one vertical slice.
-- Backend rules for the slice:
-  - use a dedicated scoring package instead of mixing scoring into `candidates` or `vacancies`;
-  - add async lifecycle `queued | running | succeeded | failed` in `match_scoring_jobs`;
-  - persist a UI-ready score artifact keyed by `vacancy_id + candidate_id + active_document_id`;
-  - reject scoring enqueue with `409` when parsed CV analysis is not ready.
-- Frontend rules for the slice:
-  - do not add a new route; extend the existing HR workspace on `/`;
-  - add shortlist review only when both vacancy and candidate are selected;
-  - keep compose browser smoke unchanged; scoring verification stays at unit/integration level because of Ollama/runtime nondeterminism.
+- Implement `TASK-11-10` as a dedicated frontend observability slice.
+- Slice rules:
+  - keep route topology unchanged (`/`, `/candidate`, `/login`, `/admin`, `/admin/staff`, `/admin/employee-keys`);
+  - keep auth model, CORS model, and typed API contracts unchanged;
+  - emit canonical Sentry tags (`workspace`, `role`, `route`) on critical-route access;
+  - capture shared HTTP failures in the frontend HTTP client;
+  - capture render failures behind a top-level localized boundary;
+  - configure Sentry release/environment/tracing through frontend env variables.
+- Next after this slice:
+  - `TASK-13-01/02`;
+  - then a dedicated planning pass for `TASK-11-08`.
 
 ## Team Roles
 - architect

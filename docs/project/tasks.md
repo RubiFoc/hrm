@@ -27,29 +27,25 @@
 | TASK-11-11 | implemented/local-baseline | Compose browser smoke covers both staff login and public candidate apply journeys through headless Chrome |
 | TASK-04-01/02/03 | implemented/local-scoring-slice | Dedicated `hrm_backend/scoring` package, Ollama adapter, async scoring jobs/artifacts, and frozen scoring API contract are present in repo with unit and integration coverage |
 | TASK-11-07 | implemented/local-scoring-slice | `/` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
+| TASK-11-10 | implemented/local-observability-slice | Frontend Sentry now tags `/`, `/candidate`, `/login`, `/admin`, `/admin/staff`, and `/admin/employee-keys`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-09 Delivery Control Notes
 - Backend implementation is ahead of the original planning docs for `TASK-03-01/02/03/05/06` and `TASK-02-01/02/03`; these items are no longer backlog-only work.
 - The main remaining frontend gaps after the login/browser hotfix were `TASK-11-06` and `TASK-11-05`; the current repository now contains a local acceptance baseline for both flows.
-- The current local diff must be landed as one cohesive PR without further feature creep. Fixed merge scope is limited to:
-  - public candidate apply/tracking by `parsing_job_id`;
-  - HR vacancy/pipeline workspace on `/`;
-  - browser smoke for staff login and public candidate apply;
-  - local compose MinIO baseline with `OBJECT_STORAGE_SSE_ENABLED=false`;
-  - backlog/architecture/testing/runbook synchronization.
-- The next local diff after that merge now implements one vertical slice: `TASK-04-01`, `TASK-04-02`, `TASK-04-03`, and `TASK-11-07`.
+- The scoring/shortlist-review slice (`TASK-04-01/02/03 + TASK-11-07`) is now implemented in repo as one vertical delivery unit.
+- The current local diff is limited to `TASK-11-10` Sentry hardening without changing route topology, auth/CORS behavior, or frozen API contracts.
+- The next active workstream after observability is `TASK-13-01/02`, while `TASK-11-08` remains planning-blocked.
 - `TASK-11-08` is explicitly deferred until a separate planning pass resolves interview entity boundaries, candidate registration/identity rules, reschedule/cancel semantics, and calendar sync conflict behavior.
-- Existing auth/CORS/public candidate transport assumptions stay unchanged for both the merge gate and the next scoring slice.
+- Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
-## Active Queue After Scoring Slice
+## Active Queue After Observability Slice
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-11-10 | Complete Sentry hardening after shortlist review lands, without changing the routing model |
-| A-2 | TASK-13-01 | Compliance mapping can now point to real admin/candidate/HR/scoring controls |
-| A-3 | TASK-13-02 | Evidence ownership can attach to real tests, OpenAPI artifacts, and smoke outputs |
-| A-4 | TASK-11-08 | Still deferred until a short planning pass closes interview workflow/product gaps |
+| A-1 | TASK-13-01 | Compliance mapping can now point to real admin/candidate/HR/scoring/observability controls |
+| A-2 | TASK-13-02 | Evidence ownership can now attach to tests, OpenAPI artifacts, compose smoke, and Sentry QA checks |
+| A-3 | TASK-11-08 | Still deferred until a short planning pass closes interview workflow/product gaps |
 
 - Execution rule: keep `TASK-11-08` blocked until the dedicated interview-planning pass is written down and approved.
 
@@ -210,7 +206,7 @@ Use this queue together with the global queue when planning phase implementation
 | FE-11 | TASK-11-05 | Delivered in local baseline: staff vacancy CRUD and pipeline workspace on `/` |
 | FE-12 | TASK-11-11 | Delivered in local baseline: Chrome browser smoke for login + public candidate apply |
 | FE-13 | TASK-11-07 | Delivered in local scoring slice: shortlist review block inside the existing `/` HR workspace with scoring polling and explainable payload rendering |
-| FE-14 | TASK-11-10 | Immediate follow-on after scoring: Sentry observability hardening without route changes |
+| FE-14 | TASK-11-10 | Delivered in local observability slice: Sentry hardening for critical routes, shared HTTP failure capture, render boundary, and release/env tracing config without route changes |
 | FE-15 | TASK-11-08 | Deferred until a short planning pass after scoring clarifies interview entity, registration, and sync behavior |
 | FE-16 | ADMIN-04 | Unified admin CRUD consoles |
 | FE-17 | ADMIN-05 | Admin observability and audit dashboards |

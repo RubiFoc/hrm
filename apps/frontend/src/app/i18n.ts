@@ -12,6 +12,11 @@ const resources = {
       logoutAction: "Logout",
       logoutPendingAction: "Logging out...",
       backToWorkspace: "Back to workspace",
+      appErrorBoundary: {
+        title: "Something went wrong",
+        message: "The page crashed before it finished rendering. Retry the screen.",
+        retry: "Retry render",
+      },
       adminWorkspaceSubtitle: "Admin shell for operational controls and support diagnostics.",
       adminAccessDeniedTitle: "Admin access denied",
       adminAccessUnauthorizedDescription:
@@ -381,6 +386,11 @@ const resources = {
       logoutAction: "Выйти",
       logoutPendingAction: "Выход...",
       backToWorkspace: "Вернуться в рабочее пространство",
+      appErrorBoundary: {
+        title: "Что-то пошло не так",
+        message: "Страница завершилась ошибкой до завершения рендера. Повторите попытку.",
+        retry: "Повторить рендер",
+      },
       adminWorkspaceSubtitle: "Админ shell для операционного контроля и диагностики.",
       adminAccessDeniedTitle: "Доступ в админ раздел запрещён",
       adminAccessUnauthorizedDescription:

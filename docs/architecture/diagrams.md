@@ -558,3 +558,23 @@ sequenceDiagram
 
   Note over AUTH: Register path consumes only keys where\nused_at=null, revoked_at=null, expires_at>now
 ```
+
+## Diagram 18: Frontend Observability Flow (TASK-11-10)
+
+```mermaid
+flowchart LR
+  USER[User opens critical route] --> ROUTE[Observed route: /, /candidate, /login, /admin*]
+  ROUTE --> TAGS[Sentry tags: workspace, role, route]
+  TAGS --> SENTRY[Sentry]
+
+  ROUTE --> UI[React page and query or mutation logic]
+  UI --> HTTP[Shared apiRequest wrapper]
+  HTTP -->|Network error or non-2xx| CAPTURE[Capture exception with method/status/path]
+  CAPTURE --> SENTRY
+
+  UI -->|Render throws| BOUNDARY[Top-level AppErrorBoundary]
+  BOUNDARY --> FALLBACK[Localized fallback UI]
+  BOUNDARY --> SENTRY
+
+  CONFIG[VITE_SENTRY_* env config] --> SENTRY
+```

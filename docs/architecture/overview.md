@@ -37,7 +37,7 @@ flowchart LR
 | Component | Responsibility | Input | Output | Owner |
 | --- | --- | --- | --- | --- |
 | React.js + TypeScript Web App | Role-based UX for all user groups, localization (ru/en), candidate self-service | User actions | API requests, UI states | frontend |
-| Frontend Telemetry | Client-side errors and performance telemetry | Browser events/errors | Sentry issues and traces | frontend |
+| Frontend Telemetry | Client-side route tags, HTTP/render failure capture, release markers, and browser tracing | Browser navigation, frontend errors, request failures | Sentry issues, traces, and tagged events | frontend |
 | API Gateway | AuthN/AuthZ entrypoint and request routing | HTTPS requests | Routed calls, access decisions | platform |
 | Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
 | Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
@@ -74,6 +74,10 @@ flowchart LR
 8. Admin Employee Key Lifecycle Flow:
    admin/hr issues key -> list/filter key registry -> revoke active key when needed ->
    registration rejects revoked/expired/used keys -> audit success/failure reason codes.
+9. Frontend Observability Flow:
+   user opens a critical frontend route -> Sentry tags `workspace`/`role`/`route` are emitted ->
+   shared HTTP client captures request failures with route metadata -> top-level render boundary
+   captures React render failures -> Sentry stores tagged events with environment/release/tracing context.
 
 ## Data Boundaries
 - Source of truth entities:
@@ -105,6 +109,9 @@ flowchart LR
 - Frontend libraries: MUI, React Router, TanStack Query, React Hook Form, Zod, i18next.
 - Browser support target: Google Chrome.
 - Monitoring: Sentry.
+- Frontend telemetry config baseline:
+  `VITE_SENTRY_DSN`, `VITE_SENTRY_ENVIRONMENT`, `VITE_SENTRY_RELEASE`,
+  `VITE_SENTRY_TRACES_SAMPLE_RATE`.
 - Mobile app: out of scope, responsive web only.
 - Storage:
   PostgreSQL for transactional data, object storage for CV/documents, queue for async jobs.
@@ -126,7 +133,8 @@ flowchart LR
 - Security:
   personal data protection aligned with Belarus/Russia data storage standards, strict role-based access control, immutable audit trail.
 - Observability:
-  structured logs, metrics by domain, trace IDs across API and async jobs; Sentry for frontend telemetry.
+  structured logs, metrics by domain, trace IDs across API and async jobs; Sentry for frontend
+  route tags, HTTP/render failure capture, release markers, and browser traces.
 
 ## Known Technical Risks
 - Scope risk from broad v1 expectation.

@@ -29,6 +29,7 @@ import {
   writeCandidateApplicationContext,
   type CandidateApplicationContext,
 } from "../app/candidate/applicationContext";
+import { useSentryRouteTags } from "../app/observability/sentry";
 
 const CANDIDATE_FORM_SCHEMA = z.object({
   first_name: z.string().trim().min(1),
@@ -52,6 +53,7 @@ type CandidateApplyMutationRequest = {
  */
 export function CandidatePage() {
   const { t } = useTranslation();
+  useSentryRouteTags("/candidate");
   const [searchParams] = useSearchParams();
   const storedContext = readCandidateApplicationContext();
   const queryVacancyId = normalizeInput(searchParams.get("vacancyId"));
