@@ -20,14 +20,14 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 | `TASK-11-11` | implemented/local-baseline | Compose browser smoke covers both staff login and public candidate apply journeys |
 | `TASK-04-01/02/03 + TASK-11-07` | implemented/local-scoring-slice | Dedicated scoring backend and shortlist review block are present in repo with frozen contract and compose/runtime wiring |
 | `TASK-11-10` | implemented/local-observability-slice | Critical-route Sentry tags, shared HTTP failure capture, render boundary, and release/env tracing config are present in repo |
-| `TASK-13-01/02` | next | Compliance mapping/evidence ownership should progress now that the controls, tests, smoke outputs, and observability baseline exist |
-| `TASK-11-08` | deferred/planning-blocked | Requires a dedicated planning pass for interview entity, registration, reschedule/cancel, and sync-conflict rules |
+| `TASK-13-01/02` | implemented/local-compliance-slice | Article-level control mapping and evidence registry are present in repo and linked to real artifacts |
+| `TASK-11-08` | next/planning-only | Requires a dedicated planning pass for interview entity, registration, reschedule/cancel, and sync-conflict rules |
 
 ## Scope Normalization
 - The original M1 sprint text stopped at FE-9, but the repo now contains a broader local acceptance baseline: `TASK-11-05`, `TASK-11-06`, `TASK-11-09`, and `TASK-11-11` are no longer future-only scope.
 - Immediate follow-on work must not reopen auth, CORS, routing topology, or transport architecture.
 - The scoring/shortlist-review track is now implemented in repo as one backend+frontend slice.
-- The current approved local diff is limited to `TASK-11-10` Sentry hardening.
+- The current approved local diff is limited to `TASK-13-01/02` compliance documentation and evidence ownership work.
 - Interview scheduling (`TASK-11-08`) is deliberately deferred until after a short planning pass.
 
 ## Phase 0 Merge Gate
@@ -51,17 +51,13 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 - After merge, sync local `main` before starting the next implementation increment.
 
 ## Approved Immediate Follow-On Slice
-- Implement `TASK-11-10` as a dedicated frontend observability slice.
+- Implement `TASK-13-01/02` as a dedicated compliance documentation slice.
 - Slice rules:
-  - keep route topology unchanged (`/`, `/candidate`, `/login`, `/admin`, `/admin/staff`, `/admin/employee-keys`);
-  - keep auth model, CORS model, and typed API contracts unchanged;
-  - emit canonical Sentry tags (`workspace`, `role`, `route`) on critical-route access;
-  - capture shared HTTP failures in the frontend HTTP client;
-  - capture render failures behind a top-level localized boundary;
-  - configure Sentry release/environment/tracing through frontend env variables.
+  - use only real repo-backed artifacts as evidence;
+  - update legal-controls matrix and evidence registry in the same change;
+  - do not change runtime, routing, auth, CORS, or API contracts.
 - Next after this slice:
-  - `TASK-13-01/02`;
-  - then a dedicated planning pass for `TASK-11-08`.
+  - a dedicated planning pass for `TASK-11-08`.
 
 ## Team Roles
 - architect

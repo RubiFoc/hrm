@@ -33,3 +33,4 @@ Shortcut commands:
 - PR Definition of Done: `.github/PULL_REQUEST_TEMPLATE.md`
 - Approved M1 sprint ownership: `docs/project/sprint-m1-plan.md`
 - Legal mapping (NPA -> controls): `docs/project/legal-controls-matrix.md`
+- Compliance evidence ownership: `docs/project/evidence-registry.md`
