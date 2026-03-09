@@ -81,6 +81,8 @@ describe("admin route guard", () => {
 
     renderWithPath("/admin/staff");
     expect(await screen.findByRole("heading", { name: /управление сотрудниками/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("role", "admin");
     expect(setTagMock).toHaveBeenCalledWith("route", "/admin/staff");
   });
 
@@ -90,6 +92,8 @@ describe("admin route guard", () => {
 
     renderWithPath("/admin/employee-keys");
     expect(await screen.findByRole("heading", { name: /ключи регистрации сотрудников/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("role", "admin");
     expect(setTagMock).toHaveBeenCalledWith("route", "/admin/employee-keys");
   });
 });

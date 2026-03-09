@@ -231,6 +231,16 @@ apps/backend/tests/
 | Frontend `/admin/employee-keys` rendering and interactions | `apps/frontend/src/pages/AdminEmployeeKeysManagementPage.test.tsx` | route guard tests in `apps/frontend/src/app/router.admin.test.tsx` | list/filter/pagination, create/revoke actions, localized errors |
 | Sentry route tag for employee-key screen | N/A | `apps/frontend/src/app/router.admin.test.tsx` + QA Sentry smoke | `route=/admin/employee-keys` tag emitted by `AdminGuard` |
 
+## Frontend Observability Verification (`TASK-11-10`)
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Canonical Sentry tags on critical routes (`/`, `/candidate`, `/login`) | `apps/frontend/src/app/router.observability.test.tsx` | Manual QA against Sentry project or local browser verification | `workspace`, `role`, `route` tags match the documented route/workspace mapping |
+| Canonical Sentry tags on admin critical routes (`/admin`, `/admin/staff`, `/admin/employee-keys`) | `apps/frontend/src/app/router.admin.test.tsx` | Manual QA against Sentry project or admin route smoke | admin routes emit `workspace=admin` plus the canonical route tag |
+| Shared HTTP failure capture with request metadata | `apps/frontend/src/api/httpClient.test.ts` | Manual failure injection against local backend or Sentry QA project | Sentry event includes current route tags plus `http_method`, `http_status`, and request path metadata |
+| Localized render-failure fallback boundary | `apps/frontend/src/app/observability/AppErrorBoundary.test.tsx` | Manual browser smoke with a forced render exception in QA build | crashing route renders RU/EN fallback UI and the exception is captured in Sentry |
+| Frontend non-regression after observability hardening | `npm --prefix apps/frontend run test -- --run` | existing compose smoke remains unchanged | no route, auth, CORS, or typed-client regression |
+
 ## Baseline Verification Commands
 - `./scripts/check-docs-structure.sh`
 - `./scripts/check-openapi-freeze.sh`

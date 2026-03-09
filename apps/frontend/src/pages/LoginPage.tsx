@@ -14,6 +14,7 @@ import {
   resolveWorkspaceRoute,
   writeAuthSession,
 } from "../app/auth/session";
+import { useSentryRouteTags } from "../app/observability/sentry";
 
 const loginSchema = z.object({
   identifier: z.string().trim().min(1),
@@ -27,6 +28,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
  */
 export function LoginPage() {
   const { t } = useTranslation();
+  useSentryRouteTags("/login");
   const navigate = useNavigate();
   const [requestError, setRequestError] = useState<string | null>(null);
   const [isBootstrapPending, setIsBootstrapPending] = useState(false);

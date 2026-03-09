@@ -438,3 +438,31 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Scoring logic is isolated from `candidates` and `vacancies`, which keeps future extraction paths open.
   - Recruiter-facing shortlist review now consumes a frozen backend contract with typed frontend wrappers.
   - Compose runtime grows by one additional queue, but route/auth/CORS/public-candidate transport assumptions stay unchanged.
+
+## ADR-0028
+- Context: After shortlist review landed, frontend observability was still partial: admin route tags existed, but the main HR, candidate, and login routes were not tagged uniformly, shared HTTP failures were not captured centrally, and render failures had no top-level localized fallback. The next safe increment had to harden Sentry without changing routes, auth, CORS, or API contracts.
+- Decision:
+  - Keep the existing route topology unchanged:
+    - `/`
+    - `/candidate`
+    - `/login`
+    - `/admin`
+    - `/admin/staff`
+    - `/admin/employee-keys`
+  - Emit canonical Sentry tags (`workspace`, `role`, `route`) on each critical-route entry:
+    - `/` -> `workspace=hr`
+    - `/candidate` -> `workspace=candidate`
+    - `/login` -> `workspace=auth`
+    - `/admin*` -> `workspace=admin`
+  - Add centralized HTTP failure capture in the shared frontend HTTP client so failed requests report:
+    - current `workspace`, `role`, `route`
+    - `http_method`
+    - `http_status` when available
+    - request path as event metadata.
+  - Wrap the frontend app shell in a top-level Sentry error boundary with RU/EN fallback UI for render failures.
+  - Configure release/environment/tracing through frontend env variables:
+    `VITE_SENTRY_DSN`, `VITE_SENTRY_ENVIRONMENT`, `VITE_SENTRY_RELEASE`, `VITE_SENTRY_TRACES_SAMPLE_RATE`.
+- Consequences:
+  - Critical frontend routes now emit one consistent Sentry tag model instead of admin-only tagging.
+  - Browser request failures and render crashes become visible in Sentry without changing business contracts.
+  - Route topology, typed API wrappers, auth behavior, and CORS assumptions stay unchanged while observability coverage increases.

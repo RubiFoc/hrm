@@ -5,6 +5,8 @@
  * into `src/api/generated/openapi-types.ts` and can be referenced in
  * higher-level API modules.
  */
+import { captureFrontendHttpFailure } from "../app/observability/sentry";
+
 export class ApiError extends Error {
   status: number;
   detail: string;
@@ -21,13 +23,29 @@ export async function apiRequest<TResponse>(
   input: RequestInfo | URL,
   init?: RequestInit,
 ): Promise<TResponse> {
-  const response = await fetch(input, init);
+  let response: Response;
+  try {
+    response = await fetch(input, init);
+  } catch (error) {
+    captureFrontendHttpFailure(error, {
+      input,
+      method: init?.method,
+    });
+    throw error;
+  }
   const rawBody = await response.text();
   const payload = parseJsonBody(rawBody);
 
   if (!response.ok) {
     const detail = resolveErrorDetail(payload, response.status);
-    throw new ApiError(response.status, detail);
+    const apiError = new ApiError(response.status, detail);
+    captureFrontendHttpFailure(apiError, {
+      input,
+      method: init?.method ?? response.request?.method,
+      status: response.status,
+      detail,
+    });
+    throw apiError;
   }
 
   if (!rawBody.trim()) {
