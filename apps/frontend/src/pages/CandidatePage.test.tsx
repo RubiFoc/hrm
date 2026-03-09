@@ -14,6 +14,26 @@ const fileArrayBufferMock = vi.fn(
   async () => new TextEncoder().encode("candidate-cv").buffer,
 );
 vi.stubGlobal("fetch", fetchMock);
+const INTERVIEW_TOKEN = "interview-token-123";
+const INTERVIEW_REGISTRATION = {
+  interview_id: "77777777-7777-4777-8777-777777777777",
+  vacancy_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  vacancy_title: "Backend Engineer",
+  status: "awaiting_candidate_confirmation",
+  calendar_sync_status: "synced",
+  schedule_version: 1,
+  scheduled_start_at: "2026-03-12T07:00:00Z",
+  scheduled_end_at: "2026-03-12T08:00:00Z",
+  timezone: "Europe/Minsk",
+  location_kind: "google_meet",
+  location_details: "https://meet.google.com/test-room",
+  candidate_response_status: "pending",
+  candidate_response_note: null,
+  candidate_token_expires_at: "2026-03-12T20:00:00Z",
+  cancelled_by: null,
+  cancel_reason_code: null,
+  updated_at: "2026-03-09T10:00:00Z",
+};
 
 Object.defineProperty(window, "crypto", {
   value: webcrypto,
@@ -33,6 +53,72 @@ function renderCandidatePage(pathname = "/candidate") {
         <CandidatePage />
       </QueryClientProvider>
     </MemoryRouter>,
+  );
+}
+
+function installCandidateInterviewFetchMock({
+  getResponse = jsonResponse(INTERVIEW_REGISTRATION),
+  confirmResponse = jsonResponse({
+    ...INTERVIEW_REGISTRATION,
+    status: "confirmed",
+    candidate_response_status: "confirmed",
+  }),
+  rescheduleResponse = jsonResponse({
+    ...INTERVIEW_REGISTRATION,
+    status: "reschedule_requested",
+    candidate_response_status: "reschedule_requested",
+    candidate_response_note: "Need a later slot",
+  }),
+  cancelResponse = jsonResponse({
+    ...INTERVIEW_REGISTRATION,
+    status: "cancelled",
+    candidate_response_status: "declined",
+    candidate_response_note: "Cannot attend",
+    cancelled_by: "candidate",
+    cancel_reason_code: "candidate_declined",
+  }),
+}: {
+  getResponse?: Promise<Response>;
+  confirmResponse?: Promise<Response>;
+  rescheduleResponse?: Promise<Response>;
+  cancelResponse?: Promise<Response>;
+} = {}) {
+  fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+    const url = String(input);
+    const method = init?.method ?? "GET";
+    const encodedToken = encodeURIComponent(INTERVIEW_TOKEN);
+
+    if (url.endsWith(`/api/v1/public/interview-registrations/${encodedToken}`) && method === "GET") {
+      return getResponse;
+    }
+    if (
+      url.endsWith(`/api/v1/public/interview-registrations/${encodedToken}/confirm`)
+      && method === "POST"
+    ) {
+      return confirmResponse;
+    }
+    if (
+      url.endsWith(`/api/v1/public/interview-registrations/${encodedToken}/request-reschedule`)
+      && method === "POST"
+    ) {
+      return rescheduleResponse;
+    }
+    if (
+      url.endsWith(`/api/v1/public/interview-registrations/${encodedToken}/cancel`)
+      && method === "POST"
+    ) {
+      return cancelResponse;
+    }
+    return Promise.resolve(new Response("not-found", { status: 404 }));
+  });
+}
+
+function jsonResponse(payload: unknown, status = 200): Promise<Response> {
+  return Promise.resolve(
+    new Response(JSON.stringify(payload), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    }),
   );
 }
 
@@ -246,4 +332,84 @@ describe("CandidatePage", () => {
       await screen.findByText(/уже было отправлено на выбранную вакансию/i),
     ).toBeDefined();
   });
+
+  it("renders localized invalid-link state for mixed vacancy and interview params", async () => {
+    renderCandidatePage(
+      `/candidate?vacancyId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa&interviewToken=${INTERVIEW_TOKEN}`,
+    );
+
+    expect(
+      await screen.findByText(/ссылка некорректна: одновременно переданы параметры вакансии и интервью/i),
+    ).toBeDefined();
+  });
+
+  it("confirms interview attendance in candidate token mode", async () => {
+    installCandidateInterviewFetchMock();
+
+    renderCandidatePage(`/candidate?interviewToken=${INTERVIEW_TOKEN}`);
+
+    expect(await screen.findByText(/регистрация на интервью/i)).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: /подтвердить/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/участие в интервью подтверждено/i)).toBeDefined();
+      expect(screen.getAllByText(/^подтверждено$/i).length).toBeGreaterThan(0);
+    });
+  });
+
+  it("requests interview reschedule and persists candidate note", async () => {
+    installCandidateInterviewFetchMock();
+
+    renderCandidatePage(`/candidate?interviewToken=${INTERVIEW_TOKEN}`);
+
+    await screen.findByText(/регистрация на интервью/i);
+    fireEvent.change(screen.getByLabelText(/комментарий/i), {
+      target: { value: "Need a later slot" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /запросить перенос/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/запрос на перенос отправлен/i)).toBeDefined();
+      expect(screen.getByText(/последний комментарий: need a later slot/i)).toBeDefined();
+    });
+  });
+
+  it("declines interview invitation in candidate token mode", async () => {
+    installCandidateInterviewFetchMock();
+
+    renderCandidatePage(`/candidate?interviewToken=${INTERVIEW_TOKEN}`);
+
+    await screen.findByText(/регистрация на интервью/i);
+    fireEvent.change(screen.getByLabelText(/комментарий/i), {
+      target: { value: "Cannot attend" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /отклонить/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/приглашение на интервью отклонено/i)).toBeDefined();
+      expect(screen.getAllByText(/^отменено$/i).length).toBeGreaterThan(0);
+    });
+  });
+
+  it.each([
+    [404, "interview_registration_not_found", /ссылка на регистрацию интервью не найдена/i],
+    [
+      409,
+      "interview_state_does_not_allow_confirmation",
+      /текущее состояние интервью больше не позволяет это действие/i,
+    ],
+    [410, "interview_registration_token_expired", /срок действия ссылки на регистрацию интервью истёк/i],
+    [422, "validation_failed", /данные ответа на интервью не прошли валидацию/i],
+  ])(
+    "renders localized interview token error for status %s",
+    async (statusCode, detail, expectedText) => {
+      installCandidateInterviewFetchMock({
+        getResponse: jsonResponse({ detail }, statusCode),
+      });
+
+      renderCandidatePage(`/candidate?interviewToken=${INTERVIEW_TOKEN}`);
+
+      expect(await screen.findByText(expectedText)).toBeDefined();
+    },
+  );
 });

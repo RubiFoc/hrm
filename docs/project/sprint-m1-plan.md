@@ -21,14 +21,14 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 | `TASK-04-01/02/03 + TASK-11-07` | implemented/local-scoring-slice | Dedicated scoring backend and shortlist review block are present in repo with frozen contract and compose/runtime wiring |
 | `TASK-11-10` | implemented/local-observability-slice | Critical-route Sentry tags, shared HTTP failure capture, render boundary, and release/env tracing config are present in repo |
 | `TASK-13-01/02` | implemented/local-compliance-slice | Article-level control mapping and evidence registry are present in repo and linked to real artifacts |
-| `TASK-11-08` | planned/spec-complete | Decision-complete interview planning is now documented in `docs/project/interview-planning-pass.md`; implementation is still pending |
+| `TASK-11-08` | implemented/local-interview-slice | Interview scheduling and candidate registration are now implemented against `docs/project/interview-planning-pass.md`, including HR controls on `/`, public token registration on `/candidate`, and free-mode Google Calendar sync via shared interviewer calendars |
 
 ## Scope Normalization
 - The original M1 sprint text stopped at FE-9, but the repo now contains a broader local acceptance baseline: `TASK-11-05`, `TASK-11-06`, `TASK-11-09`, and `TASK-11-11` are no longer future-only scope.
 - Immediate follow-on work must not reopen auth, CORS, routing topology, or transport architecture.
 - The scoring/shortlist-review track is now implemented in repo as one backend+frontend slice.
-- The current approved local diff is limited to the `TASK-11-08` planning-only documentation slice.
-- Interview scheduling implementation remains deferred until a dedicated implementation branch follows `docs/project/interview-planning-pass.md`.
+- The current approved local diff includes the `TASK-11-08` backend+frontend interview scheduling and candidate-registration slice.
+- Interview scheduling is no longer deferred; follow-on interview work is now limited to explicitly out-of-scope items such as notifications and structured feedback.
 
 ## Phase 0 Merge Gate
 - The current baseline PR must keep exactly this scope:
@@ -50,14 +50,14 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
   - `./scripts/smoke-compose.sh`
 - After merge, sync local `main` before starting the next implementation increment.
 
-## Approved Immediate Follow-On Slice
-- Implement the next `TASK-11-08` slice from the planning baseline in `docs/project/interview-planning-pass.md`.
-- Slice rules:
+## Approved Follow-On Constraint
+- `TASK-11-08` is now implemented from the planning baseline in `docs/project/interview-planning-pass.md`.
+- The preserved slice rules remain:
   - keep HR interview controls on `/`;
   - keep candidate interview registration on `/candidate?interviewToken=<token>`;
-  - do not introduce candidate auth, new CORS behavior, or notification-service scope;
+  - do not introduce candidate auth, new CORS behavior, or notification-service scope in this slice;
   - freeze OpenAPI and generated frontend types in the same change.
-- This planning pass itself remains docs-only and introduces no runtime or API changes.
+- Any further interview-domain work must build on this implemented baseline instead of reopening route or transport scope.
 
 ## Team Roles
 - architect

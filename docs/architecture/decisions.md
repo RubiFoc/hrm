@@ -472,7 +472,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 ## ADR-0029
 - Context: Interview scheduling was the next business gap after scoring/observability/compliance, but implementation remained blocked by missing product rules around entity lifecycle, candidate identity, reschedule/cancel semantics, and Google Calendar conflicts. The repository also has no candidate auth or notification service, so the interview slice needed an implementation-safe baseline that works with existing route and transport constraints.
 - Decision:
-  - Freeze the planning baseline in `docs/project/interview-planning-pass.md` before any interview implementation work starts.
+  - Freeze the planning baseline in `docs/project/interview-planning-pass.md` before interview implementation starts, then implement the slice against that frozen scope without reopening auth, CORS, or route topology.
   - Keep one non-terminal interview per `vacancy_id + candidate_id`; use `schedule_version` on the same row for reschedules.
   - Keep candidate access anonymous through a public opaque invitation token stored hashed in the backend and bound to `interview_id + schedule_version`.
   - Keep the existing route topology:
@@ -480,9 +480,14 @@ Use this log for decisions that change interfaces, data models, deployment topol
     - candidate interview registration extends `/candidate` through `?interviewToken=<token>`
   - Do not introduce candidate auth, new CORS rules, or a new route tree in the interview slice.
   - Separate business interview state from calendar execution state:
-    - interview `status`: `pending_sync`, `awaiting_candidate_confirmation`, `confirmed`, `reschedule_requested`, `cancelled`, `completed`
+    - interview `status`: `pending_sync`, `awaiting_candidate_confirmation`, `confirmed`, `reschedule_requested`, `cancelled`
     - `calendar_sync_status`: `queued`, `running`, `synced`, `conflict`, `failed`
-  - Treat Google Calendar sync as staff-calendar orchestration only for the next slice; candidate invitation delivery remains manual through `candidate_invite_url` until a notification service exists.
+  - Implement Google Calendar sync in the next slice as staff-calendar orchestration only:
+    - use a service-account JSON key
+    - map interviewer staff UUIDs to calendars configured in environment
+    - require each interviewer calendar to be manually shared with the service account
+    - do not rely on Google guest invitations or `attendees[]`
+  - Keep candidate invitation delivery manual through `candidate_invite_url` until a notification service exists.
   - Freeze the minimal public/backend API set around:
     - HR create/list/get/reschedule/cancel/resend-invite endpoints
     - public token read/confirm/request-reschedule/cancel endpoints
@@ -490,4 +495,5 @@ Use this log for decisions that change interfaces, data models, deployment topol
 - Consequences:
   - Interview implementation can proceed without the implementer making hidden product decisions.
   - Existing anonymous candidate transport assumptions remain intact.
-  - Notification delivery is intentionally deferred, so the next slice remains feasible in local-stage scope.
+  - Free-mode calendar access is operationally simple but depends on manual sharing and explicit staff-to-calendar configuration.
+  - Notification delivery is intentionally deferred, so the slice remains feasible in local-stage scope.

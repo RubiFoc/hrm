@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
@@ -23,15 +23,23 @@ import { useTranslation } from "react-i18next";
 
 import {
   ApiError,
+  cancelInterview,
+  createInterview,
   createMatchScore,
   createPipelineTransition,
   createVacancy,
+  listInterviews,
   getMatchScore,
   listCandidateProfiles,
   listPipelineTransitions,
   listVacancies,
+  resendInterviewInvite,
+  rescheduleInterview,
   updateVacancy,
   type CandidateResponse,
+  type HRInterviewListResponse,
+  type HRInterviewResponse,
+  type InterviewStatus,
   type MatchScoreResponse,
   type PipelineTransitionCreateRequest,
   type VacancyCreateRequest,
@@ -59,6 +67,15 @@ type FeedbackState = {
 
 type VacancyDraft = VacancyCreateRequest;
 type MatchScoreStatus = MatchScoreResponse["status"];
+type InterviewDraft = {
+  scheduledStartLocal: string;
+  scheduledEndLocal: string;
+  timezone: string;
+  locationKind: "google_meet" | "onsite" | "phone";
+  locationDetails: string;
+  interviewerStaffIdsInput: string;
+  cancelReasonCode: string;
+};
 
 const DEFAULT_VACANCY_DRAFT: VacancyDraft = {
   title: "",
@@ -66,6 +83,8 @@ const DEFAULT_VACANCY_DRAFT: VacancyDraft = {
   department: "",
   status: "open",
 };
+const INTERVIEW_POLL_INTERVAL_MS = 1000;
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
  * Staff recruitment workspace for vacancy CRUD and pipeline control.
@@ -85,8 +104,16 @@ export function HrDashboardPage() {
   const [transitionReason, setTransitionReason] = useState("");
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [scoreFeedback, setScoreFeedback] = useState<FeedbackState | null>(null);
+  const [interviewFeedback, setInterviewFeedback] = useState<FeedbackState | null>(null);
+  const [interviewDraft, setInterviewDraft] = useState<InterviewDraft>(createEmptyInterviewDraft);
   const matchScoreQueryKey = [
     "hr-match-score",
+    accessToken,
+    selectedVacancyId,
+    selectedCandidateId,
+  ];
+  const interviewsQueryKey = [
+    "hr-interviews",
     accessToken,
     selectedVacancyId,
     selectedCandidateId,
@@ -127,6 +154,27 @@ export function HrDashboardPage() {
       const item = query.state.data as MatchScoreResponse | null | undefined;
       if (item && (item.status === "queued" || item.status === "running")) {
         return MATCH_SCORE_POLL_INTERVAL_MS;
+      }
+      return false;
+    },
+  });
+
+  const interviewsQuery = useQuery({
+    queryKey: interviewsQueryKey,
+    queryFn: () =>
+      listInterviews(accessToken!, selectedVacancyId, {
+        candidateId: selectedCandidateId,
+      }),
+    enabled: Boolean(accessToken && selectedVacancyId && selectedCandidateId),
+    refetchInterval: (query) => {
+      const payload = query.state.data as HRInterviewListResponse | undefined;
+      const interview = selectInterviewState(payload?.items ?? []).latest;
+      if (
+        interview
+        && (interview.calendar_sync_status === "queued"
+          || interview.calendar_sync_status === "running")
+      ) {
+        return INTERVIEW_POLL_INTERVAL_MS;
       }
       return false;
     },
@@ -187,6 +235,76 @@ export function HrDashboardPage() {
     },
   });
 
+  const createInterviewMutation = useMutation({
+    mutationFn: () =>
+      createInterview(
+        accessToken!,
+        selectedVacancyId,
+        buildInterviewCreatePayload(interviewDraft, selectedCandidateId, t),
+      ),
+    onSuccess: (payload) => {
+      setInterviewFeedback({ type: "success", message: t("hrDashboard.interviews.createSuccess") });
+      queryClient.setQueryData(interviewsQueryKey, { items: [payload] });
+      void queryClient.invalidateQueries({ queryKey: interviewsQueryKey });
+    },
+    onError: (error: unknown) => {
+      setInterviewFeedback({ type: "error", message: resolveInterviewApiError(error, t) });
+    },
+  });
+
+  const rescheduleInterviewMutation = useMutation({
+    mutationFn: (interviewId: string) =>
+      rescheduleInterview(
+        accessToken!,
+        selectedVacancyId,
+        interviewId,
+        buildInterviewReschedulePayload(interviewDraft, t),
+      ),
+    onSuccess: (payload) => {
+      setInterviewFeedback({
+        type: "success",
+        message: t("hrDashboard.interviews.rescheduleSuccess"),
+      });
+      queryClient.setQueryData(interviewsQueryKey, { items: [payload] });
+      void queryClient.invalidateQueries({ queryKey: interviewsQueryKey });
+    },
+    onError: (error: unknown) => {
+      setInterviewFeedback({ type: "error", message: resolveInterviewApiError(error, t) });
+    },
+  });
+
+  const cancelInterviewMutation = useMutation({
+    mutationFn: (interviewId: string) =>
+      cancelInterview(accessToken!, selectedVacancyId, interviewId, {
+        cancel_reason_code: normalizeInput(interviewDraft.cancelReasonCode)
+          ?? "cancelled_by_staff",
+      }),
+    onSuccess: (payload) => {
+      setInterviewFeedback({ type: "success", message: t("hrDashboard.interviews.cancelSuccess") });
+      queryClient.setQueryData(interviewsQueryKey, { items: [payload] });
+      void queryClient.invalidateQueries({ queryKey: interviewsQueryKey });
+    },
+    onError: (error: unknown) => {
+      setInterviewFeedback({ type: "error", message: resolveInterviewApiError(error, t) });
+    },
+  });
+
+  const resendInterviewInviteMutation = useMutation({
+    mutationFn: (interviewId: string) =>
+      resendInterviewInvite(accessToken!, selectedVacancyId, interviewId),
+    onSuccess: (payload) => {
+      setInterviewFeedback({
+        type: "success",
+        message: t("hrDashboard.interviews.resendSuccess"),
+      });
+      queryClient.setQueryData(interviewsQueryKey, { items: [payload] });
+      void queryClient.invalidateQueries({ queryKey: interviewsQueryKey });
+    },
+    onError: (error: unknown) => {
+      setInterviewFeedback({ type: "error", message: resolveInterviewApiError(error, t) });
+    },
+  });
+
   const vacancyItems = vacanciesQuery.data?.items ?? [];
   const candidateItems = candidatesQuery.data?.items ?? [];
   const selectedVacancy =
@@ -194,12 +312,25 @@ export function HrDashboardPage() {
   const selectedCandidate =
     candidateItems.find((item) => item.candidate_id === selectedCandidateId) ?? null;
   const matchScore = matchScoreQuery.data ?? null;
+  const interviewItems = interviewsQuery.data?.items ?? [];
+  const interviewState = selectInterviewState(interviewItems);
+  const activeInterview = interviewState.active;
+  const latestInterview = interviewState.latest;
+
+  useEffect(() => {
+    if (!latestInterview) {
+      setInterviewDraft(createEmptyInterviewDraft());
+      return;
+    }
+    setInterviewDraft(buildInterviewDraftFromResponse(latestInterview));
+  }, [latestInterview]);
 
   const handleSelectVacancy = (vacancy: VacancyResponse) => {
     setSelectedVacancyId(vacancy.vacancy_id);
     setEditDraft(toVacancyDraft(vacancy));
     setFeedback(null);
     setScoreFeedback(null);
+    setInterviewFeedback(null);
   };
 
   const handleCreateVacancy = () => {
@@ -239,6 +370,7 @@ export function HrDashboardPage() {
   const handleSelectCandidate = (candidateId: string) => {
     setSelectedCandidateId(candidateId);
     setScoreFeedback(null);
+    setInterviewFeedback(null);
   };
 
   const handleRunScore = () => {
@@ -251,6 +383,54 @@ export function HrDashboardPage() {
     }
     setScoreFeedback(null);
     runScoreMutation.mutate();
+  };
+
+  const handleCreateInterview = () => {
+    if (!selectedVacancyId || !selectedCandidateId) {
+      setInterviewFeedback({
+        type: "error",
+        message: t("hrDashboard.interviews.errors.selectContext"),
+      });
+      return;
+    }
+    setInterviewFeedback(null);
+    createInterviewMutation.mutate();
+  };
+
+  const handleRescheduleInterview = () => {
+    if (!activeInterview) {
+      setInterviewFeedback({
+        type: "error",
+        message: t("hrDashboard.interviews.errors.noActiveInterview"),
+      });
+      return;
+    }
+    setInterviewFeedback(null);
+    rescheduleInterviewMutation.mutate(activeInterview.interview_id);
+  };
+
+  const handleCancelInterview = () => {
+    if (!activeInterview) {
+      setInterviewFeedback({
+        type: "error",
+        message: t("hrDashboard.interviews.errors.noActiveInterview"),
+      });
+      return;
+    }
+    setInterviewFeedback(null);
+    cancelInterviewMutation.mutate(activeInterview.interview_id);
+  };
+
+  const handleResendInterviewInvite = () => {
+    if (!activeInterview) {
+      setInterviewFeedback({
+        type: "error",
+        message: t("hrDashboard.interviews.errors.noActiveInterview"),
+      });
+      return;
+    }
+    setInterviewFeedback(null);
+    resendInterviewInviteMutation.mutate(activeInterview.interview_id);
   };
 
   if (!accessToken) {
@@ -684,6 +864,286 @@ export function HrDashboardPage() {
           ) : null}
         </Stack>
       </Paper>
+
+      <Paper sx={{ p: 2 }}>
+        <Stack spacing={2}>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            justifyContent="space-between"
+            alignItems={{ xs: "stretch", md: "center" }}
+          >
+            <Stack spacing={1}>
+              <Typography variant="h6">{t("hrDashboard.interviews.title")}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("hrDashboard.interviews.subtitle")}
+              </Typography>
+            </Stack>
+            {!activeInterview ? (
+              <Button
+                variant="contained"
+                onClick={handleCreateInterview}
+                disabled={
+                  !selectedVacancyId || !selectedCandidateId || createInterviewMutation.isPending
+                }
+              >
+                {createInterviewMutation.isPending
+                  ? t("hrDashboard.interviews.createPending")
+                  : t("hrDashboard.interviews.createAction")}
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                onClick={handleRescheduleInterview}
+                disabled={rescheduleInterviewMutation.isPending}
+              >
+                {rescheduleInterviewMutation.isPending
+                  ? t("hrDashboard.interviews.reschedulePending")
+                  : t("hrDashboard.interviews.rescheduleAction")}
+              </Button>
+            )}
+          </Stack>
+
+          {interviewFeedback ? (
+            <Alert severity={interviewFeedback.type}>{interviewFeedback.message}</Alert>
+          ) : null}
+
+          {!selectedVacancy || !selectedCandidate ? (
+            <Alert severity="info">{t("hrDashboard.interviews.inactive")}</Alert>
+          ) : null}
+
+          {selectedVacancy && selectedCandidate ? (
+            <Stack spacing={2}>
+              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                <TextField
+                  label={t("hrDashboard.interviews.fields.start")}
+                  type="datetime-local"
+                  value={interviewDraft.scheduledStartLocal}
+                  onChange={(event) =>
+                    setInterviewDraft((prev) => ({
+                      ...prev,
+                      scheduledStartLocal: event.target.value,
+                    }))
+                  }
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                />
+                <TextField
+                  label={t("hrDashboard.interviews.fields.end")}
+                  type="datetime-local"
+                  value={interviewDraft.scheduledEndLocal}
+                  onChange={(event) =>
+                    setInterviewDraft((prev) => ({
+                      ...prev,
+                      scheduledEndLocal: event.target.value,
+                    }))
+                  }
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Stack>
+
+              <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                <TextField
+                  label={t("hrDashboard.interviews.fields.timezone")}
+                  value={interviewDraft.timezone}
+                  onChange={(event) =>
+                    setInterviewDraft((prev) => ({
+                      ...prev,
+                      timezone: event.target.value,
+                    }))
+                  }
+                  fullWidth
+                />
+                <TextField
+                  select
+                  label={t("hrDashboard.interviews.fields.locationKind")}
+                  value={interviewDraft.locationKind}
+                  onChange={(event) =>
+                    setInterviewDraft((prev) => ({
+                      ...prev,
+                      locationKind: event.target.value as InterviewDraft["locationKind"],
+                    }))
+                  }
+                  fullWidth
+                  SelectProps={{ native: true }}
+                >
+                  <option value="google_meet">
+                    {t("hrDashboard.interviews.locationKind.google_meet")}
+                  </option>
+                  <option value="onsite">
+                    {t("hrDashboard.interviews.locationKind.onsite")}
+                  </option>
+                  <option value="phone">
+                    {t("hrDashboard.interviews.locationKind.phone")}
+                  </option>
+                </TextField>
+              </Stack>
+
+              <TextField
+                label={t("hrDashboard.interviews.fields.locationDetails")}
+                value={interviewDraft.locationDetails}
+                onChange={(event) =>
+                  setInterviewDraft((prev) => ({
+                    ...prev,
+                    locationDetails: event.target.value,
+                  }))
+                }
+                multiline
+                minRows={2}
+              />
+              <TextField
+                label={t("hrDashboard.interviews.fields.interviewerStaffIds")}
+                value={interviewDraft.interviewerStaffIdsInput}
+                onChange={(event) =>
+                  setInterviewDraft((prev) => ({
+                    ...prev,
+                    interviewerStaffIdsInput: event.target.value,
+                  }))
+                }
+                helperText={t("hrDashboard.interviews.fields.interviewerStaffIdsHelp")}
+              />
+              <TextField
+                label={t("hrDashboard.interviews.fields.cancelReasonCode")}
+                value={interviewDraft.cancelReasonCode}
+                onChange={(event) =>
+                  setInterviewDraft((prev) => ({
+                    ...prev,
+                    cancelReasonCode: event.target.value,
+                  }))
+                }
+                helperText={t("hrDashboard.interviews.fields.cancelReasonCodeHelp")}
+              />
+
+              {interviewsQuery.isLoading && !latestInterview ? (
+                <Typography variant="body2">{t("hrDashboard.interviews.loading")}</Typography>
+              ) : null}
+              {interviewsQuery.isError ? (
+                <Alert severity="error">
+                  {resolveInterviewApiError(interviewsQuery.error, t)}
+                </Alert>
+              ) : null}
+              {!interviewsQuery.isError && !interviewsQuery.isLoading && !latestInterview ? (
+                <Alert severity="info">{t("hrDashboard.interviews.empty")}</Alert>
+              ) : null}
+
+              {latestInterview ? (
+                <Stack spacing={2}>
+                  <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={1}
+                    alignItems={{ xs: "flex-start", md: "center" }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      {t("hrDashboard.interviews.statusLabel")}
+                    </Typography>
+                    <Chip
+                      size="small"
+                      label={t(`hrDashboard.interviews.status.${latestInterview.status}`)}
+                      color={resolveInterviewStatusChipColor(latestInterview.status)}
+                    />
+                    <Chip
+                      size="small"
+                      label={t(
+                        `hrDashboard.interviews.syncStatus.${latestInterview.calendar_sync_status}`,
+                      )}
+                      color={resolveInterviewSyncChipColor(latestInterview.calendar_sync_status)}
+                    />
+                    <Typography variant="body2" color="text.secondary">
+                      {t("hrDashboard.interviews.scheduleVersion", {
+                        value: latestInterview.schedule_version,
+                      })}
+                    </Typography>
+                  </Stack>
+
+                  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                    <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                      <Typography variant="subtitle2">
+                        {t("hrDashboard.interviews.fields.start")}
+                      </Typography>
+                      <Typography variant="body2">
+                        {formatInterviewDateTime(
+                          latestInterview.scheduled_start_at,
+                          latestInterview.timezone,
+                        )}
+                      </Typography>
+                    </Paper>
+                    <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                      <Typography variant="subtitle2">
+                        {t("hrDashboard.interviews.fields.end")}
+                      </Typography>
+                      <Typography variant="body2">
+                        {formatInterviewDateTime(
+                          latestInterview.scheduled_end_at,
+                          latestInterview.timezone,
+                        )}
+                      </Typography>
+                    </Paper>
+                    <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                      <Typography variant="subtitle2">
+                        {t("hrDashboard.interviews.fields.timezone")}
+                      </Typography>
+                      <Typography variant="body2">{latestInterview.timezone}</Typography>
+                    </Paper>
+                  </Stack>
+
+                  <Paper variant="outlined" sx={{ p: 2 }}>
+                    <Stack spacing={1}>
+                      <Typography variant="subtitle2">
+                        {t("hrDashboard.interviews.fields.locationDetails")}
+                      </Typography>
+                      <Typography variant="body2">
+                        {latestInterview.location_details
+                          || t("hrDashboard.interviews.noLocationDetails")}
+                      </Typography>
+                      {latestInterview.candidate_invite_url ? (
+                        <TextField
+                          label={t("hrDashboard.interviews.fields.inviteUrl")}
+                          value={latestInterview.candidate_invite_url}
+                          InputProps={{ readOnly: true }}
+                          fullWidth
+                        />
+                      ) : null}
+                      {latestInterview.candidate_token_expires_at ? (
+                        <Typography variant="body2" color="text.secondary">
+                          {t("hrDashboard.interviews.tokenExpiresAt", {
+                            value: formatInterviewDateTime(
+                              latestInterview.candidate_token_expires_at,
+                              latestInterview.timezone,
+                            ),
+                          })}
+                        </Typography>
+                      ) : null}
+                    </Stack>
+                  </Paper>
+
+                  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      onClick={handleCancelInterview}
+                      disabled={!activeInterview || cancelInterviewMutation.isPending}
+                    >
+                      {cancelInterviewMutation.isPending
+                        ? t("hrDashboard.interviews.cancelPending")
+                        : t("hrDashboard.interviews.cancelAction")}
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={handleResendInterviewInvite}
+                      disabled={!activeInterview || resendInterviewInviteMutation.isPending}
+                    >
+                      {resendInterviewInviteMutation.isPending
+                        ? t("hrDashboard.interviews.resendPending")
+                        : t("hrDashboard.interviews.resendAction")}
+                    </Button>
+                  </Stack>
+                </Stack>
+              ) : null}
+            </Stack>
+          ) : null}
+        </Stack>
+      </Paper>
     </Stack>
   );
 }
@@ -787,10 +1247,125 @@ function normalizeInput(value: string): string | null {
   return normalized ? normalized : null;
 }
 
+function createEmptyInterviewDraft(): InterviewDraft {
+  return {
+    scheduledStartLocal: "",
+    scheduledEndLocal: "",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    locationKind: "google_meet",
+    locationDetails: "",
+    interviewerStaffIdsInput: "",
+    cancelReasonCode: "cancelled_by_staff",
+  };
+}
+
+function buildInterviewDraftFromResponse(interview: HRInterviewResponse): InterviewDraft {
+  return {
+    scheduledStartLocal: toDateTimeLocalValue(interview.scheduled_start_at),
+    scheduledEndLocal: toDateTimeLocalValue(interview.scheduled_end_at),
+    timezone: interview.timezone,
+    locationKind: interview.location_kind,
+    locationDetails: interview.location_details ?? "",
+    interviewerStaffIdsInput: interview.interviewer_staff_ids.join(", "),
+    cancelReasonCode: interview.cancel_reason_code ?? "cancelled_by_staff",
+  };
+}
+
+function buildInterviewCreatePayload(
+  draft: InterviewDraft,
+  candidateId: string,
+  t: (key: string) => string,
+) {
+  const basePayload = buildInterviewSchedulePayload(draft, t);
+  return {
+    ...basePayload,
+    candidate_id: candidateId,
+  };
+}
+
+function buildInterviewReschedulePayload(
+  draft: InterviewDraft,
+  t: (key: string) => string,
+) {
+  return buildInterviewSchedulePayload(draft, t);
+}
+
+function buildInterviewSchedulePayload(
+  draft: InterviewDraft,
+  t: (key: string) => string,
+) {
+  const interviewerStaffIds = parseInterviewerStaffIds(draft.interviewerStaffIdsInput);
+  if (!draft.scheduledStartLocal || !draft.scheduledEndLocal) {
+    throw new Error(t("hrDashboard.interviews.errors.missingScheduleWindow"));
+  }
+  if (interviewerStaffIds.length === 0) {
+    throw new Error(t("hrDashboard.interviews.errors.invalidInterviewerIds"));
+  }
+  return {
+    scheduled_start_local: draft.scheduledStartLocal,
+    scheduled_end_local: draft.scheduledEndLocal,
+    timezone: draft.timezone.trim(),
+    location_kind: draft.locationKind,
+    location_details: normalizeInput(draft.locationDetails),
+    interviewer_staff_ids: interviewerStaffIds,
+  };
+}
+
+function parseInterviewerStaffIds(value: string): string[] {
+  const items = value
+    .split(/[\n,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (items.some((item) => !UUID_PATTERN.test(item))) {
+    return [];
+  }
+  return Array.from(new Set(items));
+}
+
+function toDateTimeLocalValue(value: string): string {
+  const item = new Date(value);
+  if (Number.isNaN(item.getTime())) {
+    return "";
+  }
+  const year = item.getFullYear();
+  const month = String(item.getMonth() + 1).padStart(2, "0");
+  const day = String(item.getDate()).padStart(2, "0");
+  const hours = String(item.getHours()).padStart(2, "0");
+  const minutes = String(item.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+function formatInterviewDateTime(value: string, timezone: string): string {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: timezone,
+    }).format(new Date(value));
+  } catch {
+    return new Date(value).toLocaleString();
+  }
+}
+
+function selectInterviewState(items: HRInterviewResponse[]): {
+  active: HRInterviewResponse | null;
+  latest: HRInterviewResponse | null;
+} {
+  const active =
+    items.find((item) => item.status !== "cancelled") ?? null;
+  return {
+    active,
+    latest: active ?? items[0] ?? null,
+  };
+}
+
 function resolveRecruitmentApiError(
   error: unknown,
   t: (key: string) => string,
 ): string {
+  if (error instanceof Error && !(error instanceof ApiError)) {
+    return error.message;
+  }
   if (error instanceof ApiError) {
     const detail = error.detail.toLowerCase();
     if (detail.includes("vacancy not found")) {
@@ -814,4 +1389,80 @@ function resolveRecruitmentApiError(
     }
   }
   return t("hrDashboard.errors.generic");
+}
+
+function resolveInterviewApiError(
+  error: unknown,
+  t: (key: string) => string,
+): string {
+  if (error instanceof Error && !(error instanceof ApiError)) {
+    return error.message;
+  }
+  if (error instanceof ApiError) {
+    const detail = error.detail.toLowerCase();
+    if (detail.includes("calendar_not_configured")) {
+      return t("hrDashboard.interviews.errors.calendarNotConfigured");
+    }
+    if (detail.includes("interviewer_calendar_not_configured")) {
+      return t("hrDashboard.interviews.errors.interviewerCalendarNotConfigured");
+    }
+    if (detail.includes("active_interview_already_exists")) {
+      return t("hrDashboard.interviews.errors.activeInterviewAlreadyExists");
+    }
+    if (detail.includes("invalid_pipeline_stage")) {
+      return t("hrDashboard.interviews.errors.invalidPipelineStage");
+    }
+    if (detail.includes("duplicate_interviewer_list")) {
+      return t("hrDashboard.interviews.errors.duplicateInterviewers");
+    }
+    if (detail.includes("interview_terminal")) {
+      return t("hrDashboard.interviews.errors.interviewTerminal");
+    }
+    if (detail.includes("invite_not_available")) {
+      return t("hrDashboard.interviews.errors.inviteNotAvailable");
+    }
+    const statusMessage = t(`hrDashboard.interviews.errors.http_${error.status}`);
+    if (statusMessage !== `hrDashboard.interviews.errors.http_${error.status}`) {
+      return statusMessage;
+    }
+  }
+  return t("hrDashboard.interviews.errors.generic");
+}
+
+function resolveInterviewStatusChipColor(
+  status: InterviewStatus,
+): "default" | "error" | "info" | "success" | "warning" {
+  switch (status) {
+    case "pending_sync":
+      return "info";
+    case "awaiting_candidate_confirmation":
+      return "warning";
+    case "confirmed":
+      return "success";
+    case "reschedule_requested":
+      return "warning";
+    case "cancelled":
+      return "error";
+    default:
+      return "default";
+  }
+}
+
+function resolveInterviewSyncChipColor(
+  status: HRInterviewResponse["calendar_sync_status"],
+): "default" | "error" | "info" | "success" | "warning" {
+  switch (status) {
+    case "queued":
+      return "info";
+    case "running":
+      return "warning";
+    case "synced":
+      return "success";
+    case "conflict":
+      return "warning";
+    case "failed":
+      return "error";
+    default:
+      return "default";
+  }
 }

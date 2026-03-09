@@ -27,6 +27,10 @@ class AppSettings(BaseSettings):
         object_storage_bucket: Object storage bucket for documents.
         ollama_base_url: Ollama API base URL.
         google_calendar_enabled: Google Calendar integration feature flag.
+        google_calendar_service_account_key_path:
+            Filesystem path to Google service-account JSON key used for interview sync.
+        interview_staff_calendar_map:
+            Mapping from staff UUID to shared Google Calendar identifier.
         jwt_secret: JWT secret key.
         jwt_algorithm: JWT algorithm.
         access_token_ttl_seconds: Access token ttl in seconds.
@@ -40,6 +44,11 @@ class AppSettings(BaseSettings):
         match_scoring_model_name: Ollama model identifier used for match scoring.
         match_scoring_request_timeout_seconds: Timeout for one Ollama scoring request.
         match_scoring_queue_name: Celery queue name used for match scoring tasks.
+        interview_sync_queue_name: Celery queue name used for interview sync tasks.
+        interview_public_token_secret:
+            Optional dedicated HMAC secret for public interview registration tokens.
+        public_frontend_base_url:
+            Frontend base URL used to construct candidate invite links.
         employee_key_ttl_seconds: Default ttl for one-time employee registration keys.
         cors_allowed_origins: Allowed browser origins for credentialed API CORS requests.
         public_apply_rate_limit_redis_prefix: Redis key prefix for public apply rate limits.
@@ -85,6 +94,14 @@ class AppSettings(BaseSettings):
     )
     ollama_base_url: str = Field(default="http://host.docker.internal:11434", env="OLLAMA_BASE_URL")
     google_calendar_enabled: bool = Field(default=False, env="GOOGLE_CALENDAR_ENABLED")
+    google_calendar_service_account_key_path: str | None = Field(
+        default=None,
+        env="GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_PATH",
+    )
+    interview_staff_calendar_map: dict[str, str] = Field(
+        default_factory=dict,
+        env="INTERVIEW_STAFF_CALENDAR_MAP_JSON",
+    )
     jwt_secret: str = Field(default="hrm-dev-secret-change-me", env="HRM_JWT_SECRET")
     jwt_algorithm: str = Field(default="HS256", env="HRM_JWT_ALGORITHM")
     access_token_ttl_seconds: int = Field(default=15 * 60, env="HRM_ACCESS_TOKEN_TTL_SECONDS", gt=0)
@@ -118,6 +135,18 @@ class AppSettings(BaseSettings):
     match_scoring_queue_name: str = Field(
         default="match_scoring",
         env="MATCH_SCORING_QUEUE_NAME",
+    )
+    interview_sync_queue_name: str = Field(
+        default="interview_sync",
+        env="INTERVIEW_SYNC_QUEUE_NAME",
+    )
+    interview_public_token_secret: str | None = Field(
+        default=None,
+        env="INTERVIEW_PUBLIC_TOKEN_SECRET",
+    )
+    public_frontend_base_url: str = Field(
+        default="http://localhost:5173",
+        env="PUBLIC_FRONTEND_BASE_URL",
     )
     employee_key_ttl_seconds: int = Field(
         default=7 * 24 * 60 * 60,
@@ -196,10 +225,12 @@ class AppSettings(BaseSettings):
         "ollama_base_url",
         "match_scoring_model_name",
         "match_scoring_queue_name",
+        "interview_sync_queue_name",
         "jwt_secret",
         "jwt_algorithm",
         "redis_prefix",
         "public_apply_rate_limit_redis_prefix",
+        "public_frontend_base_url",
         "celery_broker_url",
         "celery_result_backend",
         "celery_task_default_queue",
@@ -220,6 +251,22 @@ class AppSettings(BaseSettings):
         if not normalized:
             raise ValueError("must be non-empty")
         return normalized
+
+    @validator("interview_public_token_secret", pre=True)
+    def _normalize_optional_secret(cls, value: object) -> str | None:
+        """Normalize optional token secret and collapse empty values to None."""
+        if value is None:
+            return None
+        normalized = str(value).strip()
+        return normalized or None
+
+    @validator("google_calendar_service_account_key_path", pre=True)
+    def _normalize_optional_google_key_path(cls, value: object) -> str | None:
+        """Normalize optional Google service-account key path and collapse empty values."""
+        if value is None:
+            return None
+        normalized = str(value).strip()
+        return normalized or None
 
     @validator("cv_allowed_mime_types", pre=True)
     def _parse_cv_allowed_mime_types(cls, value: object) -> tuple[str, ...]:
@@ -279,6 +326,35 @@ class AppSettings(BaseSettings):
             raise ValueError("CORS allowed origins must contain at least one value")
         return tuple(normalized)
 
+    @validator("interview_staff_calendar_map", pre=True)
+    def _parse_interview_staff_calendar_map(cls, value: object) -> dict[str, str]:
+        """Parse staff UUID to calendar-id mapping from JSON env input."""
+        if value is None:
+            return {}
+        if isinstance(value, dict):
+            raw_items = value.items()
+        elif isinstance(value, str):
+            normalized = value.strip()
+            if not normalized:
+                return {}
+            try:
+                parsed = json.loads(normalized)
+            except json.JSONDecodeError as exc:
+                raise ValueError("Interview calendar map must be valid JSON object") from exc
+            if not isinstance(parsed, dict):
+                raise ValueError("Interview calendar map must be JSON object")
+            raw_items = parsed.items()
+        else:
+            raise ValueError("Interview calendar map must be dict or JSON object string")
+
+        normalized_map: dict[str, str] = {}
+        for raw_key, raw_value in raw_items:
+            key = str(raw_key).strip()
+            item = str(raw_value).strip()
+            if key and item:
+                normalized_map[key] = item
+        return normalized_map
+
     class Config:
         """Base settings config with local `.env` support.
 
@@ -317,12 +393,21 @@ class AppSettings(BaseSettings):
             Returns:
                 Any: Parsed value passed to pydantic field validation.
             """
-            if field_name not in {"cv_allowed_mime_types", "cors_allowed_origins"}:
+            if field_name not in {
+                "cv_allowed_mime_types",
+                "cors_allowed_origins",
+                "interview_staff_calendar_map",
+            }:
                 return super().parse_env_var(field_name, raw_val)
 
             normalized = raw_val.strip()
             if not normalized:
-                return []
+                return [] if field_name != "interview_staff_calendar_map" else {}
+
+            if field_name == "interview_staff_calendar_map":
+                if normalized.startswith("{"):
+                    return json.loads(normalized)
+                return {}
 
             if normalized.startswith("["):
                 try:

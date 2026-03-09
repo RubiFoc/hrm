@@ -11,6 +11,8 @@ from hrm_backend.admin.routers.v1 import router as admin_router
 from hrm_backend.auth.routers.v1 import router as auth_router
 from hrm_backend.candidates.routers.v1 import public_router as candidate_public_router
 from hrm_backend.candidates.routers.v1 import router as candidate_router
+from hrm_backend.interviews.routers.v1 import public_router as interview_public_router
+from hrm_backend.interviews.routers.v1 import router as interview_router
 from hrm_backend.rbac import ROLE_PERMISSION_MATRIX
 from hrm_backend.scoring.routers.v1 import router as scoring_router
 from hrm_backend.settings import get_settings
@@ -31,6 +33,8 @@ app.include_router(candidate_router)
 app.include_router(candidate_public_router)
 app.include_router(vacancy_router)
 app.include_router(scoring_router)
+app.include_router(interview_router)
+app.include_router(interview_public_router)
 
 
 @app.middleware("http")

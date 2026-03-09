@@ -51,6 +51,31 @@ const SUCCESSFUL_MATCH_SCORE = {
   model_name: "llama3.2",
   model_version: "latest",
 };
+const INTERVIEW_ID = "77777777-7777-4777-8777-777777777777";
+const BASE_INTERVIEW = {
+  interview_id: INTERVIEW_ID,
+  vacancy_id: VACANCY_ID,
+  candidate_id: CANDIDATE_ID,
+  status: "awaiting_candidate_confirmation",
+  calendar_sync_status: "synced",
+  schedule_version: 1,
+  scheduled_start_at: "2026-03-12T07:00:00Z",
+  scheduled_end_at: "2026-03-12T08:00:00Z",
+  timezone: "Europe/Minsk",
+  location_kind: "google_meet",
+  location_details: "https://meet.google.com/test-room",
+  interviewer_staff_ids: ["33333333-3333-4333-8333-333333333333"],
+  candidate_response_status: "pending",
+  candidate_response_note: null,
+  candidate_token_expires_at: "2026-03-12T20:00:00Z",
+  candidate_invite_url: "https://frontend.example/candidate?interviewToken=token-1",
+  calendar_event_id: "evt-1",
+  last_synced_at: "2026-03-09T12:10:00Z",
+  cancelled_by: null,
+  cancel_reason_code: null,
+  created_at: "2026-03-09T12:00:00Z",
+  updated_at: "2026-03-09T12:10:00Z",
+};
 
 function renderHrDashboardPage() {
   const queryClient = new QueryClient({
@@ -78,6 +103,11 @@ function jsonResponse(payload: unknown, status = 200): Promise<Response> {
 function installHrWorkspaceFetchMock({
   matchScoreGet,
   matchScorePost,
+  interviewsGet,
+  interviewsCreate,
+  interviewReschedule,
+  interviewCancel,
+  interviewResend,
   pipelineItems = [
     {
       transition_id: "99999999-9999-4999-8999-999999999999",
@@ -94,6 +124,11 @@ function installHrWorkspaceFetchMock({
 }: {
   matchScoreGet?: (url: string, init?: RequestInit) => Promise<Response>;
   matchScorePost?: (url: string, init?: RequestInit) => Promise<Response>;
+  interviewsGet?: (url: string, init?: RequestInit) => Promise<Response>;
+  interviewsCreate?: (url: string, init?: RequestInit) => Promise<Response>;
+  interviewReschedule?: (url: string, init?: RequestInit) => Promise<Response>;
+  interviewCancel?: (url: string, init?: RequestInit) => Promise<Response>;
+  interviewResend?: (url: string, init?: RequestInit) => Promise<Response>;
   pipelineItems?: Array<Record<string, unknown>>;
 }) {
   fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
@@ -109,6 +144,33 @@ function installHrWorkspaceFetchMock({
     if (url.endsWith(`/api/v1/vacancies/${VACANCY_ID}/match-scores`)) {
       if (method === "POST" && matchScorePost) {
         return matchScorePost(url, init);
+      }
+      return jsonResponse({ items: [] });
+    }
+    if (url.endsWith(`/api/v1/vacancies/${VACANCY_ID}/interviews/${INTERVIEW_ID}/reschedule`)) {
+      if (method === "POST" && interviewReschedule) {
+        return interviewReschedule(url, init);
+      }
+      return jsonResponse(BASE_INTERVIEW);
+    }
+    if (url.endsWith(`/api/v1/vacancies/${VACANCY_ID}/interviews/${INTERVIEW_ID}/cancel`)) {
+      if (method === "POST" && interviewCancel) {
+        return interviewCancel(url, init);
+      }
+      return jsonResponse(BASE_INTERVIEW);
+    }
+    if (url.endsWith(`/api/v1/vacancies/${VACANCY_ID}/interviews/${INTERVIEW_ID}/resend-invite`)) {
+      if (method === "POST" && interviewResend) {
+        return interviewResend(url, init);
+      }
+      return jsonResponse(BASE_INTERVIEW);
+    }
+    if (url.includes(`/api/v1/vacancies/${VACANCY_ID}/interviews`)) {
+      if (method === "GET" && interviewsGet) {
+        return interviewsGet(url, init);
+      }
+      if (method === "POST" && interviewsCreate) {
+        return interviewsCreate(url, init);
       }
       return jsonResponse({ items: [] });
     }
@@ -326,5 +388,223 @@ describe("HrDashboardPage", () => {
       screen.getByText(/strong shortlist fit based on python, apis, and docker evidence/i),
     ).toBeDefined();
     expect(screen.getByText(/model: llama3.2 \(latest\)/i)).toBeDefined();
+  });
+
+  it("creates an interview and renders queued then synced state with invite URL", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+
+    let interviewGetCount = 0;
+    installHrWorkspaceFetchMock({
+      interviewsGet: () => {
+        interviewGetCount += 1;
+        if (interviewGetCount === 1) {
+          return jsonResponse({ items: [] });
+        }
+        if (interviewGetCount === 2) {
+          return jsonResponse({
+            items: [
+              {
+                ...BASE_INTERVIEW,
+                status: "pending_sync",
+                calendar_sync_status: "queued",
+                candidate_invite_url: null,
+                candidate_token_expires_at: null,
+              },
+            ],
+          });
+        }
+        return jsonResponse({ items: [BASE_INTERVIEW] });
+      },
+      interviewsCreate: (_url, init) => {
+        expect(init?.method).toBe("POST");
+        expect(init?.body).toContain(CANDIDATE_ID);
+        return jsonResponse({
+          ...BASE_INTERVIEW,
+          status: "pending_sync",
+          calendar_sync_status: "queued",
+          candidate_invite_url: null,
+          candidate_token_expires_at: null,
+        });
+      },
+      pipelineItems: [
+        {
+          transition_id: "99999999-9999-4999-8999-999999999999",
+          vacancy_id: VACANCY_ID,
+          candidate_id: CANDIDATE_ID,
+          from_stage: "screening",
+          to_stage: "shortlist",
+          reason: "shortlisted",
+          changed_by_sub: "hr",
+          changed_by_role: "hr",
+          transitioned_at: "2026-03-06T10:00:00Z",
+        },
+      ],
+    });
+
+    renderHrDashboardPage();
+    await selectVacancyAndCandidate();
+
+    fireEvent.change(screen.getByLabelText(/^начало$/i), {
+      target: { value: "2026-03-12T10:00" },
+    });
+    fireEvent.change(screen.getByLabelText(/^окончание$/i), {
+      target: { value: "2026-03-12T11:00" },
+    });
+    fireEvent.change(screen.getByLabelText(/staff id интервьюеров/i), {
+      target: { value: "33333333-3333-4333-8333-333333333333" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /создать интервью/i }));
+
+    expect(await screen.findByText(/интервью создано/i)).toBeDefined();
+    expect(await screen.findByText(/ожидает синхронизации с календарём/i)).toBeDefined();
+    await waitFor(() => {
+      expect(screen.getByText(/синхронизировано/i)).toBeDefined();
+      expect(
+        screen.getByDisplayValue("https://frontend.example/candidate?interviewToken=token-1"),
+      ).toBeDefined();
+    });
+  });
+
+  it("resends invite, reschedules, and cancels an existing interview", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+    let currentInterview = { ...BASE_INTERVIEW };
+
+    installHrWorkspaceFetchMock({
+      interviewsGet: () => jsonResponse({ items: [currentInterview] }),
+      interviewResend: () => {
+        currentInterview = {
+          ...currentInterview,
+          candidate_invite_url: "https://frontend.example/candidate?interviewToken=token-2",
+        };
+        return jsonResponse(currentInterview);
+      },
+      interviewReschedule: () => {
+        currentInterview = {
+          ...currentInterview,
+          status: "pending_sync",
+          calendar_sync_status: "queued",
+          schedule_version: 2,
+          candidate_invite_url: null,
+          candidate_token_expires_at: null,
+        };
+        return jsonResponse(currentInterview);
+      },
+      interviewCancel: () => {
+        currentInterview = {
+          ...currentInterview,
+          status: "cancelled",
+          calendar_sync_status: "queued",
+          candidate_invite_url: null,
+          candidate_token_expires_at: null,
+          cancelled_by: "staff",
+          cancel_reason_code: "cancelled_by_staff",
+        };
+        return jsonResponse(currentInterview);
+      },
+      pipelineItems: [
+        {
+          transition_id: "99999999-9999-4999-8999-999999999999",
+          vacancy_id: VACANCY_ID,
+          candidate_id: CANDIDATE_ID,
+          from_stage: "shortlist",
+          to_stage: "interview",
+          reason: "interview_sync_success",
+          changed_by_sub: "system",
+          changed_by_role: "system",
+          transitioned_at: "2026-03-06T10:00:00Z",
+        },
+      ],
+    });
+
+    renderHrDashboardPage();
+    await selectVacancyAndCandidate();
+    await screen.findByRole("button", { name: /перенести интервью/i });
+
+    fireEvent.click(screen.getByRole("button", { name: /переотправить приглашение/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/ссылка приглашения кандидата переиздана/i)).toBeDefined();
+    });
+
+    fireEvent.change(screen.getByLabelText(/^начало$/i), {
+      target: { value: "2026-03-13T10:00" },
+    });
+    fireEvent.change(screen.getByLabelText(/^окончание$/i), {
+      target: { value: "2026-03-13T11:00" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /перенести интервью/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/интервью перенесено/i)).toBeDefined();
+      expect(screen.getByText(/версия расписания: 2/i)).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /отменить интервью/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/интервью отменено/i)).toBeDefined();
+      expect(screen.getByText(/^отменено$/i)).toBeDefined();
+    });
+  });
+
+  it("renders localized interview calendar configuration errors", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+
+    let createCallCount = 0;
+    installHrWorkspaceFetchMock({
+      interviewsGet: () => jsonResponse({ items: [] }),
+      interviewsCreate: () => {
+        createCallCount += 1;
+        if (createCallCount === 1) {
+          return jsonResponse({ detail: "interviewer_calendar_not_configured" }, 422);
+        }
+        return jsonResponse({ detail: "calendar_not_configured" }, 503);
+      },
+      pipelineItems: [
+        {
+          transition_id: "99999999-9999-4999-8999-999999999999",
+          vacancy_id: VACANCY_ID,
+          candidate_id: CANDIDATE_ID,
+          from_stage: "screening",
+          to_stage: "shortlist",
+          reason: "shortlisted",
+          changed_by_sub: "hr",
+          changed_by_role: "hr",
+          transitioned_at: "2026-03-06T10:00:00Z",
+        },
+      ],
+    });
+
+    renderHrDashboardPage();
+    await selectVacancyAndCandidate();
+    await screen.findByText(/интервью пока не назначено/i);
+
+    fireEvent.change(screen.getByLabelText(/^начало$/i), {
+      target: { value: "2026-03-12T10:00" },
+    });
+    fireEvent.change(screen.getByLabelText(/^окончание$/i), {
+      target: { value: "2026-03-12T11:00" },
+    });
+    fireEvent.change(screen.getByLabelText(/staff id интервьюеров/i), {
+      target: { value: "33333333-3333-4333-8333-333333333333" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /создать интервью/i }));
+    await waitFor(() => {
+      expect(
+        screen
+          .getAllByRole("alert")
+          .some((item) => /интервьюер|календар/i.test(item.textContent ?? "")),
+      ).toBe(true);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /создать интервью/i }));
+    await waitFor(() => {
+      expect(
+        screen
+          .getAllByRole("alert")
+          .some((item) => /синхронизация календаря/i.test(item.textContent ?? "")),
+      ).toBe(true);
+    });
   });
 });

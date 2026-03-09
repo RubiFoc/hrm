@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Alert,
   Button,
+  Chip,
   Divider,
   Paper,
   Stack,
@@ -9,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router-dom";
@@ -18,10 +19,15 @@ import { z } from "zod";
 import {
   ApiError,
   applyToVacancyPublic,
+  cancelPublicInterviewRegistration,
+  confirmPublicInterviewRegistration,
   getPublicCandidateCvAnalysis,
   getPublicCandidateCvParsingStatus,
+  getPublicInterviewRegistration,
+  requestPublicInterviewReschedule,
   type CandidateCvAnalysisResponse,
   type CandidateCvParsingStatusResponse,
+  type PublicInterviewRegistrationResponse,
   type PublicVacancyApplicationRequest,
 } from "../api";
 import {
@@ -47,17 +53,257 @@ type CandidateApplyMutationRequest = {
   vacancyId: string;
   payload: PublicVacancyApplicationRequest;
 };
+type FeedbackState = {
+  type: "success" | "error";
+  message: string;
+};
 
 /**
- * Public candidate application workspace with tracking for CV parsing and analysis.
+ * Public candidate workspace with both vacancy-apply and interview-registration modes.
  */
 export function CandidatePage() {
   const { t } = useTranslation();
   useSentryRouteTags("/candidate");
   const [searchParams] = useSearchParams();
-  const storedContext = readCandidateApplicationContext();
   const queryVacancyId = normalizeInput(searchParams.get("vacancyId"));
   const queryVacancyTitle = normalizeInput(searchParams.get("vacancyTitle"));
+  const interviewToken = normalizeInput(searchParams.get("interviewToken"));
+  const hasMixedRouteParams = Boolean(queryVacancyId && interviewToken);
+
+  if (hasMixedRouteParams) {
+    return (
+      <Stack spacing={3}>
+        <Stack spacing={1}>
+          <Typography variant="h4">{t("candidateWorkspace")}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            {t("candidateRoute.invalidLinkSubtitle")}
+          </Typography>
+        </Stack>
+        <Alert severity="error">{t("candidateRoute.invalidLink")}</Alert>
+      </Stack>
+    );
+  }
+
+  if (interviewToken) {
+    return <CandidateInterviewRegistrationMode interviewToken={interviewToken} />;
+  }
+
+  return (
+    <CandidateApplyTrackingMode
+      queryVacancyId={queryVacancyId}
+      queryVacancyTitle={queryVacancyTitle}
+    />
+  );
+}
+
+function CandidateInterviewRegistrationMode({ interviewToken }: { interviewToken: string }) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [note, setNote] = useState("");
+  const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const queryKey = ["candidate-interview-registration", interviewToken];
+  const registrationQuery = useQuery({
+    queryKey,
+    queryFn: () => getPublicInterviewRegistration(interviewToken),
+    retry: false,
+  });
+
+  const confirmMutation = useMutation({
+    mutationFn: () => confirmPublicInterviewRegistration(interviewToken),
+    onSuccess: (payload) => {
+      setFeedback({ type: "success", message: t("candidateInterview.confirmSuccess") });
+      queryClient.setQueryData(queryKey, payload);
+    },
+    onError: (error: unknown) => {
+      setFeedback({ type: "error", message: resolveCandidateInterviewError(error, t) });
+    },
+  });
+
+  const rescheduleMutation = useMutation({
+    mutationFn: () =>
+      requestPublicInterviewReschedule(interviewToken, {
+        note: normalizeInput(note),
+      }),
+    onSuccess: (payload) => {
+      setFeedback({ type: "success", message: t("candidateInterview.rescheduleSuccess") });
+      setNote("");
+      queryClient.setQueryData(queryKey, payload);
+    },
+    onError: (error: unknown) => {
+      setFeedback({ type: "error", message: resolveCandidateInterviewError(error, t) });
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () =>
+      cancelPublicInterviewRegistration(interviewToken, {
+        note: normalizeInput(note),
+      }),
+    onSuccess: (payload) => {
+      setFeedback({ type: "success", message: t("candidateInterview.declineSuccess") });
+      setNote("");
+      queryClient.setQueryData(queryKey, payload);
+    },
+    onError: (error: unknown) => {
+      setFeedback({ type: "error", message: resolveCandidateInterviewError(error, t) });
+    },
+  });
+
+  const isMutating =
+    confirmMutation.isPending || rescheduleMutation.isPending || cancelMutation.isPending;
+  const registration = registrationQuery.data ?? null;
+
+  return (
+    <Stack spacing={3}>
+      <Stack spacing={1}>
+        <Typography variant="h4">{t("candidateWorkspace")}</Typography>
+        <Typography variant="body2" color="text.secondary">
+          {t("candidateInterview.subtitle")}
+        </Typography>
+      </Stack>
+
+      {feedback ? <Alert severity={feedback.type}>{feedback.message}</Alert> : null}
+      {registrationQuery.isLoading ? (
+        <Typography variant="body2">{t("candidateInterview.loading")}</Typography>
+      ) : null}
+      {registrationQuery.isError ? (
+        <Alert severity="error">
+          {resolveCandidateInterviewError(registrationQuery.error, t)}
+        </Alert>
+      ) : null}
+
+      {registration ? (
+        <Paper sx={{ p: 2 }}>
+          <Stack spacing={2}>
+            <Stack spacing={1}>
+              <Typography variant="h6">{t("candidateInterview.title")}</Typography>
+              <Typography variant="body1">{registration.vacancy_title}</Typography>
+              <Stack direction={{ xs: "column", md: "row" }} spacing={1} alignItems="flex-start">
+                <Chip
+                  size="small"
+                  label={t(`candidateInterview.status.${registration.status}`)}
+                  color={resolveInterviewStatusChipColor(registration.status)}
+                />
+                <Chip
+                  size="small"
+                  label={t(
+                    `candidateInterview.syncStatus.${registration.calendar_sync_status}`,
+                  )}
+                  color={resolveInterviewSyncChipColor(registration.calendar_sync_status)}
+                />
+              </Stack>
+            </Stack>
+
+            <Stack spacing={1}>
+              <Typography variant="body2">
+                {t("candidateInterview.fields.start")}:{" "}
+                {formatInterviewDateTime(registration.scheduled_start_at, registration.timezone)}
+              </Typography>
+              <Typography variant="body2">
+                {t("candidateInterview.fields.end")}:{" "}
+                {formatInterviewDateTime(registration.scheduled_end_at, registration.timezone)}
+              </Typography>
+              <Typography variant="body2">
+                {t("candidateInterview.fields.timezone")}: {registration.timezone}
+              </Typography>
+              <Typography variant="body2">
+                {t("candidateInterview.fields.locationKind")}:{" "}
+                {t(`candidateInterview.locationKind.${registration.location_kind}`)}
+              </Typography>
+              <Typography variant="body2">
+                {t("candidateInterview.fields.locationDetails")}:{" "}
+                {registration.location_details || t("candidateInterview.noLocationDetails")}
+              </Typography>
+              <Typography variant="body2">
+                {t("candidateInterview.fields.responseStatus")}:{" "}
+                {t(
+                  `candidateInterview.responseStatus.${registration.candidate_response_status}`,
+                )}
+              </Typography>
+            </Stack>
+
+            {registration.candidate_response_note ? (
+              <Alert severity="info">
+                {t("candidateInterview.noteLabel")}: {registration.candidate_response_note}
+              </Alert>
+            ) : null}
+            {registration.candidate_token_expires_at ? (
+              <Typography variant="body2" color="text.secondary">
+                {t("candidateInterview.tokenExpiresAt", {
+                  value: formatInterviewDateTime(
+                    registration.candidate_token_expires_at,
+                    registration.timezone,
+                  ),
+                })}
+              </Typography>
+            ) : null}
+
+            <Divider />
+
+            <TextField
+              label={t("candidateInterview.fields.note")}
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              multiline
+              minRows={3}
+              helperText={t("candidateInterview.noteHelp")}
+            />
+
+            <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setFeedback(null);
+                  confirmMutation.mutate();
+                }}
+                disabled={isMutating}
+              >
+                {confirmMutation.isPending
+                  ? t("candidateInterview.actions.confirmPending")
+                  : t("candidateInterview.actions.confirm")}
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setFeedback(null);
+                  rescheduleMutation.mutate();
+                }}
+                disabled={isMutating}
+              >
+                {rescheduleMutation.isPending
+                  ? t("candidateInterview.actions.reschedulePending")
+                  : t("candidateInterview.actions.reschedule")}
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={() => {
+                  setFeedback(null);
+                  cancelMutation.mutate();
+                }}
+                disabled={isMutating}
+              >
+                {cancelMutation.isPending
+                  ? t("candidateInterview.actions.declinePending")
+                  : t("candidateInterview.actions.decline")}
+              </Button>
+            </Stack>
+          </Stack>
+        </Paper>
+      ) : null}
+    </Stack>
+  );
+}
+
+function CandidateApplyTrackingMode({
+  queryVacancyId,
+  queryVacancyTitle,
+}: {
+  queryVacancyId: string | null;
+  queryVacancyTitle: string | null;
+}) {
+  const { t } = useTranslation();
+  const storedContext = readCandidateApplicationContext();
   const [vacancyIdInput, setVacancyIdInput] = useState(queryVacancyId ?? "");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileFeedback, setFileFeedback] = useState<string | null>(null);
@@ -68,7 +314,9 @@ export function CandidatePage() {
   const [selectedTrackingJobId, setSelectedTrackingJobId] = useState(
     storedContext?.parsingJobId ?? "",
   );
-  const [latestContext, setLatestContext] = useState<CandidateApplicationContext | null>(storedContext);
+  const [latestContext, setLatestContext] = useState<CandidateApplicationContext | null>(
+    storedContext,
+  );
   const {
     register,
     handleSubmit,
@@ -456,6 +704,18 @@ function formatDateTime(value: string): string {
   return new Date(value).toLocaleString();
 }
 
+function formatInterviewDateTime(value: string, timezone: string): string {
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+      timeZone: timezone,
+    }).format(new Date(value));
+  } catch {
+    return new Date(value).toLocaleString();
+  }
+}
+
 function isTerminalStatus(status: CandidateCvParsingStatusResponse["status"]): boolean {
   return status === "succeeded" || status === "failed";
 }
@@ -522,4 +782,71 @@ function resolveCandidateTrackingError(
     }
   }
   return t("candidateTracking.errors.generic");
+}
+
+function resolveCandidateInterviewError(
+  error: unknown,
+  t: (key: string) => string,
+): string {
+  if (error instanceof ApiError) {
+    const detail = error.detail.toLowerCase();
+    if (
+      detail.includes("interview_registration_not_found")
+      || detail.includes("not found")
+    ) {
+      return t("candidateInterview.errors.tokenNotFound");
+    }
+    if (
+      detail.includes("interview_registration_token_expired")
+      || detail.includes("expired")
+    ) {
+      return t("candidateInterview.errors.tokenExpired");
+    }
+    if (detail.includes("does_not_allow")) {
+      return t("candidateInterview.errors.invalidState");
+    }
+    const statusMessage = t(`candidateInterview.errors.http_${error.status}`);
+    if (statusMessage !== `candidateInterview.errors.http_${error.status}`) {
+      return statusMessage;
+    }
+  }
+  return t("candidateInterview.errors.generic");
+}
+
+function resolveInterviewStatusChipColor(
+  status: PublicInterviewRegistrationResponse["status"],
+): "default" | "error" | "info" | "success" | "warning" {
+  switch (status) {
+    case "pending_sync":
+      return "info";
+    case "awaiting_candidate_confirmation":
+      return "warning";
+    case "confirmed":
+      return "success";
+    case "reschedule_requested":
+      return "warning";
+    case "cancelled":
+      return "error";
+    default:
+      return "default";
+  }
+}
+
+function resolveInterviewSyncChipColor(
+  status: PublicInterviewRegistrationResponse["calendar_sync_status"],
+): "default" | "error" | "info" | "success" | "warning" {
+  switch (status) {
+    case "queued":
+      return "info";
+    case "running":
+      return "warning";
+    case "synced":
+      return "success";
+    case "conflict":
+      return "warning";
+    case "failed":
+      return "error";
+    default:
+      return "default";
+  }
 }
