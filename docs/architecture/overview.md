@@ -58,8 +58,10 @@ flowchart LR
    `409` if parsed CV analysis is not ready, otherwise async scoring via Ollama ->
    persisted score artifact -> recruiter review -> shortlist.
 2. Interview Scheduling Flow:
-   pipeline stage change -> interview request -> Google Calendar sync -> participant notifications.
-   Implementation is planning-blocked until interview product rules are finalized.
+   recruiter selects vacancy + candidate in `/` -> interview create/reschedule ->
+   async Google Calendar sync for staff calendars -> sync success issues a public invitation token ->
+   HR shares `candidate_invite_url` manually -> candidate opens `/candidate?interviewToken=...` ->
+   confirm / request reschedule / decline -> HR resolves follow-up actions.
 3. Onboarding Flow:
    accepted candidate -> employee profile creation -> onboarding checklist -> completion tracking.
 4. HR Automation Flow:
@@ -139,7 +141,7 @@ flowchart LR
 ## Known Technical Risks
 - Scope risk from broad v1 expectation.
 - AI output quality variance across candidate domains and CV formats.
-- Interview workflow remains under-specified for safe implementation without a planning pass.
+- Interview workflow is now decision-complete in `docs/project/interview-planning-pass.md`, but implementation still carries calendar-integration and manual-invite delivery risk.
 - Integration instability risk with calendar sync edge cases.
 - Compliance risk if country-specific legal acts are not mapped early.
 
@@ -148,7 +150,7 @@ flowchart LR
    admin control plane, public candidate intake/tracking, HR vacancy/pipeline workspace, and browser smoke.
 2. Phase 1 scoring slice:
    dedicated scoring backend package + async scoring lifecycle + shortlist review in the existing HR workspace.
-3. Phase 1 interview planning gate:
-   finalize interview/registration/sync rules before `TASK-11-08` implementation starts.
+3. Phase 1 interview scheduling slice:
+   implement the planning baseline from `docs/project/interview-planning-pass.md` without changing candidate auth or route topology.
 4. Phase 2:
    Manager/Employee/Accountant/Leader capabilities, expanded automation and reporting.

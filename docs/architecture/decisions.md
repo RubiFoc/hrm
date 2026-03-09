@@ -32,6 +32,8 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0025 | 2026-03-06 | accepted | Track public candidate parsing by job ID and make browser smoke validate the full Phase 1 intake baseline | architect + backend-engineer + frontend-engineer | candidate workflow, compose runtime, browser verification, API contract |
 | ADR-0026 | 2026-03-09 | accepted | Land the Phase 1 baseline as one PR and make scoring the next vertical slice | architect + backend-engineer + frontend-engineer | delivery sequencing, scoring package boundary, API contracts, testing scope |
 | ADR-0027 | 2026-03-09 | accepted | Implement scoring as a dedicated backend package with DB-backed jobs/artifacts and shortlist review on `/` | architect + backend-engineer + frontend-engineer | scoring architecture, HR workspace UX, compose worker topology, OpenAPI contract |
+| ADR-0028 | 2026-03-09 | accepted | Harden frontend observability with canonical Sentry route tags and shared failure capture | architect + frontend-engineer | frontend observability, route semantics, error telemetry |
+| ADR-0029 | 2026-03-09 | accepted | Freeze interview scheduling and candidate registration as a public-token workflow on existing routes | architect + backend-engineer + frontend-engineer | interview product rules, public token model, Google Calendar sync semantics, route topology |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -466,3 +468,26 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Critical frontend routes now emit one consistent Sentry tag model instead of admin-only tagging.
   - Browser request failures and render crashes become visible in Sentry without changing business contracts.
   - Route topology, typed API wrappers, auth behavior, and CORS assumptions stay unchanged while observability coverage increases.
+
+## ADR-0029
+- Context: Interview scheduling was the next business gap after scoring/observability/compliance, but implementation remained blocked by missing product rules around entity lifecycle, candidate identity, reschedule/cancel semantics, and Google Calendar conflicts. The repository also has no candidate auth or notification service, so the interview slice needed an implementation-safe baseline that works with existing route and transport constraints.
+- Decision:
+  - Freeze the planning baseline in `docs/project/interview-planning-pass.md` before any interview implementation work starts.
+  - Keep one non-terminal interview per `vacancy_id + candidate_id`; use `schedule_version` on the same row for reschedules.
+  - Keep candidate access anonymous through a public opaque invitation token stored hashed in the backend and bound to `interview_id + schedule_version`.
+  - Keep the existing route topology:
+    - HR interview controls extend `/`
+    - candidate interview registration extends `/candidate` through `?interviewToken=<token>`
+  - Do not introduce candidate auth, new CORS rules, or a new route tree in the interview slice.
+  - Separate business interview state from calendar execution state:
+    - interview `status`: `pending_sync`, `awaiting_candidate_confirmation`, `confirmed`, `reschedule_requested`, `cancelled`, `completed`
+    - `calendar_sync_status`: `queued`, `running`, `synced`, `conflict`, `failed`
+  - Treat Google Calendar sync as staff-calendar orchestration only for the next slice; candidate invitation delivery remains manual through `candidate_invite_url` until a notification service exists.
+  - Freeze the minimal public/backend API set around:
+    - HR create/list/get/reschedule/cancel/resend-invite endpoints
+    - public token read/confirm/request-reschedule/cancel endpoints
+  - Auto-append one `shortlist -> interview` pipeline transition on first successful interview sync when needed.
+- Consequences:
+  - Interview implementation can proceed without the implementer making hidden product decisions.
+  - Existing anonymous candidate transport assumptions remain intact.
+  - Notification delivery is intentionally deferred, so the next slice remains feasible in local-stage scope.

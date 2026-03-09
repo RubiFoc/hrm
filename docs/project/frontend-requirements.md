@@ -15,14 +15,14 @@
 - Current stage target: frontend must run stably in local environment on the current device.
 - Candidate self-service in v1:
   CV upload and profile information submission with confirmation.
-- Candidate interview registration UI is delivered as a dedicated follow-up flow after the scoring slice and a separate interview-planning pass.
+- Candidate interview registration UI is the next planned follow-up flow after the scoring slice and now uses the decision-complete baseline in `docs/project/interview-planning-pass.md`.
 - Delivery priority inside phase-1 frontend:
   1. Admin workspace,
   2. Candidate CV upload and parsing visibility,
   3. HR vacancy/pipeline workspace,
   4. shortlist review inside the existing HR workspace on `/`,
-  5. interview scheduling/registration only after a dedicated planning pass.
-- Interview scheduling UX with Google Calendar sync status visibility remains required, but it is not the next implementation slice.
+  5. interview scheduling/registration from the dedicated planning baseline in `docs/project/interview-planning-pass.md`.
+- Interview scheduling UX with Google Calendar sync status visibility remains required and must now follow `docs/project/interview-planning-pass.md`.
 - Consistent UI components and validation behavior across modules.
 - Accessibility baseline for forms, tables, and primary workflows.
 - Responsive web for desktop-first usage.
@@ -43,7 +43,7 @@
 | UI framework/design system | Popular ready-made libraries |
 | Localization | `ru` + `en` in v1 |
 | Browser support | Google Chrome |
-| Candidate portal scope | CV upload + self information confirmation (interview registration via dedicated follow-up flow) |
+| Candidate portal scope | CV upload + self information confirmation + public token-based interview registration on `/candidate` |
 | Mobile depth | No mobile app, responsive web only |
 | Frontend monitoring | Sentry |
 
@@ -146,12 +146,24 @@
   - `VITE_SENTRY_TRACES_SAMPLE_RATE`
 - Do not change typed API wrappers, OpenAPI artifacts, auth flow, or CORS behavior in this slice.
 
-## TASK-11-08 Planning Gate
-- Do not start implementation until a short planning pass defines:
-  - interview entity and lifecycle rules;
-  - candidate registration token/identity model;
-  - reschedule and cancel semantics;
-  - Google Calendar sync conflict behavior.
+## TASK-11-08 Planned Slice
+- Planning baseline source of truth: `docs/project/interview-planning-pass.md`.
+- Keep the current route model:
+  - HR scheduling stays on `/`;
+  - candidate interview registration stays on `/candidate?interviewToken=<token>`.
+- HR workspace requirements:
+  - do not add a new HR route;
+  - add interview scheduling controls only when vacancy and candidate are selected;
+  - show both business `status` and `calendar_sync_status`;
+  - expose `candidate_invite_url` only to authorized staff users;
+  - support `reschedule`, `cancel`, and `resend invite`.
+- Candidate route requirements:
+  - keep public access anonymous and token-based;
+  - support `Confirm`, `Request reschedule`, and `Decline`;
+  - render localized `404`, `409`, `410`, `422`, and generic HTTP errors;
+  - reject mixed `vacancyId` and `interviewToken` modes with a localized invalid-link state.
+- Do not introduce candidate auth, new CORS rules, or a new routing tree in this slice.
+- Invitation delivery remains manual in the next slice; do not add notification-service scope here.
 
 ## Library Baseline (Popular Ready-Made Stack)
 - UI components: Material UI (MUI).

@@ -198,6 +198,29 @@ apps/backend/tests/
 - Keep scoring verification at unit/integration level; do not extend compose browser smoke to scoring until runtime nondeterminism is addressed.
 - Shortlist review must work against the real backend scoring contract, not mock-only placeholder data.
 
+## Interview Scheduling and Candidate Registration Planning Baseline (`TASK-11-08`, `TASK-05-01`, `TASK-05-02`)
+
+Planning source of truth:
+- `docs/project/interview-planning-pass.md`
+
+Future implementation must cover at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Interview lifecycle validation (`pending_sync`, `awaiting_candidate_confirmation`, `confirmed`, `reschedule_requested`, `cancelled`) | interview service state-transition tests | interview API integration suite | invalid transitions return `409`; terminal interviews cannot be mutated |
+| Calendar sync lifecycle (`queued`, `running`, `synced`, `conflict`, `failed`) | calendar adapter and worker mapping tests | interview/calendar integration suite with deterministic fake adapter | sync result persists correct interview and calendar statuses |
+| One-active-interview rule per `vacancy_id + candidate_id` | interview service unit tests | `POST /api/v1/vacancies/{vacancy_id}/interviews` integration negatives | duplicate active interview returns `409` |
+| Candidate invitation token hashing, expiry, and schedule-version invalidation | token service unit tests | public interview registration integration suite | revoked/rescheduled tokens return `404`; expired token returns `410` |
+| Candidate public actions (`confirm`, `request-reschedule`, `cancel`) | interview/public token service unit tests | public interview registration integration suite | token-bound actions update state without candidate auth |
+| HR route integration on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend interview integration suite | create/reschedule/cancel and sync-state render are localized and stable |
+| Candidate route-mode integration on `/candidate?interviewToken=...` | `apps/frontend/src/pages/CandidatePage.test.tsx` | backend interview integration suite | candidate interview mode renders localized `404/409/410/422` errors and rejects mixed route params |
+
+Acceptance rules for the future interview slice:
+- Freeze OpenAPI and generated frontend types in the same change.
+- Keep candidate transport anonymous and token-based.
+- Do not add candidate auth, Vite proxy rewrites, or new CORS behavior.
+- Keep compose smoke green without adding nondeterministic Google Calendar browser automation.
+
 ## Frontend Admin Verification (ADMIN-01)
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |

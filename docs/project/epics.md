@@ -23,7 +23,7 @@
 - `EPIC-02` backend scope is materially implemented for Phase 1 local baseline: vacancy CRUD, canonical pipeline transitions, and ordered transition history.
 - `EPIC-11` local baseline now includes candidate self-service, HR vacancy/pipeline workspace, RU/EN strings for critical flows, and browser smoke for login + public candidate apply.
 - The immediate next epic gap is the handoff from parsed candidate data into `EPIC-04` recruiter-facing scoring review.
-- `EPIC-05` remains deliberately deferred until a short planning pass resolves interview entity, candidate registration, reschedule/cancel, and calendar sync conflict rules.
+- `EPIC-05` now has a decision-complete planning baseline in `docs/project/interview-planning-pass.md`; implementation is still deferred until a dedicated slice follows that spec.
 
 ## Epic Portfolio
 
@@ -117,7 +117,7 @@
 - Low-confidence cases are routed to manual HR review.
 
 ### EPIC-05: Interview Scheduling and Fairness Controls
-- Implementation starts only after a dedicated planning pass closes interview product rules and sync semantics.
+- Implementation starts from the frozen planning baseline in `docs/project/interview-planning-pass.md`.
 - Interview slots sync with Google Calendar.
 - Structured feedback form is mandatory before decision stage.
 - Interview rubric enforces consistent evaluation criteria.
@@ -165,4 +165,4 @@
 
 ## Execution Mapping
 - Task-level decomposition, dependencies, and global priority queue are documented in `docs/project/tasks.md`.
-- Immediate sequencing rule after the current baseline merge: finish the `EPIC-04` scoring/shortlist-review slice first, then run the `EPIC-05` planning pass before interview implementation starts.
+- Immediate sequencing rule after the current baseline merge: finish the `EPIC-04` scoring/shortlist-review slice first, then use the `EPIC-05` planning pass as the implementation baseline for the next interview slice.

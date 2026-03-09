@@ -196,19 +196,30 @@ sequenceDiagram
   participant INT as Interview Service
   participant GCA as Calendar Sync Service
   participant GCAL as Google Calendar
+  participant C as Candidate
 
   HR->>UI: Propose interview slot
-  UI->>API: Create interview request
-  API->>INT: Validate stage and participants
-  INT->>GCA: Sync interview event
-  GCA->>GCAL: Create/Update calendar event
-  GCAL-->>GCA: Event id and status
-  GCA-->>INT: Reconciliation result
-  INT-->>API: Interview scheduled
-  API-->>UI: Confirm schedule and invitations
+  UI->>API: POST /api/v1/vacancies/{vacancy_id}/interviews
+  API->>INT: Validate stage, one-active-interview rule, and staff participants
+  INT->>GCA: Enqueue calendar sync
+  GCA->>GCAL: Create/Update staff calendar event
+  GCAL-->>GCA: synced | conflict | failed
+  GCA-->>INT: Persist sync result
+  INT-->>API: status + calendar_sync_status + invite metadata
+  API-->>UI: Show sync state in HR workspace on /
+  UI-->>HR: Copy candidate_invite_url after sync success
+  HR->>C: Share invite link manually
+  C->>UI: Open /candidate?interviewToken=...
+  UI->>API: GET /api/v1/public/interview-registrations/{token}
+  API-->>UI: Current invitation payload
+  C->>UI: Confirm / Request reschedule / Decline
+  UI->>API: POST public interview action
+  API->>INT: Apply token-bound action
+  INT-->>API: Updated interview state
+  API-->>UI: Updated candidate-facing status
 ```
 
-Interview scheduling implementation remains deferred until a dedicated planning pass closes interview entity, registration, reschedule/cancel, and calendar sync conflict rules.
+The planning baseline for this flow is now frozen in `docs/project/interview-planning-pass.md`. The next implementation slice must follow that document without adding candidate auth or a new route tree.
 
 ## Diagram 6: Deployment and Trust Boundaries
 
