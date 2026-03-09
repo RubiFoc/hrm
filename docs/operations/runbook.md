@@ -61,7 +61,7 @@ Runtime auth/browser integration settings:
 
 ### CV Parsing Worker (Celery executor)
 - Primary worker command:
-  `uv run --project apps/backend celery -A hrm_backend.candidates.infra.celery.app:celery_app worker --loglevel=INFO --queues=cv_parsing`
+  `uv run --project apps/backend celery -A hrm_backend.candidates.infra.celery.app:celery_app worker --loglevel=INFO --queues=cv_parsing,match_scoring`
 - Compose service: `backend-worker`.
 - Runtime lifecycle in DB (`cv_parsing_jobs` source of truth):
   `queued -> running -> succeeded/failed`.
@@ -75,6 +75,26 @@ Runtime auth/browser integration settings:
   - `CV_ALLOWED_MIME_TYPES`
   - `CV_MAX_SIZE_BYTES`
   - `OBJECT_STORAGE_SSE_ENABLED`
+
+### Match Scoring Worker (Celery executor)
+- Primary worker command:
+  `uv run --project apps/backend celery -A hrm_backend.candidates.infra.celery.app:celery_app worker --loglevel=INFO --queues=cv_parsing,match_scoring`
+- Compose service: `backend-worker`.
+- Runtime lifecycle in DB:
+  - `match_scoring_jobs`: `queued -> running -> succeeded/failed`
+  - `match_score_artifacts`: persisted score payloads keyed by vacancy, candidate, and active document
+- Retry behavior is bounded by `MATCH_SCORING_MAX_ATTEMPTS`.
+- Scoring runtime settings:
+  - `MATCH_SCORING_MODEL_NAME`
+  - `MATCH_SCORING_REQUEST_TIMEOUT_SECONDS`
+  - `MATCH_SCORING_QUEUE_NAME`
+  - `OLLAMA_BASE_URL`
+- API endpoints:
+  - `POST /api/v1/vacancies/{vacancy_id}/match-scores`
+  - `GET /api/v1/vacancies/{vacancy_id}/match-scores`
+  - `GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}`
+- Expected precondition failure:
+  - `409 Conflict` with `detail=CV analysis is not ready` when the active document is not yet parsed.
 
 ### Smoke Verification
 1. Run canonical smoke script: `./scripts/smoke-compose.sh`.
@@ -142,6 +162,22 @@ Runtime auth/browser integration settings:
   3. Verify the staff-created smoke vacancy is still `status=open`.
   4. Check `sessionStorage["hrm_candidate_application_context"]` for `vacancyId`, `candidateId`, and `parsingJobId`.
   5. If status never moves past `queued`, inspect `backend-worker` logs; compose smoke still treats `queued/running` as acceptable minimum.
+
+### HR Shortlist Review Diagnostics (`/`)
+- API path sequence:
+  - `POST /api/v1/vacancies/{vacancy_id}/match-scores`
+  - `GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}`
+- Expected UI states:
+  - `queued`
+  - `running`
+  - `succeeded`
+  - `failed`
+- Triage sequence:
+  1. Verify the selected candidate already has parsed CV analysis (`parsed_profile_json`, `evidence_json`, `parsed_at`).
+  2. If API returns `409`, re-check candidate parsing status before retrying score.
+  3. If status remains `queued`, inspect `backend-worker` logs and confirm it listens on `match_scoring`.
+  4. If status becomes `failed`, verify `OLLAMA_BASE_URL` reachability and model availability for `MATCH_SCORING_MODEL_NAME`.
+  5. Confirm the latest `match_score_artifacts` row contains `score`, `confidence`, `summary`, requirements, evidence, and model metadata.
 
 ### Auth Denylist Failure Policy
 - Auth validation is fail-closed when Redis denylist is unavailable.

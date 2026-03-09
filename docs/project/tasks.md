@@ -25,6 +25,8 @@
 | TASK-11-05 | implemented/local-baseline | `/` now exposes staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
 | TASK-11-09 | implemented/local-baseline | RU/EN strings cover login, candidate apply/tracking/analysis, admin, and HR workspace critical flows |
 | TASK-11-11 | implemented/local-baseline | Compose browser smoke covers both staff login and public candidate apply journeys through headless Chrome |
+| TASK-04-01/02/03 | implemented/local-scoring-slice | Dedicated `hrm_backend/scoring` package, Ollama adapter, async scoring jobs/artifacts, and frozen scoring API contract are present in repo with unit and integration coverage |
+| TASK-11-07 | implemented/local-scoring-slice | `/` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-09 Delivery Control Notes
@@ -36,24 +38,20 @@
   - browser smoke for staff login and public candidate apply;
   - local compose MinIO baseline with `OBJECT_STORAGE_SSE_ENABLED=false`;
   - backlog/architecture/testing/runbook synchronization.
-- The next implementation slice after that merge is one vertical slice: `TASK-04-01`, `TASK-04-02`, `TASK-04-03`, and `TASK-11-07`.
+- The next local diff after that merge now implements one vertical slice: `TASK-04-01`, `TASK-04-02`, `TASK-04-03`, and `TASK-11-07`.
 - `TASK-11-08` is explicitly deferred until a separate planning pass resolves interview entity boundaries, candidate registration/identity rules, reschedule/cancel semantics, and calendar sync conflict behavior.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged for both the merge gate and the next scoring slice.
 
-## Active Queue After Current Local Baseline
+## Active Queue After Scoring Slice
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-04-01 | Start the post-baseline slice by isolating Ollama/model configuration behind a dedicated scoring package boundary |
-| A-2 | TASK-04-02 | Add DB-backed async scoring jobs and persisted artifacts before any shortlist UI wiring |
-| A-3 | TASK-04-03 | Freeze the recruiter-facing score payload so frontend/UI work consumes a stable contract |
-| A-4 | TASK-11-07 | Extend the existing `/` HR workspace with shortlist review against the real scoring API, not placeholders |
-| A-5 | TASK-11-10 | Complete Sentry hardening after scoring lands, without changing the routing model |
-| A-6 | TASK-13-01 | Compliance mapping can now point to real admin/candidate/HR/scoring controls |
-| A-7 | TASK-13-02 | Evidence ownership can attach to real tests, OpenAPI artifacts, and smoke outputs |
-| A-8 | TASK-11-08 | Deferred until a short planning pass closes interview workflow/product gaps after the scoring slice |
+| A-1 | TASK-11-10 | Complete Sentry hardening after shortlist review lands, without changing the routing model |
+| A-2 | TASK-13-01 | Compliance mapping can now point to real admin/candidate/HR/scoring controls |
+| A-3 | TASK-13-02 | Evidence ownership can attach to real tests, OpenAPI artifacts, and smoke outputs |
+| A-4 | TASK-11-08 | Still deferred until a short planning pass closes interview workflow/product gaps |
 
-- Execution rule: implement `TASK-04-01/02/03 + TASK-11-07` as one backend+frontend change set, freeze OpenAPI in the same PR, and regenerate typed frontend artifacts from the frozen contract.
+- Execution rule: keep `TASK-11-08` blocked until the dedicated interview-planning pass is written down and approved.
 
 ## Task Breakdown by Epic
 
@@ -211,7 +209,7 @@ Use this queue together with the global queue when planning phase implementation
 | FE-10 | TASK-11-09 | Delivered in local baseline for login/admin/candidate/HR critical flows |
 | FE-11 | TASK-11-05 | Delivered in local baseline: staff vacancy CRUD and pipeline workspace on `/` |
 | FE-12 | TASK-11-11 | Delivered in local baseline: Chrome browser smoke for login + public candidate apply |
-| FE-13 | TASK-11-07 | Next active frontend gap: shortlist review block inside the existing `/` HR workspace after parsed-profile baseline |
+| FE-13 | TASK-11-07 | Delivered in local scoring slice: shortlist review block inside the existing `/` HR workspace with scoring polling and explainable payload rendering |
 | FE-14 | TASK-11-10 | Immediate follow-on after scoring: Sentry observability hardening without route changes |
 | FE-15 | TASK-11-08 | Deferred until a short planning pass after scoring clarifies interview entity, registration, and sync behavior |
 | FE-16 | ADMIN-04 | Unified admin CRUD consoles |
@@ -231,7 +229,7 @@ Use this queue together with the global queue when planning phase implementation
 - Approved by: coordinator, architect, business-analyst
 - Scope: `M1` (tasks 1-24 + TASK-12-01 + FE-1..FE-10)
 - Ownership matrix: `docs/project/sprint-m1-plan.md`
-- Note: on 2026-03-09 the next queue was further constrained to: land the current baseline as one PR, then implement `TASK-04-01/02/03 + TASK-11-07` as a single slice; `TASK-11-08` remains planning-blocked until after scoring.
+- Note: on 2026-03-09 the next queue was further constrained to: land the current baseline as one PR, then implement `TASK-04-01/02/03 + TASK-11-07` as a single slice; `TASK-11-08` remains planning-blocked even after scoring until a dedicated planning pass is approved.
 
 ### M1 Owners (Grouped by TASK-*)
 - architect + backend-engineer: TASK-01-01, TASK-01-02, TASK-01-03, TASK-01-04

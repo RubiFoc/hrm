@@ -3,6 +3,11 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
   Paper,
   Stack,
   Table,
@@ -18,13 +23,16 @@ import { useTranslation } from "react-i18next";
 
 import {
   ApiError,
+  createMatchScore,
   createPipelineTransition,
   createVacancy,
+  getMatchScore,
   listCandidateProfiles,
   listPipelineTransitions,
   listVacancies,
   updateVacancy,
   type CandidateResponse,
+  type MatchScoreResponse,
   type PipelineTransitionCreateRequest,
   type VacancyCreateRequest,
   type VacancyResponse,
@@ -41,6 +49,7 @@ const PIPELINE_STAGE_OPTIONS: PipelineTransitionCreateRequest["to_stage"][] = [
   "hired",
   "rejected",
 ];
+const MATCH_SCORE_POLL_INTERVAL_MS = 1000;
 
 type FeedbackState = {
   type: "success" | "error";
@@ -48,6 +57,7 @@ type FeedbackState = {
 };
 
 type VacancyDraft = VacancyCreateRequest;
+type MatchScoreStatus = MatchScoreResponse["status"];
 
 const DEFAULT_VACANCY_DRAFT: VacancyDraft = {
   title: "",
@@ -72,6 +82,13 @@ export function HrDashboardPage() {
     useState<PipelineTransitionCreateRequest["to_stage"]>("applied");
   const [transitionReason, setTransitionReason] = useState("");
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [scoreFeedback, setScoreFeedback] = useState<FeedbackState | null>(null);
+  const matchScoreQueryKey = [
+    "hr-match-score",
+    accessToken,
+    selectedVacancyId,
+    selectedCandidateId,
+  ];
 
   const vacanciesQuery = useQuery({
     queryKey: ["hr-vacancies", accessToken],
@@ -89,6 +106,28 @@ export function HrDashboardPage() {
     queryKey: ["hr-pipeline-history", accessToken, selectedVacancyId, selectedCandidateId],
     queryFn: () => listPipelineTransitions(accessToken!, selectedVacancyId, selectedCandidateId),
     enabled: Boolean(accessToken && selectedVacancyId && selectedCandidateId),
+  });
+
+  const matchScoreQuery = useQuery({
+    queryKey: matchScoreQueryKey,
+    queryFn: async () => {
+      try {
+        return await getMatchScore(accessToken!, selectedVacancyId, selectedCandidateId);
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
+    enabled: Boolean(accessToken && selectedVacancyId && selectedCandidateId),
+    refetchInterval: (query) => {
+      const item = query.state.data as MatchScoreResponse | null | undefined;
+      if (item && (item.status === "queued" || item.status === "running")) {
+        return MATCH_SCORE_POLL_INTERVAL_MS;
+      }
+      return false;
+    },
   });
 
   const createVacancyMutation = useMutation({
@@ -131,17 +170,34 @@ export function HrDashboardPage() {
     },
   });
 
+  const runScoreMutation = useMutation({
+    mutationFn: () =>
+      createMatchScore(accessToken!, selectedVacancyId, {
+        candidate_id: selectedCandidateId,
+      }),
+    onSuccess: (payload) => {
+      setScoreFeedback(null);
+      queryClient.setQueryData(matchScoreQueryKey, payload);
+      void queryClient.invalidateQueries({ queryKey: matchScoreQueryKey });
+    },
+    onError: (error: unknown) => {
+      setScoreFeedback({ type: "error", message: resolveRecruitmentApiError(error, t) });
+    },
+  });
+
   const vacancyItems = vacanciesQuery.data?.items ?? [];
   const candidateItems = candidatesQuery.data?.items ?? [];
   const selectedVacancy =
     vacancyItems.find((item) => item.vacancy_id === selectedVacancyId) ?? null;
   const selectedCandidate =
     candidateItems.find((item) => item.candidate_id === selectedCandidateId) ?? null;
+  const matchScore = matchScoreQuery.data ?? null;
 
   const handleSelectVacancy = (vacancy: VacancyResponse) => {
     setSelectedVacancyId(vacancy.vacancy_id);
     setEditDraft(toVacancyDraft(vacancy));
     setFeedback(null);
+    setScoreFeedback(null);
   };
 
   const handleCreateVacancy = () => {
@@ -176,6 +232,23 @@ export function HrDashboardPage() {
       to_stage: transitionStage,
       reason: normalizeInput(transitionReason),
     });
+  };
+
+  const handleSelectCandidate = (candidateId: string) => {
+    setSelectedCandidateId(candidateId);
+    setScoreFeedback(null);
+  };
+
+  const handleRunScore = () => {
+    if (!selectedVacancyId || !selectedCandidateId) {
+      setScoreFeedback({
+        type: "error",
+        message: t("hrDashboard.errors.selectShortlistContext"),
+      });
+      return;
+    }
+    setScoreFeedback(null);
+    runScoreMutation.mutate();
   };
 
   if (!accessToken) {
@@ -335,7 +408,7 @@ export function HrDashboardPage() {
               select
               label={t("hrDashboard.fields.candidate")}
               value={selectedCandidateId}
-              onChange={(event) => setSelectedCandidateId(event.target.value)}
+              onChange={(event) => handleSelectCandidate(event.target.value)}
               fullWidth
               SelectProps={{ native: true }}
             >
@@ -438,6 +511,177 @@ export function HrDashboardPage() {
           </Box>
         </Stack>
       </Paper>
+
+      <Paper sx={{ p: 2 }}>
+        <Stack spacing={2}>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            justifyContent="space-between"
+            alignItems={{ xs: "stretch", md: "center" }}
+          >
+            <Stack spacing={1}>
+              <Typography variant="h6">{t("hrDashboard.shortlist.title")}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("hrDashboard.shortlist.subtitle")}
+              </Typography>
+            </Stack>
+            <Button
+              variant="contained"
+              onClick={handleRunScore}
+              disabled={!selectedVacancyId || !selectedCandidateId || runScoreMutation.isPending}
+            >
+              {runScoreMutation.isPending
+                ? t("hrDashboard.shortlist.runPending")
+                : t("hrDashboard.shortlist.runAction")}
+            </Button>
+          </Stack>
+
+          {scoreFeedback ? <Alert severity={scoreFeedback.type}>{scoreFeedback.message}</Alert> : null}
+
+          {!selectedVacancy || !selectedCandidate ? (
+            <Alert severity="info">{t("hrDashboard.shortlist.inactive")}</Alert>
+          ) : null}
+
+          {selectedVacancy && selectedCandidate ? (
+            <Stack spacing={2}>
+              {matchScoreQuery.isLoading && !matchScore ? (
+                <Typography variant="body2">{t("hrDashboard.shortlist.loading")}</Typography>
+              ) : null}
+
+              {matchScoreQuery.isError ? (
+                <Alert severity="error">
+                  {resolveRecruitmentApiError(matchScoreQuery.error, t)}
+                </Alert>
+              ) : null}
+
+              {!matchScoreQuery.isError && !matchScoreQuery.isLoading && !matchScore ? (
+                <Alert severity="info">{t("hrDashboard.shortlist.empty")}</Alert>
+              ) : null}
+
+              {matchScore ? (
+                <Stack spacing={2}>
+                  <Stack
+                    direction={{ xs: "column", md: "row" }}
+                    spacing={1}
+                    alignItems={{ xs: "flex-start", md: "center" }}
+                  >
+                    <Typography variant="body2" color="text.secondary">
+                      {t("hrDashboard.shortlist.statusLabel")}
+                    </Typography>
+                    <Chip
+                      label={t(`hrDashboard.shortlist.status.${matchScore.status}`)}
+                      color={resolveMatchScoreChipColor(matchScore.status)}
+                      size="small"
+                    />
+                    {matchScore.scored_at ? (
+                      <Typography variant="body2" color="text.secondary">
+                        {t("hrDashboard.shortlist.scoredAt", {
+                          value: formatDateTime(matchScore.scored_at),
+                        })}
+                      </Typography>
+                    ) : null}
+                    {matchScore.model_name && matchScore.model_version ? (
+                      <Typography variant="body2" color="text.secondary">
+                        {t("hrDashboard.shortlist.model", {
+                          modelName: matchScore.model_name,
+                          modelVersion: matchScore.model_version,
+                        })}
+                      </Typography>
+                    ) : null}
+                  </Stack>
+
+                  {matchScore.status === "failed" ? (
+                    <Alert severity="warning">{t("hrDashboard.shortlist.failedHint")}</Alert>
+                  ) : null}
+
+                  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                    <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                      <Stack spacing={1}>
+                        <Typography variant="overline">
+                          {t("hrDashboard.shortlist.scoreLabel")}
+                        </Typography>
+                        <Typography variant="h4">
+                          {formatScore(matchScore.score, t)}
+                        </Typography>
+                      </Stack>
+                    </Paper>
+                    <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                      <Stack spacing={1}>
+                        <Typography variant="overline">
+                          {t("hrDashboard.shortlist.confidenceLabel")}
+                        </Typography>
+                        <Typography variant="h4">
+                          {formatConfidence(matchScore.confidence, t)}
+                        </Typography>
+                      </Stack>
+                    </Paper>
+                    <Paper variant="outlined" sx={{ p: 2, flex: 2 }}>
+                      <Stack spacing={1}>
+                        <Typography variant="overline">
+                          {t("hrDashboard.shortlist.summaryLabel")}
+                        </Typography>
+                        <Typography variant="body1">
+                          {matchScore.summary || t("hrDashboard.shortlist.noSummary")}
+                        </Typography>
+                      </Stack>
+                    </Paper>
+                  </Stack>
+
+                  <Divider />
+
+                  <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                    <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                      <Typography variant="subtitle1">
+                        {t("hrDashboard.shortlist.matchedTitle")}
+                      </Typography>
+                      {renderStringList(
+                        matchScore.matched_requirements,
+                        t("hrDashboard.shortlist.noItems"),
+                      )}
+                    </Paper>
+                    <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                      <Typography variant="subtitle1">
+                        {t("hrDashboard.shortlist.missingTitle")}
+                      </Typography>
+                      {renderStringList(
+                        matchScore.missing_requirements,
+                        t("hrDashboard.shortlist.noItems"),
+                      )}
+                    </Paper>
+                  </Stack>
+
+                  <Paper variant="outlined" sx={{ p: 2 }}>
+                    <Typography variant="subtitle1">
+                      {t("hrDashboard.shortlist.evidenceTitle")}
+                    </Typography>
+                    {matchScore.evidence.length === 0 ? (
+                      <Typography variant="body2" color="text.secondary">
+                        {t("hrDashboard.shortlist.noEvidence")}
+                      </Typography>
+                    ) : (
+                      <List dense disablePadding>
+                        {matchScore.evidence.map((item) => (
+                          <ListItem
+                            key={`${item.requirement}:${item.snippet}`}
+                            disableGutters
+                            alignItems="flex-start"
+                          >
+                            <ListItemText
+                              primary={`${item.requirement}: ${item.snippet}`}
+                              secondary={item.source_field || undefined}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    )}
+                  </Paper>
+                </Stack>
+              ) : null}
+            </Stack>
+          ) : null}
+        </Stack>
+      </Paper>
     </Stack>
   );
 }
@@ -479,6 +723,63 @@ function formatDateTime(value: string): string {
   return new Date(value).toLocaleString();
 }
 
+function formatScore(
+  value: number | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (value === null || value === undefined) {
+    return t("hrDashboard.shortlist.notAvailable");
+  }
+  return value.toFixed(0);
+}
+
+function formatConfidence(
+  value: number | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (value === null || value === undefined) {
+    return t("hrDashboard.shortlist.notAvailable");
+  }
+  return `${Math.round(value * 100)}%`;
+}
+
+function resolveMatchScoreChipColor(
+  status: MatchScoreStatus,
+): "default" | "error" | "info" | "success" | "warning" {
+  switch (status) {
+    case "queued":
+      return "info";
+    case "running":
+      return "warning";
+    case "succeeded":
+      return "success";
+    case "failed":
+      return "error";
+    default:
+      return "default";
+  }
+}
+
+function renderStringList(items: string[], emptyState: string) {
+  if (items.length === 0) {
+    return (
+      <Typography variant="body2" color="text.secondary">
+        {emptyState}
+      </Typography>
+    );
+  }
+
+  return (
+    <List dense disablePadding>
+      {items.map((item) => (
+        <ListItem key={item} disableGutters>
+          <ListItemText primary={item} />
+        </ListItem>
+      ))}
+    </List>
+  );
+}
+
 function normalizeInput(value: string): string | null {
   const normalized = value.trim();
   return normalized ? normalized : null;
@@ -495,6 +796,12 @@ function resolveRecruitmentApiError(
     }
     if (detail.includes("candidate not found")) {
       return t("hrDashboard.errors.candidateNotFound");
+    }
+    if (detail.includes("cv analysis is not ready")) {
+      return t("hrDashboard.errors.cvAnalysisNotReady");
+    }
+    if (detail.includes("match score not found")) {
+      return t("hrDashboard.errors.matchScoreNotFound");
     }
     if (detail.includes("transition from")) {
       return t("hrDashboard.errors.invalidTransition");

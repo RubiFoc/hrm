@@ -1068,6 +1068,192 @@
         "title": "LoginRequest",
         "type": "object"
       },
+      "MatchScoreCreateRequest": {
+        "additionalProperties": false,
+        "description": "Input payload for explicit scoring request.",
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id"
+        ],
+        "title": "MatchScoreCreateRequest",
+        "type": "object"
+      },
+      "MatchScoreEvidenceResponse": {
+        "additionalProperties": false,
+        "description": "One evidence item returned to the HR shortlist review UI.",
+        "properties": {
+          "requirement": {
+            "title": "Requirement",
+            "type": "string"
+          },
+          "snippet": {
+            "title": "Snippet",
+            "type": "string"
+          },
+          "source_field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Field"
+          }
+        },
+        "required": [
+          "requirement",
+          "snippet"
+        ],
+        "title": "MatchScoreEvidenceResponse",
+        "type": "object"
+      },
+      "MatchScoreListResponse": {
+        "additionalProperties": false,
+        "description": "List of latest score/status payloads for one vacancy.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/MatchScoreResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "MatchScoreListResponse",
+        "type": "object"
+      },
+      "MatchScoreResponse": {
+        "additionalProperties": false,
+        "description": "UI-ready latest score/status payload for one vacancy and candidate.",
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/MatchScoreEvidenceResponse"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "matched_requirements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Matched Requirements",
+            "type": "array"
+          },
+          "missing_requirements": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Requirements",
+            "type": "array"
+          },
+          "model_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Name"
+          },
+          "model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Version"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "scored_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scored At"
+          },
+          "status": {
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vacancy_id",
+          "candidate_id",
+          "status"
+        ],
+        "title": "MatchScoreResponse",
+        "type": "object"
+      },
       "MeResponse": {
         "description": "Authenticated identity payload for `/api/v1/auth/me` endpoint.",
         "properties": {
@@ -3109,6 +3295,191 @@
         "summary": "Apply To Vacancy Public",
         "tags": [
           "vacancies"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/match-scores": {
+      "get": {
+        "description": "List latest score/status entries for one vacancy.",
+        "operationId": "list_match_scores_api_v1_vacancies__vacancy_id__match_scores_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "candidate_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchScoreListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Match Scores",
+        "tags": [
+          "match-scoring"
+        ]
+      },
+      "post": {
+        "description": "Enqueue scoring or return existing latest score job for one candidate.",
+        "operationId": "create_match_score_api_v1_vacancies__vacancy_id__match_scores_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchScoreCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchScoreResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "CV analysis is not ready"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Match Score",
+        "tags": [
+          "match-scoring"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}": {
+      "get": {
+        "description": "Load latest score/status payload for one candidate in one vacancy.",
+        "operationId": "get_match_score_api_v1_vacancies__vacancy_id__match_scores__candidate_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchScoreResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Match Score",
+        "tags": [
+          "match-scoring"
         ]
       }
     },

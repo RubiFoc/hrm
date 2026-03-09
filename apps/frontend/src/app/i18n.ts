@@ -148,6 +148,7 @@ const resources = {
         transitionSuccess: "Pipeline transition appended successfully.",
         loadingVacancies: "Loading vacancies...",
         emptyVacancies: "No vacancies have been created yet.",
+        timelineTitle: "Pipeline timeline",
         loadingTimeline: "Loading pipeline timeline...",
         emptyTimeline: "No transitions recorded for the selected vacancy and candidate yet.",
         selectTimelineContext:
@@ -159,6 +160,37 @@ const resources = {
           "Selected candidate: {{candidateName}} ({{candidateId}})",
         selectVacancyAction: "Select",
         selectCandidateAction: "Select candidate",
+        shortlist: {
+          title: "Shortlist review",
+          subtitle:
+            "Run explainable scoring for the selected vacancy and candidate without leaving the HR workspace.",
+          inactive: "Select both a vacancy and a candidate to review shortlist scoring.",
+          runAction: "Run score",
+          runPending: "Running score...",
+          loading: "Loading latest score...",
+          empty: "No score is available for the selected vacancy and candidate yet.",
+          statusLabel: "Status",
+          scoreLabel: "Score",
+          confidenceLabel: "Confidence",
+          summaryLabel: "Summary",
+          matchedTitle: "Matched requirements",
+          missingTitle: "Missing requirements",
+          evidenceTitle: "Evidence snippets",
+          scoredAt: "Scored at: {{value}}",
+          model: "Model: {{modelName}} ({{modelVersion}})",
+          noItems: "No items available.",
+          noEvidence: "No evidence snippets available.",
+          noSummary: "No summary is available yet.",
+          notAvailable: "n/a",
+          failedHint:
+            "Scoring failed. Run score again after checking worker health and Ollama availability.",
+          status: {
+            queued: "Queued",
+            running: "Running",
+            succeeded: "Succeeded",
+            failed: "Failed",
+          },
+        },
         fields: {
           title: "Title",
           department: "Department",
@@ -198,12 +230,18 @@ const resources = {
           noVacancyChanges: "No vacancy fields were changed.",
           selectTransitionContext:
             "Select both a vacancy and a candidate before appending a transition.",
+          selectShortlistContext:
+            "Select both a vacancy and a candidate before running score.",
           vacancyNotFound: "Vacancy was not found.",
           candidateNotFound: "Candidate was not found.",
+          matchScoreNotFound: "Match score was not found.",
+          cvAnalysisNotReady:
+            "CV analysis is not ready yet. Wait for parsing to finish and run score again.",
           invalidTransition:
             "The requested pipeline transition is not allowed from the current stage.",
           http_403: "You do not have permission to perform this HR action.",
           http_404: "Requested recruitment resource was not found.",
+          http_409: "Recruitment request conflicts with the current resource state.",
           http_422: "Recruitment request validation failed.",
           generic: "Failed to complete the recruitment operation.",
         },
@@ -480,6 +518,7 @@ const resources = {
         transitionSuccess: "Переход по pipeline успешно добавлен.",
         loadingVacancies: "Загрузка вакансий...",
         emptyVacancies: "Вакансии ещё не созданы.",
+        timelineTitle: "История pipeline",
         loadingTimeline: "Загрузка timeline...",
         emptyTimeline:
           "Для выбранных вакансии и кандидата переходы по pipeline пока не записаны.",
@@ -491,6 +530,38 @@ const resources = {
           "Выбран кандидат: {{candidateName}} ({{candidateId}})",
         selectVacancyAction: "Выбрать",
         selectCandidateAction: "Выбрать кандидата",
+        shortlist: {
+          title: "Проверка шортлиста",
+          subtitle:
+            "Запускайте explainable scoring для выбранных вакансии и кандидата прямо в HR workspace.",
+          inactive:
+            "Выберите и вакансию, и кандидата, чтобы открыть scoring для шортлиста.",
+          runAction: "Запустить score",
+          runPending: "Запуск score...",
+          loading: "Загрузка последнего score...",
+          empty: "Для выбранных вакансии и кандидата score пока не запускался.",
+          statusLabel: "Статус",
+          scoreLabel: "Score",
+          confidenceLabel: "Уверенность",
+          summaryLabel: "Summary",
+          matchedTitle: "Совпавшие требования",
+          missingTitle: "Недостающие требования",
+          evidenceTitle: "Фрагменты evidence",
+          scoredAt: "Scored at: {{value}}",
+          model: "Model: {{modelName}} ({{modelVersion}})",
+          noItems: "Данных пока нет.",
+          noEvidence: "Evidence snippets пока отсутствуют.",
+          noSummary: "Summary пока недоступен.",
+          notAvailable: "н/д",
+          failedHint:
+            "Scoring завершился ошибкой. Повторите запуск после проверки worker и доступности Ollama.",
+          status: {
+            queued: "В очереди",
+            running: "В обработке",
+            succeeded: "Успешно",
+            failed: "Ошибка",
+          },
+        },
         fields: {
           title: "Название",
           department: "Подразделение",
@@ -530,12 +601,18 @@ const resources = {
           noVacancyChanges: "В полях вакансии нет изменений.",
           selectTransitionContext:
             "Перед добавлением перехода выберите и вакансию, и кандидата.",
+          selectShortlistContext:
+            "Перед запуском score выберите и вакансию, и кандидата.",
           vacancyNotFound: "Вакансия не найдена.",
           candidateNotFound: "Кандидат не найден.",
+          matchScoreNotFound: "Match score не найден.",
+          cvAnalysisNotReady:
+            "CV analysis ещё не готов. Дождитесь завершения parsing и повторите запуск score.",
           invalidTransition:
             "Запрошенный переход по pipeline недопустим из текущей стадии.",
           http_403: "Недостаточно прав для выполнения HR-операции.",
           http_404: "Запрошенный recruitment resource не найден.",
+          http_409: "Recruitment-запрос конфликтует с текущим состоянием ресурса.",
           http_422: "Ошибка валидации recruitment-запроса.",
           generic: "Не удалось выполнить recruitment-операцию.",
         },

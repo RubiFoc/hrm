@@ -154,7 +154,9 @@ sequenceDiagram
   participant UI as React.js + TypeScript UI
   participant API as API Gateway
   participant CAND as Candidate Service
-  participant SCORE as Match Scoring Worker
+  participant SCORE as Match Scoring Service
+  participant Q as Celery/Redis
+  participant WORKER as Match Scoring Worker
   participant OLL as Ollama
 
   HR->>UI: Select vacancy + candidate on `/`
@@ -167,17 +169,22 @@ sequenceDiagram
     SCORE-->>API: Reject with 409
     API-->>UI: Render localized retry guidance
   else Parsed CV analysis is ready
-    SCORE-->>API: Return active/latest job or enqueue new one
+    SCORE->>Q: Enqueue `match_scoring` job or return active/latest job
+    Q->>WORKER: Deliver job_id
+    SCORE-->>API: Return queued/running/succeeded/failed payload
     API-->>UI: queued/running payload
-    SCORE->>OLL: Score vacancy against parsed CV evidence
-    OLL-->>SCORE: score + confidence + summary + evidence
-    SCORE-->>API: Persist job state + score artifact
+    WORKER->>OLL: Score vacancy against parsed CV evidence
+    OLL-->>WORKER: score + confidence + summary + evidence
+    WORKER-->>API: Persist job state + score artifact
     UI->>API: GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}
     API->>SCORE: Read latest job + score artifact
     SCORE-->>API: UI-ready score/status payload
     API-->>UI: Render shortlist review block
   end
 ```
+
+Current implementation persists lifecycle state in `match_scoring_jobs` and UI-ready explainable
+artifacts in `match_score_artifacts`.
 
 ## Diagram 5: Interview Scheduling Sequence
 

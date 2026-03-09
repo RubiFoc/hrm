@@ -95,11 +95,12 @@ flowchart LR
 - Shared backend primitives are centralized in `hrm_backend/core` to prevent domain duplication.
 - Package boundary baseline:
   `hrm_backend/auth` handles auth/session lifecycle; `hrm_backend/admin` handles admin governance APIs.
-- Approved next package boundary:
+- Implemented package boundary:
   `hrm_backend/scoring` handles scoring jobs, score artifacts, Ollama integration, and scoring API contracts without mixing this logic into `candidates` or `vacancies`.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
 - Compose baseline services: `frontend`, `backend`, `backend-worker`, `postgres`, `postgres-init`, `backend-migrate`, `redis`, `minio`, `minio-init`.
-- Async runtime baseline: dedicated `backend-worker` (Celery) processing DB-backed jobs.
+- Async runtime baseline: dedicated `backend-worker` (Celery) processing DB-backed jobs on
+  `cv_parsing` and `match_scoring` queues.
 - Frontend style: React.js + TypeScript SPA with role-based route guards and shared component system.
 - Frontend libraries: MUI, React Router, TanStack Query, React Hook Form, Zod, i18next.
 - Browser support target: Google Chrome.
@@ -113,6 +114,9 @@ flowchart LR
   `HRM_JWT_SECRET`, `HRM_JWT_ALGORITHM`, `HRM_ACCESS_TOKEN_TTL_SECONDS`, `HRM_REFRESH_TOKEN_TTL_SECONDS`, `HRM_AUTH_REDIS_PREFIX`, `REDIS_URL`.
 - Staff auth additions:
   `EMPLOYEE_KEY_TTL_SECONDS` and Celery runtime settings (`CELERY_BROKER_URL`, `CELERY_RESULT_BACKEND`, `CELERY_TASK_DEFAULT_QUEUE`, `CELERY_TASK_TIME_LIMIT_SECONDS`).
+- Scoring runtime additions:
+  `MATCH_SCORING_MAX_ATTEMPTS`, `MATCH_SCORING_MODEL_NAME`,
+  `MATCH_SCORING_REQUEST_TIMEOUT_SECONDS`, and `MATCH_SCORING_QUEUE_NAME`.
 
 ## Non-Functional Requirements
 - Reliability:

@@ -14,6 +14,7 @@ export {
   listAdminEmployeeKeys,
   revokeAdminEmployeeKey,
 } from "./adminEmployeeKeys";
+export { createMatchScore, getMatchScore, listMatchScores } from "./matchScores";
 export {
   createPipelineTransition,
   createVacancy,
@@ -46,6 +47,12 @@ export type {
   PublicVacancyApplicationResponse,
 } from "./candidateApplications";
 export type { CandidateListResponse, CandidateResponse } from "./candidateProfiles";
+export type {
+  MatchScoreCreateRequest,
+  MatchScoreEvidenceResponse,
+  MatchScoreListResponse,
+  MatchScoreResponse,
+} from "./matchScores";
 export { createTypedApiClient, typedApiClient } from "./typedClient";
 export type { ApiPath } from "./typedClient";
 export type {
