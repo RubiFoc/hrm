@@ -34,3 +34,4 @@ Shortcut commands:
 - Approved M1 sprint ownership: `docs/project/sprint-m1-plan.md`
 - Legal mapping (NPA -> controls): `docs/project/legal-controls-matrix.md`
 - Compliance evidence ownership: `docs/project/evidence-registry.md`
+- Interview planning baseline: `docs/project/interview-planning-pass.md`

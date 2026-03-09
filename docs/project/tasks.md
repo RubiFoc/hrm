@@ -29,6 +29,7 @@
 | TASK-11-07 | implemented/local-scoring-slice | `/` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
 | TASK-11-10 | implemented/local-observability-slice | Frontend Sentry now tags `/`, `/candidate`, `/login`, `/admin`, `/admin/staff`, and `/admin/employee-keys`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
 | TASK-13-01/02 | implemented/local-compliance-slice | Legal-controls matrix now maps article-level obligations to current repo-backed controls and evidence registry entries with owners, verification sources, and update triggers |
+| TASK-11-08 | planned/spec-complete | Interview scheduling and candidate registration now have a decision-complete planning baseline in `docs/project/interview-planning-pass.md`; implementation is not started yet |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-09 Delivery Control Notes
@@ -36,17 +37,17 @@
 - The main remaining frontend gaps after the login/browser hotfix were `TASK-11-06` and `TASK-11-05`; the current repository now contains a local acceptance baseline for both flows.
 - The scoring/shortlist-review slice (`TASK-04-01/02/03 + TASK-11-07`) is now implemented in repo as one vertical delivery unit.
 - The compliance follow-on slice (`TASK-13-01/02`) is now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
-- The next active workstream after compliance is the dedicated planning pass for `TASK-11-08`.
-- `TASK-11-08` is explicitly deferred until a separate planning pass resolves interview entity boundaries, candidate registration/identity rules, reschedule/cancel semantics, and calendar sync conflict behavior.
+- The dedicated planning pass for `TASK-11-08` is now written down in `docs/project/interview-planning-pass.md`.
+- The next active workstream is implementation of `TASK-11-08` against that planning baseline without reopening auth, CORS, or the public candidate transport model.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
-## Active Queue After Compliance Slice
+## Active Queue After Planning Pass
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-11-08 | Current blocker is no longer implementation capacity but missing product decisions; planning pass is the next required slice |
+| A-1 | TASK-11-08 | Planning risk is closed; next slice is implementation of interview scheduling and candidate registration against the frozen planning spec |
 
-- Execution rule: keep `TASK-11-08` blocked until the dedicated interview-planning pass is written down and approved.
+- Execution rule: implement `TASK-11-08` only from `docs/project/interview-planning-pass.md`; do not reopen candidate auth, CORS, or route-topology scope during that slice.
 
 ## Task Breakdown by Epic
 
@@ -206,7 +207,7 @@ Use this queue together with the global queue when planning phase implementation
 | FE-12 | TASK-11-11 | Delivered in local baseline: Chrome browser smoke for login + public candidate apply |
 | FE-13 | TASK-11-07 | Delivered in local scoring slice: shortlist review block inside the existing `/` HR workspace with scoring polling and explainable payload rendering |
 | FE-14 | TASK-11-10 | Delivered in local observability slice: Sentry hardening for critical routes, shared HTTP failure capture, render boundary, and release/env tracing config without route changes |
-| FE-15 | TASK-11-08 | Next planning-only slice after compliance: interview entity, registration, and sync rules still need a decision-complete spec |
+| FE-15 | TASK-11-08 | Next implementation slice: use the frozen interview planning spec to extend `/` and `/candidate` without adding candidate auth |
 | FE-16 | ADMIN-04 | Unified admin CRUD consoles |
 | FE-17 | ADMIN-05 | Admin observability and audit dashboards |
 | FE-18 | TASK-11-12 | Phase-2 role workspace rollout |
@@ -214,7 +215,7 @@ Use this queue together with the global queue when planning phase implementation
 ## Milestone Cut Suggestion
 - `M1` (Phase 1 MVP): infra/security + ADMIN-01/02/03 + candidate CV intake/parsing/normalization + candidate self-service upload/tracking + HR vacancy/pipeline workspace baseline + RU/EN critical flows + browser smoke.
 - `M2` (Immediate post-baseline slice): `TASK-04-01/02/03 + TASK-11-07` as one scoring/shortlist-review deliverable, with `TASK-11-10` and `TASK-13-01/02` proceeding immediately after or in parallel.
-- `M2` planning gate: run a short dedicated planning pass for `TASK-11-08` before interview scheduling/registration implementation.
+- `M2` planning gate: completed in `docs/project/interview-planning-pass.md`; use that document as the baseline for interview scheduling/registration implementation.
 - `M3` (Phase 2 core): interview scheduling/fairness controls + offer-to-hire + onboarding workflows + phase-2 role workspace baseline.
 - `M4` (Phase 2 expansion): manager/leader/accountant rollout + reporting exports + notification optimization + final legal sign-off package.
 - Note: until first production launch planning starts, acceptance focus is local end-to-end operation on the current device.

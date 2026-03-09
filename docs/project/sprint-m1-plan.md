@@ -21,14 +21,14 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 | `TASK-04-01/02/03 + TASK-11-07` | implemented/local-scoring-slice | Dedicated scoring backend and shortlist review block are present in repo with frozen contract and compose/runtime wiring |
 | `TASK-11-10` | implemented/local-observability-slice | Critical-route Sentry tags, shared HTTP failure capture, render boundary, and release/env tracing config are present in repo |
 | `TASK-13-01/02` | implemented/local-compliance-slice | Article-level control mapping and evidence registry are present in repo and linked to real artifacts |
-| `TASK-11-08` | next/planning-only | Requires a dedicated planning pass for interview entity, registration, reschedule/cancel, and sync-conflict rules |
+| `TASK-11-08` | planned/spec-complete | Decision-complete interview planning is now documented in `docs/project/interview-planning-pass.md`; implementation is still pending |
 
 ## Scope Normalization
 - The original M1 sprint text stopped at FE-9, but the repo now contains a broader local acceptance baseline: `TASK-11-05`, `TASK-11-06`, `TASK-11-09`, and `TASK-11-11` are no longer future-only scope.
 - Immediate follow-on work must not reopen auth, CORS, routing topology, or transport architecture.
 - The scoring/shortlist-review track is now implemented in repo as one backend+frontend slice.
-- The current approved local diff is limited to `TASK-13-01/02` compliance documentation and evidence ownership work.
-- Interview scheduling (`TASK-11-08`) is deliberately deferred until after a short planning pass.
+- The current approved local diff is limited to the `TASK-11-08` planning-only documentation slice.
+- Interview scheduling implementation remains deferred until a dedicated implementation branch follows `docs/project/interview-planning-pass.md`.
 
 ## Phase 0 Merge Gate
 - The current baseline PR must keep exactly this scope:
@@ -51,13 +51,13 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 - After merge, sync local `main` before starting the next implementation increment.
 
 ## Approved Immediate Follow-On Slice
-- Implement `TASK-13-01/02` as a dedicated compliance documentation slice.
+- Implement the next `TASK-11-08` slice from the planning baseline in `docs/project/interview-planning-pass.md`.
 - Slice rules:
-  - use only real repo-backed artifacts as evidence;
-  - update legal-controls matrix and evidence registry in the same change;
-  - do not change runtime, routing, auth, CORS, or API contracts.
-- Next after this slice:
-  - a dedicated planning pass for `TASK-11-08`.
+  - keep HR interview controls on `/`;
+  - keep candidate interview registration on `/candidate?interviewToken=<token>`;
+  - do not introduce candidate auth, new CORS behavior, or notification-service scope;
+  - freeze OpenAPI and generated frontend types in the same change.
+- This planning pass itself remains docs-only and introduces no runtime or API changes.
 
 ## Team Roles
 - architect
