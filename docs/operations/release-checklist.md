@@ -3,6 +3,7 @@
 ## Pre-Release
 - [ ] Acceptance criteria are satisfied.
 - [ ] Required tests passed and evidence attached.
+- [ ] Legal controls matrix and evidence registry are current (`docs/project/legal-controls-matrix.md`, `docs/project/evidence-registry.md`).
 - [ ] OpenAPI frozen contract check passed (`./scripts/check-openapi-freeze.sh`).
 - [ ] PostgreSQL migrations verified (`alembic upgrade head` / rollback check as needed).
 - [ ] Rollback strategy is documented.
