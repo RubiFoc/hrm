@@ -89,7 +89,9 @@ class InterviewDAO:
             query = query.filter(Interview.candidate_id == candidate_id)
         if status is not None:
             query = query.filter(Interview.status == status)
-        return list(query.order_by(Interview.created_at.desc(), Interview.interview_id.desc()).all())
+        return list(
+            query.order_by(Interview.created_at.desc(), Interview.interview_id.desc()).all()
+        )
 
     def save(self, entity: Interview) -> Interview:
         """Persist in-memory changes and refresh interview row."""

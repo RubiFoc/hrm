@@ -54,7 +54,11 @@ class Interview(Base):
     timezone: Mapped[str] = mapped_column(String(128), nullable=False)
     location_kind: Mapped[str] = mapped_column(String(32), nullable=False)
     location_details: Mapped[str | None] = mapped_column(Text, nullable=True)
-    interviewer_staff_ids_json: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    interviewer_staff_ids_json: Mapped[list[str]] = mapped_column(
+        JSON,
+        nullable=False,
+        default=list,
+    )
     calendar_event_id: Mapped[str | None] = mapped_column(String(512), nullable=True)
     candidate_token_nonce: Mapped[str | None] = mapped_column(String(128), nullable=True)
     candidate_token_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)

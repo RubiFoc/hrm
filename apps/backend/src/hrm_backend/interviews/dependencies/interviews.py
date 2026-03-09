@@ -14,9 +14,14 @@ from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
 from hrm_backend.core.db.session import get_db_session
 from hrm_backend.interviews.dao.calendar_binding_dao import InterviewCalendarBindingDAO
 from hrm_backend.interviews.dao.interview_dao import InterviewDAO
-from hrm_backend.interviews.infra.google_calendar import GoogleCalendarAdapter, InterviewCalendarAdapter
+from hrm_backend.interviews.infra.google_calendar import (
+    GoogleCalendarAdapter,
+    InterviewCalendarAdapter,
+)
 from hrm_backend.interviews.services.interview_service import InterviewService
-from hrm_backend.interviews.services.interview_sync_worker_service import InterviewSyncWorkerService
+from hrm_backend.interviews.services.interview_sync_worker_service import (
+    InterviewSyncWorkerService,
+)
 from hrm_backend.interviews.utils.tokens import InterviewTokenManager
 from hrm_backend.settings import AppSettings, get_settings
 from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransitionDAO
@@ -47,7 +52,9 @@ def get_interview_calendar_adapter(settings: SettingsDependency) -> InterviewCal
     return _build_interview_calendar_adapter(
         enabled=settings.google_calendar_enabled,
         service_account_key_path=settings.google_calendar_service_account_key_path,
-        staff_calendar_items=tuple(sorted(settings.interview_staff_calendar_map.items())),
+        staff_calendar_items=tuple(
+            sorted(settings.interview_staff_calendar_map.items())
+        ),
     )
 
 
@@ -61,7 +68,9 @@ def get_interview_service(
     settings: SettingsDependency,
     session: SessionDependency,
     audit_service: AuditDependency,
-    calendar_adapter: Annotated[InterviewCalendarAdapter, Depends(get_interview_calendar_adapter)],
+    calendar_adapter: Annotated[
+        InterviewCalendarAdapter, Depends(get_interview_calendar_adapter)
+    ],
     token_manager: Annotated[InterviewTokenManager, Depends(get_interview_token_manager)],
 ) -> InterviewService:
     """Build interview API service dependency."""
@@ -82,7 +91,9 @@ def get_interview_sync_worker_service(
     settings: SettingsDependency,
     session: SessionDependency,
     audit_service: AuditDependency,
-    calendar_adapter: Annotated[InterviewCalendarAdapter, Depends(get_interview_calendar_adapter)],
+    calendar_adapter: Annotated[
+        InterviewCalendarAdapter, Depends(get_interview_calendar_adapter)
+    ],
     token_manager: Annotated[InterviewTokenManager, Depends(get_interview_token_manager)],
 ) -> InterviewSyncWorkerService:
     """Build interview worker service dependency."""

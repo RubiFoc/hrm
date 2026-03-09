@@ -163,7 +163,9 @@ class GoogleCalendarAdapter:
                 ),
                 conference_request_id=f"{interview.interview_id}-{interview.schedule_version}",
             ),
-            include_conference_data=interview.location_kind == "google_meet" and primary_binding is None,
+            include_conference_data=(
+                interview.location_kind == "google_meet" and primary_binding is None
+            ),
         )
         resolved_location_details = (
             self._extract_meet_link(primary_response)
@@ -279,7 +281,11 @@ class GoogleCalendarAdapter:
 
     def _service_account_key_file(self) -> Path:
         """Return configured service-account key path."""
-        return Path("" if self._service_account_key_path is None else self._service_account_key_path)
+        return Path(
+            ""
+            if self._service_account_key_path is None
+            else self._service_account_key_path
+        )
 
     def _get_access_token(self) -> str:
         """Exchange service-account assertion for Calendar API bearer token."""

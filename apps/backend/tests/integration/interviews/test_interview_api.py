@@ -69,7 +69,11 @@ class _FakeCalendarAdapter:
         """Validate calendar mappings for requested interviewer list."""
         if not self.configured:
             raise RuntimeError("calendar_not_configured")
-        missing = [staff_id for staff_id in interviewer_staff_ids if staff_id not in self.staff_calendar_map]
+        missing = [
+            staff_id
+            for staff_id in interviewer_staff_ids
+            if staff_id not in self.staff_calendar_map
+        ]
         if missing:
             from fastapi import HTTPException
 
@@ -459,7 +463,7 @@ async def test_hr_reschedule_cancel_and_resend_invite_flow(
     configured_app,
     api_client: AsyncClient,
 ) -> None:
-    """Verify HR actions expose invite lifecycle, reschedule token invalidation, and cancellation."""
+    """Verify HR invite lifecycle, reschedule invalidation, and cancellation."""
     candidate_id = str(UUID("cccccccc-cccc-4ccc-8ccc-cccccccccccc"))
     _seed_candidate(configured_app["engine"], candidate_id=candidate_id, suffix="hr")
     vacancy_id = await _create_vacancy(api_client, title_suffix="hr")
@@ -666,7 +670,13 @@ async def test_interview_sync_state_machine_and_pipeline_append(
         vacancy_id=synced_vacancy_id,
         candidate_id=synced_candidate_id,
     )
-    assert _load_interview(configured_app["engine"], synced_created["interview_id"]).calendar_sync_status == "queued"
+    assert (
+        _load_interview(
+            configured_app["engine"],
+            synced_created["interview_id"],
+        ).calendar_sync_status
+        == "queued"
+    )
 
     assert _run_worker(configured_app, interview_id=synced_created["interview_id"]) == "synced"
     assert running_observation["status"] == "running"
@@ -682,7 +692,11 @@ async def test_interview_sync_state_machine_and_pipeline_append(
         assert last_transition.to_stage == "interview"
 
     conflict_candidate_id = str(UUID("34343434-3434-4343-8343-343434343434"))
-    _seed_candidate(configured_app["engine"], candidate_id=conflict_candidate_id, suffix="sync-conflict")
+    _seed_candidate(
+        configured_app["engine"],
+        candidate_id=conflict_candidate_id,
+        suffix="sync-conflict",
+    )
     conflict_vacancy_id = await _create_vacancy(api_client, title_suffix="sync-conflict")
     await _append_transition(
         api_client,
@@ -703,7 +717,11 @@ async def test_interview_sync_state_machine_and_pipeline_append(
     assert conflict_row.status == "reschedule_requested"
 
     failed_candidate_id = str(UUID("56565656-5656-4565-8565-565656565656"))
-    _seed_candidate(configured_app["engine"], candidate_id=failed_candidate_id, suffix="sync-failed")
+    _seed_candidate(
+        configured_app["engine"],
+        candidate_id=failed_candidate_id,
+        suffix="sync-failed",
+    )
     failed_vacancy_id = await _create_vacancy(api_client, title_suffix="sync-failed")
     await _append_transition(
         api_client,

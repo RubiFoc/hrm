@@ -49,7 +49,11 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("last_synced_at", sa.DateTime(timezone=True), nullable=True),
-        sa.ForeignKeyConstraint(["candidate_id"], ["candidate_profiles.candidate_id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["candidate_id"],
+            ["candidate_profiles.candidate_id"],
+            ondelete="CASCADE",
+        ),
         sa.ForeignKeyConstraint(["vacancy_id"], ["vacancies.vacancy_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("interview_id"),
     )

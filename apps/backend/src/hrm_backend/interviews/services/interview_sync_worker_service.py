@@ -216,7 +216,10 @@ class InterviewSyncWorkerService:
         """Delete external events after cancellation and clear stored bindings."""
         bindings = self._binding_dao.list_for_interview(entity.interview_id)
         try:
-            result = self._calendar_adapter.cancel_schedule(interview=entity, existing_bindings=bindings)
+            result = self._calendar_adapter.cancel_schedule(
+                interview=entity,
+                existing_bindings=bindings,
+            )
         except Exception as exc:  # noqa: BLE001
             entity.calendar_sync_status = "failed"
             entity.calendar_sync_reason_code = "calendar_sync_failed"

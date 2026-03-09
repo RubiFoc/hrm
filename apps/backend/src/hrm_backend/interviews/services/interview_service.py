@@ -84,8 +84,13 @@ class InterviewService:
             vacancy_id=str(vacancy_id),
             candidate_id=str(payload.candidate_id),
         )
-        self._ensure_no_active_interview(vacancy_id=str(vacancy_id), candidate_id=str(payload.candidate_id))
-        interviewer_staff_ids = self._normalize_and_validate_interviewers(payload.interviewer_staff_ids)
+        self._ensure_no_active_interview(
+            vacancy_id=str(vacancy_id),
+            candidate_id=str(payload.candidate_id),
+        )
+        interviewer_staff_ids = self._normalize_and_validate_interviewers(
+            payload.interviewer_staff_ids
+        )
         scheduled_start_at, scheduled_end_at, timezone_name = normalize_schedule_window(
             scheduled_start_local=payload.scheduled_start_local,
             scheduled_end_local=payload.scheduled_end_local,
@@ -143,7 +148,9 @@ class InterviewService:
             actor_role=actor_role,
             resource_id=str(vacancy_id),
         )
-        return HRInterviewListResponse(items=[self._build_hr_response(entity=item) for item in items])
+        return HRInterviewListResponse(
+            items=[self._build_hr_response(entity=item) for item in items]
+        )
 
     def get_interview(
         self,
@@ -187,7 +194,9 @@ class InterviewService:
         )
         if not can_hr_reschedule(entity.status):  # type: ignore[arg-type]
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="interview_terminal")
-        interviewer_staff_ids = self._normalize_and_validate_interviewers(payload.interviewer_staff_ids)
+        interviewer_staff_ids = self._normalize_and_validate_interviewers(
+            payload.interviewer_staff_ids
+        )
         scheduled_start_at, scheduled_end_at, timezone_name = normalize_schedule_window(
             scheduled_start_local=payload.scheduled_start_local,
             scheduled_end_local=payload.scheduled_end_local,
@@ -458,7 +467,10 @@ class InterviewService:
 
     def _ensure_no_active_interview(self, *, vacancy_id: str, candidate_id: str) -> None:
         """Reject creation when one active interview already exists for the pair."""
-        existing = self._interview_dao.find_active_for_pair(vacancy_id=vacancy_id, candidate_id=candidate_id)
+        existing = self._interview_dao.find_active_for_pair(
+            vacancy_id=vacancy_id,
+            candidate_id=candidate_id,
+        )
         if existing is not None:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
@@ -509,7 +521,7 @@ class InterviewService:
         return entity
 
     def _issue_candidate_token(self, entity: Interview) -> None:
-        """Issue one candidate token for current schedule version and persist it on interview row."""
+        """Issue one token for current schedule version and persist it on interview row."""
         issued = self._token_manager.issue_token(
             interview_id=entity.interview_id,
             schedule_version=entity.schedule_version,
@@ -560,7 +572,11 @@ class InterviewService:
             ),
             candidate_invite_url=candidate_invite_url,
             calendar_event_id=entity.calendar_event_id,
-            last_synced_at=None if entity.last_synced_at is None else _ensure_aware_utc(entity.last_synced_at),
+            last_synced_at=(
+                None
+                if entity.last_synced_at is None
+                else _ensure_aware_utc(entity.last_synced_at)
+            ),
             cancelled_by=entity.cancelled_by,  # type: ignore[arg-type]
             cancel_reason_code=entity.cancel_reason_code,
             created_at=_ensure_aware_utc(entity.created_at),
