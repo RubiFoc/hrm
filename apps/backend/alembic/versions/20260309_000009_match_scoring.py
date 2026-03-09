@@ -33,8 +33,16 @@ def upgrade() -> None:
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("finished_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["candidate_id"], ["candidate_profiles.candidate_id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["document_id"], ["candidate_documents.document_id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["candidate_id"],
+            ["candidate_profiles.candidate_id"],
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["document_id"],
+            ["candidate_documents.document_id"],
+            ondelete="CASCADE",
+        ),
         sa.ForeignKeyConstraint(["vacancy_id"], ["vacancies.vacancy_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("job_id"),
     )
@@ -92,8 +100,16 @@ def upgrade() -> None:
         sa.Column("model_version", sa.String(length=128), nullable=False),
         sa.Column("scored_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
-        sa.ForeignKeyConstraint(["candidate_id"], ["candidate_profiles.candidate_id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["document_id"], ["candidate_documents.document_id"], ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["candidate_id"],
+            ["candidate_profiles.candidate_id"],
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["document_id"],
+            ["candidate_documents.document_id"],
+            ondelete="CASCADE",
+        ),
         sa.ForeignKeyConstraint(["job_id"], ["match_scoring_jobs.job_id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["vacancy_id"], ["vacancies.vacancy_id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("artifact_id"),
