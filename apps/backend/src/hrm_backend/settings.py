@@ -36,6 +36,10 @@ class AppSettings(BaseSettings):
         cv_max_size_bytes: Maximum allowed CV payload size.
         object_storage_sse_enabled: Whether uploads use SSE-S3 headers.
         cv_parsing_max_attempts: Maximum worker retries for CV parsing.
+        match_scoring_max_attempts: Maximum worker retries for match scoring.
+        match_scoring_model_name: Ollama model identifier used for match scoring.
+        match_scoring_request_timeout_seconds: Timeout for one Ollama scoring request.
+        match_scoring_queue_name: Celery queue name used for match scoring tasks.
         employee_key_ttl_seconds: Default ttl for one-time employee registration keys.
         cors_allowed_origins: Allowed browser origins for credentialed API CORS requests.
         public_apply_rate_limit_redis_prefix: Redis key prefix for public apply rate limits.
@@ -101,6 +105,20 @@ class AppSettings(BaseSettings):
     cv_max_size_bytes: int = Field(default=10 * 1024 * 1024, env="CV_MAX_SIZE_BYTES", gt=0)
     object_storage_sse_enabled: bool = Field(default=True, env="OBJECT_STORAGE_SSE_ENABLED")
     cv_parsing_max_attempts: int = Field(default=3, env="CV_PARSING_MAX_ATTEMPTS", gt=0)
+    match_scoring_max_attempts: int = Field(default=3, env="MATCH_SCORING_MAX_ATTEMPTS", gt=0)
+    match_scoring_model_name: str = Field(
+        default="llama3.2:latest",
+        env="MATCH_SCORING_MODEL_NAME",
+    )
+    match_scoring_request_timeout_seconds: int = Field(
+        default=90,
+        env="MATCH_SCORING_REQUEST_TIMEOUT_SECONDS",
+        gt=0,
+    )
+    match_scoring_queue_name: str = Field(
+        default="match_scoring",
+        env="MATCH_SCORING_QUEUE_NAME",
+    )
     employee_key_ttl_seconds: int = Field(
         default=7 * 24 * 60 * 60,
         env="EMPLOYEE_KEY_TTL_SECONDS",
@@ -176,6 +194,8 @@ class AppSettings(BaseSettings):
         "object_storage_secret_key",
         "object_storage_bucket",
         "ollama_base_url",
+        "match_scoring_model_name",
+        "match_scoring_queue_name",
         "jwt_secret",
         "jwt_algorithm",
         "redis_prefix",

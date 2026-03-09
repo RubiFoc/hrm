@@ -446,6 +446,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/vacancies/{vacancy_id}/match-scores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Match Scores
+         * @description List latest score/status entries for one vacancy.
+         */
+        get: operations["list_match_scores_api_v1_vacancies__vacancy_id__match_scores_get"];
+        put?: never;
+        /**
+         * Create Match Score
+         * @description Enqueue scoring or return existing latest score job for one candidate.
+         */
+        post: operations["create_match_score_api_v1_vacancies__vacancy_id__match_scores_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Match Score
+         * @description Load latest score/status payload for one candidate in one vacancy.
+         */
+        get: operations["get_match_score_api_v1_vacancies__vacancy_id__match_scores__candidate_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -957,6 +1001,76 @@ export interface components {
             identifier: string;
             /** Password */
             password: string;
+        };
+        /**
+         * MatchScoreCreateRequest
+         * @description Input payload for explicit scoring request.
+         */
+        MatchScoreCreateRequest: {
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+        };
+        /**
+         * MatchScoreEvidenceResponse
+         * @description One evidence item returned to the HR shortlist review UI.
+         */
+        MatchScoreEvidenceResponse: {
+            /** Requirement */
+            requirement: string;
+            /** Snippet */
+            snippet: string;
+            /** Source Field */
+            source_field?: string | null;
+        };
+        /**
+         * MatchScoreListResponse
+         * @description List of latest score/status payloads for one vacancy.
+         */
+        MatchScoreListResponse: {
+            /** Items */
+            items: components["schemas"]["MatchScoreResponse"][];
+        };
+        /**
+         * MatchScoreResponse
+         * @description UI-ready latest score/status payload for one vacancy and candidate.
+         */
+        MatchScoreResponse: {
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /** Confidence */
+            confidence?: number | null;
+            /** Evidence */
+            evidence?: components["schemas"]["MatchScoreEvidenceResponse"][];
+            /** Matched Requirements */
+            matched_requirements?: string[];
+            /** Missing Requirements */
+            missing_requirements?: string[];
+            /** Model Name */
+            model_name?: string | null;
+            /** Model Version */
+            model_version?: string | null;
+            /** Score */
+            score?: number | null;
+            /** Scored At */
+            scored_at?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "queued" | "running" | "succeeded" | "failed";
+            /** Summary */
+            summary?: string | null;
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
         };
         /**
          * MeResponse
@@ -2158,6 +2272,113 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    list_match_scores_api_v1_vacancies__vacancy_id__match_scores_get: {
+        parameters: {
+            query?: {
+                candidate_id?: string | null;
+            };
+            header?: never;
+            path: {
+                vacancy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchScoreListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_match_score_api_v1_vacancies__vacancy_id__match_scores_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MatchScoreCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchScoreResponse"];
+                };
+            };
+            /** @description CV analysis is not ready */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_match_score_api_v1_vacancies__vacancy_id__match_scores__candidate_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchScoreResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };

@@ -178,10 +178,10 @@ apps/backend/tests/
 ### Backend
 | Capability | Unit Coverage | Integration Coverage | Required Evidence |
 | --- | --- | --- | --- |
-| Ollama adapter mapping and score schema validation | `apps/backend/tests/unit/scoring/*` | N/A | model response mapping is deterministic and score payload validates against schema |
+| Ollama adapter mapping and score schema validation | `apps/backend/tests/unit/scoring/test_ollama_adapter.py` | N/A | model response mapping is deterministic and score payload validates against schema |
 | Worker/job state transitions and retry behavior | `apps/backend/tests/unit/scoring/test_match_scoring_worker.py` | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | `queued/running/succeeded/failed` lifecycle is persisted correctly |
 | Reject scoring when parsed CV analysis is not ready | N/A | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | `POST /api/v1/vacancies/{vacancy_id}/match-scores` returns `409` without silent fallback |
-| Score payload shape and evidence propagation | schema unit tests | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | latest score response includes `score`, `confidence`, `summary`, requirements, evidence, model metadata, and `scored_at` |
+| Score payload shape and evidence propagation | `apps/backend/tests/unit/scoring/test_ollama_adapter.py` | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | latest score response includes `score`, `confidence`, `summary`, requirements, evidence, model metadata, and `scored_at` |
 
 ### Frontend
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |

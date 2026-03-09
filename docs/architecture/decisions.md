@@ -31,6 +31,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0024 | 2026-03-06 | accepted | Persist RU/EN-normalized CV analysis with evidence traceability and expose analysis API | architect + backend-engineer + frontend-engineer | candidate domain model, parsing pipeline, API contract, frontend candidate workspace |
 | ADR-0025 | 2026-03-06 | accepted | Track public candidate parsing by job ID and make browser smoke validate the full Phase 1 intake baseline | architect + backend-engineer + frontend-engineer | candidate workflow, compose runtime, browser verification, API contract |
 | ADR-0026 | 2026-03-09 | accepted | Land the Phase 1 baseline as one PR and make scoring the next vertical slice | architect + backend-engineer + frontend-engineer | delivery sequencing, scoring package boundary, API contracts, testing scope |
+| ADR-0027 | 2026-03-09 | accepted | Implement scoring as a dedicated backend package with DB-backed jobs/artifacts and shortlist review on `/` | architect + backend-engineer + frontend-engineer | scoring architecture, HR workspace UX, compose worker topology, OpenAPI contract |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -419,3 +420,21 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Scoring contracts, storage, and package boundaries become explicit before UI work is wired.
   - Auth, CORS, public-candidate transport, and compose smoke assumptions remain stable across the next slice.
   - Interview scheduling remains intentionally blocked on unresolved product decisions instead of being implemented on guesswork.
+
+## ADR-0027
+- Context: The post-baseline scoring slice is now implemented locally and needed one cohesive architecture instead of scattered vacancy/candidate add-ons. The delivery needed a stable API contract, explicit async lifecycle, and a shortlist UI that works against the real backend contract without changing route topology.
+- Decision:
+  - Implement a dedicated backend package `hrm_backend/scoring` with extraction-ready subpackages for models, DAO, services, dependencies, routers, utils, and infrastructure adapters.
+  - Persist async lifecycle in `match_scoring_jobs` and persist explainable UI payloads in `match_score_artifacts`.
+  - Keep the public API surface limited to:
+    - `POST /api/v1/vacancies/{vacancy_id}/match-scores`
+    - `GET /api/v1/vacancies/{vacancy_id}/match-scores`
+    - `GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}`
+  - Reject enqueue with `409` when the active candidate document does not yet contain parsed CV analysis.
+  - Reuse the existing Celery app/runtime, but register a separate `match_scoring` queue consumed by the same compose worker process.
+  - Extend `HrDashboardPage` on `/` with a shortlist review block instead of introducing a new frontend route.
+  - Keep scoring verification at unit/integration level and continue excluding Ollama/browser scoring from compose smoke.
+- Consequences:
+  - Scoring logic is isolated from `candidates` and `vacancies`, which keeps future extraction paths open.
+  - Recruiter-facing shortlist review now consumes a frozen backend contract with typed frontend wrappers.
+  - Compose runtime grows by one additional queue, but route/auth/CORS/public-candidate transport assumptions stay unchanged.
