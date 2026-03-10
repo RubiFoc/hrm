@@ -1,8 +1,8 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-09
-- Updated by: architect + backend-engineer + frontend-engineer
+- Date: 2026-03-10
+- Updated by: architect + devops-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -330,26 +330,32 @@ flowchart LR
 ```mermaid
 flowchart TB
   subgraph Compose[Docker Compose]
-    FE[frontend container\nReact + Vite preview]
+    FE[frontend container\nReact + Vite dev server]
     BE[backend container\nFastAPI API]
-    WKR[backend-worker container\nCelery worker]
+    WKR[backend-worker container\nCelery worker\ncv_parsing/match_scoring/interview_sync]
     DB[(postgres container :5432)]
     OBJ[(minio container :9000/:9001)]
     MQ[(redis container :6379)]
-    INIT[minio-init one-shot job]
+    DBINIT[postgres-init one-shot job]
+    MIG[backend-migrate one-shot job]
+    MINIT[minio-init one-shot job]
   end
 
   USER[Chrome Browser] --> FE
   FE --> BE
+  DBINIT --> DB
+  MIG --> DB
+  MINIT --> OBJ
   BE --> DB
   BE --> OBJ
   BE --> MQ
   WKR --> DB
   WKR --> MQ
   WKR --> OBJ
-  INIT --> OBJ
   BE --> OLL[Ollama]
+  WKR --> OLL
   BE <--> GCAL[Google Calendar]
+  WKR <--> GCAL
 ```
 
 ## Diagram 10: Authentication and Session Lifecycle Sequence

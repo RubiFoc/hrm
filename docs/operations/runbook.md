@@ -1,8 +1,8 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-09
-- Updated by: devops-engineer + backend-engineer + frontend-engineer
+- Date: 2026-03-10
+- Updated by: devops-engineer + backend-engineer
 
 ## Local Environment (Docker Compose)
 ### Prerequisites
@@ -12,14 +12,15 @@
 
 ### Bootstrap
 1. Create runtime env file: `cp .env.example .env`
-2. Start stack: `docker compose up -d --build`
-3. Verify status: `docker compose ps`
-4. Run smoke suite: `./scripts/smoke-compose.sh`
+2. Validate compose file: `docker compose config`
+3. Start stack: `docker compose up -d --build`
+4. Verify status: `docker compose ps`
+5. Run smoke suite: `./scripts/smoke-compose.sh`
 
 Compose bootstrap notes:
 - `postgres-init` ensures `${POSTGRES_DB}` exists even when reusing an old data volume.
 - `backend-migrate` runs `alembic upgrade head` before backend starts.
-- `backend-worker` runs the Celery `cv_parsing` queue consumer against the same compose dependencies as `backend`.
+- `backend-worker` runs one Celery worker process for `cv_parsing`, `match_scoring`, and `interview_sync` against the same compose dependencies as `backend`.
 - Backend container starts only after DB bootstrap and migrations complete successfully.
 
 Shortcut wrappers:
@@ -66,7 +67,7 @@ Runtime auth/browser integration settings:
 
 ### CV Parsing Worker (Celery executor)
 - Primary worker command:
-  `uv run --project apps/backend celery -A hrm_backend.candidates.infra.celery.app:celery_app worker --loglevel=INFO --queues=cv_parsing,match_scoring`
+  `uv run --project apps/backend celery -A hrm_backend.candidates.infra.celery.app:celery_app worker --loglevel=INFO --queues=cv_parsing,match_scoring,interview_sync`
 - Compose service: `backend-worker`.
 - Runtime lifecycle in DB (`cv_parsing_jobs` source of truth):
   `queued -> running -> succeeded/failed`.
@@ -83,7 +84,7 @@ Runtime auth/browser integration settings:
 
 ### Match Scoring Worker (Celery executor)
 - Primary worker command:
-  `uv run --project apps/backend celery -A hrm_backend.candidates.infra.celery.app:celery_app worker --loglevel=INFO --queues=cv_parsing,match_scoring`
+  `uv run --project apps/backend celery -A hrm_backend.candidates.infra.celery.app:celery_app worker --loglevel=INFO --queues=cv_parsing,match_scoring,interview_sync`
 - Compose service: `backend-worker`.
 - Runtime lifecycle in DB:
   - `match_scoring_jobs`: `queued -> running -> succeeded/failed`
@@ -101,9 +102,25 @@ Runtime auth/browser integration settings:
 - Expected precondition failure:
   - `409 Conflict` with `detail=CV analysis is not ready` when the active document is not yet parsed.
 
+### Interview Sync Worker (Celery executor)
+- Primary worker command:
+  `uv run --project apps/backend celery -A hrm_backend.candidates.infra.celery.app:celery_app worker --loglevel=INFO --queues=cv_parsing,match_scoring,interview_sync`
+- Compose service: `backend-worker`.
+- Runtime queue: `interview_sync`.
+- Calendar runtime settings:
+  - `GOOGLE_CALENDAR_ENABLED`
+  - `GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_PATH`
+  - `INTERVIEW_STAFF_CALENDAR_MAP_JSON`
+  - `INTERVIEW_SYNC_QUEUE_NAME`
+- Invite-link runtime settings:
+  - `INTERVIEW_PUBLIC_TOKEN_SECRET`
+  - `PUBLIC_FRONTEND_BASE_URL`
+- Local compose acceptance does not require live Google Calendar verification; interview sync is diagnosed separately when interview runtime behavior changes.
+
 ### Smoke Verification
-1. Run canonical smoke script: `./scripts/smoke-compose.sh`.
-2. Script validation scope:
+1. Validate normalized compose file: `docker compose config`.
+2. Run canonical smoke script: `./scripts/smoke-compose.sh`.
+3. Script validation scope:
    - `docker compose ps` contains `running + healthy` for `backend`, `postgres`, `redis`, `minio`;
    - `docker compose ps` contains `running` for `frontend` and `backend-worker`;
    - backend health endpoint returns `{"status":"ok"}`;
@@ -117,7 +134,8 @@ Runtime auth/browser integration settings:
    - candidate browser requests target `http://localhost:8000` rather than relative `/api/...` on the frontend origin;
    - candidate smoke succeeds when public tracking reaches at least `queued` or `running`; `analysis_ready=true` is preferred but not required.
    - scoring/Ollama verification is intentionally excluded from compose smoke; validate the scoring slice through targeted unit and integration suites to avoid nondeterministic browser smoke failures.
-3. For reproducibility checks, run one teardown/restart cycle:
+   - Google Calendar verification is intentionally excluded from compose smoke; disabled or unreachable calendar integration does not block local compose baseline acceptance.
+4. For reproducibility checks, run one teardown/restart cycle:
    - `docker compose down`
    - `docker compose up -d --build`
    - `./scripts/smoke-compose.sh`

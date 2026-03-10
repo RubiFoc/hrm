@@ -2,18 +2,19 @@
 
 ## Last Updated
 - Date: 2026-03-10
-- Updated by: coordinator + architect
+- Updated by: coordinator + architect + devops-engineer
 
 ## Sprint Goal
 Deliver Phase 1 MVP local baseline with working technical foundations, containerized platform bootstrap, admin control plane, public candidate apply/tracking flow, HR vacancy/pipeline workspace, and compliance baseline.
 Current sprint acceptance target is stable local end-to-end operation on the current device (production rollout is out of scope for this stage).
 
-## Reconciled Delivery Status (2026-03-09)
+## Reconciled Delivery Status (2026-03-10)
 
 | Area | Status | Notes |
 | --- | --- | --- |
 | `TASK-03-01/02/03/05/06` | implemented/local-baseline | Backend candidate schema, upload, parsing, normalization, evidence traceability, and public tracking-by-job-id endpoints are present in repo |
 | `TASK-02-01/02/03` | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered history endpoint are present in repo |
+| `TASK-12-01` | implemented/local-compose-baseline | Docker Compose runtime baseline is present in repo with `frontend`, `backend`, `backend-worker`, `postgres`, `redis`, `minio`, bootstrap jobs, smoke script, and CI browser smoke |
 | `TASK-11-06` | implemented/local-baseline | `/candidate` now provides deep-link public apply, browser checksum calculation, session storage context, and tracking/analysis polling |
 | `TASK-11-05` | implemented/local-baseline | `/` now provides staff vacancy CRUD, editing, candidate selection, transition append, and history timeline UX |
 | `TASK-11-09` | implemented/local-baseline | RU/EN critical-flow strings are in place for login/admin/candidate/HR routes |
@@ -24,6 +25,7 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 | `TASK-11-08` | implemented/local-interview-slice | Interview scheduling and candidate registration are now implemented against `docs/project/interview-planning-pass.md`, including HR controls on `/`, public token registration on `/candidate`, and free-mode Google Calendar sync via shared interviewer calendars |
 
 ## Scope Normalization
+- `TASK-12-01` is now implemented in repo as the local compose baseline; acceptance is backed by compose config validation, stack bootstrap, smoke script, and CI browser smoke rather than pending infra build-out.
 - The original M1 sprint text stopped at FE-9, but the repo now contains a broader local acceptance baseline: `TASK-11-05`, `TASK-11-06`, `TASK-11-09`, and `TASK-11-11` are no longer future-only scope.
 - Immediate follow-on work must not reopen auth, CORS, routing topology, or transport architecture.
 - The scoring/shortlist-review track is now implemented in repo as one backend+frontend slice.
