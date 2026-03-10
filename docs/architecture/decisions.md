@@ -34,6 +34,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0027 | 2026-03-09 | accepted | Implement scoring as a dedicated backend package with DB-backed jobs/artifacts and shortlist review on `/` | architect + backend-engineer + frontend-engineer | scoring architecture, HR workspace UX, compose worker topology, OpenAPI contract |
 | ADR-0028 | 2026-03-09 | accepted | Harden frontend observability with canonical Sentry route tags and shared failure capture | architect + frontend-engineer | frontend observability, route semantics, error telemetry |
 | ADR-0029 | 2026-03-09 | accepted | Freeze interview scheduling and candidate registration as a public-token workflow on existing routes | architect + backend-engineer + frontend-engineer | interview product rules, public token model, Google Calendar sync semantics, route topology |
+| ADR-0030 | 2026-03-10 | accepted | Freeze interviewer feedback as schedule-versioned interview data and enforce fairness gate on the existing `interview -> offer` transition | architect + backend-engineer + frontend-engineer | interview feedback data model, HR workspace UX, pipeline transition semantics, OpenAPI contract |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -497,3 +498,28 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Existing anonymous candidate transport assumptions remain intact.
   - Free-mode calendar access is operationally simple but depends on manual sharing and explicit staff-to-calendar configuration.
   - Notification delivery is intentionally deferred, so the slice remains feasible in local-stage scope.
+
+## ADR-0030
+- Context: Interview scheduling and candidate registration are now implemented, but the next interview-domain work remained under-specified around who can submit structured feedback, how reschedules affect feedback validity, and where the fairness guard should live before `offer`. Reopening auth, route topology, or adding a parallel decision API would create avoidable scope creep.
+- Decision:
+  - Freeze the planning baseline in `docs/project/interview-feedback-fairness-pass.md` before implementation of `TASK-05-03/04`.
+  - Keep interviewer feedback as interview-domain data rather than pipeline metadata:
+    - one current feedback row per `interview_id + schedule_version + interviewer_staff_id`
+    - previous schedule-version feedback remains audit history but does not satisfy the fairness gate
+  - Keep the existing route topology:
+    - HR feedback UX extends `/`
+    - candidate route `/candidate` remains unchanged and never exposes interviewer feedback
+  - Keep the existing transition endpoint `POST /api/v1/pipeline/transitions`; when `to_stage=offer`, run the fairness gate there instead of adding a parallel offer-decision API.
+  - Limit the fairness gate in this slice to current-version completeness and payload validity:
+    - all assigned interviewers must submit feedback for the active `schedule_version`
+    - mandatory rubric scores and qualitative notes must be present
+    - recommendation disagreement is surfaced to HR but does not auto-block `offer`
+  - Freeze the minimal backend API set around:
+    - `GET /api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback`
+    - `PUT /api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback/me`
+  - Keep auth, CORS behavior, public candidate transport, and compose smoke scope unchanged for this slice.
+- Consequences:
+  - The next interview slice can be implemented without hidden product or API decisions.
+  - Feedback remains traceable to the real interview schedule and interviewer assignment.
+  - Pipeline semantics stay centralized in the existing transition flow, which reduces route and audit fragmentation.
+  - More sophisticated fairness policy, interviewer reminders, and candidate-facing visibility remain explicitly deferred.

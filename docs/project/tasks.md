@@ -1,7 +1,7 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-09
+- Date: 2026-03-10
 - Updated by: coordinator + architect
 
 ## Priority Model
@@ -43,6 +43,8 @@
 
 ## Active Queue After Planning Pass
 
+- Planning source of truth for the next interview follow-on slice:
+  `docs/project/interview-feedback-fairness-pass.md`.
 | Order | Task ID | Why Now |
 | --- | --- | --- |
 | A-1 | TASK-05-03/04 | Interview baseline scheduling/registration is in repo; the next interview follow-on work is structured feedback and fairness controls outside this slice |

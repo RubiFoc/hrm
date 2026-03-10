@@ -222,6 +222,35 @@ Operational assumptions for the current interview slice:
 - Free Google Calendar mode uses a service-account JSON key and calendars manually shared with that service account; missing calendar mapping returns `422 interviewer_calendar_not_configured`, while missing runtime calendar configuration returns `503 calendar_not_configured`.
 - Keep compose smoke green without adding nondeterministic Google Calendar browser automation.
 
+## Structured Interview Feedback and Fairness Verification (`TASK-05-03`, `TASK-05-04`)
+
+Implementation source of truth:
+- `docs/project/interview-feedback-fairness-pass.md`
+
+Future implementation coverage must include at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Feedback payload validation (score range, mandatory notes, recommendation enum) | `apps/backend/tests/unit/interviews/*` | `apps/backend/tests/integration/interviews/test_interview_api.py` or dedicated feedback integration module | invalid payload returns `422`; valid interviewer payload persists current-version feedback |
+| Assigned-interviewer-only submission rule | `apps/backend/tests/unit/interviews/*` | interview feedback integration suite | non-interviewer submit returns `403`; interviewer can create/update only their own row |
+| Reschedule invalidates old feedback for gate purposes | `apps/backend/tests/unit/interviews/*` | interview feedback integration suite | previous `schedule_version` feedback is readable as history but blocks `interview -> offer` |
+| Fairness gate on existing `interview -> offer` transition | `apps/backend/tests/unit/vacancies/*` or `apps/backend/tests/unit/interviews/*` | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` or dedicated transition suite | `409` detail codes for `interview_feedback_window_not_open`, `interview_feedback_missing`, `interview_feedback_incomplete`, and `interview_feedback_stale` |
+| Successful `interview -> offer` after complete current-version panel feedback | N/A | pipeline transition integration suite | transition succeeds without adding a new route or pipeline stage |
+| HR feedback UX on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | summary, current-user form, and localized fairness blocker messages render correctly |
+
+Acceptance rules for the implementation slice:
+- Freeze OpenAPI and update generated frontend types in the same change.
+- Keep auth, CORS, route topology, and anonymous candidate transport unchanged.
+- Keep compose smoke green without adding feedback-specific browser automation.
+- Minimum verification set:
+  - `./scripts/check-docs-structure.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+  - `./scripts/smoke-compose.sh`
+
 ## Frontend Admin Verification (ADMIN-01)
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |

@@ -16,6 +16,7 @@ This folder is the single source of truth for project context required for deliv
 - `project/legal-controls-matrix.md`: NPA-to-controls compliance tracking matrix
 - `project/evidence-registry.md`: Evidence ownership and verification registry for compliance controls
 - `project/interview-planning-pass.md`: Decision-complete planning baseline for interview scheduling and candidate registration
+- `project/interview-feedback-fairness-pass.md`: Decision-complete planning baseline for structured interviewer feedback and fairness gate before `offer`
 - `project/rbac-matrix.md`: Phase-1 role and permission matrix baseline
 - `project/auth-session-lifecycle.md`: Authentication/session lifecycle baseline and API contract
 - `architecture/overview.md`: System architecture and boundaries

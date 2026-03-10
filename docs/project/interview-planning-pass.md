@@ -1,7 +1,7 @@
 # Interview Planning Pass (`TASK-11-08`, `TASK-05-01`, `TASK-05-02`)
 
 ## Last Updated
-- Date: 2026-03-09
+- Date: 2026-03-10
 - Updated by: architect + backend-engineer + frontend-engineer
 
 ## Purpose
@@ -20,7 +20,7 @@
 - New CORS or transport rewrites.
 - Email/SMS notification service rollout.
 - Multi-slot availability collection from candidates.
-- Structured interviewer feedback and fairness rubric enforcement (`TASK-05-03`, `TASK-05-04`).
+- Structured interviewer feedback and fairness rubric enforcement (`TASK-05-03`, `TASK-05-04`), now frozen separately in `docs/project/interview-feedback-fairness-pass.md`.
 - Manager-specific frontend workspace changes.
 
 ## Assumptions
@@ -249,6 +249,6 @@ One interview row represents one active interview process for a single `vacancy_
   - `/candidate?interviewToken=...` route-mode rendering and localized failures.
 
 ## Explicit Deferrals
-- `TASK-05-03` keeps structured feedback out of the scheduling slice.
-- `TASK-05-04` keeps fairness rubric enforcement out of the scheduling slice.
+- `TASK-05-03` keeps structured feedback out of the scheduling slice and is planned separately in `docs/project/interview-feedback-fairness-pass.md`.
+- `TASK-05-04` keeps fairness rubric enforcement out of the scheduling slice and is planned separately in `docs/project/interview-feedback-fairness-pass.md`.
 - Candidate notification automation remains a later platform slice.
