@@ -323,6 +323,69 @@ const resources = {
           },
           noLocationDetails: "Location details are not available yet.",
           tokenExpiresAt: "Invite link expires at: {{value}}",
+          feedback: {
+            title: "Interviewer feedback",
+            subtitle:
+              "Review current-panel completeness, recommendation distribution, and fairness gate status for this interview.",
+            loading: "Loading interview feedback summary...",
+            requiredCount: "Required interviewers",
+            submittedCount: "Submitted feedback",
+            missingCount: "Missing feedback",
+            missingTitle: "Missing interviewers",
+            noMissing: "All required interviewers have submitted current-version feedback.",
+            distributionTitle: "Recommendation distribution",
+            averagesTitle: "Rubric averages",
+            submittedTitle: "Submitted panel feedback",
+            empty: "No feedback has been submitted for the current schedule version yet.",
+            updatedAt: "Updated at: {{value}}",
+            formTitle: "Your feedback",
+            formSubtitle:
+              "Only the assigned interviewer can submit feedback for the current schedule version after the interview window closes.",
+            loadingCurrentUser: "Loading current user context...",
+            notAssigned:
+              "The current user is not assigned as an interviewer for this interview.",
+            locked:
+              "Feedback is locked because the candidate is no longer in the interview stage or the interview was cancelled.",
+            windowNotOpen:
+              "Feedback can be submitted only after the interview window has ended.",
+            submitAction: "Save feedback",
+            submitPending: "Saving feedback...",
+            submitSuccess: "Interview feedback saved.",
+            gatePassed: "Fairness gate passed. Offer transition is ready.",
+            gateBlocked: "Fairness gate is blocked: {{reasons}}.",
+            offerReady: "Interview to offer transition is ready. Current feedback panel is complete.",
+            offerBlocked: "Interview to offer transition is blocked: {{reasons}}.",
+            recommendation: {
+              strong_yes: "Strong yes",
+              yes: "Yes",
+              mixed: "Mixed",
+              no: "No",
+            },
+            notes: {
+              strengths: "Strengths",
+              concerns: "Concerns",
+              evidence: "Evidence",
+            },
+            fields: {
+              requirementsMatchScore: "Requirements match",
+              communicationScore: "Communication",
+              problemSolvingScore: "Problem solving",
+              collaborationScore: "Collaboration",
+              recommendation: "Recommendation",
+            },
+            gateReasons: {
+              interview_feedback_window_not_open:
+                "the interview window has not closed yet",
+              interview_feedback_missing: "one or more required interviewers are missing",
+              interview_feedback_incomplete: "one or more submitted feedback forms are incomplete",
+              interview_feedback_stale:
+                "feedback exists only for an outdated interview schedule version",
+            },
+            errors: {
+              selectContext: "Select an interview before submitting feedback.",
+              notesRequired: "Fill in strengths, concerns, and evidence before saving feedback.",
+            },
+          },
           errors: {
             selectContext: "Select both a vacancy and a candidate before creating an interview.",
             noActiveInterview: "There is no active interview available for this action.",
@@ -395,6 +458,14 @@ const resources = {
             "CV analysis is not ready yet. Wait for parsing to finish and run score again.",
           invalidTransition:
             "The requested pipeline transition is not allowed from the current stage.",
+          interviewFeedbackWindowNotOpen:
+            "Interview to offer transition is blocked until the interview window has ended.",
+          interviewFeedbackMissing:
+            "Interview to offer transition is blocked until every assigned interviewer submits feedback.",
+          interviewFeedbackIncomplete:
+            "Interview to offer transition is blocked because one or more feedback forms are incomplete.",
+          interviewFeedbackStale:
+            "Interview to offer transition is blocked because feedback belongs to an outdated schedule version.",
           http_403: "You do not have permission to perform this HR action.",
           http_404: "Requested recruitment resource was not found.",
           http_409: "Recruitment request conflicts with the current resource state.",
@@ -850,6 +921,74 @@ const resources = {
           },
           noLocationDetails: "Детали локации пока недоступны.",
           tokenExpiresAt: "Ссылка приглашения действует до: {{value}}",
+          feedback: {
+            title: "Feedback интервьюеров",
+            subtitle:
+              "Проверьте полноту текущей панели, распределение рекомендаций и статус fairness gate для этого интервью.",
+            loading: "Загрузка summary по feedback...",
+            requiredCount: "Обязательные интервьюеры",
+            submittedCount: "Сданный feedback",
+            missingCount: "Отсутствующий feedback",
+            missingTitle: "Кто ещё не отправил feedback",
+            noMissing:
+              "Все обязательные интервьюеры уже отправили feedback для текущей версии расписания.",
+            distributionTitle: "Распределение рекомендаций",
+            averagesTitle: "Средние оценки по рубрикам",
+            submittedTitle: "Текущий panel feedback",
+            empty: "Для текущей версии расписания feedback пока не отправлен.",
+            updatedAt: "Обновлено: {{value}}",
+            formTitle: "Ваш feedback",
+            formSubtitle:
+              "Только назначенный интервьюер может отправить feedback для текущей версии расписания после окончания окна интервью.",
+            loadingCurrentUser: "Загрузка текущего пользователя...",
+            notAssigned:
+              "Текущий пользователь не назначен интервьюером для этого интервью.",
+            locked:
+              "Feedback заблокирован, потому что кандидат уже не находится на стадии interview или интервью отменено.",
+            windowNotOpen:
+              "Feedback можно отправить только после завершения окна интервью.",
+            submitAction: "Сохранить feedback",
+            submitPending: "Сохраняем feedback...",
+            submitSuccess: "Feedback по интервью сохранён.",
+            gatePassed: "Fairness gate пройден. Переход в оффер разблокирован.",
+            gateBlocked: "Fairness gate заблокирован: {{reasons}}.",
+            offerReady:
+              "Переход interview -> offer готов. Текущая панель feedback заполнена полностью.",
+            offerBlocked: "Переход interview -> offer заблокирован: {{reasons}}.",
+            recommendation: {
+              strong_yes: "Strong yes",
+              yes: "Yes",
+              mixed: "Mixed",
+              no: "No",
+            },
+            notes: {
+              strengths: "Сильные стороны",
+              concerns: "Риски и сомнения",
+              evidence: "Обоснование",
+            },
+            fields: {
+              requirementsMatchScore: "Совпадение с требованиями",
+              communicationScore: "Коммуникация",
+              problemSolvingScore: "Решение задач",
+              collaborationScore: "Коллаборация",
+              recommendation: "Рекомендация",
+            },
+            gateReasons: {
+              interview_feedback_window_not_open:
+                "окно интервью ещё не завершилось",
+              interview_feedback_missing:
+                "не все обязательные интервьюеры отправили feedback",
+              interview_feedback_incomplete:
+                "одна или несколько форм feedback заполнены не полностью",
+              interview_feedback_stale:
+                "feedback относится к устаревшей версии расписания",
+            },
+            errors: {
+              selectContext: "Сначала выберите интервью, а затем отправляйте feedback.",
+              notesRequired:
+                "Перед сохранением заполните поля со сильными сторонами, рисками и обоснованием.",
+            },
+          },
           errors: {
             selectContext:
               "Перед созданием интервью выберите и вакансию, и кандидата.",
@@ -925,6 +1064,14 @@ const resources = {
             "CV analysis ещё не готов. Дождитесь завершения parsing и повторите запуск score.",
           invalidTransition:
             "Запрошенный переход по pipeline недопустим из текущей стадии.",
+          interviewFeedbackWindowNotOpen:
+            "Переход interview -> offer заблокирован до завершения окна интервью.",
+          interviewFeedbackMissing:
+            "Переход interview -> offer заблокирован, пока каждый назначенный интервьюер не отправит feedback.",
+          interviewFeedbackIncomplete:
+            "Переход interview -> offer заблокирован, потому что одна или несколько форм feedback заполнены не полностью.",
+          interviewFeedbackStale:
+            "Переход interview -> offer заблокирован, потому что feedback относится к устаревшей версии расписания.",
           http_403: "Недостаточно прав для выполнения HR-операции.",
           http_404: "Запрошенный recruitment resource не найден.",
           http_409: "Recruitment-запрос конфликтует с текущим состоянием ресурса.",

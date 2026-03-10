@@ -234,14 +234,14 @@ Operational assumptions for the current interview slice:
 Implementation source of truth:
 - `docs/project/interview-feedback-fairness-pass.md`
 
-Future implementation coverage must include at minimum:
+Current implementation coverage includes at minimum:
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
 | --- | --- | --- | --- |
-| Feedback payload validation (score range, mandatory notes, recommendation enum) | `apps/backend/tests/unit/interviews/*` | `apps/backend/tests/integration/interviews/test_interview_api.py` or dedicated feedback integration module | invalid payload returns `422`; valid interviewer payload persists current-version feedback |
-| Assigned-interviewer-only submission rule | `apps/backend/tests/unit/interviews/*` | interview feedback integration suite | non-interviewer submit returns `403`; interviewer can create/update only their own row |
-| Reschedule invalidates old feedback for gate purposes | `apps/backend/tests/unit/interviews/*` | interview feedback integration suite | previous `schedule_version` feedback is readable as history but blocks `interview -> offer` |
-| Fairness gate on existing `interview -> offer` transition | `apps/backend/tests/unit/vacancies/*` or `apps/backend/tests/unit/interviews/*` | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` or dedicated transition suite | `409` detail codes for `interview_feedback_window_not_open`, `interview_feedback_missing`, `interview_feedback_incomplete`, and `interview_feedback_stale` |
+| Feedback payload validation (score range, mandatory notes, recommendation enum) | `apps/backend/tests/unit/interviews/test_feedback.py` | `apps/backend/tests/integration/interviews/test_interview_api.py` | valid interviewer payload persists current-version feedback; invalid state rows remain blocked by gate logic |
+| Assigned-interviewer-only submission rule | `apps/backend/tests/unit/interviews/test_feedback.py` | `apps/backend/tests/integration/interviews/test_interview_api.py` | non-interviewer submit returns `403`; interviewer can create/update only their own row |
+| Reschedule invalidates old feedback for gate purposes | `apps/backend/tests/unit/interviews/test_feedback.py` | `apps/backend/tests/integration/interviews/test_interview_api.py` | previous `schedule_version` feedback is readable as history but blocks `interview -> offer` |
+| Fairness gate on existing `interview -> offer` transition | `apps/backend/tests/unit/interviews/test_feedback.py` | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | `409` detail codes for `interview_feedback_window_not_open`, `interview_feedback_missing`, `interview_feedback_incomplete`, and `interview_feedback_stale` |
 | Successful `interview -> offer` after complete current-version panel feedback | N/A | pipeline transition integration suite | transition succeeds without adding a new route or pipeline stage |
 | HR feedback UX on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | summary, current-user form, and localized fairness blocker messages render correctly |
 

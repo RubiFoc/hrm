@@ -28,19 +28,27 @@ import {
   createMatchScore,
   createPipelineTransition,
   createVacancy,
+  getInterviewFeedbackSummary,
+  getMe,
   listInterviews,
   getMatchScore,
   listCandidateProfiles,
   listPipelineTransitions,
   listVacancies,
+  putMyInterviewFeedback,
   resendInterviewInvite,
   rescheduleInterview,
   updateVacancy,
   type CandidateResponse,
   type HRInterviewListResponse,
+  type InterviewFeedbackItemResponse,
+  type InterviewFeedbackPanelSummaryResponse,
+  type InterviewFeedbackRecommendation,
+  type InterviewFeedbackUpsertRequest,
   type HRInterviewResponse,
   type InterviewStatus,
   type MatchScoreResponse,
+  type MeResponse,
   type PipelineTransitionCreateRequest,
   type VacancyCreateRequest,
   type VacancyResponse,
@@ -76,6 +84,16 @@ type InterviewDraft = {
   interviewerStaffIdsInput: string;
   cancelReasonCode: string;
 };
+type InterviewerFeedbackDraft = {
+  requirementsMatchScore: number;
+  communicationScore: number;
+  problemSolvingScore: number;
+  collaborationScore: number;
+  recommendation: InterviewFeedbackRecommendation;
+  strengthsNote: string;
+  concernsNote: string;
+  evidenceNote: string;
+};
 
 const DEFAULT_VACANCY_DRAFT: VacancyDraft = {
   title: "",
@@ -85,6 +103,13 @@ const DEFAULT_VACANCY_DRAFT: VacancyDraft = {
 };
 const INTERVIEW_POLL_INTERVAL_MS = 1000;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const FEEDBACK_SCORE_OPTIONS = [1, 2, 3, 4, 5] as const;
+const FEEDBACK_RECOMMENDATION_OPTIONS: InterviewFeedbackRecommendation[] = [
+  "strong_yes",
+  "yes",
+  "mixed",
+  "no",
+];
 
 /**
  * Staff recruitment workspace for vacancy CRUD and pipeline control.
@@ -105,7 +130,10 @@ export function HrDashboardPage() {
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [scoreFeedback, setScoreFeedback] = useState<FeedbackState | null>(null);
   const [interviewFeedback, setInterviewFeedback] = useState<FeedbackState | null>(null);
+  const [feedbackPanelState, setFeedbackPanelState] = useState<FeedbackState | null>(null);
   const [interviewDraft, setInterviewDraft] = useState<InterviewDraft>(createEmptyInterviewDraft);
+  const [feedbackDraft, setFeedbackDraft] =
+    useState<InterviewerFeedbackDraft>(createEmptyInterviewerFeedbackDraft);
   const matchScoreQueryKey = [
     "hr-match-score",
     accessToken,
@@ -118,6 +146,7 @@ export function HrDashboardPage() {
     selectedVacancyId,
     selectedCandidateId,
   ];
+  const meQueryKey = ["auth-me", accessToken];
 
   const vacanciesQuery = useQuery({
     queryKey: ["hr-vacancies", accessToken],
@@ -178,6 +207,29 @@ export function HrDashboardPage() {
       }
       return false;
     },
+  });
+  const interviewItems = interviewsQuery.data?.items ?? [];
+  const interviewState = selectInterviewState(interviewItems);
+  const activeInterview = interviewState.active;
+  const latestInterview = interviewState.latest;
+  const feedbackSummaryQueryKey = [
+    "hr-interview-feedback",
+    accessToken,
+    selectedVacancyId,
+    latestInterview?.interview_id ?? "",
+  ];
+
+  const meQuery = useQuery({
+    queryKey: meQueryKey,
+    queryFn: () => getMe(accessToken!),
+    enabled: Boolean(accessToken),
+  });
+
+  const feedbackSummaryQuery = useQuery({
+    queryKey: feedbackSummaryQueryKey,
+    queryFn: () =>
+      getInterviewFeedbackSummary(accessToken!, selectedVacancyId, latestInterview!.interview_id),
+    enabled: Boolean(accessToken && selectedVacancyId && latestInterview),
   });
 
   const createVacancyMutation = useMutation({
@@ -305,6 +357,21 @@ export function HrDashboardPage() {
     },
   });
 
+  const putInterviewFeedbackMutation = useMutation({
+    mutationFn: (payload: InterviewFeedbackUpsertRequest) =>
+      putMyInterviewFeedback(accessToken!, selectedVacancyId, latestInterview!.interview_id, payload),
+    onSuccess: async () => {
+      setFeedbackPanelState({
+        type: "success",
+        message: t("hrDashboard.interviews.feedback.submitSuccess"),
+      });
+      await queryClient.invalidateQueries({ queryKey: feedbackSummaryQueryKey });
+    },
+    onError: (error: unknown) => {
+      setFeedbackPanelState({ type: "error", message: resolveInterviewApiError(error, t) });
+    },
+  });
+
   const vacancyItems = vacanciesQuery.data?.items ?? [];
   const candidateItems = candidatesQuery.data?.items ?? [];
   const selectedVacancy =
@@ -312,10 +379,30 @@ export function HrDashboardPage() {
   const selectedCandidate =
     candidateItems.find((item) => item.candidate_id === selectedCandidateId) ?? null;
   const matchScore = matchScoreQuery.data ?? null;
-  const interviewItems = interviewsQuery.data?.items ?? [];
-  const interviewState = selectInterviewState(interviewItems);
-  const activeInterview = interviewState.active;
-  const latestInterview = interviewState.latest;
+  const matchedRequirements = matchScore?.matched_requirements ?? [];
+  const missingRequirements = matchScore?.missing_requirements ?? [];
+  const matchScoreEvidence = matchScore?.evidence ?? [];
+  const feedbackSummary = feedbackSummaryQuery.data ?? null;
+  const currentUser = meQuery.data ?? null;
+  const currentPipelineStage = transitionsQuery.data
+    ? (transitionsQuery.data.items[transitionsQuery.data.items.length - 1]?.to_stage ?? null)
+    : null;
+  const currentUserCanWriteFeedback = isCurrentUserAssignedInterviewer(
+    latestInterview,
+    currentUser,
+  );
+  const currentUserFeedbackItem = findFeedbackItemForInterviewer(
+    feedbackSummary,
+    currentUser?.subject_id ?? null,
+  );
+  const feedbackWindowOpen = hasInterviewFeedbackWindowOpened(latestInterview);
+  const feedbackEditorBlockedReason = resolveFeedbackEditorBlockedReason({
+    latestInterview,
+    currentPipelineStage,
+    currentUserCanWriteFeedback,
+    feedbackWindowOpen,
+    t,
+  });
 
   useEffect(() => {
     if (!latestInterview) {
@@ -325,12 +412,21 @@ export function HrDashboardPage() {
     setInterviewDraft(buildInterviewDraftFromResponse(latestInterview));
   }, [latestInterview]);
 
+  useEffect(() => {
+    if (!latestInterview) {
+      setFeedbackDraft(createEmptyInterviewerFeedbackDraft());
+      return;
+    }
+    setFeedbackDraft(buildFeedbackDraftFromItem(currentUserFeedbackItem));
+  }, [currentUserFeedbackItem, latestInterview]);
+
   const handleSelectVacancy = (vacancy: VacancyResponse) => {
     setSelectedVacancyId(vacancy.vacancy_id);
     setEditDraft(toVacancyDraft(vacancy));
     setFeedback(null);
     setScoreFeedback(null);
     setInterviewFeedback(null);
+    setFeedbackPanelState(null);
   };
 
   const handleCreateVacancy = () => {
@@ -371,6 +467,7 @@ export function HrDashboardPage() {
     setSelectedCandidateId(candidateId);
     setScoreFeedback(null);
     setInterviewFeedback(null);
+    setFeedbackPanelState(null);
   };
 
   const handleRunScore = () => {
@@ -431,6 +528,33 @@ export function HrDashboardPage() {
     }
     setInterviewFeedback(null);
     resendInterviewInviteMutation.mutate(activeInterview.interview_id);
+  };
+
+  const handleSubmitInterviewFeedback = () => {
+    if (!latestInterview || !selectedVacancyId) {
+      setFeedbackPanelState({
+        type: "error",
+        message: t("hrDashboard.interviews.feedback.errors.selectContext"),
+      });
+      return;
+    }
+    if (feedbackEditorBlockedReason) {
+      setFeedbackPanelState({
+        type: "error",
+        message: feedbackEditorBlockedReason,
+      });
+      return;
+    }
+    try {
+      const payload = buildInterviewFeedbackPayload(feedbackDraft, t);
+      setFeedbackPanelState(null);
+      putInterviewFeedbackMutation.mutate(payload);
+    } catch (error) {
+      setFeedbackPanelState({
+        type: "error",
+        message: resolveInterviewApiError(error, t),
+      });
+    }
   };
 
   if (!accessToken) {
@@ -818,7 +942,7 @@ export function HrDashboardPage() {
                         {t("hrDashboard.shortlist.matchedTitle")}
                       </Typography>
                       {renderStringList(
-                        matchScore.matched_requirements,
+                        matchedRequirements,
                         t("hrDashboard.shortlist.noItems"),
                       )}
                     </Paper>
@@ -827,7 +951,7 @@ export function HrDashboardPage() {
                         {t("hrDashboard.shortlist.missingTitle")}
                       </Typography>
                       {renderStringList(
-                        matchScore.missing_requirements,
+                        missingRequirements,
                         t("hrDashboard.shortlist.noItems"),
                       )}
                     </Paper>
@@ -837,13 +961,13 @@ export function HrDashboardPage() {
                     <Typography variant="subtitle1">
                       {t("hrDashboard.shortlist.evidenceTitle")}
                     </Typography>
-                    {matchScore.evidence.length === 0 ? (
+                    {matchScoreEvidence.length === 0 ? (
                       <Typography variant="body2" color="text.secondary">
                         {t("hrDashboard.shortlist.noEvidence")}
                       </Typography>
                     ) : (
                       <List dense disablePadding>
-                        {matchScore.evidence.map((item) => (
+                        {matchScoreEvidence.map((item) => (
                           <ListItem
                             key={`${item.requirement}:${item.snippet}`}
                             disableGutters
@@ -1117,6 +1241,427 @@ export function HrDashboardPage() {
                     </Stack>
                   </Paper>
 
+                  {transitionStage === "offer" && feedbackSummary ? (
+                    <Alert
+                      severity={feedbackSummary.gate_status === "passed" ? "success" : "warning"}
+                    >
+                      {buildOfferGateAlertMessage(feedbackSummary, t)}
+                    </Alert>
+                  ) : null}
+
+                  {feedbackSummaryQuery.isLoading ? (
+                    <Typography variant="body2">
+                      {t("hrDashboard.interviews.feedback.loading")}
+                    </Typography>
+                  ) : null}
+
+                  {feedbackSummaryQuery.isError ? (
+                    <Alert severity="error">
+                      {resolveInterviewApiError(feedbackSummaryQuery.error, t)}
+                    </Alert>
+                  ) : null}
+
+                  {feedbackSummary ? (
+                    <Paper variant="outlined" sx={{ p: 2 }}>
+                      <Stack spacing={2}>
+                        <Stack spacing={0.5}>
+                          <Typography variant="subtitle1">
+                            {t("hrDashboard.interviews.feedback.title")}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {t("hrDashboard.interviews.feedback.subtitle")}
+                          </Typography>
+                        </Stack>
+
+                        <Alert
+                          severity={feedbackSummary.gate_status === "passed" ? "success" : "warning"}
+                        >
+                          {buildFeedbackGateMessage(feedbackSummary, t)}
+                        </Alert>
+
+                        <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                          <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                            <Typography variant="overline">
+                              {t("hrDashboard.interviews.feedback.requiredCount")}
+                            </Typography>
+                            <Typography variant="h5">
+                              {feedbackSummary.required_interviewer_count}
+                            </Typography>
+                          </Paper>
+                          <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                            <Typography variant="overline">
+                              {t("hrDashboard.interviews.feedback.submittedCount")}
+                            </Typography>
+                            <Typography variant="h5">{feedbackSummary.submitted_count}</Typography>
+                          </Paper>
+                          <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                            <Typography variant="overline">
+                              {t("hrDashboard.interviews.feedback.missingCount")}
+                            </Typography>
+                            <Typography variant="h5">
+                              {feedbackSummary.missing_interviewer_ids.length}
+                            </Typography>
+                          </Paper>
+                        </Stack>
+
+                        <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                          <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                            <Typography variant="subtitle2">
+                              {t("hrDashboard.interviews.feedback.missingTitle")}
+                            </Typography>
+                            {renderStringList(
+                              feedbackSummary.missing_interviewer_ids,
+                              t("hrDashboard.interviews.feedback.noMissing"),
+                            )}
+                          </Paper>
+                          <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                            <Typography variant="subtitle2">
+                              {t("hrDashboard.interviews.feedback.distributionTitle")}
+                            </Typography>
+                            <List dense disablePadding>
+                              {FEEDBACK_RECOMMENDATION_OPTIONS.map((recommendation) => (
+                                <ListItem key={recommendation} disableGutters>
+                                  <ListItemText
+                                    primary={t(
+                                      `hrDashboard.interviews.feedback.recommendation.${recommendation}`,
+                                    )}
+                                    secondary={String(
+                                      feedbackSummary.recommendation_distribution[recommendation],
+                                    )}
+                                  />
+                                </ListItem>
+                              ))}
+                            </List>
+                          </Paper>
+                          <Paper variant="outlined" sx={{ p: 2, flex: 1 }}>
+                            <Typography variant="subtitle2">
+                              {t("hrDashboard.interviews.feedback.averagesTitle")}
+                            </Typography>
+                            <List dense disablePadding>
+                              <ListItem disableGutters>
+                                <ListItemText
+                                  primary={t(
+                                    "hrDashboard.interviews.feedback.fields.requirementsMatchScore",
+                                  )}
+                                  secondary={formatAverageScore(
+                                    feedbackSummary.average_scores.requirements_match_score,
+                                    t,
+                                  )}
+                                />
+                              </ListItem>
+                              <ListItem disableGutters>
+                                <ListItemText
+                                  primary={t(
+                                    "hrDashboard.interviews.feedback.fields.communicationScore",
+                                  )}
+                                  secondary={formatAverageScore(
+                                    feedbackSummary.average_scores.communication_score,
+                                    t,
+                                  )}
+                                />
+                              </ListItem>
+                              <ListItem disableGutters>
+                                <ListItemText
+                                  primary={t(
+                                    "hrDashboard.interviews.feedback.fields.problemSolvingScore",
+                                  )}
+                                  secondary={formatAverageScore(
+                                    feedbackSummary.average_scores.problem_solving_score,
+                                    t,
+                                  )}
+                                />
+                              </ListItem>
+                              <ListItem disableGutters>
+                                <ListItemText
+                                  primary={t(
+                                    "hrDashboard.interviews.feedback.fields.collaborationScore",
+                                  )}
+                                  secondary={formatAverageScore(
+                                    feedbackSummary.average_scores.collaboration_score,
+                                    t,
+                                  )}
+                                />
+                              </ListItem>
+                            </List>
+                          </Paper>
+                        </Stack>
+
+                        <Paper variant="outlined" sx={{ p: 2 }}>
+                          <Typography variant="subtitle2">
+                            {t("hrDashboard.interviews.feedback.submittedTitle")}
+                          </Typography>
+                          {feedbackSummary.items.length === 0 ? (
+                            <Typography variant="body2" color="text.secondary">
+                              {t("hrDashboard.interviews.feedback.empty")}
+                            </Typography>
+                          ) : (
+                            <Stack spacing={1.5} sx={{ mt: 1 }}>
+                              {feedbackSummary.items.map((item) => (
+                                <Paper key={item.feedback_id} variant="outlined" sx={{ p: 2 }}>
+                                  <Stack spacing={0.75}>
+                                    <Stack
+                                      direction={{ xs: "column", md: "row" }}
+                                      spacing={1}
+                                      alignItems={{ xs: "flex-start", md: "center" }}
+                                    >
+                                      <Typography variant="body2" fontWeight={600}>
+                                        {item.interviewer_staff_id}
+                                      </Typography>
+                                      <Chip
+                                        size="small"
+                                        label={t(
+                                          `hrDashboard.interviews.feedback.recommendation.${item.recommendation}`,
+                                        )}
+                                      />
+                                      <Typography variant="body2" color="text.secondary">
+                                        {t("hrDashboard.interviews.feedback.updatedAt", {
+                                          value: formatDateTime(item.updated_at),
+                                        })}
+                                      </Typography>
+                                    </Stack>
+                                    <Typography variant="body2">
+                                      {t("hrDashboard.interviews.feedback.notes.strengths")}
+                                      {`: ${item.strengths_note}`}
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      {t("hrDashboard.interviews.feedback.notes.concerns")}
+                                      {`: ${item.concerns_note}`}
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      {t("hrDashboard.interviews.feedback.notes.evidence")}
+                                      {`: ${item.evidence_note}`}
+                                    </Typography>
+                                  </Stack>
+                                </Paper>
+                              ))}
+                            </Stack>
+                          )}
+                        </Paper>
+
+                        <Paper variant="outlined" sx={{ p: 2 }}>
+                          <Stack spacing={2}>
+                            <Stack spacing={0.5}>
+                              <Typography variant="subtitle2">
+                                {t("hrDashboard.interviews.feedback.formTitle")}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {t("hrDashboard.interviews.feedback.formSubtitle")}
+                              </Typography>
+                            </Stack>
+
+                            {feedbackPanelState ? (
+                              <Alert severity={feedbackPanelState.type}>
+                                {feedbackPanelState.message}
+                              </Alert>
+                            ) : null}
+
+                            {meQuery.isLoading ? (
+                              <Typography variant="body2">
+                                {t("hrDashboard.interviews.feedback.loadingCurrentUser")}
+                              </Typography>
+                            ) : null}
+
+                            {meQuery.isError ? (
+                              <Alert severity="error">
+                                {resolveRecruitmentApiError(meQuery.error, t)}
+                              </Alert>
+                            ) : null}
+
+                            {!currentUserCanWriteFeedback && !meQuery.isLoading ? (
+                              <Alert severity="info">
+                                {t("hrDashboard.interviews.feedback.notAssigned")}
+                              </Alert>
+                            ) : null}
+
+                            {currentUserCanWriteFeedback && feedbackEditorBlockedReason ? (
+                              <Alert severity="warning">{feedbackEditorBlockedReason}</Alert>
+                            ) : null}
+
+                            {currentUserCanWriteFeedback ? (
+                              <Stack spacing={2}>
+                                <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                                  <TextField
+                                    select
+                                    label={t(
+                                      "hrDashboard.interviews.feedback.fields.requirementsMatchScore",
+                                    )}
+                                    value={feedbackDraft.requirementsMatchScore}
+                                    onChange={(event) =>
+                                      setFeedbackDraft((prev) => ({
+                                        ...prev,
+                                        requirementsMatchScore: Number(event.target.value),
+                                      }))
+                                    }
+                                    disabled={Boolean(feedbackEditorBlockedReason)}
+                                    fullWidth
+                                    SelectProps={{ native: true }}
+                                  >
+                                    {FEEDBACK_SCORE_OPTIONS.map((value) => (
+                                      <option key={value} value={value}>
+                                        {value}
+                                      </option>
+                                    ))}
+                                  </TextField>
+                                  <TextField
+                                    select
+                                    label={t(
+                                      "hrDashboard.interviews.feedback.fields.communicationScore",
+                                    )}
+                                    value={feedbackDraft.communicationScore}
+                                    onChange={(event) =>
+                                      setFeedbackDraft((prev) => ({
+                                        ...prev,
+                                        communicationScore: Number(event.target.value),
+                                      }))
+                                    }
+                                    disabled={Boolean(feedbackEditorBlockedReason)}
+                                    fullWidth
+                                    SelectProps={{ native: true }}
+                                  >
+                                    {FEEDBACK_SCORE_OPTIONS.map((value) => (
+                                      <option key={value} value={value}>
+                                        {value}
+                                      </option>
+                                    ))}
+                                  </TextField>
+                                </Stack>
+
+                                <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                                  <TextField
+                                    select
+                                    label={t(
+                                      "hrDashboard.interviews.feedback.fields.problemSolvingScore",
+                                    )}
+                                    value={feedbackDraft.problemSolvingScore}
+                                    onChange={(event) =>
+                                      setFeedbackDraft((prev) => ({
+                                        ...prev,
+                                        problemSolvingScore: Number(event.target.value),
+                                      }))
+                                    }
+                                    disabled={Boolean(feedbackEditorBlockedReason)}
+                                    fullWidth
+                                    SelectProps={{ native: true }}
+                                  >
+                                    {FEEDBACK_SCORE_OPTIONS.map((value) => (
+                                      <option key={value} value={value}>
+                                        {value}
+                                      </option>
+                                    ))}
+                                  </TextField>
+                                  <TextField
+                                    select
+                                    label={t(
+                                      "hrDashboard.interviews.feedback.fields.collaborationScore",
+                                    )}
+                                    value={feedbackDraft.collaborationScore}
+                                    onChange={(event) =>
+                                      setFeedbackDraft((prev) => ({
+                                        ...prev,
+                                        collaborationScore: Number(event.target.value),
+                                      }))
+                                    }
+                                    disabled={Boolean(feedbackEditorBlockedReason)}
+                                    fullWidth
+                                    SelectProps={{ native: true }}
+                                  >
+                                    {FEEDBACK_SCORE_OPTIONS.map((value) => (
+                                      <option key={value} value={value}>
+                                        {value}
+                                      </option>
+                                    ))}
+                                  </TextField>
+                                </Stack>
+
+                                <TextField
+                                  select
+                                  label={t(
+                                    "hrDashboard.interviews.feedback.fields.recommendation",
+                                  )}
+                                  value={feedbackDraft.recommendation}
+                                  onChange={(event) =>
+                                    setFeedbackDraft((prev) => ({
+                                      ...prev,
+                                      recommendation:
+                                        event.target.value as InterviewFeedbackRecommendation,
+                                    }))
+                                  }
+                                  disabled={Boolean(feedbackEditorBlockedReason)}
+                                  SelectProps={{ native: true }}
+                                  fullWidth
+                                >
+                                  {FEEDBACK_RECOMMENDATION_OPTIONS.map((recommendation) => (
+                                    <option key={recommendation} value={recommendation}>
+                                      {t(
+                                        `hrDashboard.interviews.feedback.recommendation.${recommendation}`,
+                                      )}
+                                    </option>
+                                  ))}
+                                </TextField>
+
+                                <TextField
+                                  label={t("hrDashboard.interviews.feedback.notes.strengths")}
+                                  value={feedbackDraft.strengthsNote}
+                                  onChange={(event) =>
+                                    setFeedbackDraft((prev) => ({
+                                      ...prev,
+                                      strengthsNote: event.target.value,
+                                    }))
+                                  }
+                                  disabled={Boolean(feedbackEditorBlockedReason)}
+                                  multiline
+                                  minRows={2}
+                                  fullWidth
+                                />
+                                <TextField
+                                  label={t("hrDashboard.interviews.feedback.notes.concerns")}
+                                  value={feedbackDraft.concernsNote}
+                                  onChange={(event) =>
+                                    setFeedbackDraft((prev) => ({
+                                      ...prev,
+                                      concernsNote: event.target.value,
+                                    }))
+                                  }
+                                  disabled={Boolean(feedbackEditorBlockedReason)}
+                                  multiline
+                                  minRows={2}
+                                  fullWidth
+                                />
+                                <TextField
+                                  label={t("hrDashboard.interviews.feedback.notes.evidence")}
+                                  value={feedbackDraft.evidenceNote}
+                                  onChange={(event) =>
+                                    setFeedbackDraft((prev) => ({
+                                      ...prev,
+                                      evidenceNote: event.target.value,
+                                    }))
+                                  }
+                                  disabled={Boolean(feedbackEditorBlockedReason)}
+                                  multiline
+                                  minRows={2}
+                                  fullWidth
+                                />
+
+                                <Button
+                                  variant="contained"
+                                  onClick={handleSubmitInterviewFeedback}
+                                  disabled={
+                                    putInterviewFeedbackMutation.isPending
+                                    || Boolean(feedbackEditorBlockedReason)
+                                  }
+                                >
+                                  {putInterviewFeedbackMutation.isPending
+                                    ? t("hrDashboard.interviews.feedback.submitPending")
+                                    : t("hrDashboard.interviews.feedback.submitAction")}
+                                </Button>
+                              </Stack>
+                            ) : null}
+                          </Stack>
+                        </Paper>
+                      </Stack>
+                    </Paper>
+                  ) : null}
+
                   <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
                     <Button
                       variant="outlined"
@@ -1205,6 +1750,53 @@ function formatConfidence(
   return `${Math.round(value * 100)}%`;
 }
 
+function formatAverageScore(
+  value: number | null | undefined,
+  t: (key: string) => string,
+): string {
+  if (value === null || value === undefined) {
+    return t("hrDashboard.shortlist.notAvailable");
+  }
+  return value.toFixed(2);
+}
+
+function buildOfferGateAlertMessage(
+  summary: InterviewFeedbackPanelSummaryResponse,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  if (summary.gate_status === "passed") {
+    return t("hrDashboard.interviews.feedback.offerReady");
+  }
+  return t("hrDashboard.interviews.feedback.offerBlocked", {
+    reasons: resolveFeedbackGateReasonLabels(summary.gate_reason_codes, t).join(", "),
+  });
+}
+
+function buildFeedbackGateMessage(
+  summary: InterviewFeedbackPanelSummaryResponse,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  if (summary.gate_status === "passed") {
+    return t("hrDashboard.interviews.feedback.gatePassed");
+  }
+  return t("hrDashboard.interviews.feedback.gateBlocked", {
+    reasons: resolveFeedbackGateReasonLabels(summary.gate_reason_codes, t).join(", "),
+  });
+}
+
+function resolveFeedbackGateReasonLabels(
+  reasonCodes: string[],
+  t: (key: string) => string,
+): string[] {
+  return reasonCodes.map((reasonCode) => {
+    const translated = t(`hrDashboard.interviews.feedback.gateReasons.${reasonCode}`);
+    if (translated !== `hrDashboard.interviews.feedback.gateReasons.${reasonCode}`) {
+      return translated;
+    }
+    return reasonCode;
+  });
+}
+
 function resolveMatchScoreChipColor(
   status: MatchScoreStatus,
 ): "default" | "error" | "info" | "success" | "warning" {
@@ -1259,6 +1851,19 @@ function createEmptyInterviewDraft(): InterviewDraft {
   };
 }
 
+function createEmptyInterviewerFeedbackDraft(): InterviewerFeedbackDraft {
+  return {
+    requirementsMatchScore: 3,
+    communicationScore: 3,
+    problemSolvingScore: 3,
+    collaborationScore: 3,
+    recommendation: "mixed",
+    strengthsNote: "",
+    concernsNote: "",
+    evidenceNote: "",
+  };
+}
+
 function buildInterviewDraftFromResponse(interview: HRInterviewResponse): InterviewDraft {
   return {
     scheduledStartLocal: toDateTimeLocalValue(interview.scheduled_start_at),
@@ -1268,6 +1873,46 @@ function buildInterviewDraftFromResponse(interview: HRInterviewResponse): Interv
     locationDetails: interview.location_details ?? "",
     interviewerStaffIdsInput: interview.interviewer_staff_ids.join(", "),
     cancelReasonCode: interview.cancel_reason_code ?? "cancelled_by_staff",
+  };
+}
+
+function buildFeedbackDraftFromItem(
+  item: InterviewFeedbackItemResponse | null,
+): InterviewerFeedbackDraft {
+  if (!item) {
+    return createEmptyInterviewerFeedbackDraft();
+  }
+  return {
+    requirementsMatchScore: item.requirements_match_score,
+    communicationScore: item.communication_score,
+    problemSolvingScore: item.problem_solving_score,
+    collaborationScore: item.collaboration_score,
+    recommendation: item.recommendation,
+    strengthsNote: item.strengths_note,
+    concernsNote: item.concerns_note,
+    evidenceNote: item.evidence_note,
+  };
+}
+
+function buildInterviewFeedbackPayload(
+  draft: InterviewerFeedbackDraft,
+  t: (key: string) => string,
+): InterviewFeedbackUpsertRequest {
+  const strengthsNote = draft.strengthsNote.trim();
+  const concernsNote = draft.concernsNote.trim();
+  const evidenceNote = draft.evidenceNote.trim();
+  if (!strengthsNote || !concernsNote || !evidenceNote) {
+    throw new Error(t("hrDashboard.interviews.feedback.errors.notesRequired"));
+  }
+  return {
+    requirements_match_score: draft.requirementsMatchScore,
+    communication_score: draft.communicationScore,
+    problem_solving_score: draft.problemSolvingScore,
+    collaboration_score: draft.collaborationScore,
+    recommendation: draft.recommendation,
+    strengths_note: strengthsNote,
+    concerns_note: concernsNote,
+    evidence_note: evidenceNote,
   };
 }
 
@@ -1359,6 +2004,64 @@ function selectInterviewState(items: HRInterviewResponse[]): {
   };
 }
 
+function findFeedbackItemForInterviewer(
+  summary: InterviewFeedbackPanelSummaryResponse | null,
+  interviewerId: string | null,
+): InterviewFeedbackItemResponse | null {
+  if (!summary || !interviewerId) {
+    return null;
+  }
+  return (
+    summary.items.find((item) => item.interviewer_staff_id === interviewerId)
+    ?? null
+  );
+}
+
+function isCurrentUserAssignedInterviewer(
+  interview: HRInterviewResponse | null,
+  currentUser: MeResponse | null,
+): boolean {
+  if (!interview || !currentUser) {
+    return false;
+  }
+  return interview.interviewer_staff_ids.includes(currentUser.subject_id);
+}
+
+function hasInterviewFeedbackWindowOpened(interview: HRInterviewResponse | null): boolean {
+  if (!interview) {
+    return false;
+  }
+  return new Date(interview.scheduled_end_at).getTime() <= Date.now();
+}
+
+function resolveFeedbackEditorBlockedReason({
+  latestInterview,
+  currentPipelineStage,
+  currentUserCanWriteFeedback,
+  feedbackWindowOpen,
+  t,
+}: {
+  latestInterview: HRInterviewResponse | null;
+  currentPipelineStage: PipelineTransitionCreateRequest["to_stage"] | null;
+  currentUserCanWriteFeedback: boolean;
+  feedbackWindowOpen: boolean;
+  t: (key: string) => string;
+}): string | null {
+  if (!latestInterview || !currentUserCanWriteFeedback) {
+    return null;
+  }
+  if (latestInterview.status === "cancelled") {
+    return t("hrDashboard.interviews.feedback.locked");
+  }
+  if (!feedbackWindowOpen) {
+    return t("hrDashboard.interviews.feedback.windowNotOpen");
+  }
+  if (currentPipelineStage && currentPipelineStage !== "interview") {
+    return t("hrDashboard.interviews.feedback.locked");
+  }
+  return null;
+}
+
 function resolveRecruitmentApiError(
   error: unknown,
   t: (key: string) => string,
@@ -1379,6 +2082,18 @@ function resolveRecruitmentApiError(
     }
     if (detail.includes("match score not found")) {
       return t("hrDashboard.errors.matchScoreNotFound");
+    }
+    if (detail.includes("interview_feedback_window_not_open")) {
+      return t("hrDashboard.errors.interviewFeedbackWindowNotOpen");
+    }
+    if (detail.includes("interview_feedback_missing")) {
+      return t("hrDashboard.errors.interviewFeedbackMissing");
+    }
+    if (detail.includes("interview_feedback_incomplete")) {
+      return t("hrDashboard.errors.interviewFeedbackIncomplete");
+    }
+    if (detail.includes("interview_feedback_stale")) {
+      return t("hrDashboard.errors.interviewFeedbackStale");
     }
     if (detail.includes("transition from")) {
       return t("hrDashboard.errors.invalidTransition");
@@ -1420,6 +2135,15 @@ function resolveInterviewApiError(
     }
     if (detail.includes("invite_not_available")) {
       return t("hrDashboard.interviews.errors.inviteNotAvailable");
+    }
+    if (detail.includes("interview_feedback_forbidden")) {
+      return t("hrDashboard.interviews.feedback.notAssigned");
+    }
+    if (detail.includes("interview_feedback_locked")) {
+      return t("hrDashboard.interviews.feedback.locked");
+    }
+    if (detail.includes("interview_feedback_window_not_open")) {
+      return t("hrDashboard.interviews.feedback.windowNotOpen");
     }
     const statusMessage = t(`hrDashboard.interviews.errors.http_${error.status}`);
     if (statusMessage !== `hrDashboard.interviews.errors.http_${error.status}`) {

@@ -13,6 +13,9 @@ from hrm_backend.interviews.dependencies.interviews import get_interview_service
 from hrm_backend.interviews.schemas.interview import (
     HRInterviewListResponse,
     HRInterviewResponse,
+    InterviewFeedbackItemResponse,
+    InterviewFeedbackPanelSummaryResponse,
+    InterviewFeedbackUpsertRequest,
     InterviewCancelRequest,
     InterviewCreateRequest,
     InterviewRescheduleRequest,
@@ -103,6 +106,64 @@ def get_interview(
         executor=lambda: service.get_interview(
             vacancy_id=vacancy_id,
             interview_id=interview_id,
+            auth_context=auth_context,
+            request=request,
+        ),
+        service=service,
+    )
+
+
+@router.get(
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback",
+    response_model=InterviewFeedbackPanelSummaryResponse,
+)
+def get_feedback_summary(
+    vacancy_id: UUID,
+    interview_id: UUID,
+    request: Request,
+    auth_context: CurrentAuthContext,
+    service: InterviewServiceDependency,
+) -> InterviewFeedbackPanelSummaryResponse:
+    """Read current-version interview feedback summary for HR or assigned interviewer."""
+    return _execute_hr_action(
+        action="interview_feedback:read",
+        resource_id=str(interview_id),
+        resource_type="interview_feedback",
+        request=request,
+        auth_context=auth_context,
+        executor=lambda: service.get_feedback_summary(
+            vacancy_id=vacancy_id,
+            interview_id=interview_id,
+            auth_context=auth_context,
+            request=request,
+        ),
+        service=service,
+    )
+
+
+@router.put(
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback/me",
+    response_model=InterviewFeedbackItemResponse,
+)
+def put_feedback_for_current_user(
+    vacancy_id: UUID,
+    interview_id: UUID,
+    payload: InterviewFeedbackUpsertRequest,
+    request: Request,
+    auth_context: CurrentAuthContext,
+    service: InterviewServiceDependency,
+) -> InterviewFeedbackItemResponse:
+    """Create or replace the current interviewer's feedback for active schedule version."""
+    return _execute_hr_action(
+        action="interview_feedback:write",
+        resource_id=str(interview_id),
+        resource_type="interview_feedback",
+        request=request,
+        auth_context=auth_context,
+        executor=lambda: service.upsert_feedback_for_current_user(
+            vacancy_id=vacancy_id,
+            interview_id=interview_id,
+            payload=payload,
             auth_context=auth_context,
             request=request,
         ),
@@ -279,6 +340,7 @@ def _execute_hr_action(
     *,
     action: str,
     resource_id: str,
+    resource_type: str = "interview",
     request: Request,
     auth_context: AuthContext,
     executor,
@@ -292,7 +354,7 @@ def _execute_hr_action(
     except HTTPException as exc:
         service._audit_service.record_api_event(  # noqa: SLF001
             action=action,
-            resource_type="interview",
+            resource_type=resource_type,
             result="failure",
             request=request,
             actor_sub=actor_sub,

@@ -40,17 +40,18 @@
 - The scoring/shortlist-review slice (`TASK-04-01/02/03 + TASK-11-07`) is now implemented in repo as one vertical delivery unit.
 - The compliance follow-on slice (`TASK-13-01/02`) is now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
 - The dedicated planning pass for `TASK-11-08` is implemented in repo as one backend+frontend interview slice without reopening auth, CORS, or the public candidate transport model.
-- The remaining follow-on work for interview domain is limited to out-of-scope items such as notifications and structured feedback, not baseline scheduling/registration.
+- The structured interview feedback and fairness gate slice (`TASK-05-03/04`) is now implemented in repo on top of the scheduling baseline, without reopening auth, CORS, route topology, or candidate transport.
+- The remaining follow-on work for interview domain is limited to offer/onboarding dependencies and out-of-scope items such as notifications, not baseline scheduling, registration, or feedback transport.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
 ## Active Queue After Planning Pass
 
 - `TASK-12-01` is no longer active queue work; compose baseline acceptance is already satisfied in repo and the remaining step is tracker/issue closure alignment.
-- Planning source of truth for the next interview follow-on slice:
-  `docs/project/interview-feedback-fairness-pass.md`.
+- `TASK-05-03/04` is no longer active queue work; the implemented source of truth remains `docs/project/interview-feedback-fairness-pass.md`.
+- The next downstream dependency on interview-domain state is `TASK-06-01` offer workflow.
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-05-03/04 | Interview baseline scheduling/registration is in repo; the next interview follow-on work is structured feedback and fairness controls outside this slice |
+| A-1 | TASK-06-01 | Offer lifecycle is the next dependent slice now that interview fairness gate and current-version feedback baseline are stable in repo |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 

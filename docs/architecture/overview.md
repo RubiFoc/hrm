@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-10
-- Updated by: architect + devops-engineer
+- Updated by: architect + backend-engineer + frontend-engineer
 
 ## System Context
 HRM platform for Belarus and Russia that supports candidate selection, fair interview workflows, onboarding, HR automation, and operational workflows for HR, managers, employees, leaders, and accountants.
@@ -42,7 +42,7 @@ flowchart LR
 | Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
 | Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
 | Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key lifecycle (issue/list/revoke), audit hooks | platform |
-| Recruitment Domain | Vacancies, candidates, pipeline, active CV document state | Candidate and vacancy data | Vacancy/pipeline state, active-document readiness, candidate context | hr-tech |
+| Recruitment Domain | Vacancies, candidates, pipeline, interviews, and schedule-versioned interviewer feedback | Candidate and vacancy data | Vacancy/pipeline state, interview fairness state, active-document readiness, candidate context | hr-tech |
 | Match Scoring Domain | Async scoring jobs and explainable score artifacts keyed by vacancy, candidate, and active document | Scoring requests, parsed CV analysis, vacancy snapshot | UI-ready score/status payloads for shortlist review | ai-platform |
 | Employee Domain | Employee profile and onboarding workflows | Hire decisions, profile data | Employee records, onboarding tasks | hr-tech |
 | HR Operations Domain | HR process automation and workflow execution | Rules and triggers | Automated tasks, status updates | hr-ops |
@@ -61,7 +61,8 @@ flowchart LR
    recruiter selects vacancy + candidate in `/` -> interview create/reschedule ->
    async Google Calendar sync for staff calendars -> sync success issues a public invitation token ->
    HR shares `candidate_invite_url` manually -> candidate opens `/candidate?interviewToken=...` ->
-   confirm / request reschedule / decline -> HR resolves follow-up actions.
+   confirm / request reschedule / decline -> assigned interviewer submits structured feedback on `/` after the interview window closes ->
+   `POST /api/v1/pipeline/transitions` applies current-version completeness gate before `interview -> offer`.
 3. Onboarding Flow:
    accepted candidate -> employee profile creation -> onboarding checklist -> completion tracking.
 4. HR Automation Flow:
@@ -90,6 +91,9 @@ flowchart LR
   `match_scoring_jobs` (`queued`, `running`, `succeeded`, `failed`) and score payloads keyed by
   `vacancy_id + candidate_id + active_document_id`, including `score`, `confidence`, `summary`,
   `matched_requirements`, `missing_requirements`, `evidence`, `model_name`, `model_version`, and `scored_at`.
+- Interview feedback artifacts:
+  `interview_feedback` rows keyed by `interview_id + schedule_version + interviewer_staff_id`,
+  including rubric scores, recommendation, qualitative notes, and submission timestamps used by the fairness gate.
 - Auth revocation artifacts:
   denylisted token ids (`jti`) and session ids (`sid`) in Redis.
 - External integrations: Ollama, Google Calendar

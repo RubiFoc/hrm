@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from uuid import UUID, uuid4
@@ -371,6 +372,58 @@ def _load_audit_events(engine) -> list[AuditEvent]:
         )
 
 
+def _set_auth_context(configured_app, *, subject_id: str, role: str) -> None:
+    """Swap the test auth context to a specific staff actor."""
+    configured_app["context_holder"]["context"] = AuthContext(
+        subject_id=UUID(subject_id),
+        role=role,
+        session_id=uuid4(),
+        token_id=uuid4(),
+        expires_at=9999999999,
+    )
+
+
+def _set_interview_window(
+    engine,
+    *,
+    interview_id: str,
+    scheduled_start_at: datetime,
+    scheduled_end_at: datetime,
+) -> None:
+    """Update the persisted interview window for gate and feedback scenarios."""
+    with Session(engine) as session:
+        entity = session.get(Interview, interview_id)
+        assert entity is not None
+        entity.scheduled_start_at = scheduled_start_at
+        entity.scheduled_end_at = scheduled_end_at
+        session.add(entity)
+        session.commit()
+
+
+async def _put_feedback(
+    api_client: AsyncClient,
+    *,
+    vacancy_id: str,
+    interview_id: str,
+    payload: dict[str, object] | None = None,
+):
+    """Submit one interviewer feedback payload to the HR API."""
+    return await api_client.put(
+        f"/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback/me",
+        json=payload
+        or {
+            "requirements_match_score": 5,
+            "communication_score": 4,
+            "problem_solving_score": 4,
+            "collaboration_score": 5,
+            "recommendation": "strong_yes",
+            "strengths_note": "Clear communication and ownership.",
+            "concerns_note": "No major risks identified.",
+            "evidence_note": "Explained tradeoffs with concrete examples.",
+        },
+    )
+
+
 async def test_create_requires_shortlist_and_exposes_hr_interview_reads(
     configured_app,
     api_client: AsyncClient,
@@ -639,6 +692,169 @@ async def test_public_confirm_reschedule_decline_and_expired_token(
     )
     assert expired_response.status_code == 410
     assert expired_response.json()["detail"] == "interview_registration_token_expired"
+
+
+async def test_interviewer_feedback_read_write_update_and_forbidden_access(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify assigned interviewer feedback routes allow create/update and deny outsiders."""
+    candidate_id = str(UUID("78787878-7878-4787-8787-787878787878"))
+    _seed_candidate(configured_app["engine"], candidate_id=candidate_id, suffix="feedback-write")
+    vacancy_id = await _create_vacancy(api_client, title_suffix="feedback-write")
+    await _append_transition(
+        api_client,
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+        to_stage="shortlist",
+    )
+    created = await _create_interview(
+        api_client,
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+        interviewer_staff_ids=[INTERVIEWER_A],
+        scheduled_start_local="2026-03-08T10:00:00",
+        scheduled_end_local="2026-03-08T11:00:00",
+    )
+    assert _run_worker(configured_app, interview_id=created["interview_id"]) == "synced"
+
+    _set_auth_context(configured_app, subject_id=INTERVIEWER_A, role="employee")
+    initial_summary = await api_client.get(
+        f"/api/v1/vacancies/{vacancy_id}/interviews/{created['interview_id']}/feedback"
+    )
+    assert initial_summary.status_code == 200
+    assert initial_summary.json()["submitted_count"] == 0
+    assert initial_summary.json()["gate_reason_codes"] == ["interview_feedback_missing"]
+
+    created_feedback = await _put_feedback(
+        api_client,
+        vacancy_id=vacancy_id,
+        interview_id=created["interview_id"],
+    )
+    assert created_feedback.status_code == 200
+    assert created_feedback.json()["interviewer_staff_id"] == INTERVIEWER_A
+
+    updated_feedback = await _put_feedback(
+        api_client,
+        vacancy_id=vacancy_id,
+        interview_id=created["interview_id"],
+        payload={
+            "requirements_match_score": 4,
+            "communication_score": 5,
+            "problem_solving_score": 4,
+            "collaboration_score": 4,
+            "recommendation": "yes",
+            "strengths_note": "Strong communication with realistic examples.",
+            "concerns_note": "Minor concerns about domain ramp-up speed.",
+            "evidence_note": "Explained API tradeoffs clearly.",
+        },
+    )
+    assert updated_feedback.status_code == 200
+    assert updated_feedback.json()["recommendation"] == "yes"
+
+    completed_summary = await api_client.get(
+        f"/api/v1/vacancies/{vacancy_id}/interviews/{created['interview_id']}/feedback"
+    )
+    assert completed_summary.status_code == 200
+    assert completed_summary.json()["submitted_count"] == 1
+    assert completed_summary.json()["missing_interviewer_ids"] == []
+    assert completed_summary.json()["gate_status"] == "passed"
+
+    _set_auth_context(
+        configured_app,
+        subject_id="98989898-9898-4989-8989-989898989898",
+        role="employee",
+    )
+    forbidden_read = await api_client.get(
+        f"/api/v1/vacancies/{vacancy_id}/interviews/{created['interview_id']}/feedback"
+    )
+    assert forbidden_read.status_code == 403
+    assert forbidden_read.json()["detail"] == "interview_feedback_forbidden"
+
+    forbidden_write = await _put_feedback(
+        api_client,
+        vacancy_id=vacancy_id,
+        interview_id=created["interview_id"],
+    )
+    assert forbidden_write.status_code == 403
+    assert forbidden_write.json()["detail"] == "interview_feedback_forbidden"
+
+
+async def test_reschedule_marks_previous_feedback_stale_and_blocks_offer_transition(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify rescheduling invalidates previous-version feedback and blocks offer transition."""
+    candidate_id = str(UUID("79797979-7979-4797-8797-797979797979"))
+    _seed_candidate(configured_app["engine"], candidate_id=candidate_id, suffix="feedback-stale")
+    vacancy_id = await _create_vacancy(api_client, title_suffix="feedback-stale")
+    await _append_transition(
+        api_client,
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+        to_stage="shortlist",
+    )
+    created = await _create_interview(
+        api_client,
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+        interviewer_staff_ids=[INTERVIEWER_A],
+        scheduled_start_local="2026-03-08T10:00:00",
+        scheduled_end_local="2026-03-08T11:00:00",
+    )
+    assert _run_worker(configured_app, interview_id=created["interview_id"]) == "synced"
+
+    _set_auth_context(configured_app, subject_id=INTERVIEWER_A, role="employee")
+    submitted = await _put_feedback(
+        api_client,
+        vacancy_id=vacancy_id,
+        interview_id=created["interview_id"],
+    )
+    assert submitted.status_code == 200
+
+    _set_auth_context(
+        configured_app,
+        subject_id="90909090-9090-4090-8090-909090909090",
+        role="hr",
+    )
+    rescheduled = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/interviews/{created['interview_id']}/reschedule",
+        json={
+            "scheduled_start_local": "2026-03-09T10:00:00",
+            "scheduled_end_local": "2026-03-09T11:00:00",
+            "timezone": "Europe/Minsk",
+            "location_kind": "google_meet",
+            "location_details": None,
+            "interviewer_staff_ids": [INTERVIEWER_A],
+        },
+    )
+    assert rescheduled.status_code == 200
+    assert rescheduled.json()["schedule_version"] == 2
+    _set_interview_window(
+        configured_app["engine"],
+        interview_id=created["interview_id"],
+        scheduled_start_at=datetime(2026, 3, 9, 7, 0, tzinfo=UTC),
+        scheduled_end_at=datetime(2026, 3, 9, 8, 0, tzinfo=UTC),
+    )
+
+    summary = await api_client.get(
+        f"/api/v1/vacancies/{vacancy_id}/interviews/{created['interview_id']}/feedback"
+    )
+    assert summary.status_code == 200
+    assert summary.json()["missing_interviewer_ids"] == [INTERVIEWER_A]
+    assert summary.json()["gate_reason_codes"] == ["interview_feedback_stale"]
+
+    offer_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_id,
+            "to_stage": "offer",
+            "reason": "ready_for_offer",
+        },
+    )
+    assert offer_transition.status_code == 409
+    assert offer_transition.json()["detail"] == "interview_feedback_stale"
 
 
 async def test_interview_sync_state_machine_and_pipeline_append(

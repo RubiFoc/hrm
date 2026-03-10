@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 import hashlib
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid4, uuid5
@@ -16,6 +17,8 @@ from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.core.models.base import Base
+from hrm_backend.interviews.models.feedback import InterviewFeedback
+from hrm_backend.interviews.models.interview import Interview
 from hrm_backend.main import app
 from hrm_backend.settings import AppSettings, get_settings
 
@@ -110,6 +113,107 @@ def _load_events(database_url: str) -> list[AuditEvent]:
         engine.dispose()
 
 
+def _seed_candidate(database_url: str, *, candidate_id: str, suffix: str) -> None:
+    """Insert one candidate profile row directly for pipeline gate scenarios."""
+    engine = create_engine(database_url, future=True)
+    try:
+        with Session(engine) as session:
+            session.add(
+                CandidateProfile(
+                    candidate_id=candidate_id,
+                    owner_subject_id=f"candidate-{suffix}",
+                    first_name="Gate",
+                    last_name=suffix,
+                    email=f"candidate-{suffix}@example.com",
+                    phone=None,
+                    location=None,
+                    current_title=None,
+                    extra_data={},
+                )
+            )
+            session.commit()
+    finally:
+        engine.dispose()
+
+
+def _insert_interview(
+    database_url: str,
+    *,
+    vacancy_id: str,
+    candidate_id: str,
+    schedule_version: int,
+    scheduled_start_at: datetime,
+    scheduled_end_at: datetime,
+    interviewer_staff_ids: list[str],
+) -> str:
+    """Persist one active interview row for a pipeline transition scenario."""
+    engine = create_engine(database_url, future=True)
+    try:
+        with Session(engine) as session:
+            entity = Interview(
+                vacancy_id=vacancy_id,
+                candidate_id=candidate_id,
+                status="awaiting_candidate_confirmation",
+                calendar_sync_status="synced",
+                schedule_version=schedule_version,
+                scheduled_start_at=scheduled_start_at,
+                scheduled_end_at=scheduled_end_at,
+                timezone="UTC",
+                location_kind="google_meet",
+                location_details="https://meet.google.com/test-room",
+                interviewer_staff_ids_json=interviewer_staff_ids,
+                candidate_response_status="pending",
+                created_by_staff_id="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                updated_by_staff_id="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                last_synced_at=scheduled_start_at,
+            )
+            session.add(entity)
+            session.commit()
+            session.refresh(entity)
+            return entity.interview_id
+    finally:
+        engine.dispose()
+
+
+def _insert_feedback(
+    database_url: str,
+    *,
+    interview_id: str,
+    schedule_version: int,
+    interviewer_staff_id: str,
+    requirements_match_score: int,
+    communication_score: int,
+    problem_solving_score: int,
+    collaboration_score: int,
+    recommendation: str,
+    strengths_note: str,
+    concerns_note: str,
+    evidence_note: str,
+) -> None:
+    """Persist one structured feedback row for a fairness-gate scenario."""
+    engine = create_engine(database_url, future=True)
+    try:
+        with Session(engine) as session:
+            session.add(
+                InterviewFeedback(
+                    interview_id=interview_id,
+                    schedule_version=schedule_version,
+                    interviewer_staff_id=interviewer_staff_id,
+                    requirements_match_score=requirements_match_score,
+                    communication_score=communication_score,
+                    problem_solving_score=problem_solving_score,
+                    collaboration_score=collaboration_score,
+                    recommendation=recommendation,
+                    strengths_note=strengths_note,
+                    concerns_note=concerns_note,
+                    evidence_note=evidence_note,
+                )
+            )
+            session.commit()
+    finally:
+        engine.dispose()
+
+
 @pytest.fixture()
 async def api_client(configured_app) -> AsyncClient:
     """Provide async API client for vacancy integration tests."""
@@ -126,7 +230,9 @@ async def test_vacancy_crud_and_pipeline_transitions(
     api_client: AsyncClient,
 ) -> None:
     """Verify vacancy CRUD and canonical pipeline transitions."""
-    _, _, _, candidate_1_id, candidate_2_id = configured_app
+    _, _, database_url, candidate_1_id, candidate_2_id = configured_app
+    interviewer_a = "11111111-1111-4111-8111-111111111111"
+    interviewer_b = "22222222-2222-4222-8222-222222222222"
 
     create_response = await api_client.post(
         "/api/v1/vacancies",
@@ -154,15 +260,58 @@ async def test_vacancy_crud_and_pipeline_transitions(
     assert patch_response.status_code == 200
     assert patch_response.json()["status"] == "active"
 
-    stages = [
-        "applied",
-        "screening",
-        "shortlist",
-        "interview",
-        "offer",
-        "hired",
-    ]
-    for stage in stages:
+    stages = ["applied", "screening", "shortlist", "interview", "offer", "hired"]
+    for stage in stages[:4]:
+        transition = await api_client.post(
+            "/api/v1/pipeline/transitions",
+            json={
+                "vacancy_id": vacancy_id,
+                "candidate_id": candidate_1_id,
+                "to_stage": stage,
+                "reason": "progress",
+            },
+        )
+        assert transition.status_code == 200
+
+    interview_id = _insert_interview(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_1_id,
+        schedule_version=1,
+        scheduled_start_at=datetime(2026, 3, 8, 10, 0, tzinfo=UTC),
+        scheduled_end_at=datetime(2026, 3, 8, 11, 0, tzinfo=UTC),
+        interviewer_staff_ids=[interviewer_a, interviewer_b],
+    )
+    _insert_feedback(
+        database_url,
+        interview_id=interview_id,
+        schedule_version=1,
+        interviewer_staff_id=interviewer_a,
+        requirements_match_score=5,
+        communication_score=4,
+        problem_solving_score=5,
+        collaboration_score=4,
+        recommendation="strong_yes",
+        strengths_note="Strong backend ownership.",
+        concerns_note="No major concerns.",
+        evidence_note="Clear design explanations.",
+    )
+    _insert_feedback(
+        database_url,
+        interview_id=interview_id,
+        schedule_version=1,
+        interviewer_staff_id=interviewer_b,
+        requirements_match_score=4,
+        communication_score=4,
+        problem_solving_score=4,
+        collaboration_score=5,
+        recommendation="yes",
+        strengths_note="Strong collaboration examples.",
+        concerns_note="Minor ramp-up expected.",
+        evidence_note="Grounded answers during the interview.",
+    )
+
+    for stage in stages[4:]:
         transition = await api_client.post(
             "/api/v1/pipeline/transitions",
             json={
@@ -196,6 +345,211 @@ async def test_vacancy_crud_and_pipeline_transitions(
     )
     assert invalid_transition.status_code == 422
     assert "not allowed" in invalid_transition.json()["detail"]
+
+
+async def test_interview_to_offer_feedback_gate_blocks_and_passes_by_reason_code(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify `interview -> offer` checks window, missing, incomplete, stale, and complete feedback."""
+    _, _, database_url, _, _ = configured_app
+    interviewer_a = "11111111-1111-4111-8111-111111111111"
+    interviewer_b = "22222222-2222-4222-8222-222222222222"
+
+    create_response = await api_client.post(
+        "/api/v1/vacancies",
+        json={
+            "title": "Interview Fairness Gate",
+            "description": "Offer transition fairness checks",
+            "department": "Engineering",
+            "status": "open",
+        },
+    )
+    assert create_response.status_code == 200
+    vacancy_id = create_response.json()["vacancy_id"]
+
+    async def prepare_candidate(candidate_suffix: str) -> str:
+        candidate_id = str(uuid5(NAMESPACE_URL, f"feedback-gate-{candidate_suffix}"))
+        _seed_candidate(database_url, candidate_id=candidate_id, suffix=f"feedback-gate-{candidate_suffix}")
+        for stage in ["applied", "screening", "shortlist", "interview"]:
+            transition = await api_client.post(
+                "/api/v1/pipeline/transitions",
+                json={
+                    "vacancy_id": vacancy_id,
+                    "candidate_id": candidate_id,
+                    "to_stage": stage,
+                    "reason": f"move_to_{stage}",
+                },
+            )
+            assert transition.status_code == 200
+        return candidate_id
+
+    future_candidate_id = await prepare_candidate("future")
+    future_interview_id = _insert_interview(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=future_candidate_id,
+        schedule_version=1,
+        scheduled_start_at=datetime(2026, 3, 11, 10, 0, tzinfo=UTC),
+        scheduled_end_at=datetime(2026, 3, 11, 11, 0, tzinfo=UTC),
+        interviewer_staff_ids=[interviewer_a],
+    )
+    _ = future_interview_id
+    future_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": future_candidate_id,
+            "to_stage": "offer",
+            "reason": "future-window",
+        },
+    )
+    assert future_transition.status_code == 409
+    assert future_transition.json()["detail"] == "interview_feedback_window_not_open"
+
+    missing_candidate_id = await prepare_candidate("missing")
+    _insert_interview(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=missing_candidate_id,
+        schedule_version=1,
+        scheduled_start_at=datetime(2026, 3, 8, 10, 0, tzinfo=UTC),
+        scheduled_end_at=datetime(2026, 3, 8, 11, 0, tzinfo=UTC),
+        interviewer_staff_ids=[interviewer_a, interviewer_b],
+    )
+    missing_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": missing_candidate_id,
+            "to_stage": "offer",
+            "reason": "missing-feedback",
+        },
+    )
+    assert missing_transition.status_code == 409
+    assert missing_transition.json()["detail"] == "interview_feedback_missing"
+
+    incomplete_candidate_id = await prepare_candidate("incomplete")
+    incomplete_interview_id = _insert_interview(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=incomplete_candidate_id,
+        schedule_version=1,
+        scheduled_start_at=datetime(2026, 3, 8, 12, 0, tzinfo=UTC),
+        scheduled_end_at=datetime(2026, 3, 8, 13, 0, tzinfo=UTC),
+        interviewer_staff_ids=[interviewer_a],
+    )
+    _insert_feedback(
+        database_url,
+        interview_id=incomplete_interview_id,
+        schedule_version=1,
+        interviewer_staff_id=interviewer_a,
+        requirements_match_score=5,
+        communication_score=4,
+        problem_solving_score=0,
+        collaboration_score=5,
+        recommendation="yes",
+        strengths_note="Clear API experience.",
+        concerns_note="Minor concerns remain.",
+        evidence_note="Provided direct evidence.",
+    )
+    incomplete_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": incomplete_candidate_id,
+            "to_stage": "offer",
+            "reason": "incomplete-feedback",
+        },
+    )
+    assert incomplete_transition.status_code == 409
+    assert incomplete_transition.json()["detail"] == "interview_feedback_incomplete"
+
+    stale_candidate_id = await prepare_candidate("stale")
+    stale_interview_id = _insert_interview(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=stale_candidate_id,
+        schedule_version=2,
+        scheduled_start_at=datetime(2026, 3, 8, 14, 0, tzinfo=UTC),
+        scheduled_end_at=datetime(2026, 3, 8, 15, 0, tzinfo=UTC),
+        interviewer_staff_ids=[interviewer_a],
+    )
+    _insert_feedback(
+        database_url,
+        interview_id=stale_interview_id,
+        schedule_version=1,
+        interviewer_staff_id=interviewer_a,
+        requirements_match_score=5,
+        communication_score=5,
+        problem_solving_score=4,
+        collaboration_score=5,
+        recommendation="strong_yes",
+        strengths_note="Excellent ownership.",
+        concerns_note="No major concerns.",
+        evidence_note="Strong system design discussion.",
+    )
+    stale_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": stale_candidate_id,
+            "to_stage": "offer",
+            "reason": "stale-feedback",
+        },
+    )
+    assert stale_transition.status_code == 409
+    assert stale_transition.json()["detail"] == "interview_feedback_stale"
+
+    success_candidate_id = await prepare_candidate("success")
+    success_interview_id = _insert_interview(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=success_candidate_id,
+        schedule_version=1,
+        scheduled_start_at=datetime(2026, 3, 8, 16, 0, tzinfo=UTC),
+        scheduled_end_at=datetime(2026, 3, 8, 17, 0, tzinfo=UTC),
+        interviewer_staff_ids=[interviewer_a, interviewer_b],
+    )
+    _insert_feedback(
+        database_url,
+        interview_id=success_interview_id,
+        schedule_version=1,
+        interviewer_staff_id=interviewer_a,
+        requirements_match_score=5,
+        communication_score=4,
+        problem_solving_score=5,
+        collaboration_score=4,
+        recommendation="strong_yes",
+        strengths_note="Strong systems thinking.",
+        concerns_note="No major concerns.",
+        evidence_note="Explained architectural tradeoffs clearly.",
+    )
+    _insert_feedback(
+        database_url,
+        interview_id=success_interview_id,
+        schedule_version=1,
+        interviewer_staff_id=interviewer_b,
+        requirements_match_score=4,
+        communication_score=4,
+        problem_solving_score=4,
+        collaboration_score=5,
+        recommendation="yes",
+        strengths_note="Strong collaboration examples.",
+        concerns_note="Small onboarding ramp expected.",
+        evidence_note="Grounded feedback with candidate examples.",
+    )
+    success_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": success_candidate_id,
+            "to_stage": "offer",
+            "reason": "complete-panel",
+        },
+    )
+    assert success_transition.status_code == 200
+    assert success_transition.json()["to_stage"] == "offer"
 
 
 async def test_pipeline_transition_rbac_deny_is_audited(
@@ -346,6 +700,16 @@ async def test_openapi_exposes_uuid_format_for_normalized_id_contracts(
     assert (
         schemas["PipelineTransitionResponse"]["properties"]["transition_id"]["format"] == "uuid"
     )
+    assert schemas["InterviewFeedbackItemResponse"]["properties"]["feedback_id"]["format"] == "uuid"
+    assert schemas["InterviewFeedbackItemResponse"]["properties"]["interview_id"]["format"] == "uuid"
+    assert (
+        schemas["InterviewFeedbackItemResponse"]["properties"]["interviewer_staff_id"]["format"]
+        == "uuid"
+    )
+    assert (
+        schemas["InterviewFeedbackPanelSummaryResponse"]["properties"]["interview_id"]["format"]
+        == "uuid"
+    )
 
     vacancy_get_parameters = spec["paths"]["/api/v1/vacancies/{vacancy_id}"]["get"]["parameters"]
     candidate_get_parameters = spec["paths"]["/api/v1/candidates/{candidate_id}"]["get"][
@@ -354,6 +718,12 @@ async def test_openapi_exposes_uuid_format_for_normalized_id_contracts(
     candidate_analysis_get_parameters = spec["paths"][
         "/api/v1/candidates/{candidate_id}/cv/analysis"
     ]["get"]["parameters"]
+    interview_feedback_get_parameters = spec["paths"][
+        "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback"
+    ]["get"]["parameters"]
+    interview_feedback_put_parameters = spec["paths"][
+        "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback/me"
+    ]["put"]["parameters"]
     assert any(
         parameter["name"] == "vacancy_id"
         and parameter["schema"].get("format") == "uuid"
@@ -368,4 +738,24 @@ async def test_openapi_exposes_uuid_format_for_normalized_id_contracts(
         parameter["name"] == "candidate_id"
         and parameter["schema"].get("format") == "uuid"
         for parameter in candidate_analysis_get_parameters
+    )
+    assert any(
+        parameter["name"] == "vacancy_id"
+        and parameter["schema"].get("format") == "uuid"
+        for parameter in interview_feedback_get_parameters
+    )
+    assert any(
+        parameter["name"] == "interview_id"
+        and parameter["schema"].get("format") == "uuid"
+        for parameter in interview_feedback_get_parameters
+    )
+    assert any(
+        parameter["name"] == "vacancy_id"
+        and parameter["schema"].get("format") == "uuid"
+        for parameter in interview_feedback_put_parameters
+    )
+    assert any(
+        parameter["name"] == "interview_id"
+        and parameter["schema"].get("format") == "uuid"
+        for parameter in interview_feedback_put_parameters
     )

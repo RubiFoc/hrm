@@ -13,13 +13,8 @@ if (dsn) {
     dsn,
     environment: normalizeEnvValue(import.meta.env.VITE_SENTRY_ENVIRONMENT) ?? "local-compose",
     release: normalizeEnvValue(import.meta.env.VITE_SENTRY_RELEASE),
-    integrations: [
-      Sentry.browserTracingIntegration({
-        tracePropagationTargets: resolveTracePropagationTargets(
-          import.meta.env.VITE_API_BASE_URL,
-        ),
-      }),
-    ],
+    integrations: [Sentry.browserTracingIntegration()],
+    tracePropagationTargets: resolveTracePropagationTargets(import.meta.env.VITE_API_BASE_URL),
     tracesSampleRate: resolveTracesSampleRate(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE),
   });
 }

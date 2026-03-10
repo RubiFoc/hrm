@@ -19,6 +19,8 @@ from hrm_backend.candidates.infra.postgres import (
     CVParsingJobDAO,
 )
 from hrm_backend.core.db.session import get_db_session
+from hrm_backend.interviews.dao.feedback_dao import InterviewFeedbackDAO
+from hrm_backend.interviews.dao.interview_dao import InterviewDAO
 from hrm_backend.settings import AppSettings, get_settings
 from hrm_backend.vacancies.dao.public_apply_guard_dao import PublicApplyGuardDAO
 from hrm_backend.vacancies.infra.postgres import PipelineTransitionDAO, VacancyDAO
@@ -51,6 +53,8 @@ def get_vacancy_service(
         vacancy_dao=VacancyDAO(session=session),
         transition_dao=PipelineTransitionDAO(session=session),
         candidate_profile_dao=CandidateProfileDAO(session=session),
+        interview_dao=InterviewDAO(session=session),
+        interview_feedback_dao=InterviewFeedbackDAO(session=session),
         audit_service=audit_service,
     )
 

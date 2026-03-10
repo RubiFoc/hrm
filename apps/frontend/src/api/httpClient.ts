@@ -41,7 +41,7 @@ export async function apiRequest<TResponse>(
     const apiError = new ApiError(response.status, detail);
     captureFrontendHttpFailure(apiError, {
       input,
-      method: init?.method ?? response.request?.method,
+      method: init?.method,
       status: response.status,
       detail,
     });

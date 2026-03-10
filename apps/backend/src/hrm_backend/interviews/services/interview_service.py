@@ -12,11 +12,18 @@ from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
 from hrm_backend.core.errors.http import service_unavailable
 from hrm_backend.interviews.dao.calendar_binding_dao import InterviewCalendarBindingDAO
+from hrm_backend.interviews.dao.feedback_dao import InterviewFeedbackDAO
 from hrm_backend.interviews.dao.interview_dao import InterviewDAO
 from hrm_backend.interviews.infra.celery.dispatch import enqueue_interview_sync
 from hrm_backend.interviews.infra.google_calendar import InterviewCalendarAdapter
+from hrm_backend.interviews.models.feedback import InterviewFeedback
 from hrm_backend.interviews.models.interview import Interview
 from hrm_backend.interviews.schemas.interview import (
+    InterviewFeedbackAverageScoresResponse,
+    InterviewFeedbackItemResponse,
+    InterviewFeedbackPanelSummaryResponse,
+    InterviewFeedbackRecommendationDistributionResponse,
+    InterviewFeedbackUpsertRequest,
     HRInterviewListResponse,
     HRInterviewResponse,
     InterviewCancelRequest,
@@ -24,6 +31,10 @@ from hrm_backend.interviews.schemas.interview import (
     InterviewRescheduleRequest,
     PublicInterviewActionRequest,
     PublicInterviewRegistrationResponse,
+)
+from hrm_backend.interviews.utils.feedback import (
+    GATE_REASON_WINDOW_NOT_OPEN,
+    build_feedback_panel_summary,
 )
 from hrm_backend.interviews.utils.lifecycle import (
     can_candidate_cancel,
@@ -34,6 +45,7 @@ from hrm_backend.interviews.utils.lifecycle import (
 )
 from hrm_backend.interviews.utils.scheduling import normalize_schedule_window
 from hrm_backend.interviews.utils.tokens import InterviewTokenManager
+from hrm_backend.rbac import evaluate_permission, parse_role
 from hrm_backend.settings import AppSettings
 from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransitionDAO
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
@@ -50,6 +62,7 @@ class InterviewService:
         candidate_profile_dao: CandidateProfileDAO,
         transition_dao: PipelineTransitionDAO,
         interview_dao: InterviewDAO,
+        feedback_dao: InterviewFeedbackDAO,
         binding_dao: InterviewCalendarBindingDAO,
         calendar_adapter: InterviewCalendarAdapter,
         token_manager: InterviewTokenManager,
@@ -61,6 +74,7 @@ class InterviewService:
         self._candidate_profile_dao = candidate_profile_dao
         self._transition_dao = transition_dao
         self._interview_dao = interview_dao
+        self._feedback_dao = feedback_dao
         self._binding_dao = binding_dao
         self._calendar_adapter = calendar_adapter
         self._token_manager = token_manager
@@ -176,6 +190,80 @@ class InterviewService:
             resource_id=entity.interview_id,
         )
         return self._build_hr_response(entity=entity)
+
+    def get_feedback_summary(
+        self,
+        *,
+        vacancy_id: UUID,
+        interview_id: UUID,
+        auth_context: AuthContext,
+        request: Request,
+    ) -> InterviewFeedbackPanelSummaryResponse:
+        """Read current-version interview feedback summary for HR or assigned interviewer."""
+        entity = self._get_interview_for_vacancy_or_404(
+            vacancy_id=str(vacancy_id),
+            interview_id=str(interview_id),
+        )
+        self._ensure_feedback_read_allowed(entity=entity, auth_context=auth_context)
+        summary = build_feedback_panel_summary(
+            interview=entity,
+            feedback_history=self._feedback_dao.list_for_interview(interview_id=entity.interview_id),
+        )
+        actor_sub, actor_role = actor_from_auth_context(auth_context)
+        self._audit_service.record_api_event(
+            action="interview_feedback:read",
+            resource_type="interview_feedback",
+            result="success",
+            request=request,
+            actor_sub=actor_sub,
+            actor_role=actor_role,
+            resource_id=entity.interview_id,
+        )
+        return self._build_feedback_panel_summary_response(entity=entity, summary=summary)
+
+    def upsert_feedback_for_current_user(
+        self,
+        *,
+        vacancy_id: UUID,
+        interview_id: UUID,
+        payload: InterviewFeedbackUpsertRequest,
+        auth_context: AuthContext,
+        request: Request,
+    ) -> InterviewFeedbackItemResponse:
+        """Create or update the current interviewer's feedback for the active schedule version."""
+        entity = self._get_interview_for_vacancy_or_404(
+            vacancy_id=str(vacancy_id),
+            interview_id=str(interview_id),
+        )
+        interviewer_staff_id = str(auth_context.subject_id)
+        self._ensure_feedback_write_allowed(
+            entity=entity,
+            interviewer_staff_id=interviewer_staff_id,
+        )
+        feedback = self._feedback_dao.upsert_feedback(
+            interview_id=entity.interview_id,
+            schedule_version=entity.schedule_version,
+            interviewer_staff_id=interviewer_staff_id,
+            requirements_match_score=payload.requirements_match_score,
+            communication_score=payload.communication_score,
+            problem_solving_score=payload.problem_solving_score,
+            collaboration_score=payload.collaboration_score,
+            recommendation=payload.recommendation,
+            strengths_note=payload.strengths_note,
+            concerns_note=payload.concerns_note,
+            evidence_note=payload.evidence_note,
+        )
+        actor_sub, actor_role = actor_from_auth_context(auth_context)
+        self._audit_service.record_api_event(
+            action="interview_feedback:write",
+            resource_type="interview_feedback",
+            result="success",
+            request=request,
+            actor_sub=actor_sub,
+            actor_role=actor_role,
+            resource_id=feedback.feedback_id,
+        )
+        return self._build_feedback_item_response(feedback)
 
     def reschedule_interview(
         self,
@@ -454,11 +542,7 @@ class InterviewService:
 
     def _ensure_pipeline_stage_allows_create(self, *, vacancy_id: str, candidate_id: str) -> None:
         """Ensure candidate is currently in shortlist or interview pipeline stage."""
-        previous = self._transition_dao.get_last_transition(
-            vacancy_id=vacancy_id,
-            candidate_id=candidate_id,
-        )
-        stage = None if previous is None else previous.to_stage
+        stage = self._get_current_pipeline_stage(vacancy_id=vacancy_id, candidate_id=candidate_id)
         if stage not in {"shortlist", "interview"}:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -496,6 +580,14 @@ class InterviewService:
         if candidate is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="candidate_not_found")
         return candidate
+
+    def _get_current_pipeline_stage(self, *, vacancy_id: str, candidate_id: str) -> str | None:
+        """Load the latest recorded pipeline stage for one vacancy-candidate pair."""
+        previous = self._transition_dao.get_last_transition(
+            vacancy_id=vacancy_id,
+            candidate_id=candidate_id,
+        )
+        return None if previous is None else previous.to_stage
 
     def _get_interview_for_vacancy_or_404(self, *, vacancy_id: str, interview_id: str) -> Interview:
         """Load interview row scoped to vacancy or raise 404."""
@@ -536,6 +628,55 @@ class InterviewService:
         entity.candidate_token_nonce = None
         entity.candidate_token_hash = None
         entity.candidate_token_expires_at = None
+
+    def _ensure_feedback_read_allowed(
+        self,
+        *,
+        entity: Interview,
+        auth_context: AuthContext,
+    ) -> None:
+        """Allow feedback reads for `interview:manage` roles and assigned interviewers."""
+        role = parse_role(auth_context.role)
+        if evaluate_permission(role, "interview:manage").allowed:
+            return
+        if str(auth_context.subject_id) in entity.interviewer_staff_ids_json:
+            return
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="interview_feedback_forbidden",
+        )
+
+    def _ensure_feedback_write_allowed(
+        self,
+        *,
+        entity: Interview,
+        interviewer_staff_id: str,
+    ) -> None:
+        """Validate whether the current interviewer can mutate feedback right now."""
+        if interviewer_staff_id not in entity.interviewer_staff_ids_json:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="interview_feedback_forbidden",
+            )
+        if entity.status == "cancelled":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="interview_feedback_locked",
+            )
+        if _ensure_aware_utc(entity.scheduled_end_at) > datetime.now(UTC):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=GATE_REASON_WINDOW_NOT_OPEN,
+            )
+        current_stage = self._get_current_pipeline_stage(
+            vacancy_id=entity.vacancy_id,
+            candidate_id=entity.candidate_id,
+        )
+        if current_stage != "interview":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="interview_feedback_locked",
+            )
 
     def _build_hr_response(self, *, entity: Interview) -> HRInterviewResponse:
         """Map interview row to HR-facing API response."""
@@ -581,6 +722,62 @@ class InterviewService:
             cancel_reason_code=entity.cancel_reason_code,
             created_at=_ensure_aware_utc(entity.created_at),
             updated_at=_ensure_aware_utc(entity.updated_at),
+        )
+
+    def _build_feedback_item_response(
+        self,
+        entity: InterviewFeedback,
+    ) -> InterviewFeedbackItemResponse:
+        """Map persisted interview feedback row to API response schema."""
+        return InterviewFeedbackItemResponse(
+            feedback_id=UUID(entity.feedback_id),
+            interview_id=UUID(entity.interview_id),
+            schedule_version=entity.schedule_version,
+            interviewer_staff_id=UUID(entity.interviewer_staff_id),
+            requirements_match_score=entity.requirements_match_score,
+            communication_score=entity.communication_score,
+            problem_solving_score=entity.problem_solving_score,
+            collaboration_score=entity.collaboration_score,
+            recommendation=entity.recommendation,  # type: ignore[arg-type]
+            strengths_note=entity.strengths_note,
+            concerns_note=entity.concerns_note,
+            evidence_note=entity.evidence_note,
+            submitted_at=_ensure_aware_utc(entity.submitted_at),
+            updated_at=_ensure_aware_utc(entity.updated_at),
+        )
+
+    def _build_feedback_panel_summary_response(
+        self,
+        *,
+        entity: Interview,
+        summary,
+    ) -> InterviewFeedbackPanelSummaryResponse:
+        """Map derived panel summary to API response schema."""
+        return InterviewFeedbackPanelSummaryResponse(
+            interview_id=UUID(entity.interview_id),
+            vacancy_id=UUID(entity.vacancy_id),
+            candidate_id=UUID(entity.candidate_id),
+            schedule_version=entity.schedule_version,
+            required_interviewer_ids=[UUID(item) for item in summary.required_interviewer_ids],
+            submitted_interviewer_ids=[UUID(item) for item in summary.submitted_interviewer_ids],
+            missing_interviewer_ids=[UUID(item) for item in summary.missing_interviewer_ids],
+            required_interviewer_count=len(summary.required_interviewer_ids),
+            submitted_count=len(summary.submitted_interviewer_ids),
+            gate_status=summary.gate_status,  # type: ignore[arg-type]
+            gate_reason_codes=list(summary.gate_reason_codes),
+            recommendation_distribution=InterviewFeedbackRecommendationDistributionResponse(
+                strong_yes=summary.recommendation_distribution["strong_yes"],
+                yes=summary.recommendation_distribution["yes"],
+                mixed=summary.recommendation_distribution["mixed"],
+                no=summary.recommendation_distribution["no"],
+            ),
+            average_scores=InterviewFeedbackAverageScoresResponse(
+                requirements_match_score=summary.average_scores["requirements_match_score"],
+                communication_score=summary.average_scores["communication_score"],
+                problem_solving_score=summary.average_scores["problem_solving_score"],
+                collaboration_score=summary.average_scores["collaboration_score"],
+            ),
+            items=[self._build_feedback_item_response(item) for item in summary.current_items],
         )
 
     def _build_public_response(

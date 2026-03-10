@@ -1,4 +1,4 @@
-"""Schema models for interview scheduling APIs."""
+"""Schema models for interview scheduling and feedback APIs."""
 
 from __future__ import annotations
 
@@ -19,6 +19,8 @@ CalendarSyncStatus = Literal["queued", "running", "synced", "conflict", "failed"
 CandidateResponseStatus = Literal["pending", "confirmed", "reschedule_requested", "declined"]
 InterviewLocationKind = Literal["google_meet", "onsite", "phone"]
 CancelledBy = Literal["staff", "candidate"]
+InterviewFeedbackRecommendation = Literal["strong_yes", "yes", "mixed", "no"]
+InterviewFeedbackGateStatus = Literal["passed", "blocked"]
 
 
 class InterviewCreateRequest(BaseModel):
@@ -78,6 +80,86 @@ class PublicInterviewActionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     note: str | None = Field(default=None, max_length=1000)
+
+
+class InterviewFeedbackUpsertRequest(BaseModel):
+    """Input payload for current-user interview feedback create or update."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    requirements_match_score: int = Field(ge=1, le=5)
+    communication_score: int = Field(ge=1, le=5)
+    problem_solving_score: int = Field(ge=1, le=5)
+    collaboration_score: int = Field(ge=1, le=5)
+    recommendation: InterviewFeedbackRecommendation
+    strengths_note: str = Field(min_length=1, max_length=4000)
+    concerns_note: str = Field(min_length=1, max_length=4000)
+    evidence_note: str = Field(min_length=1, max_length=4000)
+
+    @field_validator("strengths_note", "concerns_note", "evidence_note")
+    @classmethod
+    def validate_non_blank_notes(cls, value: str) -> str:
+        """Trim note payloads and reject whitespace-only values."""
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("feedback notes must not be blank")
+        return normalized
+
+
+class InterviewFeedbackItemResponse(BaseModel):
+    """Structured feedback row for one interviewer and one schedule version."""
+
+    feedback_id: UUID
+    interview_id: UUID
+    schedule_version: int
+    interviewer_staff_id: UUID
+    requirements_match_score: int
+    communication_score: int
+    problem_solving_score: int
+    collaboration_score: int
+    recommendation: InterviewFeedbackRecommendation
+    strengths_note: str
+    concerns_note: str
+    evidence_note: str
+    submitted_at: datetime
+    updated_at: datetime
+
+
+class InterviewFeedbackRecommendationDistributionResponse(BaseModel):
+    """Distribution of structured recommendations in the current interview panel."""
+
+    strong_yes: int
+    yes: int
+    mixed: int
+    no: int
+
+
+class InterviewFeedbackAverageScoresResponse(BaseModel):
+    """Average rubric scores for the current interview panel."""
+
+    requirements_match_score: float | None
+    communication_score: float | None
+    problem_solving_score: float | None
+    collaboration_score: float | None
+
+
+class InterviewFeedbackPanelSummaryResponse(BaseModel):
+    """Current-version panel summary used by HR fairness review and interviewer UX."""
+
+    interview_id: UUID
+    vacancy_id: UUID
+    candidate_id: UUID
+    schedule_version: int
+    required_interviewer_ids: list[UUID]
+    submitted_interviewer_ids: list[UUID]
+    missing_interviewer_ids: list[UUID]
+    required_interviewer_count: int
+    submitted_count: int
+    gate_status: InterviewFeedbackGateStatus
+    gate_reason_codes: list[str]
+    recommendation_distribution: InterviewFeedbackRecommendationDistributionResponse
+    average_scores: InterviewFeedbackAverageScoresResponse
+    items: list[InterviewFeedbackItemResponse]
 
 
 class HRInterviewResponse(BaseModel):

@@ -590,6 +590,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Feedback Summary
+         * @description Read current-version interview feedback summary for HR or assigned interviewer.
+         */
+        get: operations["get_feedback_summary_api_v1_vacancies__vacancy_id__interviews__interview_id__feedback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Put Feedback For Current User
+         * @description Create or replace the current interviewer's feedback for active schedule version.
+         */
+        put: operations["put_feedback_for_current_user_api_v1_vacancies__vacancy_id__interviews__interview_id__feedback_me_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/reschedule": {
         parameters: {
             query?: never;
@@ -1304,6 +1344,155 @@ export interface components {
             scheduled_start_local: string;
             /** Timezone */
             timezone: string;
+        };
+        /**
+         * InterviewFeedbackAverageScoresResponse
+         * @description Average rubric scores for the current interview panel.
+         */
+        InterviewFeedbackAverageScoresResponse: {
+            /** Collaboration Score */
+            collaboration_score: number | null;
+            /** Communication Score */
+            communication_score: number | null;
+            /** Problem Solving Score */
+            problem_solving_score: number | null;
+            /** Requirements Match Score */
+            requirements_match_score: number | null;
+        };
+        /**
+         * InterviewFeedbackItemResponse
+         * @description Structured feedback row for one interviewer and one schedule version.
+         */
+        InterviewFeedbackItemResponse: {
+            /** Collaboration Score */
+            collaboration_score: number;
+            /** Communication Score */
+            communication_score: number;
+            /** Concerns Note */
+            concerns_note: string;
+            /** Evidence Note */
+            evidence_note: string;
+            /**
+             * Feedback Id
+             * Format: uuid
+             */
+            feedback_id: string;
+            /**
+             * Interview Id
+             * Format: uuid
+             */
+            interview_id: string;
+            /**
+             * Interviewer Staff Id
+             * Format: uuid
+             */
+            interviewer_staff_id: string;
+            /** Problem Solving Score */
+            problem_solving_score: number;
+            /**
+             * Recommendation
+             * @enum {string}
+             */
+            recommendation: "strong_yes" | "yes" | "mixed" | "no";
+            /** Requirements Match Score */
+            requirements_match_score: number;
+            /** Schedule Version */
+            schedule_version: number;
+            /** Strengths Note */
+            strengths_note: string;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * InterviewFeedbackPanelSummaryResponse
+         * @description Current-version panel summary used by HR fairness review and interviewer UX.
+         */
+        InterviewFeedbackPanelSummaryResponse: {
+            average_scores: components["schemas"]["InterviewFeedbackAverageScoresResponse"];
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /** Gate Reason Codes */
+            gate_reason_codes: string[];
+            /**
+             * Gate Status
+             * @enum {string}
+             */
+            gate_status: "passed" | "blocked";
+            /**
+             * Interview Id
+             * Format: uuid
+             */
+            interview_id: string;
+            /** Items */
+            items: components["schemas"]["InterviewFeedbackItemResponse"][];
+            /** Missing Interviewer Ids */
+            missing_interviewer_ids: string[];
+            recommendation_distribution: components["schemas"]["InterviewFeedbackRecommendationDistributionResponse"];
+            /** Required Interviewer Count */
+            required_interviewer_count: number;
+            /** Required Interviewer Ids */
+            required_interviewer_ids: string[];
+            /** Schedule Version */
+            schedule_version: number;
+            /** Submitted Count */
+            submitted_count: number;
+            /** Submitted Interviewer Ids */
+            submitted_interviewer_ids: string[];
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+        };
+        /**
+         * InterviewFeedbackRecommendationDistributionResponse
+         * @description Distribution of structured recommendations in the current interview panel.
+         */
+        InterviewFeedbackRecommendationDistributionResponse: {
+            /** Mixed */
+            mixed: number;
+            /** No */
+            no: number;
+            /** Strong Yes */
+            strong_yes: number;
+            /** Yes */
+            yes: number;
+        };
+        /**
+         * InterviewFeedbackUpsertRequest
+         * @description Input payload for current-user interview feedback create or update.
+         */
+        InterviewFeedbackUpsertRequest: {
+            /** Collaboration Score */
+            collaboration_score: number;
+            /** Communication Score */
+            communication_score: number;
+            /** Concerns Note */
+            concerns_note: string;
+            /** Evidence Note */
+            evidence_note: string;
+            /** Problem Solving Score */
+            problem_solving_score: number;
+            /**
+             * Recommendation
+             * @enum {string}
+             */
+            recommendation: "strong_yes" | "yes" | "mixed" | "no";
+            /** Requirements Match Score */
+            requirements_match_score: number;
+            /** Strengths Note */
+            strengths_note: string;
         };
         /**
          * InterviewRescheduleRequest
@@ -2948,6 +3137,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HRInterviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_feedback_summary_api_v1_vacancies__vacancy_id__interviews__interview_id__feedback_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewFeedbackPanelSummaryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_feedback_for_current_user_api_v1_vacancies__vacancy_id__interviews__interview_id__feedback_me_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                interview_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InterviewFeedbackUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InterviewFeedbackItemResponse"];
                 };
             };
             /** @description Validation Error */
