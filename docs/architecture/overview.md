@@ -1,8 +1,8 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-09
-- Updated by: architect + backend-engineer + frontend-engineer
+- Date: 2026-03-10
+- Updated by: architect + devops-engineer
 
 ## System Context
 HRM platform for Belarus and Russia that supports candidate selection, fair interview workflows, onboarding, HR automation, and operational workflows for HR, managers, employees, leaders, and accountants.
@@ -105,8 +105,9 @@ flowchart LR
   `hrm_backend/scoring` handles scoring jobs, score artifacts, Ollama integration, and scoring API contracts without mixing this logic into `candidates` or `vacancies`.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
 - Compose baseline services: `frontend`, `backend`, `backend-worker`, `postgres`, `postgres-init`, `backend-migrate`, `redis`, `minio`, `minio-init`.
+- Compose bootstrap baseline: `postgres-init`, `backend-migrate`, and `minio-init` are one-shot prerequisites before steady-state services are considered ready.
 - Async runtime baseline: dedicated `backend-worker` (Celery) processing DB-backed jobs on
-  `cv_parsing` and `match_scoring` queues.
+  `cv_parsing`, `match_scoring`, and `interview_sync` queues.
 - Frontend style: React.js + TypeScript SPA with role-based route guards and shared component system.
 - Frontend libraries: MUI, React Router, TanStack Query, React Hook Form, Zod, i18next.
 - Browser support target: Google Chrome.

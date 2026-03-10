@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-10
-- Updated by: coordinator + architect
+- Updated by: coordinator + architect + devops-engineer
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -19,6 +19,7 @@
 | ADMIN-02 | done/closed | GitHub issue #53 closed; merged in `main` via PR #51 (`bd96d86`) |
 | ADMIN-03 | done/closed | GitHub issue #52 closed; merged in `main` via PR #55 (`2c9c5b5`) |
 | TASK-11-13 | done/closed | GitHub issue #67 closed; merged in `main` via PR #68 and PR #69 (`d8ea39e`) |
+| TASK-12-01 | implemented/local-compose-baseline | `docker-compose.yml`, Dockerfiles, `./scripts/smoke-compose.sh`, and CI compose browser smoke already verify the local stack (`frontend`, `backend`, `backend-worker`, `postgres`, `redis`, `minio`) plus bootstrap jobs |
 | TASK-03-01/02/03/05/06 | implemented/local-baseline | Backend candidate profile, public apply, async parsing, RU/EN normalization, evidence traceability, and public tracking endpoints are present in repo with integration coverage |
 | TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
 | TASK-11-06 | implemented/local-baseline | `/candidate` now supports public deep-link apply, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling |
@@ -32,7 +33,8 @@
 | TASK-11-08 | implemented/local-interview-slice | Interview scheduling and candidate registration are implemented against `docs/project/interview-planning-pass.md`, with HR controls on `/`, public token registration on `/candidate`, and free-mode Google Calendar sync via service account + shared interviewer calendars |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
-## 2026-03-09 Delivery Control Notes
+## 2026-03-10 Delivery Control Notes
+- `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
 - Backend implementation is ahead of the original planning docs for `TASK-03-01/02/03/05/06` and `TASK-02-01/02/03`; these items are no longer backlog-only work.
 - The main remaining frontend gaps after the login/browser hotfix were `TASK-11-06` and `TASK-11-05`; the current repository now contains a local acceptance baseline for both flows.
 - The scoring/shortlist-review slice (`TASK-04-01/02/03 + TASK-11-07`) is now implemented in repo as one vertical delivery unit.
@@ -43,6 +45,7 @@
 
 ## Active Queue After Planning Pass
 
+- `TASK-12-01` is no longer active queue work; compose baseline acceptance is already satisfied in repo and the remaining step is tracker/issue closure alignment.
 - Planning source of truth for the next interview follow-on slice:
   `docs/project/interview-feedback-fairness-pass.md`.
 | Order | Task ID | Why Now |
@@ -126,9 +129,11 @@
 
 ## Global Prioritized Queue
 
+Historical planning queue retained for lineage; implemented items from the execution snapshot above are not active backlog work.
+
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| 0 | TASK-12-01 | Highest priority to standardize local/dev/runtime environment and unblock parallel delivery |
+| 0 | TASK-12-01 | Delivered in repo; retained as historical sequencing reference for the compose baseline |
 | 1 | TASK-01-01 | Foundation for all role-based behavior |
 | 2 | TASK-01-02 | System entrypoint security baseline |
 | 3 | TASK-01-03 | Access enforcement for all endpoints |

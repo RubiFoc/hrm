@@ -83,7 +83,13 @@ apps/backend/tests/
 - This gate applies to the cohesive baseline PR only; do not add more feature scope before it lands.
 
 ## Infrastructure Smoke Baseline (`TASK-12-01`)
-- Canonical command: `./scripts/smoke-compose.sh`.
+- Baseline acceptance commands:
+  - `docker compose config`
+  - `docker compose up -d --build`
+  - `./scripts/smoke-compose.sh`
+  - `./scripts/check-docs-structure.sh`
+- Canonical smoke command: `./scripts/smoke-compose.sh`.
+- For docs/tracker-only normalization of `TASK-12-01`, this acceptance set is sufficient; do not expand to OpenAPI, frontend, or backend test suites unless runtime, API, or route behavior changed.
 - The smoke script must verify:
   - compose service status and health for `backend`, `postgres`, `redis`, `minio`;
   - compose runtime state for `frontend` and `backend-worker`;
@@ -99,6 +105,7 @@ apps/backend/tests/
   - headless Chrome public candidate path `/candidate?vacancyId=...&vacancyTitle=... -> POST /api/v1/vacancies/{vacancy_id}/applications -> GET /api/v1/public/cv-parsing-jobs/{job_id} -> optional GET /analysis`;
   - browser public candidate requests use `VITE_API_BASE_URL` backend origin rather than relative frontend origin;
   - smoke passes when the public tracking status reaches at least `queued`/`running`; `analysis_ready=true` is preferred but not mandatory for compose success.
+  - Google Calendar and Ollama integrations are intentionally excluded from compose smoke; their reachability is not required for local compose baseline acceptance.
 
 ## Evidence Format
 - Command
