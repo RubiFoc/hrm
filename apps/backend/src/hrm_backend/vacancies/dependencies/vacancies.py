@@ -23,8 +23,9 @@ from hrm_backend.interviews.dao.feedback_dao import InterviewFeedbackDAO
 from hrm_backend.interviews.dao.interview_dao import InterviewDAO
 from hrm_backend.settings import AppSettings, get_settings
 from hrm_backend.vacancies.dao.public_apply_guard_dao import PublicApplyGuardDAO
-from hrm_backend.vacancies.infra.postgres import PipelineTransitionDAO, VacancyDAO
+from hrm_backend.vacancies.infra.postgres import OfferDAO, PipelineTransitionDAO, VacancyDAO
 from hrm_backend.vacancies.services.application_service import VacancyApplicationService
+from hrm_backend.vacancies.services.offer_service import OfferService
 from hrm_backend.vacancies.services.public_apply_policy import PublicApplyPolicyService
 from hrm_backend.vacancies.services.public_apply_rate_limiter import PublicApplyRateLimiter
 from hrm_backend.vacancies.services.vacancy_service import VacancyService
@@ -52,9 +53,24 @@ def get_vacancy_service(
     return VacancyService(
         vacancy_dao=VacancyDAO(session=session),
         transition_dao=PipelineTransitionDAO(session=session),
+        offer_dao=OfferDAO(session=session),
         candidate_profile_dao=CandidateProfileDAO(session=session),
         interview_dao=InterviewDAO(session=session),
         interview_feedback_dao=InterviewFeedbackDAO(session=session),
+        audit_service=audit_service,
+    )
+
+
+def get_offer_service(
+    session: SessionDependency,
+    audit_service: AuditDependency,
+) -> OfferService:
+    """Build offer service dependency."""
+    return OfferService(
+        vacancy_dao=VacancyDAO(session=session),
+        candidate_profile_dao=CandidateProfileDAO(session=session),
+        transition_dao=PipelineTransitionDAO(session=session),
+        offer_dao=OfferDAO(session=session),
         audit_service=audit_service,
     )
 

@@ -6,6 +6,7 @@ import "../app/i18n";
 import type {
   HRInterviewResponse,
   InterviewFeedbackPanelSummaryResponse,
+  OfferResponse,
 } from "../api";
 import { HrDashboardPage } from "./HrDashboardPage";
 
@@ -113,6 +114,23 @@ const BASE_FEEDBACK_SUMMARY = {
   },
   items: [],
 };
+const BASE_OFFER = {
+  offer_id: "99999999-1111-4999-8999-999999999999",
+  vacancy_id: VACANCY_ID,
+  candidate_id: CANDIDATE_ID,
+  status: "draft",
+  terms_summary: null,
+  proposed_start_date: null,
+  expires_at: null,
+  note: null,
+  sent_at: null,
+  sent_by_staff_id: null,
+  decision_at: null,
+  decision_note: null,
+  decision_recorded_by_staff_id: null,
+  created_at: "2026-03-10T08:00:00Z",
+  updated_at: "2026-03-10T08:00:00Z",
+};
 
 function renderHrDashboardPage() {
   const queryClient = new QueryClient({
@@ -148,6 +166,11 @@ function installHrWorkspaceFetchMock({
   interviewReschedule,
   interviewCancel,
   interviewResend,
+  offerGet,
+  offerPut,
+  offerSend,
+  offerAccept,
+  offerDecline,
   pipelineItems = [
     {
       transition_id: "99999999-9999-4999-8999-999999999999",
@@ -172,6 +195,11 @@ function installHrWorkspaceFetchMock({
   interviewReschedule?: (url: string, init?: RequestInit) => Promise<Response>;
   interviewCancel?: (url: string, init?: RequestInit) => Promise<Response>;
   interviewResend?: (url: string, init?: RequestInit) => Promise<Response>;
+  offerGet?: (url: string, init?: RequestInit) => Promise<Response>;
+  offerPut?: (url: string, init?: RequestInit) => Promise<Response>;
+  offerSend?: (url: string, init?: RequestInit) => Promise<Response>;
+  offerAccept?: (url: string, init?: RequestInit) => Promise<Response>;
+  offerDecline?: (url: string, init?: RequestInit) => Promise<Response>;
   pipelineItems?: Array<Record<string, unknown>>;
 }) {
   fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
@@ -240,6 +268,33 @@ function installHrWorkspaceFetchMock({
         submitted_at: "2026-03-10T10:00:00Z",
         updated_at: "2026-03-10T10:00:00Z",
       });
+    }
+    if (url.endsWith(`/api/v1/vacancies/${VACANCY_ID}/offers/${CANDIDATE_ID}`)) {
+      if (method === "GET" && offerGet) {
+        return offerGet(url, init);
+      }
+      if (method === "PUT" && offerPut) {
+        return offerPut(url, init);
+      }
+      return jsonResponse({ detail: "offer_stage_not_active" }, 409);
+    }
+    if (url.endsWith(`/api/v1/vacancies/${VACANCY_ID}/offers/${CANDIDATE_ID}/send`)) {
+      if (method === "POST" && offerSend) {
+        return offerSend(url, init);
+      }
+      return jsonResponse({ detail: "offer_stage_not_active" }, 409);
+    }
+    if (url.endsWith(`/api/v1/vacancies/${VACANCY_ID}/offers/${CANDIDATE_ID}/accept`)) {
+      if (method === "POST" && offerAccept) {
+        return offerAccept(url, init);
+      }
+      return jsonResponse({ detail: "offer_stage_not_active" }, 409);
+    }
+    if (url.endsWith(`/api/v1/vacancies/${VACANCY_ID}/offers/${CANDIDATE_ID}/decline`)) {
+      if (method === "POST" && offerDecline) {
+        return offerDecline(url, init);
+      }
+      return jsonResponse({ detail: "offer_stage_not_active" }, 409);
     }
     if (url.includes(`/api/v1/vacancies/${VACANCY_ID}/interviews`)) {
       if (method === "GET" && interviewsGet) {
@@ -796,6 +851,162 @@ describe("HrDashboardPage", () => {
     await waitFor(() => {
       expect(
         screen.getByText(/каждый назначенный интервьюер не отправит feedback/i),
+      ).toBeDefined();
+    });
+  });
+
+  it("saves, sends, and accepts an offer from the HR workspace", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+
+    let currentOffer = { ...BASE_OFFER } as OfferResponse;
+    installHrWorkspaceFetchMock({
+      interviewsGet: () => jsonResponse({ items: [] }),
+      offerGet: () => jsonResponse(currentOffer),
+      offerPut: (_url, init) => {
+        const payload = JSON.parse(String(init?.body)) as {
+          terms_summary: string;
+          proposed_start_date?: string | null;
+          expires_at?: string | null;
+          note?: string | null;
+        };
+        currentOffer = {
+          ...currentOffer,
+          terms_summary: payload.terms_summary,
+          proposed_start_date: payload.proposed_start_date ?? null,
+          expires_at: payload.expires_at ?? null,
+          note: payload.note ?? null,
+        };
+        return jsonResponse(currentOffer);
+      },
+      offerSend: () => {
+        currentOffer = {
+          ...currentOffer,
+          status: "sent",
+          sent_at: "2026-03-10T09:30:00Z",
+          sent_by_staff_id: CURRENT_USER_ID,
+        };
+        return jsonResponse(currentOffer);
+      },
+      offerAccept: (_url, init) => {
+        const payload = JSON.parse(String(init?.body)) as { note?: string | null };
+        currentOffer = {
+          ...currentOffer,
+          status: "accepted",
+          decision_note: payload.note ?? null,
+          decision_at: "2026-03-10T10:30:00Z",
+          decision_recorded_by_staff_id: CURRENT_USER_ID,
+        };
+        return jsonResponse(currentOffer);
+      },
+      pipelineItems: [
+        {
+          transition_id: "99999999-9999-4999-8999-999999999999",
+          vacancy_id: VACANCY_ID,
+          candidate_id: CANDIDATE_ID,
+          from_stage: "interview",
+          to_stage: "offer",
+          reason: "ready_for_offer",
+          changed_by_sub: "hr",
+          changed_by_role: "hr",
+          transitioned_at: "2026-03-10T09:00:00Z",
+        },
+      ],
+    });
+
+    renderHrDashboardPage();
+    await selectVacancyAndCandidate();
+    await screen.findByLabelText(/краткое содержание условий оффера/i);
+
+    fireEvent.change(screen.getByLabelText(/краткое содержание условий оффера/i), {
+      target: { value: "Base salary 5000 BYN gross with probation bonus." },
+    });
+    fireEvent.change(screen.getByLabelText(/предлагаемая дата выхода/i), {
+      target: { value: "2026-04-01" },
+    });
+    fireEvent.change(screen.getByLabelText(/оффер действует до/i), {
+      target: { value: "2026-03-20" },
+    });
+    fireEvent.change(screen.getByLabelText(/внутренняя заметка hr/i), {
+      target: { value: "Manual delivery via HR email." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /сохранить draft/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/draft оффера сохранён/i)).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /отметить как отправленный/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/оффер отмечен как отправленный/i)).toBeDefined();
+      expect(screen.getByText(/ожидается ответ кандидата/i)).toBeDefined();
+    });
+
+    fireEvent.change(screen.getByLabelText(/заметка по решению/i), {
+      target: { value: "Candidate confirmed by phone." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /отметить как accepted/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/оффер отмечен как accepted/i)).toBeDefined();
+      expect(
+        screen.getByText(/теперь pipeline можно перевести в hired/i),
+      ).toBeDefined();
+    });
+  }, 10_000);
+
+  it("renders localized blocker for offer to hired transition before acceptance", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+
+    installHrWorkspaceFetchMock({
+      interviewsGet: () => jsonResponse({ items: [] }),
+      offerGet: () =>
+        jsonResponse({
+          ...BASE_OFFER,
+          status: "sent",
+          terms_summary: "Base salary 5000 BYN gross with probation bonus.",
+          sent_at: "2026-03-10T09:30:00Z",
+          sent_by_staff_id: CURRENT_USER_ID,
+        }),
+      pipelineItems: [
+        {
+          transition_id: "99999999-9999-4999-8999-999999999999",
+          vacancy_id: VACANCY_ID,
+          candidate_id: CANDIDATE_ID,
+          from_stage: "interview",
+          to_stage: "offer",
+          reason: "ready_for_offer",
+          changed_by_sub: "hr",
+          changed_by_role: "hr",
+          transitioned_at: "2026-03-10T09:00:00Z",
+        },
+      ],
+    });
+    const defaultImplementation = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/api/v1/pipeline/transitions") && init?.method === "POST") {
+        const payload = JSON.parse(String(init.body)) as { to_stage?: string };
+        if (payload.to_stage === "hired") {
+          return jsonResponse({ detail: "offer_not_accepted" }, 409);
+        }
+      }
+      return defaultImplementation?.(input, init);
+    });
+
+    renderHrDashboardPage();
+    await selectVacancyAndCandidate();
+    await screen.findByLabelText(/заметка по решению/i);
+
+    fireEvent.change(screen.getByRole("combobox", { name: /стадия перехода/i }), {
+      target: { value: "hired" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /добавить переход/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/перед переводом pipeline в hired оффер должен быть отмечен как accepted/i),
       ).toBeDefined();
     });
   });

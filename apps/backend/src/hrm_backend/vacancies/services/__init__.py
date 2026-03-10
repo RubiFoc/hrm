@@ -10,12 +10,14 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from hrm_backend.vacancies.services.application_service import VacancyApplicationService
+    from hrm_backend.vacancies.services.offer_service import OfferService
     from hrm_backend.vacancies.services.public_apply_policy import PublicApplyPolicyService
     from hrm_backend.vacancies.services.public_apply_rate_limiter import PublicApplyRateLimiter
     from hrm_backend.vacancies.services.vacancy_service import VacancyService
 
 __all__ = [
     "VacancyService",
+    "OfferService",
     "VacancyApplicationService",
     "PublicApplyRateLimiter",
     "PublicApplyPolicyService",
@@ -28,6 +30,10 @@ def __getattr__(name: str) -> Any:
         from hrm_backend.vacancies.services.vacancy_service import VacancyService
 
         return VacancyService
+    if name == "OfferService":
+        from hrm_backend.vacancies.services.offer_service import OfferService
+
+        return OfferService
     if name == "VacancyApplicationService":
         from hrm_backend.vacancies.services.application_service import VacancyApplicationService
 

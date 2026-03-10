@@ -2014,6 +2014,243 @@
         "title": "MeResponse",
         "type": "object"
       },
+      "OfferDecisionRequest": {
+        "additionalProperties": false,
+        "description": "Optional note payload for recording accepted or declined offer status.",
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "title": "OfferDecisionRequest",
+        "type": "object"
+      },
+      "OfferResponse": {
+        "description": "Canonical staff-facing offer lifecycle payload.",
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "decision_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision At"
+          },
+          "decision_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Note"
+          },
+          "decision_recorded_by_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Recorded By Staff Id"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "offer_id": {
+            "format": "uuid",
+            "title": "Offer Id",
+            "type": "string"
+          },
+          "proposed_start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed Start Date"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "sent_by_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent By Staff Id"
+          },
+          "status": {
+            "enum": [
+              "draft",
+              "sent",
+              "accepted",
+              "declined"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "terms_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terms Summary"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "offer_id",
+          "vacancy_id",
+          "candidate_id",
+          "status",
+          "terms_summary",
+          "proposed_start_date",
+          "expires_at",
+          "note",
+          "sent_at",
+          "sent_by_staff_id",
+          "decision_at",
+          "decision_note",
+          "decision_recorded_by_staff_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OfferResponse",
+        "type": "object"
+      },
+      "OfferUpsertRequest": {
+        "additionalProperties": false,
+        "description": "Input payload for creating or updating one draft offer.",
+        "properties": {
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "proposed_start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proposed Start Date"
+          },
+          "terms_summary": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Terms Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "terms_summary"
+        ],
+        "title": "OfferUpsertRequest",
+        "type": "object"
+      },
       "PipelineTransitionCreateRequest": {
         "additionalProperties": false,
         "description": "Input payload for one pipeline transition append event.",
@@ -5115,6 +5352,343 @@
         "summary": "Get Match Score",
         "tags": [
           "match-scoring"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}": {
+      "get": {
+        "description": "Read current offer lifecycle state for one vacancy+candidate pair.",
+        "operationId": "get_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Offer",
+        "tags": [
+          "vacancies"
+        ]
+      },
+      "put": {
+        "description": "Create or update draft offer fields for one vacancy+candidate pair.",
+        "operationId": "put_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfferUpsertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Put Offer",
+        "tags": [
+          "vacancies"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}/accept": {
+      "post": {
+        "description": "Record accepted status for one sent offer.",
+        "operationId": "accept_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__accept_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/OfferDecisionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Accept Offer",
+        "tags": [
+          "vacancies"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}/decline": {
+      "post": {
+        "description": "Record declined status for one sent offer.",
+        "operationId": "decline_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__decline_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/OfferDecisionRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Decline Offer",
+        "tags": [
+          "vacancies"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}/send": {
+      "post": {
+        "description": "Move one draft offer to `sent`.",
+        "operationId": "send_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__send_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Send Offer",
+        "tags": [
+          "vacancies"
         ]
       }
     },

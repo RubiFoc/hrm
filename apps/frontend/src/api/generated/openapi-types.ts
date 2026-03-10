@@ -714,6 +714,90 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Offer
+         * @description Read current offer lifecycle state for one vacancy+candidate pair.
+         */
+        get: operations["get_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__get"];
+        /**
+         * Put Offer
+         * @description Create or update draft offer fields for one vacancy+candidate pair.
+         */
+        put: operations["put_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept Offer
+         * @description Record accepted status for one sent offer.
+         */
+        post: operations["accept_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decline Offer
+         * @description Record declined status for one sent offer.
+         */
+        post: operations["decline_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__decline_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Offer
+         * @description Move one draft offer to `sent`.
+         */
+        post: operations["send_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__send_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -1622,6 +1706,82 @@ export interface components {
              * Format: uuid
              */
             subject_id: string;
+        };
+        /**
+         * OfferDecisionRequest
+         * @description Optional note payload for recording accepted or declined offer status.
+         */
+        OfferDecisionRequest: {
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * OfferResponse
+         * @description Canonical staff-facing offer lifecycle payload.
+         */
+        OfferResponse: {
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Decision At */
+            decision_at: string | null;
+            /** Decision Note */
+            decision_note: string | null;
+            /** Decision Recorded By Staff Id */
+            decision_recorded_by_staff_id: string | null;
+            /** Expires At */
+            expires_at: string | null;
+            /** Note */
+            note: string | null;
+            /**
+             * Offer Id
+             * Format: uuid
+             */
+            offer_id: string;
+            /** Proposed Start Date */
+            proposed_start_date: string | null;
+            /** Sent At */
+            sent_at: string | null;
+            /** Sent By Staff Id */
+            sent_by_staff_id: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "sent" | "accepted" | "declined";
+            /** Terms Summary */
+            terms_summary: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+        };
+        /**
+         * OfferUpsertRequest
+         * @description Input payload for creating or updating one draft offer.
+         */
+        OfferUpsertRequest: {
+            /** Expires At */
+            expires_at?: string | null;
+            /** Note */
+            note?: string | null;
+            /** Proposed Start Date */
+            proposed_start_date?: string | null;
+            /** Terms Summary */
+            terms_summary: string;
         };
         /**
          * PipelineTransitionCreateRequest
@@ -3380,6 +3540,178 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MatchScoreResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfferResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OfferUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfferResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accept_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OfferDecisionRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfferResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decline_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__decline_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["OfferDecisionRequest"] | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfferResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_offer_api_v1_vacancies__vacancy_id__offers__candidate_id__send_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+                candidate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfferResponse"];
                 };
             };
             /** @description Validation Error */

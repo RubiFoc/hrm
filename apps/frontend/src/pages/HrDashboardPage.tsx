@@ -22,12 +22,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import {
+  acceptOffer,
   ApiError,
   cancelInterview,
   createInterview,
   createMatchScore,
   createPipelineTransition,
   createVacancy,
+  declineOffer,
+  getOffer,
   getInterviewFeedbackSummary,
   getMe,
   listInterviews,
@@ -38,6 +41,8 @@ import {
   putMyInterviewFeedback,
   resendInterviewInvite,
   rescheduleInterview,
+  sendOffer,
+  upsertOffer,
   updateVacancy,
   type CandidateResponse,
   type HRInterviewListResponse,
@@ -49,6 +54,9 @@ import {
   type InterviewStatus,
   type MatchScoreResponse,
   type MeResponse,
+  type OfferResponse,
+  type OfferStatus,
+  type OfferUpsertRequest,
   type PipelineTransitionCreateRequest,
   type VacancyCreateRequest,
   type VacancyResponse,
@@ -94,6 +102,13 @@ type InterviewerFeedbackDraft = {
   concernsNote: string;
   evidenceNote: string;
 };
+type OfferDraft = {
+  termsSummary: string;
+  proposedStartDate: string;
+  expiresAt: string;
+  note: string;
+  decisionNote: string;
+};
 
 const DEFAULT_VACANCY_DRAFT: VacancyDraft = {
   title: "",
@@ -110,6 +125,7 @@ const FEEDBACK_RECOMMENDATION_OPTIONS: InterviewFeedbackRecommendation[] = [
   "mixed",
   "no",
 ];
+const OFFER_MUTABLE_STATUS: OfferStatus = "draft";
 
 /**
  * Staff recruitment workspace for vacancy CRUD and pipeline control.
@@ -131,9 +147,11 @@ export function HrDashboardPage() {
   const [scoreFeedback, setScoreFeedback] = useState<FeedbackState | null>(null);
   const [interviewFeedback, setInterviewFeedback] = useState<FeedbackState | null>(null);
   const [feedbackPanelState, setFeedbackPanelState] = useState<FeedbackState | null>(null);
+  const [offerPanelState, setOfferPanelState] = useState<FeedbackState | null>(null);
   const [interviewDraft, setInterviewDraft] = useState<InterviewDraft>(createEmptyInterviewDraft);
   const [feedbackDraft, setFeedbackDraft] =
     useState<InterviewerFeedbackDraft>(createEmptyInterviewerFeedbackDraft);
+  const [offerDraft, setOfferDraft] = useState<OfferDraft>(createEmptyOfferDraft);
   const matchScoreQueryKey = [
     "hr-match-score",
     accessToken,
@@ -218,6 +236,7 @@ export function HrDashboardPage() {
     selectedVacancyId,
     latestInterview?.interview_id ?? "",
   ];
+  const offerQueryKey = ["hr-offer", accessToken, selectedVacancyId, selectedCandidateId];
 
   const meQuery = useQuery({
     queryKey: meQueryKey,
@@ -230,6 +249,13 @@ export function HrDashboardPage() {
     queryFn: () =>
       getInterviewFeedbackSummary(accessToken!, selectedVacancyId, latestInterview!.interview_id),
     enabled: Boolean(accessToken && selectedVacancyId && latestInterview),
+  });
+
+  const offerQuery = useQuery({
+    queryKey: offerQueryKey,
+    queryFn: () => getOffer(accessToken!, selectedVacancyId, selectedCandidateId),
+    enabled: Boolean(accessToken && selectedVacancyId && selectedCandidateId),
+    retry: false,
   });
 
   const createVacancyMutation = useMutation({
@@ -266,6 +292,7 @@ export function HrDashboardPage() {
       setFeedback({ type: "success", message: t("hrDashboard.transitionSuccess") });
       setTransitionReason("");
       void queryClient.invalidateQueries({ queryKey: ["hr-pipeline-history"] });
+      void queryClient.invalidateQueries({ queryKey: offerQueryKey });
     },
     onError: (error: unknown) => {
       setFeedback({ type: "error", message: resolveRecruitmentApiError(error, t) });
@@ -372,6 +399,65 @@ export function HrDashboardPage() {
     },
   });
 
+  const upsertOfferMutation = useMutation({
+    mutationFn: (payload: OfferUpsertRequest) =>
+      upsertOffer(accessToken!, selectedVacancyId, selectedCandidateId, payload),
+    onSuccess: async () => {
+      setOfferPanelState({ type: "success", message: t("hrDashboard.offers.saveSuccess") });
+      await queryClient.invalidateQueries({ queryKey: offerQueryKey });
+    },
+    onError: (error: unknown) => {
+      setOfferPanelState({ type: "error", message: resolveRecruitmentApiError(error, t) });
+    },
+  });
+
+  const sendOfferMutation = useMutation({
+    mutationFn: () => sendOffer(accessToken!, selectedVacancyId, selectedCandidateId),
+    onSuccess: async () => {
+      setOfferPanelState({ type: "success", message: t("hrDashboard.offers.sendSuccess") });
+      await queryClient.invalidateQueries({ queryKey: offerQueryKey });
+    },
+    onError: (error: unknown) => {
+      setOfferPanelState({ type: "error", message: resolveRecruitmentApiError(error, t) });
+    },
+  });
+
+  const acceptOfferMutation = useMutation({
+    mutationFn: (note: string | null) =>
+      acceptOffer(
+        accessToken!,
+        selectedVacancyId,
+        selectedCandidateId,
+        note ? { note } : undefined,
+      ),
+    onSuccess: async () => {
+      setOfferPanelState({ type: "success", message: t("hrDashboard.offers.acceptSuccess") });
+      await queryClient.invalidateQueries({ queryKey: offerQueryKey });
+      await queryClient.invalidateQueries({ queryKey: ["hr-pipeline-history"] });
+    },
+    onError: (error: unknown) => {
+      setOfferPanelState({ type: "error", message: resolveRecruitmentApiError(error, t) });
+    },
+  });
+
+  const declineOfferMutation = useMutation({
+    mutationFn: (note: string | null) =>
+      declineOffer(
+        accessToken!,
+        selectedVacancyId,
+        selectedCandidateId,
+        note ? { note } : undefined,
+      ),
+    onSuccess: async () => {
+      setOfferPanelState({ type: "success", message: t("hrDashboard.offers.declineSuccess") });
+      await queryClient.invalidateQueries({ queryKey: offerQueryKey });
+      await queryClient.invalidateQueries({ queryKey: ["hr-pipeline-history"] });
+    },
+    onError: (error: unknown) => {
+      setOfferPanelState({ type: "error", message: resolveRecruitmentApiError(error, t) });
+    },
+  });
+
   const vacancyItems = vacanciesQuery.data?.items ?? [];
   const candidateItems = candidatesQuery.data?.items ?? [];
   const selectedVacancy =
@@ -383,6 +469,7 @@ export function HrDashboardPage() {
   const missingRequirements = matchScore?.missing_requirements ?? [];
   const matchScoreEvidence = matchScore?.evidence ?? [];
   const feedbackSummary = feedbackSummaryQuery.data ?? null;
+  const offer = offerQuery.data ?? null;
   const currentUser = meQuery.data ?? null;
   const currentPipelineStage = transitionsQuery.data
     ? (transitionsQuery.data.items[transitionsQuery.data.items.length - 1]?.to_stage ?? null)
@@ -395,6 +482,7 @@ export function HrDashboardPage() {
     feedbackSummary,
     currentUser?.subject_id ?? null,
   );
+  const hasSelectionContext = Boolean(selectedVacancyId && selectedCandidateId);
   const feedbackWindowOpen = hasInterviewFeedbackWindowOpened(latestInterview);
   const feedbackEditorBlockedReason = resolveFeedbackEditorBlockedReason({
     latestInterview,
@@ -403,6 +491,20 @@ export function HrDashboardPage() {
     feedbackWindowOpen,
     t,
   });
+  const offerStatus = offer?.status ?? "draft";
+  const offerReadOnly =
+    currentPipelineStage !== "offer" || offerStatus !== OFFER_MUTABLE_STATUS;
+  const offerPrerequisiteMessage = buildOfferPrerequisiteMessage({
+    currentPipelineStage,
+    feedbackSummary,
+    offerQueryError: offerQuery.error,
+    t,
+  });
+  const offerPrerequisiteSeverity =
+    currentPipelineStage === "interview" && feedbackSummary?.gate_status === "blocked"
+      ? "warning"
+      : "info";
+  const offerStatusHint = buildOfferStatusHint(offerStatus, t);
 
   useEffect(() => {
     if (!latestInterview) {
@@ -420,6 +522,10 @@ export function HrDashboardPage() {
     setFeedbackDraft(buildFeedbackDraftFromItem(currentUserFeedbackItem));
   }, [currentUserFeedbackItem, latestInterview]);
 
+  useEffect(() => {
+    setOfferDraft(buildOfferDraftFromResponse(offer));
+  }, [offer]);
+
   const handleSelectVacancy = (vacancy: VacancyResponse) => {
     setSelectedVacancyId(vacancy.vacancy_id);
     setEditDraft(toVacancyDraft(vacancy));
@@ -427,6 +533,7 @@ export function HrDashboardPage() {
     setScoreFeedback(null);
     setInterviewFeedback(null);
     setFeedbackPanelState(null);
+    setOfferPanelState(null);
   };
 
   const handleCreateVacancy = () => {
@@ -468,6 +575,7 @@ export function HrDashboardPage() {
     setScoreFeedback(null);
     setInterviewFeedback(null);
     setFeedbackPanelState(null);
+    setOfferPanelState(null);
   };
 
   const handleRunScore = () => {
@@ -555,6 +663,61 @@ export function HrDashboardPage() {
         message: resolveInterviewApiError(error, t),
       });
     }
+  };
+
+  const handleSaveOfferDraft = () => {
+    if (!selectedVacancyId || !selectedCandidateId) {
+      setOfferPanelState({
+        type: "error",
+        message: t("hrDashboard.offers.errors.selectContext"),
+      });
+      return;
+    }
+    try {
+      setOfferPanelState(null);
+      upsertOfferMutation.mutate(buildOfferUpsertPayload(offerDraft, t));
+    } catch (error) {
+      setOfferPanelState({
+        type: "error",
+        message: resolveRecruitmentApiError(error, t),
+      });
+    }
+  };
+
+  const handleSendOffer = () => {
+    if (!selectedVacancyId || !selectedCandidateId) {
+      setOfferPanelState({
+        type: "error",
+        message: t("hrDashboard.offers.errors.selectContext"),
+      });
+      return;
+    }
+    setOfferPanelState(null);
+    sendOfferMutation.mutate();
+  };
+
+  const handleAcceptOffer = () => {
+    if (!selectedVacancyId || !selectedCandidateId) {
+      setOfferPanelState({
+        type: "error",
+        message: t("hrDashboard.offers.errors.selectContext"),
+      });
+      return;
+    }
+    setOfferPanelState(null);
+    acceptOfferMutation.mutate(normalizeInput(offerDraft.decisionNote));
+  };
+
+  const handleDeclineOffer = () => {
+    if (!selectedVacancyId || !selectedCandidateId) {
+      setOfferPanelState({
+        type: "error",
+        message: t("hrDashboard.offers.errors.selectContext"),
+      });
+      return;
+    }
+    setOfferPanelState(null);
+    declineOfferMutation.mutate(normalizeInput(offerDraft.decisionNote));
   };
 
   if (!accessToken) {
@@ -845,11 +1008,11 @@ export function HrDashboardPage() {
 
           {scoreFeedback ? <Alert severity={scoreFeedback.type}>{scoreFeedback.message}</Alert> : null}
 
-          {!selectedVacancy || !selectedCandidate ? (
+          {!hasSelectionContext ? (
             <Alert severity="info">{t("hrDashboard.shortlist.inactive")}</Alert>
           ) : null}
 
-          {selectedVacancy && selectedCandidate ? (
+          {hasSelectionContext ? (
             <Stack spacing={2}>
               {matchScoreQuery.isLoading && !matchScore ? (
                 <Typography variant="body2">{t("hrDashboard.shortlist.loading")}</Typography>
@@ -1032,11 +1195,11 @@ export function HrDashboardPage() {
             <Alert severity={interviewFeedback.type}>{interviewFeedback.message}</Alert>
           ) : null}
 
-          {!selectedVacancy || !selectedCandidate ? (
+          {!hasSelectionContext ? (
             <Alert severity="info">{t("hrDashboard.interviews.inactive")}</Alert>
           ) : null}
 
-          {selectedVacancy && selectedCandidate ? (
+          {hasSelectionContext ? (
             <Stack spacing={2}>
               <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
                 <TextField
@@ -1685,6 +1848,198 @@ export function HrDashboardPage() {
                   </Stack>
                 </Stack>
               ) : null}
+
+              <Paper variant="outlined" sx={{ p: 2 }}>
+                <Stack spacing={2}>
+                  <Stack spacing={0.5}>
+                    <Typography variant="subtitle1">
+                      {t("hrDashboard.offers.title")}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {t("hrDashboard.offers.subtitle")}
+                    </Typography>
+                  </Stack>
+
+                  {offerPanelState ? (
+                    <Alert severity={offerPanelState.type}>{offerPanelState.message}</Alert>
+                  ) : null}
+
+                  {offerPrerequisiteMessage ? (
+                    <Alert severity={offerPrerequisiteSeverity}>
+                      {offerPrerequisiteMessage}
+                    </Alert>
+                  ) : null}
+
+                  {offerQuery.isLoading && !offer ? (
+                    <Typography variant="body2">
+                      {t("hrDashboard.offers.loading")}
+                    </Typography>
+                  ) : null}
+
+                  {offerQuery.isError && !isOfferStageNotActiveError(offerQuery.error) ? (
+                    <Alert severity="error">
+                      {resolveRecruitmentApiError(offerQuery.error, t)}
+                    </Alert>
+                  ) : null}
+
+                  {offer ? (
+                    <Stack spacing={2}>
+                      <Stack
+                        direction={{ xs: "column", md: "row" }}
+                        spacing={1}
+                        alignItems={{ xs: "flex-start", md: "center" }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          {t("hrDashboard.offers.stageLabel", {
+                            stage: currentPipelineStage
+                              ? t(`hrDashboard.stages.${currentPipelineStage}`)
+                              : t("hrDashboard.timeline.start"),
+                          })}
+                        </Typography>
+                        <Chip
+                          size="small"
+                          color={resolveOfferStatusChipColor(offer.status)}
+                          label={t(`hrDashboard.offers.status.${offer.status}`)}
+                        />
+                        {offer.sent_at ? (
+                          <Typography variant="body2" color="text.secondary">
+                            {t("hrDashboard.offers.sentAt", {
+                              value: formatDateTime(offer.sent_at),
+                            })}
+                          </Typography>
+                        ) : null}
+                        {offer.decision_at ? (
+                          <Typography variant="body2" color="text.secondary">
+                            {t("hrDashboard.offers.decisionAt", {
+                              value: formatDateTime(offer.decision_at),
+                            })}
+                          </Typography>
+                        ) : null}
+                      </Stack>
+
+                      <Alert severity={resolveOfferHintSeverity(offer.status)}>
+                        {offerStatusHint}
+                      </Alert>
+
+                      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                        <TextField
+                          label={t("hrDashboard.offers.fields.proposedStartDate")}
+                          type="date"
+                          value={offerDraft.proposedStartDate}
+                          onChange={(event) =>
+                            setOfferDraft((prev) => ({
+                              ...prev,
+                              proposedStartDate: event.target.value,
+                            }))
+                          }
+                          InputLabelProps={{ shrink: true }}
+                          disabled={offerReadOnly}
+                          fullWidth
+                        />
+                        <TextField
+                          label={t("hrDashboard.offers.fields.expiresAt")}
+                          type="date"
+                          value={offerDraft.expiresAt}
+                          onChange={(event) =>
+                            setOfferDraft((prev) => ({
+                              ...prev,
+                              expiresAt: event.target.value,
+                            }))
+                          }
+                          InputLabelProps={{ shrink: true }}
+                          disabled={offerReadOnly}
+                          fullWidth
+                        />
+                      </Stack>
+
+                      <TextField
+                        label={t("hrDashboard.offers.fields.termsSummary")}
+                        value={offerDraft.termsSummary}
+                        onChange={(event) =>
+                          setOfferDraft((prev) => ({
+                            ...prev,
+                            termsSummary: event.target.value,
+                          }))
+                        }
+                        disabled={offerReadOnly}
+                        multiline
+                        minRows={3}
+                        fullWidth
+                      />
+                      <TextField
+                        label={t("hrDashboard.offers.fields.note")}
+                        value={offerDraft.note}
+                        onChange={(event) =>
+                          setOfferDraft((prev) => ({
+                            ...prev,
+                            note: event.target.value,
+                          }))
+                        }
+                        disabled={offerReadOnly}
+                        multiline
+                        minRows={2}
+                        fullWidth
+                      />
+
+                      <TextField
+                        label={t("hrDashboard.offers.fields.decisionNote")}
+                        value={offerDraft.decisionNote}
+                        onChange={(event) =>
+                          setOfferDraft((prev) => ({
+                            ...prev,
+                            decisionNote: event.target.value,
+                          }))
+                        }
+                        disabled={offer.status !== "sent"}
+                        multiline
+                        minRows={2}
+                        fullWidth
+                      />
+
+                      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+                        <Button
+                          variant="contained"
+                          onClick={handleSaveOfferDraft}
+                          disabled={offerReadOnly || upsertOfferMutation.isPending}
+                        >
+                          {upsertOfferMutation.isPending
+                            ? t("hrDashboard.offers.savePending")
+                            : t("hrDashboard.offers.saveAction")}
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          onClick={handleSendOffer}
+                          disabled={offer.status !== "draft" || sendOfferMutation.isPending}
+                        >
+                          {sendOfferMutation.isPending
+                            ? t("hrDashboard.offers.sendPending")
+                            : t("hrDashboard.offers.sendAction")}
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="success"
+                          onClick={handleAcceptOffer}
+                          disabled={offer.status !== "sent" || acceptOfferMutation.isPending}
+                        >
+                          {acceptOfferMutation.isPending
+                            ? t("hrDashboard.offers.acceptPending")
+                            : t("hrDashboard.offers.acceptAction")}
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          color="error"
+                          onClick={handleDeclineOffer}
+                          disabled={offer.status !== "sent" || declineOfferMutation.isPending}
+                        >
+                          {declineOfferMutation.isPending
+                            ? t("hrDashboard.offers.declinePending")
+                            : t("hrDashboard.offers.declineAction")}
+                        </Button>
+                      </Stack>
+                    </Stack>
+                  ) : null}
+                </Stack>
+              </Paper>
             </Stack>
           ) : null}
         </Stack>
@@ -1851,6 +2206,16 @@ function createEmptyInterviewDraft(): InterviewDraft {
   };
 }
 
+function createEmptyOfferDraft(): OfferDraft {
+  return {
+    termsSummary: "",
+    proposedStartDate: "",
+    expiresAt: "",
+    note: "",
+    decisionNote: "",
+  };
+}
+
 function createEmptyInterviewerFeedbackDraft(): InterviewerFeedbackDraft {
   return {
     requirementsMatchScore: 3,
@@ -1894,6 +2259,19 @@ function buildFeedbackDraftFromItem(
   };
 }
 
+function buildOfferDraftFromResponse(item: OfferResponse | null): OfferDraft {
+  if (!item) {
+    return createEmptyOfferDraft();
+  }
+  return {
+    termsSummary: item.terms_summary ?? "",
+    proposedStartDate: item.proposed_start_date ?? "",
+    expiresAt: item.expires_at ?? "",
+    note: item.note ?? "",
+    decisionNote: item.decision_note ?? "",
+  };
+}
+
 function buildInterviewFeedbackPayload(
   draft: InterviewerFeedbackDraft,
   t: (key: string) => string,
@@ -1913,6 +2291,22 @@ function buildInterviewFeedbackPayload(
     strengths_note: strengthsNote,
     concerns_note: concernsNote,
     evidence_note: evidenceNote,
+  };
+}
+
+function buildOfferUpsertPayload(
+  draft: OfferDraft,
+  t: (key: string) => string,
+): OfferUpsertRequest {
+  const termsSummary = normalizeInput(draft.termsSummary);
+  if (!termsSummary) {
+    throw new Error(t("hrDashboard.offers.errors.termsRequired"));
+  }
+  return {
+    terms_summary: termsSummary,
+    proposed_start_date: normalizeInput(draft.proposedStartDate),
+    expires_at: normalizeInput(draft.expiresAt),
+    note: normalizeInput(draft.note),
   };
 }
 
@@ -2062,6 +2456,56 @@ function resolveFeedbackEditorBlockedReason({
   return null;
 }
 
+function buildOfferPrerequisiteMessage({
+  currentPipelineStage,
+  feedbackSummary,
+  offerQueryError,
+  t,
+}: {
+  currentPipelineStage: PipelineTransitionCreateRequest["to_stage"] | null;
+  feedbackSummary: InterviewFeedbackPanelSummaryResponse | null;
+  offerQueryError: unknown;
+  t: (key: string, options?: Record<string, unknown>) => string;
+}): string | null {
+  if (currentPipelineStage === "interview" && feedbackSummary) {
+    if (feedbackSummary.gate_status === "passed") {
+      return t("hrDashboard.offers.waitingForTransition");
+    }
+    return t("hrDashboard.offers.blockedByFairnessGate", {
+      reasons: resolveFeedbackGateReasonLabels(feedbackSummary.gate_reason_codes, t).join(", "),
+    });
+  }
+  if (currentPipelineStage !== "offer" && currentPipelineStage !== "hired" && currentPipelineStage !== "rejected") {
+    return t("hrDashboard.offers.inactive");
+  }
+  if (isOfferStageNotActiveError(offerQueryError)) {
+    return t("hrDashboard.offers.stageNotReady");
+  }
+  return null;
+}
+
+function buildOfferStatusHint(
+  status: OfferStatus,
+  t: (key: string) => string,
+): string {
+  switch (status) {
+    case "draft":
+      return t("hrDashboard.offers.hints.draft");
+    case "sent":
+      return t("hrDashboard.offers.hints.sent");
+    case "accepted":
+      return t("hrDashboard.offers.hints.accepted");
+    case "declined":
+      return t("hrDashboard.offers.hints.declined");
+    default:
+      return t("hrDashboard.offers.hints.draft");
+  }
+}
+
+function isOfferStageNotActiveError(error: unknown): boolean {
+  return error instanceof ApiError && error.detail.toLowerCase().includes("offer_stage_not_active");
+}
+
 function resolveRecruitmentApiError(
   error: unknown,
   t: (key: string) => string,
@@ -2094,6 +2538,36 @@ function resolveRecruitmentApiError(
     }
     if (detail.includes("interview_feedback_stale")) {
       return t("hrDashboard.errors.interviewFeedbackStale");
+    }
+    if (detail.includes("offer_stage_not_active")) {
+      return t("hrDashboard.errors.offerStageNotActive");
+    }
+    if (detail.includes("offer_not_found")) {
+      return t("hrDashboard.errors.offerNotFound");
+    }
+    if (detail.includes("offer_not_editable")) {
+      return t("hrDashboard.errors.offerNotEditable");
+    }
+    if (detail.includes("offer_already_sent")) {
+      return t("hrDashboard.errors.offerAlreadySent");
+    }
+    if (detail.includes("offer_already_accepted")) {
+      return t("hrDashboard.errors.offerAlreadyAccepted");
+    }
+    if (detail.includes("offer_already_declined")) {
+      return t("hrDashboard.errors.offerAlreadyDeclined");
+    }
+    if (detail.includes("offer_not_sent")) {
+      return t("hrDashboard.errors.offerNotSent");
+    }
+    if (detail.includes("offer_terms_missing")) {
+      return t("hrDashboard.errors.offerTermsMissing");
+    }
+    if (detail.includes("offer_not_accepted")) {
+      return t("hrDashboard.errors.offerNotAccepted");
+    }
+    if (detail.includes("offer_not_declined")) {
+      return t("hrDashboard.errors.offerNotDeclined");
     }
     if (detail.includes("transition from")) {
       return t("hrDashboard.errors.invalidTransition");
@@ -2188,5 +2662,39 @@ function resolveInterviewSyncChipColor(
       return "error";
     default:
       return "default";
+  }
+}
+
+function resolveOfferStatusChipColor(
+  status: OfferStatus,
+): "default" | "error" | "info" | "success" | "warning" {
+  switch (status) {
+    case "draft":
+      return "info";
+    case "sent":
+      return "warning";
+    case "accepted":
+      return "success";
+    case "declined":
+      return "error";
+    default:
+      return "default";
+  }
+}
+
+function resolveOfferHintSeverity(
+  status: OfferStatus,
+): "error" | "info" | "success" | "warning" {
+  switch (status) {
+    case "draft":
+      return "warning";
+    case "sent":
+      return "info";
+    case "accepted":
+      return "success";
+    case "declined":
+      return "error";
+    default:
+      return "info";
   }
 }
