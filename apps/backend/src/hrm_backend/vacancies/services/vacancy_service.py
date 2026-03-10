@@ -23,13 +23,13 @@ from hrm_backend.vacancies.schemas.pipeline import (
     PipelineTransitionListResponse,
     PipelineTransitionResponse,
 )
-from hrm_backend.vacancies.utils.offers import resolve_offer_pipeline_gate
 from hrm_backend.vacancies.schemas.vacancy import (
     VacancyCreateRequest,
     VacancyListResponse,
     VacancyResponse,
     VacancyUpdateRequest,
 )
+from hrm_backend.vacancies.utils.offers import resolve_offer_pipeline_gate
 from hrm_backend.vacancies.utils.pipeline import is_transition_allowed
 
 
@@ -344,7 +344,11 @@ class VacancyService:
 
     def _ensure_offer_exists(self, *, vacancy_id: str, candidate_id: str) -> None:
         """Create blank draft offer for pairs that have just entered stage `offer`."""
-        if self._offer_dao.get_by_pair(vacancy_id=vacancy_id, candidate_id=candidate_id) is not None:
+        existing_offer = self._offer_dao.get_by_pair(
+            vacancy_id=vacancy_id,
+            candidate_id=candidate_id,
+        )
+        if existing_offer is not None:
             return
         self._offer_dao.create_offer(vacancy_id=vacancy_id, candidate_id=candidate_id)
 

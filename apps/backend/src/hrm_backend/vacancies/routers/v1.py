@@ -15,12 +15,12 @@ from hrm_backend.vacancies.dependencies.vacancies import (
     get_vacancy_application_service,
     get_vacancy_service,
 )
+from hrm_backend.vacancies.schemas.application import PublicVacancyApplicationResponse
 from hrm_backend.vacancies.schemas.offer import (
     OfferDecisionRequest,
     OfferResponse,
     OfferUpsertRequest,
 )
-from hrm_backend.vacancies.schemas.application import PublicVacancyApplicationResponse
 from hrm_backend.vacancies.schemas.pipeline import (
     PipelineTransitionCreateRequest,
     PipelineTransitionListResponse,
@@ -32,8 +32,8 @@ from hrm_backend.vacancies.schemas.vacancy import (
     VacancyResponse,
     VacancyUpdateRequest,
 )
-from hrm_backend.vacancies.services.offer_service import OfferService
 from hrm_backend.vacancies.services.application_service import VacancyApplicationService
+from hrm_backend.vacancies.services.offer_service import OfferService
 from hrm_backend.vacancies.services.vacancy_service import VacancyService
 
 router = APIRouter(tags=["vacancies"])

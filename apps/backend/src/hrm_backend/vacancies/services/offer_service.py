@@ -64,7 +64,11 @@ class OfferService:
             candidate_id=candidate_key,
         )
         if entity is None:
-            if self._get_current_pipeline_stage(vacancy_id=vacancy_key, candidate_id=candidate_key) != "offer":
+            current_stage = self._get_current_pipeline_stage(
+                vacancy_id=vacancy_key,
+                candidate_id=candidate_key,
+            )
+            if current_stage != "offer":
                 self._audit_failure(
                     auth_context=auth_context,
                     request=request,
@@ -319,7 +323,11 @@ class OfferService:
         request: Request,
     ) -> None:
         """Reject mutations when the pair is not currently inside pipeline stage `offer`."""
-        if self._get_current_pipeline_stage(vacancy_id=vacancy_id, candidate_id=candidate_id) == "offer":
+        current_stage = self._get_current_pipeline_stage(
+            vacancy_id=vacancy_id,
+            candidate_id=candidate_id,
+        )
+        if current_stage == "offer":
             return
         self._audit_failure(
             auth_context=auth_context,
