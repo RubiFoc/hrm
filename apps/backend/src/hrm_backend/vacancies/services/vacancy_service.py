@@ -15,6 +15,7 @@ from hrm_backend.interviews.utils.feedback import (
     GATE_REASON_MISSING,
     build_feedback_panel_summary,
 )
+from hrm_backend.vacancies.dao.offer_dao import OfferDAO
 from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransitionDAO
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
 from hrm_backend.vacancies.schemas.pipeline import (
@@ -28,6 +29,7 @@ from hrm_backend.vacancies.schemas.vacancy import (
     VacancyResponse,
     VacancyUpdateRequest,
 )
+from hrm_backend.vacancies.utils.offers import resolve_offer_pipeline_gate
 from hrm_backend.vacancies.utils.pipeline import is_transition_allowed
 
 
@@ -39,6 +41,7 @@ class VacancyService:
         *,
         vacancy_dao: VacancyDAO,
         transition_dao: PipelineTransitionDAO,
+        offer_dao: OfferDAO,
         candidate_profile_dao: CandidateProfileDAO,
         interview_dao: InterviewDAO,
         interview_feedback_dao: InterviewFeedbackDAO,
@@ -49,6 +52,7 @@ class VacancyService:
         Args:
             vacancy_dao: Vacancy DAO.
             transition_dao: Pipeline transition DAO.
+            offer_dao: Offer DAO.
             candidate_profile_dao: Candidate profile DAO.
             interview_dao: Interview DAO.
             interview_feedback_dao: Interview feedback DAO.
@@ -56,6 +60,7 @@ class VacancyService:
         """
         self._vacancy_dao = vacancy_dao
         self._transition_dao = transition_dao
+        self._offer_dao = offer_dao
         self._candidate_profile_dao = candidate_profile_dao
         self._interview_dao = interview_dao
         self._interview_feedback_dao = interview_feedback_dao
@@ -189,19 +194,33 @@ class VacancyService:
                 candidate_id=candidate_id,
             )
             if gate_reason is not None:
-                self._audit_service.record_api_event(
-                    action="pipeline:transition",
-                    resource_type="pipeline",
-                    result="failure",
+                self._audit_transition_failure(
                     request=request,
                     actor_sub=actor_sub,
                     actor_role=actor_role,
-                    resource_id=f"{vacancy_id}:{candidate_id}",
+                    vacancy_id=vacancy_id,
+                    candidate_id=candidate_id,
                     reason=gate_reason,
+                )
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=gate_reason)
+        if from_stage == "offer" and payload.to_stage in {"hired", "rejected"}:
+            offer_gate_reason = self._evaluate_offer_resolution_gate(
+                vacancy_id=vacancy_id,
+                candidate_id=candidate_id,
+                to_stage=payload.to_stage,
+            )
+            if offer_gate_reason is not None:
+                self._audit_transition_failure(
+                    request=request,
+                    actor_sub=actor_sub,
+                    actor_role=actor_role,
+                    vacancy_id=vacancy_id,
+                    candidate_id=candidate_id,
+                    reason=offer_gate_reason,
                 )
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=gate_reason,
+                    detail=offer_gate_reason,
                 )
         transition = self._transition_dao.create_transition(
             vacancy_id=vacancy_id,
@@ -212,6 +231,11 @@ class VacancyService:
             changed_by_sub=actor_sub,
             changed_by_role=actor_role,
         )
+        if payload.to_stage == "offer":
+            self._ensure_offer_exists(
+                vacancy_id=vacancy_id,
+                candidate_id=candidate_id,
+            )
         self._audit_service.record_api_event(
             action="pipeline:transition",
             resource_type="pipeline",
@@ -303,6 +327,52 @@ class VacancyService:
         if summary.gate_status == "passed":
             return None
         return summary.gate_reason_codes[0]
+
+    def _evaluate_offer_resolution_gate(
+        self,
+        *,
+        vacancy_id: str,
+        candidate_id: str,
+        to_stage: str,
+    ) -> str | None:
+        """Return blocker for `offer -> hired/rejected` when lifecycle status is incomplete."""
+        offer = self._offer_dao.get_by_pair(vacancy_id=vacancy_id, candidate_id=candidate_id)
+        return resolve_offer_pipeline_gate(
+            status=None if offer is None else offer.status,
+            to_stage=to_stage,
+        )
+
+    def _ensure_offer_exists(self, *, vacancy_id: str, candidate_id: str) -> None:
+        """Create blank draft offer for pairs that have just entered stage `offer`."""
+        existing_offer = self._offer_dao.get_by_pair(
+            vacancy_id=vacancy_id,
+            candidate_id=candidate_id,
+        )
+        if existing_offer is not None:
+            return
+        self._offer_dao.create_offer(vacancy_id=vacancy_id, candidate_id=candidate_id)
+
+    def _audit_transition_failure(
+        self,
+        *,
+        request: Request,
+        actor_sub: str,
+        actor_role: str,
+        vacancy_id: str,
+        candidate_id: str,
+        reason: str,
+    ) -> None:
+        """Write stable audit event for blocked pipeline transition attempts."""
+        self._audit_service.record_api_event(
+            action="pipeline:transition",
+            resource_type="pipeline",
+            result="failure",
+            request=request,
+            actor_sub=actor_sub,
+            actor_role=actor_role,
+            resource_id=f"{vacancy_id}:{candidate_id}",
+            reason=reason,
+        )
 
 
 def _to_vacancy_response(entity) -> VacancyResponse:

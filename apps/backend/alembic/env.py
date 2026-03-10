@@ -20,6 +20,7 @@ from hrm_backend.interviews.models.feedback import InterviewFeedback  # noqa: F4
 from hrm_backend.interviews.models.interview import Interview  # noqa: F401
 from hrm_backend.scoring.models.score_artifact import MatchScoreArtifact  # noqa: F401
 from hrm_backend.scoring.models.scoring_job import MatchScoringJob  # noqa: F401
+from hrm_backend.vacancies.models.offer import Offer  # noqa: F401
 from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition  # noqa: F401
 from hrm_backend.vacancies.models.vacancy import Vacancy  # noqa: F401
 

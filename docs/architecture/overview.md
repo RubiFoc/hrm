@@ -42,7 +42,7 @@ flowchart LR
 | Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
 | Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
 | Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key lifecycle (issue/list/revoke), audit hooks | platform |
-| Recruitment Domain | Vacancies, candidates, pipeline, interviews, and schedule-versioned interviewer feedback | Candidate and vacancy data | Vacancy/pipeline state, interview fairness state, active-document readiness, candidate context | hr-tech |
+| Recruitment Domain | Vacancies, candidates, pipeline, interviews, schedule-versioned interviewer feedback, and offer lifecycle state | Candidate and vacancy data | Vacancy/pipeline state, interview fairness state, offer status, active-document readiness, candidate context | hr-tech |
 | Match Scoring Domain | Async scoring jobs and explainable score artifacts keyed by vacancy, candidate, and active document | Scoring requests, parsed CV analysis, vacancy snapshot | UI-ready score/status payloads for shortlist review | ai-platform |
 | Employee Domain | Employee profile and onboarding workflows | Hire decisions, profile data | Employee records, onboarding tasks | hr-tech |
 | HR Operations Domain | HR process automation and workflow execution | Rules and triggers | Automated tasks, status updates | hr-ops |
@@ -63,21 +63,27 @@ flowchart LR
    HR shares `candidate_invite_url` manually -> candidate opens `/candidate?interviewToken=...` ->
    confirm / request reschedule / decline -> assigned interviewer submits structured feedback on `/` after the interview window closes ->
    `POST /api/v1/pipeline/transitions` applies current-version completeness gate before `interview -> offer`.
-3. Onboarding Flow:
+3. Offer Workflow:
+   after successful `interview -> offer`, the recruitment domain persists one offer row for the current
+   vacancy/candidate pair -> HR updates draft terms on the existing vacancy route tree ->
+   HR marks the offer as `sent`, then records `accepted` or `declined` manually in `/` ->
+   `POST /api/v1/pipeline/transitions` allows `offer -> hired` only after `accepted` and
+   `offer -> rejected` only after `declined`.
+4. Onboarding Flow:
    accepted candidate -> employee profile creation -> onboarding checklist -> completion tracking.
-4. HR Automation Flow:
+5. HR Automation Flow:
    rule trigger -> workflow engine -> task creation/assignment -> status update and reporting.
-5. Public Candidate Apply Flow:
+6. Public Candidate Apply Flow:
    anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
-6. Authentication Flow:
+7. Authentication Flow:
    staff key issuance -> staff register/login (login/email + password) -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
-7. Admin Staff Governance Flow:
+8. Admin Staff Governance Flow:
    admin opens `/admin/staff` -> paginated/filterable staff list -> patch `role`/`is_active` ->
    strict guard (self-protection + last-active-admin protection) -> audit success/failure reason codes.
-8. Admin Employee Key Lifecycle Flow:
+9. Admin Employee Key Lifecycle Flow:
    admin/hr issues key -> list/filter key registry -> revoke active key when needed ->
    registration rejects revoked/expired/used keys -> audit success/failure reason codes.
-9. Frontend Observability Flow:
+10. Frontend Observability Flow:
    user opens a critical frontend route -> Sentry tags `workspace`/`role`/`route` are emitted ->
    shared HTTP client captures request failures with route metadata -> top-level render boundary
    captures React render failures -> Sentry stores tagged events with environment/release/tracing context.
@@ -94,6 +100,9 @@ flowchart LR
 - Interview feedback artifacts:
   `interview_feedback` rows keyed by `interview_id + schedule_version + interviewer_staff_id`,
   including rubric scores, recommendation, qualitative notes, and submission timestamps used by the fairness gate.
+- Offer lifecycle artifacts:
+  `offers` rows keyed by `vacancy_id + candidate_id`, including `status`, draft terms, send metadata,
+  and decision metadata used to gate `offer -> hired/rejected`.
 - Auth revocation artifacts:
   denylisted token ids (`jti`) and session ids (`sid`) in Redis.
 - External integrations: Ollama, Google Calendar
@@ -147,6 +156,7 @@ flowchart LR
 - Scope risk from broad v1 expectation.
 - AI output quality variance across candidate domains and CV formats.
 - Interview workflow is implemented from `docs/project/interview-planning-pass.md`, but runtime still carries calendar-integration and manual-invite delivery risk because the free Google Calendar mode depends on manually shared interviewer calendars.
+- Offer workflow currently records candidate decisions through staff actions on `/`; candidate-facing offer acceptance/decline transport is intentionally out of scope for this slice.
 - Integration instability risk with calendar sync edge cases.
 - Compliance risk if country-specific legal acts are not mapped early.
 

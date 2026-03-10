@@ -23,6 +23,8 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 | `TASK-11-10` | implemented/local-observability-slice | Critical-route Sentry tags, shared HTTP failure capture, render boundary, and release/env tracing config are present in repo |
 | `TASK-13-01/02` | implemented/local-compliance-slice | Article-level control mapping and evidence registry are present in repo and linked to real artifacts |
 | `TASK-11-08` | implemented/local-interview-slice | Interview scheduling and candidate registration are now implemented against `docs/project/interview-planning-pass.md`, including HR controls on `/`, public token registration on `/candidate`, and free-mode Google Calendar sync via shared interviewer calendars |
+| `TASK-05-03/04` | done/closed | PR #82 (`182875c`) is merged in `main`; current-version interviewer feedback and the existing `interview -> offer` fairness gate are the repo baseline |
+| `TASK-06-01` | implemented/local-offer-slice | Offer persistence, staff offer lifecycle APIs, `/` offer block, and pipeline guards for `offer -> hired/rejected` are implemented without reopening auth, CORS, route topology, or public candidate transport |
 
 ## Scope Normalization
 - `TASK-12-01` is now implemented in repo as the local compose baseline; acceptance is backed by compose config validation, stack bootstrap, smoke script, and CI browser smoke rather than pending infra build-out.
@@ -30,7 +32,7 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 - Immediate follow-on work must not reopen auth, CORS, routing topology, or transport architecture.
 - The scoring/shortlist-review track is now implemented in repo as one backend+frontend slice.
 - The current approved local diff includes the `TASK-11-08` backend+frontend interview scheduling and candidate-registration slice.
-- Interview scheduling is no longer deferred; follow-on interview work is now limited to explicitly out-of-scope items such as notifications and structured feedback.
+- Interview scheduling and structured feedback are no longer deferred, and the next dependent slice (`TASK-06-01`) now persists offer lifecycle state directly on the existing vacancy route tree instead of adding a parallel decision surface.
 
 ## Phase 0 Merge Gate
 - The current baseline PR must keep exactly this scope:
@@ -55,11 +57,12 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 ## Approved Follow-On Constraint
 - `TASK-11-08` is now implemented from the planning baseline in `docs/project/interview-planning-pass.md`.
 - `TASK-05-03/04` is now implemented from `docs/project/interview-feedback-fairness-pass.md`, including staff feedback APIs, the `/` workspace feedback block, and the existing `interview -> offer` fairness gate.
-- The next downstream dependency on the interview domain is `TASK-06-01` offer workflow rather than new interview transport or auth scope.
+- `TASK-06-01` is now implemented as one follow-on slice on top of that fairness baseline: offers are persisted as `draft/sent/accepted/declined`, staff-only lifecycle APIs stay under the existing vacancy route tree, and `offer -> hired/rejected` now requires accepted/declined offer state.
+- The next downstream dependency on the interview domain is `TASK-06-02` candidate-to-employee conversion rather than new interview transport or auth scope.
 - The preserved slice rules remain:
   - keep HR interview controls on `/`;
   - keep candidate interview registration on `/candidate?interviewToken=<token>`;
-  - do not introduce candidate auth, new CORS behavior, or notification-service scope in this slice;
+  - do not introduce candidate auth, new CORS behavior, new top-level route trees, or notification-service scope in this slice;
   - freeze OpenAPI and generated frontend types in the same change.
 - Any further interview-domain work must build on this implemented baseline instead of reopening route or transport scope.
 

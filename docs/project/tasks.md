@@ -31,6 +31,8 @@
 | TASK-11-10 | implemented/local-observability-slice | Frontend Sentry now tags `/`, `/candidate`, `/login`, `/admin`, `/admin/staff`, and `/admin/employee-keys`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
 | TASK-13-01/02 | implemented/local-compliance-slice | Legal-controls matrix now maps article-level obligations to current repo-backed controls and evidence registry entries with owners, verification sources, and update triggers |
 | TASK-11-08 | implemented/local-interview-slice | Interview scheduling and candidate registration are implemented against `docs/project/interview-planning-pass.md`, with HR controls on `/`, public token registration on `/candidate`, and free-mode Google Calendar sync via service account + shared interviewer calendars |
+| TASK-05-03/04 | done/closed | GitHub issues #16 and #17 are closed; merged in `main` via PR #82 (`182875c`) with schedule-versioned feedback and the existing `interview -> offer` fairness gate |
+| TASK-06-01 | implemented/local-offer-slice | Offer persistence, staff lifecycle APIs on the existing vacancy route tree, `/` offer workflow UI, and `offer -> hired/rejected` guards are present in repo with OpenAPI/frontend/backend coverage |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-10 Delivery Control Notes
@@ -41,17 +43,19 @@
 - The compliance follow-on slice (`TASK-13-01/02`) is now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
 - The dedicated planning pass for `TASK-11-08` is implemented in repo as one backend+frontend interview slice without reopening auth, CORS, or the public candidate transport model.
 - The structured interview feedback and fairness gate slice (`TASK-05-03/04`) is now implemented in repo on top of the scheduling baseline, without reopening auth, CORS, route topology, or candidate transport.
-- The remaining follow-on work for interview domain is limited to offer/onboarding dependencies and out-of-scope items such as notifications, not baseline scheduling, registration, or feedback transport.
+- `TASK-06-01` is now implemented in repo as the next dependent slice: one persisted offer lifecycle (`draft`, `sent`, `accepted`, `declined`) on the existing vacancy route tree and `/` workspace, while the existing fairness gate remains the only `interview -> offer` blocker.
+- The remaining follow-on work for interview domain is limited to candidate-to-employee conversion, onboarding dependencies, and out-of-scope items such as notifications, not baseline scheduling, registration, feedback transport, or a new offer route tree.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
 ## Active Queue After Planning Pass
 
 - `TASK-12-01` is no longer active queue work; compose baseline acceptance is already satisfied in repo and the remaining step is tracker/issue closure alignment.
 - `TASK-05-03/04` is no longer active queue work; the implemented source of truth remains `docs/project/interview-feedback-fairness-pass.md`.
-- The next downstream dependency on interview-domain state is `TASK-06-01` offer workflow.
+- `TASK-06-01` is no longer active queue work; the implemented source of truth is the current repo-backed offer lifecycle on the existing vacancy route tree.
+- The next downstream dependency on interview-domain state is `TASK-06-02` candidate-to-employee conversion.
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-06-01 | Offer lifecycle is the next dependent slice now that interview fairness gate and current-version feedback baseline are stable in repo |
+| A-1 | TASK-06-02 | Candidate-to-employee conversion is now the next dependent slice because accepted offers are persisted and enforced before `offer -> hired` |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 

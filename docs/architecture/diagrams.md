@@ -121,6 +121,7 @@ flowchart LR
   SCORE[AI Match Scoring]
   INT[Interview Management]
   FAIR[Interview Feedback Fairness Gate]
+  OFFER[Offer Lifecycle]
   HIRE[Hiring Decision]
   EMP[Employee Profile]
   ONB[Onboarding]
@@ -131,7 +132,8 @@ flowchart LR
   CAND --> SCORE
   SCORE --> INT
   INT --> FAIR
-  FAIR --> HIRE
+  FAIR --> OFFER
+  OFFER --> HIRE
   HIRE --> EMP
   EMP --> ONB
   VAC --> AUTO
@@ -233,11 +235,25 @@ sequenceDiagram
   API->>PIPE: Evaluate canonical transition
   PIPE->>INT: Read fairness-gate state for active interview
   INT-->>PIPE: passed | 409 reason code
+  PIPE->>INT: Auto-provision offer draft on successful move to offer
   PIPE-->>API: transition created | blocked
   API-->>UI: Offer transition success or localized blocker
+  HR->>UI: Maintain offer draft / mark sent
+  UI->>API: GET/PUT /api/v1/vacancies/{vacancy_id}/offers/{candidate_id}
+  API->>INT: Read or upsert persisted offer row
+  INT-->>API: offer payload (`draft`/`sent`/`accepted`/`declined`)
+  API-->>UI: Render offer lifecycle block on `/`
+  HR->>UI: Record accepted or declined
+  UI->>API: POST /api/v1/vacancies/{vacancy_id}/offers/{candidate_id}/accept|decline
+  API->>INT: Validate `sent` state and persist decision metadata
+  HR->>UI: Attempt offer -> hired or offer -> rejected transition
+  UI->>API: POST /api/v1/pipeline/transitions
+  API->>PIPE: Validate canonical transition + required offer status
+  PIPE-->>API: transition created | 409 offer_not_accepted | 409 offer_not_declined
+  API-->>UI: Terminal offer transition success or localized blocker
 ```
 
-The interview flow is now implemented from `docs/project/interview-planning-pass.md` and `docs/project/interview-feedback-fairness-pass.md` without adding candidate auth or a new route tree. In the current free-mode runtime, Google Calendar access is service-account based, each interviewer calendar is shared manually with that service account, candidate delivery still uses `candidate_invite_url` instead of Google guest invitations, and the fairness guard stays on the existing `interview -> offer` transition.
+The interview flow is now implemented from `docs/project/interview-planning-pass.md` and `docs/project/interview-feedback-fairness-pass.md`, and the downstream offer flow now stays on the same vacancy route tree without adding candidate auth or a new top-level route tree. In the current free-mode runtime, Google Calendar access is service-account based, each interviewer calendar is shared manually with that service account, candidate delivery still uses `candidate_invite_url` instead of Google guest invitations, the fairness guard stays on the existing `interview -> offer` transition, and offer acceptance/decline remains staff-recorded in `/`.
 
 ## Diagram 6: Deployment and Trust Boundaries
 
@@ -491,7 +507,15 @@ flowchart LR
   LOAD --> CURR[Resolve from_stage from append-only history]
   CURR --> VAL{Canonical transition allowed?}
   VAL -->|No| ERR[422 Unprocessable Entity]
-  VAL -->|Yes| APPEND[Insert pipeline_transitions row]
+  VAL -->|Yes| TARGET{Target stage}
+  TARGET -->|offer| FAIR{Fairness gate passed?}
+  FAIR -->|No| ERR409A[409 Fairness reason code]
+  FAIR -->|Yes| ENSURE[Ensure persisted offer draft exists]
+  ENSURE --> APPEND[Insert pipeline_transitions row]
+  TARGET -->|hired/rejected| OFFERCHK{Offer status compatible?}
+  OFFERCHK -->|No| ERR409B[409 offer_not_accepted / offer_not_declined]
+  OFFERCHK -->|Yes| APPEND
+  TARGET -->|other| APPEND
   APPEND --> AUD[Audit pipeline:transition success]
   AUD --> RES[200 Transition response]
 ```

@@ -311,17 +311,46 @@ async def test_vacancy_crud_and_pipeline_transitions(
         evidence_note="Grounded answers during the interview.",
     )
 
-    for stage in stages[4:]:
-        transition = await api_client.post(
-            "/api/v1/pipeline/transitions",
-            json={
-                "vacancy_id": vacancy_id,
-                "candidate_id": candidate_1_id,
-                "to_stage": stage,
-                "reason": "progress",
-            },
-        )
-        assert transition.status_code == 200
+    offer_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_1_id,
+            "to_stage": "offer",
+            "reason": "progress",
+        },
+    )
+    assert offer_transition.status_code == 200
+
+    update_offer_response = await api_client.put(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_1_id}",
+        json={
+            "terms_summary": "Standard offer package for canonical pipeline test.",
+        },
+    )
+    assert update_offer_response.status_code == 200
+
+    send_offer_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_1_id}/send"
+    )
+    assert send_offer_response.status_code == 200
+
+    accept_offer_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_1_id}/accept",
+        json={"note": "Candidate accepted during canonical flow."},
+    )
+    assert accept_offer_response.status_code == 200
+
+    hired_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_1_id,
+            "to_stage": "hired",
+            "reason": "progress",
+        },
+    )
+    assert hired_transition.status_code == 200
 
     history_response = await api_client.get(
         "/api/v1/pipeline/transitions",
@@ -554,6 +583,272 @@ async def test_interview_to_offer_feedback_gate_blocks_and_passes_by_reason_code
     )
     assert success_transition.status_code == 200
     assert success_transition.json()["to_stage"] == "offer"
+
+
+async def test_offer_lifecycle_api_blocks_and_unblocks_pipeline_resolution(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify offer draft/send/accept lifecycle and `offer -> hired` gate behavior."""
+    _, _, database_url, candidate_1_id, _ = configured_app
+    interviewer_a = "11111111-1111-4111-8111-111111111111"
+
+    create_response = await api_client.post(
+        "/api/v1/vacancies",
+        json={
+            "title": "Offer Lifecycle",
+            "description": "Verify offer workflow",
+            "department": "Engineering",
+            "status": "open",
+        },
+    )
+    assert create_response.status_code == 200
+    vacancy_id = create_response.json()["vacancy_id"]
+
+    for stage in ["applied", "screening", "shortlist", "interview"]:
+        transition = await api_client.post(
+            "/api/v1/pipeline/transitions",
+            json={
+                "vacancy_id": vacancy_id,
+                "candidate_id": candidate_1_id,
+                "to_stage": stage,
+                "reason": f"move_to_{stage}",
+            },
+        )
+        assert transition.status_code == 200
+
+    interview_id = _insert_interview(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_1_id,
+        schedule_version=1,
+        scheduled_start_at=datetime(2026, 3, 8, 16, 0, tzinfo=UTC),
+        scheduled_end_at=datetime(2026, 3, 8, 17, 0, tzinfo=UTC),
+        interviewer_staff_ids=[interviewer_a],
+    )
+    _insert_feedback(
+        database_url,
+        interview_id=interview_id,
+        schedule_version=1,
+        interviewer_staff_id=interviewer_a,
+        requirements_match_score=5,
+        communication_score=4,
+        problem_solving_score=5,
+        collaboration_score=4,
+        recommendation="strong_yes",
+        strengths_note="Strong systems thinking.",
+        concerns_note="No major concerns.",
+        evidence_note="Grounded recommendation for offer.",
+    )
+
+    offer_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_1_id,
+            "to_stage": "offer",
+            "reason": "ready_for_offer",
+        },
+    )
+    assert offer_transition.status_code == 200
+
+    get_offer_response = await api_client.get(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_1_id}"
+    )
+    assert get_offer_response.status_code == 200
+    assert get_offer_response.json()["status"] == "draft"
+    assert get_offer_response.json()["terms_summary"] is None
+
+    update_offer_response = await api_client.put(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_1_id}",
+        json={
+            "terms_summary": "Base salary 5000 BYN gross with probation bonus.",
+            "proposed_start_date": "2026-04-01",
+            "expires_at": "2026-03-20",
+            "note": "Manual delivery via HR email.",
+        },
+    )
+    assert update_offer_response.status_code == 200
+    assert update_offer_response.json()["status"] == "draft"
+    assert update_offer_response.json()["terms_summary"].startswith("Base salary")
+
+    send_offer_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_1_id}/send"
+    )
+    assert send_offer_response.status_code == 200
+    assert send_offer_response.json()["status"] == "sent"
+    assert send_offer_response.json()["sent_at"] is not None
+
+    locked_update_response = await api_client.put(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_1_id}",
+        json={
+            "terms_summary": "Updated terms after sending.",
+            "note": "Late edit should fail.",
+        },
+    )
+    assert locked_update_response.status_code == 409
+    assert locked_update_response.json()["detail"] == "offer_not_editable"
+
+    blocked_hired_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_1_id,
+            "to_stage": "hired",
+            "reason": "skip_acceptance",
+        },
+    )
+    assert blocked_hired_transition.status_code == 409
+    assert blocked_hired_transition.json()["detail"] == "offer_not_accepted"
+
+    accept_offer_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_1_id}/accept",
+        json={"note": "Candidate confirmed by phone."},
+    )
+    assert accept_offer_response.status_code == 200
+    assert accept_offer_response.json()["status"] == "accepted"
+    assert accept_offer_response.json()["decision_note"] == "Candidate confirmed by phone."
+
+    hired_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_1_id,
+            "to_stage": "hired",
+            "reason": "accepted_offer",
+        },
+    )
+    assert hired_transition.status_code == 200
+    assert hired_transition.json()["to_stage"] == "hired"
+
+
+async def test_offer_stage_and_decline_flow_return_stable_reason_codes(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify offer stage blockers, missing terms blocker, and decline-to-rejected flow."""
+    _, _, database_url, _, candidate_2_id = configured_app
+    interviewer_a = "11111111-1111-4111-8111-111111111111"
+
+    create_response = await api_client.post(
+        "/api/v1/vacancies",
+        json={
+            "title": "Offer Decline",
+            "description": "Verify decline flow",
+            "department": "Engineering",
+            "status": "open",
+        },
+    )
+    assert create_response.status_code == 200
+    vacancy_id = create_response.json()["vacancy_id"]
+
+    blocked_offer_write = await api_client.put(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_2_id}",
+        json={
+            "terms_summary": "Offer should not be writable before pipeline reaches offer.",
+        },
+    )
+    assert blocked_offer_write.status_code == 409
+    assert blocked_offer_write.json()["detail"] == "offer_stage_not_active"
+
+    for stage in ["applied", "screening", "shortlist", "interview"]:
+        transition = await api_client.post(
+            "/api/v1/pipeline/transitions",
+            json={
+                "vacancy_id": vacancy_id,
+                "candidate_id": candidate_2_id,
+                "to_stage": stage,
+                "reason": f"move_to_{stage}",
+            },
+        )
+        assert transition.status_code == 200
+
+    interview_id = _insert_interview(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_2_id,
+        schedule_version=1,
+        scheduled_start_at=datetime(2026, 3, 8, 18, 0, tzinfo=UTC),
+        scheduled_end_at=datetime(2026, 3, 8, 19, 0, tzinfo=UTC),
+        interviewer_staff_ids=[interviewer_a],
+    )
+    _insert_feedback(
+        database_url,
+        interview_id=interview_id,
+        schedule_version=1,
+        interviewer_staff_id=interviewer_a,
+        requirements_match_score=4,
+        communication_score=4,
+        problem_solving_score=4,
+        collaboration_score=4,
+        recommendation="yes",
+        strengths_note="Ready for offer discussion.",
+        concerns_note="Some onboarding ramp expected.",
+        evidence_note="All required signals gathered.",
+    )
+
+    offer_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_2_id,
+            "to_stage": "offer",
+            "reason": "offer_stage_entered",
+        },
+    )
+    assert offer_transition.status_code == 200
+
+    blocked_send_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_2_id}/send"
+    )
+    assert blocked_send_response.status_code == 409
+    assert blocked_send_response.json()["detail"] == "offer_terms_missing"
+
+    update_offer_response = await api_client.put(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_2_id}",
+        json={
+            "terms_summary": "Base salary 4200 BYN gross.",
+            "note": "Offer prepared for decline scenario.",
+        },
+    )
+    assert update_offer_response.status_code == 200
+
+    send_offer_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_2_id}/send"
+    )
+    assert send_offer_response.status_code == 200
+    assert send_offer_response.json()["status"] == "sent"
+
+    blocked_rejected_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_2_id,
+            "to_stage": "rejected",
+            "reason": "skip_decline_record",
+        },
+    )
+    assert blocked_rejected_transition.status_code == 409
+    assert blocked_rejected_transition.json()["detail"] == "offer_not_declined"
+
+    decline_offer_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_2_id}/decline",
+        json={"note": "Candidate declined the compensation package."},
+    )
+    assert decline_offer_response.status_code == 200
+    assert decline_offer_response.json()["status"] == "declined"
+
+    rejected_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_2_id,
+            "to_stage": "rejected",
+            "reason": "declined_offer",
+        },
+    )
+    assert rejected_transition.status_code == 200
+    assert rejected_transition.json()["to_stage"] == "rejected"
 
 
 async def test_pipeline_transition_rbac_deny_is_audited(

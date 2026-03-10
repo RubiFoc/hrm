@@ -11,10 +11,16 @@ from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.rbac import Role, require_permission
 from hrm_backend.vacancies.dependencies.vacancies import (
+    get_offer_service,
     get_vacancy_application_service,
     get_vacancy_service,
 )
 from hrm_backend.vacancies.schemas.application import PublicVacancyApplicationResponse
+from hrm_backend.vacancies.schemas.offer import (
+    OfferDecisionRequest,
+    OfferResponse,
+    OfferUpsertRequest,
+)
 from hrm_backend.vacancies.schemas.pipeline import (
     PipelineTransitionCreateRequest,
     PipelineTransitionListResponse,
@@ -27,10 +33,12 @@ from hrm_backend.vacancies.schemas.vacancy import (
     VacancyUpdateRequest,
 )
 from hrm_backend.vacancies.services.application_service import VacancyApplicationService
+from hrm_backend.vacancies.services.offer_service import OfferService
 from hrm_backend.vacancies.services.vacancy_service import VacancyService
 
 router = APIRouter(tags=["vacancies"])
 VacancyServiceDependency = Annotated[VacancyService, Depends(get_vacancy_service)]
+OfferServiceDependency = Annotated[OfferService, Depends(get_offer_service)]
 VacancyApplicationServiceDependency = Annotated[
     VacancyApplicationService,
     Depends(get_vacancy_application_service),
@@ -121,6 +129,117 @@ def list_pipeline_transitions(
     return service.list_pipeline_transitions(
         vacancy_id=vacancy_id,
         candidate_id=candidate_id,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@router.get(
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}",
+    response_model=OfferResponse,
+)
+def get_offer(
+    vacancy_id: UUID,
+    candidate_id: UUID,
+    request: Request,
+    _: PipelineReadRole,
+    auth_context: CurrentAuthContext,
+    service: OfferServiceDependency,
+) -> OfferResponse:
+    """Read current offer lifecycle state for one vacancy+candidate pair."""
+    return service.get_offer(
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@router.put(
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}",
+    response_model=OfferResponse,
+)
+def put_offer(
+    vacancy_id: UUID,
+    candidate_id: UUID,
+    payload: OfferUpsertRequest,
+    request: Request,
+    _: PipelineTransitionRole,
+    auth_context: CurrentAuthContext,
+    service: OfferServiceDependency,
+) -> OfferResponse:
+    """Create or update draft offer fields for one vacancy+candidate pair."""
+    return service.upsert_offer_draft(
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+        payload=payload,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@router.post(
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}/send",
+    response_model=OfferResponse,
+)
+def send_offer(
+    vacancy_id: UUID,
+    candidate_id: UUID,
+    request: Request,
+    _: PipelineTransitionRole,
+    auth_context: CurrentAuthContext,
+    service: OfferServiceDependency,
+) -> OfferResponse:
+    """Move one draft offer to `sent`."""
+    return service.send_offer(
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@router.post(
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}/accept",
+    response_model=OfferResponse,
+)
+def accept_offer(
+    vacancy_id: UUID,
+    candidate_id: UUID,
+    request: Request,
+    _: PipelineTransitionRole,
+    auth_context: CurrentAuthContext,
+    service: OfferServiceDependency,
+    payload: OfferDecisionRequest | None = None,
+) -> OfferResponse:
+    """Record accepted status for one sent offer."""
+    return service.accept_offer(
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+        payload=payload or OfferDecisionRequest(),
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@router.post(
+    "/api/v1/vacancies/{vacancy_id}/offers/{candidate_id}/decline",
+    response_model=OfferResponse,
+)
+def decline_offer(
+    vacancy_id: UUID,
+    candidate_id: UUID,
+    request: Request,
+    _: PipelineTransitionRole,
+    auth_context: CurrentAuthContext,
+    service: OfferServiceDependency,
+    payload: OfferDecisionRequest | None = None,
+) -> OfferResponse:
+    """Record declined status for one sent offer."""
+    return service.decline_offer(
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+        payload=payload or OfferDecisionRequest(),
         auth_context=auth_context,
         request=request,
     )

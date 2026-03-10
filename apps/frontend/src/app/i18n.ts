@@ -410,6 +410,58 @@ const resources = {
             generic: "Failed to complete the interview operation.",
           },
         },
+        offers: {
+          title: "Offer workflow",
+          subtitle:
+            "Keep one offer draft, mark manual sending, and record accepted or declined status next to the interview state.",
+          inactive: "Offer lifecycle activates after the candidate reaches the offer stage.",
+          stageNotReady: "Offer lifecycle is not active for the current pipeline state.",
+          waitingForTransition:
+            "Fairness gate passed. Append the interview -> offer transition to activate the offer lifecycle.",
+          blockedByFairnessGate:
+            "Offer lifecycle is blocked by the fairness gate: {{reasons}}.",
+          loading: "Loading offer lifecycle...",
+          saveAction: "Save draft",
+          savePending: "Saving draft...",
+          saveSuccess: "Offer draft saved.",
+          sendAction: "Mark sent",
+          sendPending: "Marking sent...",
+          sendSuccess: "Offer marked as sent.",
+          acceptAction: "Mark accepted",
+          acceptPending: "Saving acceptance...",
+          acceptSuccess: "Offer marked as accepted.",
+          declineAction: "Mark declined",
+          declinePending: "Saving decline...",
+          declineSuccess: "Offer marked as declined.",
+          stageLabel: "Current pipeline stage: {{stage}}",
+          sentAt: "Sent at: {{value}}",
+          decisionAt: "Decision recorded at: {{value}}",
+          status: {
+            draft: "Draft",
+            sent: "Sent",
+            accepted: "Accepted",
+            declined: "Declined",
+          },
+          hints: {
+            draft: "Complete the offer terms and then mark the offer as sent.",
+            sent:
+              "Wait for candidate response. Accepted unlocks hired; declined unlocks rejected.",
+            accepted: "Accepted offer recorded. The pipeline can now move to hired.",
+            declined: "Declined offer recorded. The pipeline can now move to rejected.",
+          },
+          fields: {
+            termsSummary: "Offer terms summary",
+            proposedStartDate: "Proposed start date",
+            expiresAt: "Offer expires at",
+            note: "Internal HR note",
+            decisionNote: "Decision note",
+          },
+          errors: {
+            selectContext:
+              "Select both a vacancy and a candidate before managing the offer.",
+            termsRequired: "Fill in the offer terms summary before saving the draft.",
+          },
+        },
         fields: {
           title: "Title",
           department: "Department",
@@ -466,6 +518,20 @@ const resources = {
             "Interview to offer transition is blocked because one or more feedback forms are incomplete.",
           interviewFeedbackStale:
             "Interview to offer transition is blocked because feedback belongs to an outdated schedule version.",
+          offerStageNotActive:
+            "Offer lifecycle is available only while the candidate is in the offer stage.",
+          offerNotFound: "Offer was not found for the selected vacancy and candidate.",
+          offerNotEditable:
+            "This offer can no longer be edited because it already left draft state.",
+          offerAlreadySent: "Offer has already been marked as sent.",
+          offerAlreadyAccepted: "Offer has already been marked as accepted.",
+          offerAlreadyDeclined: "Offer has already been marked as declined.",
+          offerNotSent: "Send the offer before recording accepted or declined status.",
+          offerTermsMissing: "Complete the offer draft before marking it as sent.",
+          offerNotAccepted:
+            "Offer must be marked as accepted before pipeline can move to hired.",
+          offerNotDeclined:
+            "Offer must be marked as declined before pipeline can move to rejected.",
           http_403: "You do not have permission to perform this HR action.",
           http_404: "Requested recruitment resource was not found.",
           http_409: "Recruitment request conflicts with the current resource state.",
@@ -1016,6 +1082,59 @@ const resources = {
             generic: "Не удалось выполнить операцию с интервью.",
           },
         },
+        offers: {
+          title: "Offer workflow",
+          subtitle:
+            "Ведите один draft оффера, фиксируйте ручную отправку и записывайте accepted/declined рядом с интервью.",
+          inactive: "Offer lifecycle активируется после перехода кандидата в стадию offer.",
+          stageNotReady: "Для текущего состояния pipeline offer lifecycle ещё не активен.",
+          waitingForTransition:
+            "Fairness gate уже пройден. Добавьте переход interview -> offer, чтобы активировать offer lifecycle.",
+          blockedByFairnessGate:
+            "Offer lifecycle заблокирован fairness gate: {{reasons}}.",
+          loading: "Загрузка состояния offer...",
+          saveAction: "Сохранить draft",
+          savePending: "Сохраняем draft...",
+          saveSuccess: "Draft оффера сохранён.",
+          sendAction: "Отметить как отправленный",
+          sendPending: "Фиксируем отправку...",
+          sendSuccess: "Оффер отмечен как отправленный.",
+          acceptAction: "Отметить как accepted",
+          acceptPending: "Сохраняем accepted...",
+          acceptSuccess: "Оффер отмечен как accepted.",
+          declineAction: "Отметить как declined",
+          declinePending: "Сохраняем declined...",
+          declineSuccess: "Оффер отмечен как declined.",
+          stageLabel: "Текущая стадия pipeline: {{stage}}",
+          sentAt: "Отправлено: {{value}}",
+          decisionAt: "Решение зафиксировано: {{value}}",
+          status: {
+            draft: "Draft",
+            sent: "Sent",
+            accepted: "Accepted",
+            declined: "Declined",
+          },
+          hints: {
+            draft: "Заполните условия оффера и затем отметьте его как отправленный.",
+            sent:
+              "Ожидается ответ кандидата. Accepted разблокирует hired, declined разблокирует rejected.",
+            accepted: "Принятый оффер зафиксирован. Теперь pipeline можно перевести в hired.",
+            declined: "Отклонённый оффер зафиксирован. Теперь pipeline можно перевести в rejected.",
+          },
+          fields: {
+            termsSummary: "Краткое содержание условий оффера",
+            proposedStartDate: "Предлагаемая дата выхода",
+            expiresAt: "Оффер действует до",
+            note: "Внутренняя заметка HR",
+            decisionNote: "Заметка по решению",
+          },
+          errors: {
+            selectContext:
+              "Перед управлением оффером выберите и вакансию, и кандидата.",
+            termsRequired:
+              "Перед сохранением draft заполните краткое содержание условий оффера.",
+          },
+        },
         fields: {
           title: "Название",
           department: "Подразделение",
@@ -1072,6 +1191,23 @@ const resources = {
             "Переход interview -> offer заблокирован, потому что одна или несколько форм feedback заполнены не полностью.",
           interviewFeedbackStale:
             "Переход interview -> offer заблокирован, потому что feedback относится к устаревшей версии расписания.",
+          offerStageNotActive:
+            "Offer lifecycle доступен только когда кандидат находится на стадии offer.",
+          offerNotFound:
+            "Для выбранных вакансии и кандидата оффер не найден.",
+          offerNotEditable:
+            "Этот оффер уже нельзя редактировать, потому что он вышел из состояния draft.",
+          offerAlreadySent: "Оффер уже отмечен как отправленный.",
+          offerAlreadyAccepted: "Оффер уже отмечен как accepted.",
+          offerAlreadyDeclined: "Оффер уже отмечен как declined.",
+          offerNotSent:
+            "Перед фиксацией accepted или declined сначала отметьте оффер как отправленный.",
+          offerTermsMissing:
+            "Перед отметкой отправки заполните draft оффера.",
+          offerNotAccepted:
+            "Перед переводом pipeline в hired оффер должен быть отмечен как accepted.",
+          offerNotDeclined:
+            "Перед переводом pipeline в rejected оффер должен быть отмечен как declined.",
           http_403: "Недостаточно прав для выполнения HR-операции.",
           http_404: "Запрошенный recruitment resource не найден.",
           http_409: "Recruitment-запрос конфликтует с текущим состоянием ресурса.",

@@ -1,6 +1,7 @@
 export { ApiError, apiRequest } from "./httpClient";
 export { getMe, login, logout } from "./auth";
 export { listAdminStaff, updateAdminStaff } from "./adminStaff";
+export { acceptOffer, declineOffer, getOffer, sendOffer, upsertOffer } from "./offers";
 export {
   getCandidateCvAnalysis,
   getCandidateCvParsingStatus,
@@ -44,6 +45,7 @@ export type {
   AdminStaffUpdateRequest,
   StaffRoleClaim,
 } from "./adminStaff";
+export type { OfferDecisionRequest, OfferResponse, OfferStatus, OfferUpsertRequest } from "./offers";
 export type {
   AdminCreateEmployeeKeyRequest,
   AdminEmployeeKeyListItem,

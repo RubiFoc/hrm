@@ -178,6 +178,7 @@ apps/backend/tests/
 | Vacancy list/create/edit UI on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | `./scripts/smoke-compose.sh` creates vacancy through staff API for downstream browser use | staff user can create and update vacancy through typed API wrappers |
 | Candidate selection and pipeline transition append | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration: `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | valid transition appends and invalid transition returns localized `422` |
 | Ordered transition history/timeline render | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration: `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | timeline reflects append-only transition history for selected vacancy + candidate |
+| Offer lifecycle block on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend offer/pipeline integration below | HR can save draft, mark sent, record accepted/declined, and see localized blockers in the existing workspace |
 | Localized HR workspace errors (`403`, `404`, `422`, generic) | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | manual role smoke with expired/forbidden session variants | recruiter-facing failures remain readable in RU/EN |
 
 ## Scoring and Shortlist Review Verification (`TASK-04-01/02/03`, `TASK-11-07`)
@@ -249,6 +250,31 @@ Acceptance rules for the implementation slice:
 - Freeze OpenAPI and update generated frontend types in the same change.
 - Keep auth, CORS, route topology, and anonymous candidate transport unchanged.
 - Keep compose smoke green without adding feedback-specific browser automation.
+- Minimum verification set:
+  - `./scripts/check-docs-structure.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+  - `./scripts/smoke-compose.sh`
+
+## Offer Workflow Verification (`TASK-06-01`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Offer lifecycle state machine (`draft`, `sent`, `accepted`, `declined`) and reason-code validation | `apps/backend/tests/unit/vacancies/test_offer_lifecycle.py` | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | invalid stage/status mutations return `409/422` with stable offer reason codes |
+| Offer draft persistence on the existing vacancy route tree | `apps/backend/tests/unit/vacancies/test_offer_lifecycle.py` | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | `GET/PUT /api/v1/vacancies/{vacancy_id}/offers/{candidate_id}` works without adding a new top-level route tree |
+| Fairness-gated `interview -> offer` bootstrap | covered by `TASK-05-03/04` unit/integration suite | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | successful `interview -> offer` still depends on the existing fairness gate and auto-provisions offer state |
+| `offer -> hired` requires accepted offer; `offer -> rejected` requires declined offer | `apps/backend/tests/unit/vacancies/test_offer_lifecycle.py` | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | pipeline transition endpoint returns `409 offer_not_accepted` / `409 offer_not_declined` before terminal conversion |
+| HR offer UX on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | draft save, send, accept flow, and localized hired blocker render correctly in the existing HR workspace |
+
+Acceptance rules for the implementation slice:
+- Freeze OpenAPI and update generated frontend types in the same change.
+- Keep auth, CORS, route topology, and anonymous candidate transport unchanged.
+- Keep the fairness gate on the existing `interview -> offer` transition; do not add a candidate-facing offer decision endpoint in this slice.
 - Minimum verification set:
   - `./scripts/check-docs-structure.sh`
   - `./scripts/check-openapi-freeze.sh`
