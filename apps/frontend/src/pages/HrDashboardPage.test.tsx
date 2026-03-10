@@ -3,12 +3,17 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "../app/i18n";
+import type {
+  HRInterviewResponse,
+  InterviewFeedbackPanelSummaryResponse,
+} from "../api";
 import { HrDashboardPage } from "./HrDashboardPage";
 
 const fetchMock = vi.fn();
 vi.stubGlobal("fetch", fetchMock);
 const VACANCY_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const CANDIDATE_ID = "11111111-1111-1111-1111-111111111111";
+const CURRENT_USER_ID = "33333333-3333-4333-8333-333333333333";
 const VACANCY_ITEM = {
   vacancy_id: VACANCY_ID,
   title: "Backend Engineer",
@@ -76,6 +81,38 @@ const BASE_INTERVIEW = {
   created_at: "2026-03-09T12:00:00Z",
   updated_at: "2026-03-09T12:10:00Z",
 };
+const BASE_ME = {
+  subject_id: CURRENT_USER_ID,
+  role: "hr",
+  session_id: "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+  access_token_expires_at: 9999999999,
+};
+const BASE_FEEDBACK_SUMMARY = {
+  interview_id: INTERVIEW_ID,
+  vacancy_id: VACANCY_ID,
+  candidate_id: CANDIDATE_ID,
+  schedule_version: 1,
+  required_interviewer_ids: [CURRENT_USER_ID],
+  submitted_interviewer_ids: [],
+  missing_interviewer_ids: [CURRENT_USER_ID],
+  required_interviewer_count: 1,
+  submitted_count: 0,
+  gate_status: "blocked",
+  gate_reason_codes: ["interview_feedback_window_not_open"],
+  recommendation_distribution: {
+    strong_yes: 0,
+    yes: 0,
+    mixed: 0,
+    no: 0,
+  },
+  average_scores: {
+    requirements_match_score: null,
+    communication_score: null,
+    problem_solving_score: null,
+    collaboration_score: null,
+  },
+  items: [],
+};
 
 function renderHrDashboardPage() {
   const queryClient = new QueryClient({
@@ -101,10 +138,13 @@ function jsonResponse(payload: unknown, status = 200): Promise<Response> {
 }
 
 function installHrWorkspaceFetchMock({
+  meGet,
   matchScoreGet,
   matchScorePost,
   interviewsGet,
   interviewsCreate,
+  feedbackSummaryGet,
+  feedbackSubmit,
   interviewReschedule,
   interviewCancel,
   interviewResend,
@@ -122,10 +162,13 @@ function installHrWorkspaceFetchMock({
     },
   ],
 }: {
+  meGet?: (url: string, init?: RequestInit) => Promise<Response>;
   matchScoreGet?: (url: string, init?: RequestInit) => Promise<Response>;
   matchScorePost?: (url: string, init?: RequestInit) => Promise<Response>;
   interviewsGet?: (url: string, init?: RequestInit) => Promise<Response>;
   interviewsCreate?: (url: string, init?: RequestInit) => Promise<Response>;
+  feedbackSummaryGet?: (url: string, init?: RequestInit) => Promise<Response>;
+  feedbackSubmit?: (url: string, init?: RequestInit) => Promise<Response>;
   interviewReschedule?: (url: string, init?: RequestInit) => Promise<Response>;
   interviewCancel?: (url: string, init?: RequestInit) => Promise<Response>;
   interviewResend?: (url: string, init?: RequestInit) => Promise<Response>;
@@ -135,6 +178,12 @@ function installHrWorkspaceFetchMock({
     const url = String(input);
     const method = init?.method ?? "GET";
 
+    if (url.endsWith("/api/v1/auth/me")) {
+      if (method === "GET" && meGet) {
+        return meGet(url, init);
+      }
+      return jsonResponse(BASE_ME);
+    }
     if (url.includes(`/api/v1/vacancies/${VACANCY_ID}/match-scores/${CANDIDATE_ID}`)) {
       if (method === "GET" && matchScoreGet) {
         return matchScoreGet(url, init);
@@ -164,6 +213,33 @@ function installHrWorkspaceFetchMock({
         return interviewResend(url, init);
       }
       return jsonResponse(BASE_INTERVIEW);
+    }
+    if (url.endsWith(`/api/v1/vacancies/${VACANCY_ID}/interviews/${INTERVIEW_ID}/feedback`)) {
+      if (method === "GET" && feedbackSummaryGet) {
+        return feedbackSummaryGet(url, init);
+      }
+      return jsonResponse(BASE_FEEDBACK_SUMMARY);
+    }
+    if (url.endsWith(`/api/v1/vacancies/${VACANCY_ID}/interviews/${INTERVIEW_ID}/feedback/me`)) {
+      if (method === "PUT" && feedbackSubmit) {
+        return feedbackSubmit(url, init);
+      }
+      return jsonResponse({
+        feedback_id: "88888888-8888-4888-8888-888888888888",
+        interview_id: INTERVIEW_ID,
+        schedule_version: 1,
+        interviewer_staff_id: CURRENT_USER_ID,
+        requirements_match_score: 4,
+        communication_score: 4,
+        problem_solving_score: 4,
+        collaboration_score: 4,
+        recommendation: "yes",
+        strengths_note: "Clear strengths",
+        concerns_note: "No major concerns",
+        evidence_note: "Strong examples",
+        submitted_at: "2026-03-10T10:00:00Z",
+        updated_at: "2026-03-10T10:00:00Z",
+      });
     }
     if (url.includes(`/api/v1/vacancies/${VACANCY_ID}/interviews`)) {
       if (method === "GET" && interviewsGet) {
@@ -469,7 +545,7 @@ describe("HrDashboardPage", () => {
   it("resends invite, reschedules, and cancels an existing interview", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
     window.localStorage.setItem("hrm_user_role", "hr");
-    let currentInterview = { ...BASE_INTERVIEW };
+    let currentInterview = { ...BASE_INTERVIEW } as HRInterviewResponse;
 
     installHrWorkspaceFetchMock({
       interviewsGet: () => jsonResponse({ items: [currentInterview] }),
@@ -541,8 +617,186 @@ describe("HrDashboardPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /отменить интервью/i }));
     await waitFor(() => {
-      expect(screen.getByText(/интервью отменено/i)).toBeDefined();
+      expect(screen.getAllByText(/интервью отменено/i).length).toBeGreaterThan(0);
       expect(screen.getByText(/^отменено$/i)).toBeDefined();
+    });
+  }, 10000);
+
+  it("renders feedback summary and saves current interviewer feedback", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+
+    const pastInterview = {
+      ...BASE_INTERVIEW,
+      scheduled_start_at: "2026-03-08T07:00:00Z",
+      scheduled_end_at: "2026-03-08T08:00:00Z",
+    };
+    let feedbackSummaryState = {
+      ...BASE_FEEDBACK_SUMMARY,
+      gate_reason_codes: ["interview_feedback_missing"],
+      missing_interviewer_ids: [CURRENT_USER_ID],
+      submitted_interviewer_ids: [],
+      submitted_count: 0,
+      gate_status: "blocked",
+    } as InterviewFeedbackPanelSummaryResponse;
+
+    installHrWorkspaceFetchMock({
+      interviewsGet: () => jsonResponse({ items: [pastInterview] }),
+      feedbackSummaryGet: () => jsonResponse(feedbackSummaryState),
+      feedbackSubmit: (_url, init) => {
+        expect(init?.method).toBe("PUT");
+        expect(init?.body).toContain('"recommendation":"strong_yes"');
+        feedbackSummaryState = {
+          ...feedbackSummaryState,
+          missing_interviewer_ids: [],
+          submitted_interviewer_ids: [CURRENT_USER_ID],
+          submitted_count: 1,
+          gate_status: "passed",
+          gate_reason_codes: [],
+          recommendation_distribution: {
+            strong_yes: 1,
+            yes: 0,
+            mixed: 0,
+            no: 0,
+          },
+          average_scores: {
+            requirements_match_score: 5,
+            communication_score: 4,
+            problem_solving_score: 4,
+            collaboration_score: 5,
+          },
+          items: [
+            {
+              feedback_id: "88888888-8888-4888-8888-888888888888",
+              interview_id: INTERVIEW_ID,
+              schedule_version: 1,
+              interviewer_staff_id: CURRENT_USER_ID,
+              requirements_match_score: 5,
+              communication_score: 4,
+              problem_solving_score: 4,
+              collaboration_score: 5,
+              recommendation: "strong_yes",
+              strengths_note: "Strong communication and ownership.",
+              concerns_note: "No major concerns.",
+              evidence_note: "Detailed architecture answers.",
+              submitted_at: "2026-03-10T10:00:00Z",
+              updated_at: "2026-03-10T10:00:00Z",
+            },
+          ],
+        };
+        return jsonResponse(feedbackSummaryState.items[0]);
+      },
+      pipelineItems: [
+        {
+          transition_id: "99999999-9999-4999-8999-999999999999",
+          vacancy_id: VACANCY_ID,
+          candidate_id: CANDIDATE_ID,
+          from_stage: "shortlist",
+          to_stage: "interview",
+          reason: "interview_sync_success",
+          changed_by_sub: "system",
+          changed_by_role: "system",
+          transitioned_at: "2026-03-06T10:00:00Z",
+        },
+      ],
+    });
+
+    renderHrDashboardPage();
+    await selectVacancyAndCandidate();
+
+    expect(await screen.findByText(/feedback интервьюеров/i)).toBeDefined();
+
+    fireEvent.change(screen.getByRole("combobox", { name: /совпадение с требованиями/i }), {
+      target: { value: "5" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: /коммуникация/i }), {
+      target: { value: "4" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: /решение задач/i }), {
+      target: { value: "4" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: /коллаборация/i }), {
+      target: { value: "5" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: /^рекомендация$/i }), {
+      target: { value: "strong_yes" },
+    });
+    fireEvent.change(screen.getByLabelText(/сильные стороны/i), {
+      target: { value: "Strong communication and ownership." },
+    });
+    fireEvent.change(screen.getByLabelText(/риски и сомнения/i), {
+      target: { value: "No major concerns." },
+    });
+    fireEvent.change(screen.getByLabelText(/обоснование/i), {
+      target: { value: "Detailed architecture answers." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /сохранить feedback/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/feedback по интервью сохранён/i)).toBeDefined();
+      expect(screen.getByText(/fairness gate пройден/i)).toBeDefined();
+      expect(screen.getAllByText(/strong communication and ownership/i).length).toBeGreaterThan(0);
+    });
+  }, 10000);
+
+  it("renders localized fairness blocker for interview to offer transition", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+
+    const pastInterview = {
+      ...BASE_INTERVIEW,
+      scheduled_start_at: "2026-03-08T07:00:00Z",
+      scheduled_end_at: "2026-03-08T08:00:00Z",
+    };
+
+    installHrWorkspaceFetchMock({
+      interviewsGet: () => jsonResponse({ items: [pastInterview] }),
+      feedbackSummaryGet: () =>
+        jsonResponse({
+          ...BASE_FEEDBACK_SUMMARY,
+          gate_reason_codes: ["interview_feedback_missing"],
+          gate_status: "blocked",
+          missing_interviewer_ids: [CURRENT_USER_ID],
+        }),
+      pipelineItems: [
+        {
+          transition_id: "99999999-9999-4999-8999-999999999999",
+          vacancy_id: VACANCY_ID,
+          candidate_id: CANDIDATE_ID,
+          from_stage: "shortlist",
+          to_stage: "interview",
+          reason: "interview_sync_success",
+          changed_by_sub: "system",
+          changed_by_role: "system",
+          transitioned_at: "2026-03-06T10:00:00Z",
+        },
+      ],
+    });
+    const defaultImplementation = fetchMock.getMockImplementation();
+    fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.endsWith("/api/v1/pipeline/transitions") && init?.method === "POST") {
+        return jsonResponse({ detail: "interview_feedback_missing" }, 409);
+      }
+      return defaultImplementation?.(input, init);
+    });
+
+    renderHrDashboardPage();
+    await selectVacancyAndCandidate();
+
+    fireEvent.change(screen.getByRole("combobox", { name: /стадия перехода/i }), {
+      target: { value: "offer" },
+    });
+    expect(
+      await screen.findByText(/переход interview -> offer заблокирован/i),
+    ).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: /добавить переход/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/каждый назначенный интервьюер не отправит feedback/i),
+      ).toBeDefined();
     });
   });
 

@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import "../i18n";
 import { AppErrorBoundary } from "./AppErrorBoundary";
 
-function CrashingScreen() {
+function CrashingScreen(): never {
   throw new Error("render boom");
 }
 

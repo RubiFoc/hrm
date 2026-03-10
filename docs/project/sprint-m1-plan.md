@@ -54,7 +54,8 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 
 ## Approved Follow-On Constraint
 - `TASK-11-08` is now implemented from the planning baseline in `docs/project/interview-planning-pass.md`.
-- The next interview follow-on planning source of truth is `docs/project/interview-feedback-fairness-pass.md` for `TASK-05-03/04`.
+- `TASK-05-03/04` is now implemented from `docs/project/interview-feedback-fairness-pass.md`, including staff feedback APIs, the `/` workspace feedback block, and the existing `interview -> offer` fairness gate.
+- The next downstream dependency on the interview domain is `TASK-06-01` offer workflow rather than new interview transport or auth scope.
 - The preserved slice rules remain:
   - keep HR interview controls on `/`;
   - keep candidate interview registration on `/candidate?interviewToken=<token>`;

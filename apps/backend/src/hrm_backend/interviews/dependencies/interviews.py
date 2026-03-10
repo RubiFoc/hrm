@@ -13,6 +13,7 @@ from hrm_backend.audit.services.audit_service import AuditService
 from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
 from hrm_backend.core.db.session import get_db_session
 from hrm_backend.interviews.dao.calendar_binding_dao import InterviewCalendarBindingDAO
+from hrm_backend.interviews.dao.feedback_dao import InterviewFeedbackDAO
 from hrm_backend.interviews.dao.interview_dao import InterviewDAO
 from hrm_backend.interviews.infra.google_calendar import (
     GoogleCalendarAdapter,
@@ -80,6 +81,7 @@ def get_interview_service(
         candidate_profile_dao=CandidateProfileDAO(session=session),
         transition_dao=PipelineTransitionDAO(session=session),
         interview_dao=InterviewDAO(session=session),
+        feedback_dao=InterviewFeedbackDAO(session=session),
         binding_dao=InterviewCalendarBindingDAO(session=session),
         calendar_adapter=calendar_adapter,
         token_manager=token_manager,

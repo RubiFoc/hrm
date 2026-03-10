@@ -1363,6 +1363,354 @@
         "title": "InterviewCreateRequest",
         "type": "object"
       },
+      "InterviewFeedbackAverageScoresResponse": {
+        "description": "Average rubric scores for the current interview panel.",
+        "properties": {
+          "collaboration_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collaboration Score"
+          },
+          "communication_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Communication Score"
+          },
+          "problem_solving_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Problem Solving Score"
+          },
+          "requirements_match_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requirements Match Score"
+          }
+        },
+        "required": [
+          "requirements_match_score",
+          "communication_score",
+          "problem_solving_score",
+          "collaboration_score"
+        ],
+        "title": "InterviewFeedbackAverageScoresResponse",
+        "type": "object"
+      },
+      "InterviewFeedbackItemResponse": {
+        "description": "Structured feedback row for one interviewer and one schedule version.",
+        "properties": {
+          "collaboration_score": {
+            "title": "Collaboration Score",
+            "type": "integer"
+          },
+          "communication_score": {
+            "title": "Communication Score",
+            "type": "integer"
+          },
+          "concerns_note": {
+            "title": "Concerns Note",
+            "type": "string"
+          },
+          "evidence_note": {
+            "title": "Evidence Note",
+            "type": "string"
+          },
+          "feedback_id": {
+            "format": "uuid",
+            "title": "Feedback Id",
+            "type": "string"
+          },
+          "interview_id": {
+            "format": "uuid",
+            "title": "Interview Id",
+            "type": "string"
+          },
+          "interviewer_staff_id": {
+            "format": "uuid",
+            "title": "Interviewer Staff Id",
+            "type": "string"
+          },
+          "problem_solving_score": {
+            "title": "Problem Solving Score",
+            "type": "integer"
+          },
+          "recommendation": {
+            "enum": [
+              "strong_yes",
+              "yes",
+              "mixed",
+              "no"
+            ],
+            "title": "Recommendation",
+            "type": "string"
+          },
+          "requirements_match_score": {
+            "title": "Requirements Match Score",
+            "type": "integer"
+          },
+          "schedule_version": {
+            "title": "Schedule Version",
+            "type": "integer"
+          },
+          "strengths_note": {
+            "title": "Strengths Note",
+            "type": "string"
+          },
+          "submitted_at": {
+            "format": "date-time",
+            "title": "Submitted At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "feedback_id",
+          "interview_id",
+          "schedule_version",
+          "interviewer_staff_id",
+          "requirements_match_score",
+          "communication_score",
+          "problem_solving_score",
+          "collaboration_score",
+          "recommendation",
+          "strengths_note",
+          "concerns_note",
+          "evidence_note",
+          "submitted_at",
+          "updated_at"
+        ],
+        "title": "InterviewFeedbackItemResponse",
+        "type": "object"
+      },
+      "InterviewFeedbackPanelSummaryResponse": {
+        "description": "Current-version panel summary used by HR fairness review and interviewer UX.",
+        "properties": {
+          "average_scores": {
+            "$ref": "#/components/schemas/InterviewFeedbackAverageScoresResponse"
+          },
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "gate_reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Gate Reason Codes",
+            "type": "array"
+          },
+          "gate_status": {
+            "enum": [
+              "passed",
+              "blocked"
+            ],
+            "title": "Gate Status",
+            "type": "string"
+          },
+          "interview_id": {
+            "format": "uuid",
+            "title": "Interview Id",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InterviewFeedbackItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "missing_interviewer_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Missing Interviewer Ids",
+            "type": "array"
+          },
+          "recommendation_distribution": {
+            "$ref": "#/components/schemas/InterviewFeedbackRecommendationDistributionResponse"
+          },
+          "required_interviewer_count": {
+            "title": "Required Interviewer Count",
+            "type": "integer"
+          },
+          "required_interviewer_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Required Interviewer Ids",
+            "type": "array"
+          },
+          "schedule_version": {
+            "title": "Schedule Version",
+            "type": "integer"
+          },
+          "submitted_count": {
+            "title": "Submitted Count",
+            "type": "integer"
+          },
+          "submitted_interviewer_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Submitted Interviewer Ids",
+            "type": "array"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "interview_id",
+          "vacancy_id",
+          "candidate_id",
+          "schedule_version",
+          "required_interviewer_ids",
+          "submitted_interviewer_ids",
+          "missing_interviewer_ids",
+          "required_interviewer_count",
+          "submitted_count",
+          "gate_status",
+          "gate_reason_codes",
+          "recommendation_distribution",
+          "average_scores",
+          "items"
+        ],
+        "title": "InterviewFeedbackPanelSummaryResponse",
+        "type": "object"
+      },
+      "InterviewFeedbackRecommendationDistributionResponse": {
+        "description": "Distribution of structured recommendations in the current interview panel.",
+        "properties": {
+          "mixed": {
+            "title": "Mixed",
+            "type": "integer"
+          },
+          "no": {
+            "title": "No",
+            "type": "integer"
+          },
+          "strong_yes": {
+            "title": "Strong Yes",
+            "type": "integer"
+          },
+          "yes": {
+            "title": "Yes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "strong_yes",
+          "yes",
+          "mixed",
+          "no"
+        ],
+        "title": "InterviewFeedbackRecommendationDistributionResponse",
+        "type": "object"
+      },
+      "InterviewFeedbackUpsertRequest": {
+        "additionalProperties": false,
+        "description": "Input payload for current-user interview feedback create or update.",
+        "properties": {
+          "collaboration_score": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Collaboration Score",
+            "type": "integer"
+          },
+          "communication_score": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Communication Score",
+            "type": "integer"
+          },
+          "concerns_note": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Concerns Note",
+            "type": "string"
+          },
+          "evidence_note": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Evidence Note",
+            "type": "string"
+          },
+          "problem_solving_score": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Problem Solving Score",
+            "type": "integer"
+          },
+          "recommendation": {
+            "enum": [
+              "strong_yes",
+              "yes",
+              "mixed",
+              "no"
+            ],
+            "title": "Recommendation",
+            "type": "string"
+          },
+          "requirements_match_score": {
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Requirements Match Score",
+            "type": "integer"
+          },
+          "strengths_note": {
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Strengths Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "requirements_match_score",
+          "communication_score",
+          "problem_solving_score",
+          "collaboration_score",
+          "recommendation",
+          "strengths_note",
+          "concerns_note",
+          "evidence_note"
+        ],
+        "title": "InterviewFeedbackUpsertRequest",
+        "type": "object"
+      },
       "InterviewRescheduleRequest": {
         "additionalProperties": false,
         "description": "Input payload for replacing one existing interview schedule.",
@@ -4324,6 +4672,134 @@
           }
         ],
         "summary": "Cancel Interview",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback": {
+      "get": {
+        "description": "Read current-version interview feedback summary for HR or assigned interviewer.",
+        "operationId": "get_feedback_summary_api_v1_vacancies__vacancy_id__interviews__interview_id__feedback_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewFeedbackPanelSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Feedback Summary",
+        "tags": [
+          "interviews"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback/me": {
+      "put": {
+        "description": "Create or replace the current interviewer's feedback for active schedule version.",
+        "operationId": "put_feedback_for_current_user_api_v1_vacancies__vacancy_id__interviews__interview_id__feedback_me_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "interview_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Interview Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterviewFeedbackUpsertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InterviewFeedbackItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Put Feedback For Current User",
         "tags": [
           "interviews"
         ]

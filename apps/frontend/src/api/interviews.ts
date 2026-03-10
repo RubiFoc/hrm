@@ -14,6 +14,20 @@ export type CalendarSyncStatus =
   components["schemas"]["HRInterviewResponse"]["calendar_sync_status"];
 export type PublicInterviewRegistrationResponse =
   components["schemas"]["PublicInterviewRegistrationResponse"];
+export type InterviewFeedbackRecommendation =
+  components["schemas"]["InterviewFeedbackItemResponse"]["recommendation"];
+export type InterviewFeedbackGateStatus =
+  components["schemas"]["InterviewFeedbackPanelSummaryResponse"]["gate_status"];
+export type InterviewFeedbackUpsertRequest =
+  components["schemas"]["InterviewFeedbackUpsertRequest"];
+export type InterviewFeedbackItemResponse =
+  components["schemas"]["InterviewFeedbackItemResponse"];
+export type InterviewFeedbackRecommendationDistributionResponse =
+  components["schemas"]["InterviewFeedbackRecommendationDistributionResponse"];
+export type InterviewFeedbackAverageScoresResponse =
+  components["schemas"]["InterviewFeedbackAverageScoresResponse"];
+export type InterviewFeedbackPanelSummaryResponse =
+  components["schemas"]["InterviewFeedbackPanelSummaryResponse"];
 
 function withAuth(accessToken: string): RequestInit {
   return {
@@ -70,6 +84,37 @@ export function getInterview(
   return typedApiClient.get<HRInterviewResponse>(
     `/api/v1/vacancies/${vacancyId}/interviews/${interviewId}`,
     undefined,
+    withAuth(accessToken),
+  );
+}
+
+/**
+ * Read current-version feedback summary for one interview.
+ */
+export function getInterviewFeedbackSummary(
+  accessToken: string,
+  vacancyId: string,
+  interviewId: string,
+): Promise<InterviewFeedbackPanelSummaryResponse> {
+  return typedApiClient.get<InterviewFeedbackPanelSummaryResponse>(
+    `/api/v1/vacancies/${vacancyId}/interviews/${interviewId}/feedback`,
+    undefined,
+    withAuth(accessToken),
+  );
+}
+
+/**
+ * Create or replace the current interviewer's feedback for one interview.
+ */
+export function putMyInterviewFeedback(
+  accessToken: string,
+  vacancyId: string,
+  interviewId: string,
+  payload: InterviewFeedbackUpsertRequest,
+): Promise<InterviewFeedbackItemResponse> {
+  return typedApiClient.put<InterviewFeedbackItemResponse>(
+    `/api/v1/vacancies/${vacancyId}/interviews/${interviewId}/feedback/me`,
+    payload,
     withAuth(accessToken),
   );
 }

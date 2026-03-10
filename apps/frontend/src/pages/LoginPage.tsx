@@ -52,9 +52,10 @@ export function LoginPage() {
         cancelled = true;
       };
     }
+    const accessToken = session.accessToken;
 
     setIsBootstrapPending(true);
-    void getMe(session.accessToken)
+    void getMe(accessToken)
       .then((identity) => {
         if (cancelled) {
           return;
@@ -67,7 +68,7 @@ export function LoginPage() {
         }
 
         writeAuthSession({
-          accessToken: session.accessToken,
+          accessToken,
           refreshToken: session.refreshToken,
           role,
         });

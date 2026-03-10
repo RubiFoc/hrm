@@ -65,4 +65,24 @@ describe("typedApiClient", () => {
     expect(init.body).toBe(formData);
     expect(init.headers).toBeUndefined();
   });
+
+  it("sends JSON PUT payloads with content-type header", async () => {
+    vi.stubEnv("VITE_API_BASE_URL", "http://localhost:8000");
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    const { typedApiClient } = await import("./typedClient");
+
+    await typedApiClient.put<{ ok: boolean }>("/api/v1/items/123", { status: "saved" });
+
+    const [input, init] = fetchMock.mock.calls[0] as [RequestInfo | URL, RequestInit];
+    expect(String(input)).toBe("http://localhost:8000/api/v1/items/123");
+    expect(init.method).toBe("PUT");
+    expect(init.headers).toEqual({ "Content-Type": "application/json" });
+    expect(init.body).toBe(JSON.stringify({ status: "saved" }));
+  });
 });

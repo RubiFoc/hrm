@@ -9,6 +9,12 @@ from fastapi import HTTPException, Request, status
 from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
+from hrm_backend.interviews.dao.feedback_dao import InterviewFeedbackDAO
+from hrm_backend.interviews.dao.interview_dao import InterviewDAO
+from hrm_backend.interviews.utils.feedback import (
+    GATE_REASON_MISSING,
+    build_feedback_panel_summary,
+)
 from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransitionDAO
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
 from hrm_backend.vacancies.schemas.pipeline import (
@@ -34,6 +40,8 @@ class VacancyService:
         vacancy_dao: VacancyDAO,
         transition_dao: PipelineTransitionDAO,
         candidate_profile_dao: CandidateProfileDAO,
+        interview_dao: InterviewDAO,
+        interview_feedback_dao: InterviewFeedbackDAO,
         audit_service: AuditService,
     ) -> None:
         """Initialize vacancy service dependencies.
@@ -42,11 +50,15 @@ class VacancyService:
             vacancy_dao: Vacancy DAO.
             transition_dao: Pipeline transition DAO.
             candidate_profile_dao: Candidate profile DAO.
+            interview_dao: Interview DAO.
+            interview_feedback_dao: Interview feedback DAO.
             audit_service: Audit service.
         """
         self._vacancy_dao = vacancy_dao
         self._transition_dao = transition_dao
         self._candidate_profile_dao = candidate_profile_dao
+        self._interview_dao = interview_dao
+        self._interview_feedback_dao = interview_feedback_dao
         self._audit_service = audit_service
 
     def create_vacancy(
@@ -171,6 +183,26 @@ class VacancyService:
             )
 
         actor_sub, actor_role = actor_from_auth_context(auth_context)
+        if from_stage == "interview" and payload.to_stage == "offer":
+            gate_reason = self._evaluate_offer_feedback_gate(
+                vacancy_id=vacancy_id,
+                candidate_id=candidate_id,
+            )
+            if gate_reason is not None:
+                self._audit_service.record_api_event(
+                    action="pipeline:transition",
+                    resource_type="pipeline",
+                    result="failure",
+                    request=request,
+                    actor_sub=actor_sub,
+                    actor_role=actor_role,
+                    resource_id=f"{vacancy_id}:{candidate_id}",
+                    reason=gate_reason,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=gate_reason,
+                )
         transition = self._transition_dao.create_transition(
             vacancy_id=vacancy_id,
             candidate_id=candidate_id,
@@ -248,6 +280,29 @@ class VacancyService:
             resource_id=f"{vacancy_id}:{candidate_id}",
         )
         return PipelineTransitionListResponse(items=items)
+
+    def _evaluate_offer_feedback_gate(
+        self,
+        *,
+        vacancy_id: str,
+        candidate_id: str,
+    ) -> str | None:
+        """Return the first fairness-gate blocker for `interview -> offer`, if any."""
+        interview = self._interview_dao.find_active_for_pair(
+            vacancy_id=vacancy_id,
+            candidate_id=candidate_id,
+        )
+        if interview is None:
+            return GATE_REASON_MISSING
+        summary = build_feedback_panel_summary(
+            interview=interview,
+            feedback_history=self._interview_feedback_dao.list_for_interview(
+                interview_id=interview.interview_id
+            ),
+        )
+        if summary.gate_status == "passed":
+            return None
+        return summary.gate_reason_codes[0]
 
 
 def _to_vacancy_response(entity) -> VacancyResponse:

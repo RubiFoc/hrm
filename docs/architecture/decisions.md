@@ -520,6 +520,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Keep auth, CORS behavior, public candidate transport, and compose smoke scope unchanged for this slice.
 - Consequences:
   - The next interview slice can be implemented without hidden product or API decisions.
+  - Implementation now persists `interview_feedback` rows, extends the `/` workspace with panel summary + `feedback/me`, and enforces the accepted `409` fairness-gate reason codes on the existing `interview -> offer` transition.
   - Feedback remains traceable to the real interview schedule and interviewer assignment.
   - Pipeline semantics stay centralized in the existing transition flow, which reduces route and audit fragmentation.
   - More sophisticated fairness policy, interviewer reminders, and candidate-facing visibility remain explicitly deferred.

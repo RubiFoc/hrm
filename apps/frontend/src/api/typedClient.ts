@@ -22,6 +22,12 @@ export function createTypedApiClient(baseUrl = "") {
         withJsonRequestInit("POST", body, init),
       );
     },
+    put<TResponse>(path: string, body: unknown, init?: RequestInit) {
+      return apiRequest<TResponse>(
+        `${baseUrl}${path}`,
+        withJsonRequestInit("PUT", body, init),
+      );
+    },
     patch<TResponse>(path: string, body: unknown, init?: RequestInit) {
       return apiRequest<TResponse>(
         `${baseUrl}${path}`,
@@ -53,7 +59,7 @@ function resolveApiBaseUrl(): string {
 export const typedApiClient = createTypedApiClient(resolveApiBaseUrl());
 
 function withJsonRequestInit(
-  method: "POST" | "PATCH",
+  method: "POST" | "PUT" | "PATCH",
   body: unknown,
   init?: RequestInit,
 ): RequestInit {

@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-10
-- Updated by: architect + devops-engineer
+- Updated by: architect + backend-engineer + frontend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -120,6 +120,7 @@ flowchart LR
   CAND[Candidate Management]
   SCORE[AI Match Scoring]
   INT[Interview Management]
+  FAIR[Interview Feedback Fairness Gate]
   HIRE[Hiring Decision]
   EMP[Employee Profile]
   ONB[Onboarding]
@@ -129,7 +130,8 @@ flowchart LR
   VAC --> SCORE
   CAND --> SCORE
   SCORE --> INT
-  INT --> HIRE
+  INT --> FAIR
+  FAIR --> HIRE
   HIRE --> EMP
   EMP --> ONB
   VAC --> AUTO
@@ -191,9 +193,11 @@ artifacts in `match_score_artifacts`.
 ```mermaid
 sequenceDiagram
   participant HR as HR
+  participant REV as Assigned Interviewer
   participant UI as React.js + TypeScript UI
   participant API as API Gateway
   participant INT as Interview Service
+  participant PIPE as Pipeline Service
   participant GCA as Calendar Sync Service
   participant GCAL as Google Calendar
   participant C as Candidate
@@ -217,9 +221,23 @@ sequenceDiagram
   API->>INT: Apply token-bound action
   INT-->>API: Updated interview state
   API-->>UI: Updated candidate-facing status
+  REV->>UI: Open feedback block on `/` after interview end
+  UI->>API: GET /api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback
+  API->>INT: Read current-version panel summary
+  INT-->>API: Summary + gate state
+  REV->>UI: Submit PUT feedback/me
+  UI->>API: PUT /api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback/me
+  API->>INT: Upsert current interviewer feedback
+  HR->>UI: Attempt interview -> offer transition
+  UI->>API: POST /api/v1/pipeline/transitions
+  API->>PIPE: Evaluate canonical transition
+  PIPE->>INT: Read fairness-gate state for active interview
+  INT-->>PIPE: passed | 409 reason code
+  PIPE-->>API: transition created | blocked
+  API-->>UI: Offer transition success or localized blocker
 ```
 
-The interview flow is now implemented from `docs/project/interview-planning-pass.md` without adding candidate auth or a new route tree. In the current free-mode runtime, Google Calendar access is service-account based, each interviewer calendar is shared manually with that service account, and candidate delivery still uses `candidate_invite_url` instead of Google guest invitations.
+The interview flow is now implemented from `docs/project/interview-planning-pass.md` and `docs/project/interview-feedback-fairness-pass.md` without adding candidate auth or a new route tree. In the current free-mode runtime, Google Calendar access is service-account based, each interviewer calendar is shared manually with that service account, candidate delivery still uses `candidate_invite_url` instead of Google guest invitations, and the fairness guard stays on the existing `interview -> offer` transition.
 
 ## Diagram 6: Deployment and Trust Boundaries
 
