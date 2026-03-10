@@ -1,7 +1,7 @@
 # Sprint M1 Plan and Task Ownership
 
 ## Last Updated
-- Date: 2026-03-09
+- Date: 2026-03-10
 - Updated by: coordinator + architect
 
 ## Sprint Goal
@@ -52,6 +52,7 @@ Current sprint acceptance target is stable local end-to-end operation on the cur
 
 ## Approved Follow-On Constraint
 - `TASK-11-08` is now implemented from the planning baseline in `docs/project/interview-planning-pass.md`.
+- The next interview follow-on planning source of truth is `docs/project/interview-feedback-fairness-pass.md` for `TASK-05-03/04`.
 - The preserved slice rules remain:
   - keep HR interview controls on `/`;
   - keep candidate interview registration on `/candidate?interviewToken=<token>`;
