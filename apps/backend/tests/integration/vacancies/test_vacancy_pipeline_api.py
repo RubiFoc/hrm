@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
 import hashlib
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
@@ -351,7 +351,7 @@ async def test_interview_to_offer_feedback_gate_blocks_and_passes_by_reason_code
     configured_app,
     api_client: AsyncClient,
 ) -> None:
-    """Verify `interview -> offer` checks window, missing, incomplete, stale, and complete feedback."""
+    """Verify `interview -> offer` checks all feedback gate outcomes."""
     _, _, database_url, _, _ = configured_app
     interviewer_a = "11111111-1111-4111-8111-111111111111"
     interviewer_b = "22222222-2222-4222-8222-222222222222"
@@ -370,7 +370,11 @@ async def test_interview_to_offer_feedback_gate_blocks_and_passes_by_reason_code
 
     async def prepare_candidate(candidate_suffix: str) -> str:
         candidate_id = str(uuid5(NAMESPACE_URL, f"feedback-gate-{candidate_suffix}"))
-        _seed_candidate(database_url, candidate_id=candidate_id, suffix=f"feedback-gate-{candidate_suffix}")
+        _seed_candidate(
+            database_url,
+            candidate_id=candidate_id,
+            suffix=f"feedback-gate-{candidate_suffix}",
+        )
         for stage in ["applied", "screening", "shortlist", "interview"]:
             transition = await api_client.post(
                 "/api/v1/pipeline/transitions",
@@ -700,8 +704,14 @@ async def test_openapi_exposes_uuid_format_for_normalized_id_contracts(
     assert (
         schemas["PipelineTransitionResponse"]["properties"]["transition_id"]["format"] == "uuid"
     )
-    assert schemas["InterviewFeedbackItemResponse"]["properties"]["feedback_id"]["format"] == "uuid"
-    assert schemas["InterviewFeedbackItemResponse"]["properties"]["interview_id"]["format"] == "uuid"
+    assert (
+        schemas["InterviewFeedbackItemResponse"]["properties"]["feedback_id"]["format"]
+        == "uuid"
+    )
+    assert (
+        schemas["InterviewFeedbackItemResponse"]["properties"]["interview_id"]["format"]
+        == "uuid"
+    )
     assert (
         schemas["InterviewFeedbackItemResponse"]["properties"]["interviewer_staff_id"]["format"]
         == "uuid"

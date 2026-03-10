@@ -15,9 +15,9 @@ from hrm_backend.candidates.models.document import CandidateDocument  # noqa: F4
 from hrm_backend.candidates.models.parsing_job import CVParsingJob  # noqa: F401
 from hrm_backend.candidates.models.profile import CandidateProfile  # noqa: F401
 from hrm_backend.core.models.base import Base
+from hrm_backend.interviews.models.calendar_binding import InterviewCalendarBinding  # noqa: F401
 from hrm_backend.interviews.models.feedback import InterviewFeedback  # noqa: F401
 from hrm_backend.interviews.models.interview import Interview  # noqa: F401
-from hrm_backend.interviews.models.calendar_binding import InterviewCalendarBinding  # noqa: F401
 from hrm_backend.scoring.models.score_artifact import MatchScoreArtifact  # noqa: F401
 from hrm_backend.scoring.models.scoring_job import MatchScoringJob  # noqa: F401
 from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition  # noqa: F401
