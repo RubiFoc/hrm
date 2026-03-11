@@ -1,8 +1,8 @@
 # Product Epics
 
 ## Last Updated
-- Date: 2026-03-09
-- Updated by: architect
+- Date: 2026-03-11
+- Updated by: architect + business-analyst
 
 ## Planning Baseline
 - Jurisdictions: Belarus and Russia.
@@ -20,6 +20,7 @@
 
 ## Implementation Reality (2026-03-09)
 - `EPIC-03` backend scope is materially implemented for Phase 1 local baseline: public apply, CV upload, async parsing, RU/EN normalization, evidence traceability, and anonymous tracking by `parsing_job_id`.
+- The current `EPIC-03` parsing baseline is still heuristic/text-oriented; native PDF/DOCX extraction and richer section-aware profile extraction remain open and are now tracked as `TASK-03-07` and `TASK-03-08`.
 - `EPIC-02` backend scope is materially implemented for Phase 1 local baseline: vacancy CRUD, canonical pipeline transitions, and ordered transition history.
 - `EPIC-11` local baseline now includes candidate self-service, HR vacancy/pipeline workspace, RU/EN strings for critical flows, and browser smoke for login + public candidate apply.
 - The immediate next epic gap is the handoff from parsed candidate data into `EPIC-04` recruiter-facing scoring review.
