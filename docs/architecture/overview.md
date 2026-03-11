@@ -53,7 +53,7 @@ flowchart LR
 
 ## Key Flows
 1. Candidate Screening Flow:
-   candidate profile + CV -> CV parsing -> RU/EN normalization + evidence extraction ->
+   candidate profile + CV -> native PDF/DOCX text extraction -> RU/EN normalization + evidence extraction ->
    recruiter selects vacancy + candidate in `/` -> explicit scoring request ->
    `409` if parsed CV analysis is not ready, otherwise async scoring via Ollama ->
    persisted score artifact -> recruiter review -> shortlist.
@@ -85,7 +85,7 @@ flowchart LR
 5. HR Automation Flow:
    rule trigger -> workflow engine -> task creation/assignment -> status update and reporting.
 6. Public Candidate Apply Flow:
-   anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
+   anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> native PDF/DOCX extraction + persisted analysis artifacts -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
 7. Authentication Flow:
    staff key issuance -> staff register/login (login/email + password) -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
 8. Admin Staff Governance Flow:
@@ -103,7 +103,7 @@ flowchart LR
 - Source of truth entities:
   vacancies, candidates, CV metadata, interview records, employee profiles, onboarding runs/templates/tasks, HR operations, audit events.
 - CV analysis artifacts:
-  `parsed_profile_json`, `evidence_json`, `detected_language`, `parsed_at` stored per active candidate document.
+  `parsed_profile_json`, `evidence_json`, `detected_language`, `parsed_at` stored per active candidate document; evidence offsets anchor to extracted text and PDF evidence now carries page numbers when extraction can resolve them.
 - Match scoring artifacts:
   `match_scoring_jobs` (`queued`, `running`, `succeeded`, `failed`) and score payloads keyed by
   `vacancy_id + candidate_id + active_document_id`, including `score`, `confidence`, `summary`,

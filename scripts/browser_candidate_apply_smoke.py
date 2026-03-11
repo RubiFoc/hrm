@@ -29,6 +29,10 @@ from browser_auth_smoke import (
 CANDIDATE_STORAGE_KEY = "hrm_candidate_application_context"
 APPLY_SUCCESS_STATUSES = {200, 201}
 TRACKING_ACTIVE_STATUSES = {"queued", "running", "succeeded"}
+PDF_FIXTURE_PATH = (
+    Path(__file__).resolve().parents[1]
+    / "apps/backend/tests/fixtures/candidates/sample_cv_en.pdf"
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -77,12 +81,7 @@ def build_candidate_url(frontend_url: str, vacancy_id: str, vacancy_title: str) 
 
 def build_submit_expression(email: str) -> str:
     """Build the JavaScript snippet that fills and submits the candidate form."""
-    file_contents = (
-        "%PDF-1.4\n"
-        "HRM browser smoke CV\n"
-        "Python experience\n"
-        "Backend engineer\n"
-    )
+    file_base64 = base64.b64encode(PDF_FIXTURE_PATH.read_bytes()).decode("ascii")
     return f"""
 (() => {{
   const setValue = (selector, value) => {{
@@ -102,13 +101,15 @@ def build_submit_expression(email: str) -> str:
     input.dispatchEvent(new Event("blur", {{ bubbles: true }}));
   }};
 
-  const attachFile = (selector, filename, mimeType, contents) => {{
+  const attachFile = (selector, filename, mimeType, base64Contents) => {{
     const input = document.querySelector(selector);
     if (!(input instanceof HTMLInputElement)) {{
       throw new Error("Missing file input for selector: " + selector);
     }}
     const dataTransfer = new DataTransfer();
-    const file = new File([contents], filename, {{ type: mimeType }});
+    const binary = atob(base64Contents);
+    const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+    const file = new File([bytes], filename, {{ type: mimeType }});
     dataTransfer.items.add(file);
     input.files = dataTransfer.files;
     input.dispatchEvent(new Event("change", {{ bubbles: true }}));
@@ -124,7 +125,7 @@ def build_submit_expression(email: str) -> str:
     'input[type="file"]',
     "browser-smoke-cv.pdf",
     "application/pdf",
-    {json.dumps(file_contents)},
+    {json.dumps(file_base64)},
   );
 
   const submit = document.querySelector('button[type="submit"]');

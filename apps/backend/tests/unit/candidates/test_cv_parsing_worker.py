@@ -3,9 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from hrm_backend.candidates.services.cv_parsing_worker_service import CVParsingWorkerService
 from hrm_backend.settings import AppSettings
+
+FIXTURES_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "candidates"
+
+
+def _read_fixture_bytes(filename: str) -> bytes:
+    """Read one CV fixture payload by filename."""
+    return (FIXTURES_DIR / filename).read_bytes()
 
 
 @dataclass
@@ -139,7 +147,7 @@ def test_worker_marks_job_succeeded_and_is_retry_safe() -> None:
             mime_type="application/pdf",
         )
     }
-    payloads = {"obj-1": b"normal-content"}
+    payloads = {"obj-1": _read_fixture_bytes("sample_cv_en.pdf")}
     audit_service = _FakeAuditService()
     worker = _build_worker(
         jobs=jobs,
@@ -180,7 +188,7 @@ def test_worker_marks_failure_and_records_reason() -> None:
             mime_type="application/pdf",
         )
     }
-    payloads = {"obj-2": b"FAIL_PARSE content"}
+    payloads = {"obj-2": _read_fixture_bytes("broken_cv.pdf")}
     audit_service = _FakeAuditService()
     worker = _build_worker(
         jobs=jobs,
@@ -194,5 +202,6 @@ def test_worker_marks_failure_and_records_reason() -> None:
     assert result.status == "failed"
     assert jobs[0].status == "failed"
     assert jobs[0].last_error is not None
+    assert "PDF" in jobs[0].last_error
     assert len(audit_service.events) == 1
     assert audit_service.events[0]["result"] == "failure"

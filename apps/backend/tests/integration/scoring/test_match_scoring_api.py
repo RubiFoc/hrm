@@ -36,6 +36,12 @@ from hrm_backend.settings import AppSettings, get_settings
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
 
 pytestmark = pytest.mark.anyio
+FIXTURES_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "candidates"
+
+
+def _read_fixture_bytes(filename: str) -> bytes:
+    """Read one CV fixture payload by filename."""
+    return (FIXTURES_DIR / filename).read_bytes()
 
 
 class InMemoryCandidateStorage:
@@ -325,12 +331,7 @@ async def _create_scoring_fixture(api_client: AsyncClient) -> tuple[str, str]:
     assert candidate_response.status_code == 200
     candidate_id = candidate_response.json()["candidate_id"]
 
-    content = (
-        b"Jane Stone\n"
-        b"jane@example.com\n"
-        b"5 years of Python backend engineering\n"
-        b"REST APIs Dockerized deployment ownership\n"
-    )
+    content = _read_fixture_bytes("sample_cv_en.pdf")
     checksum = hashlib.sha256(content).hexdigest()
     upload_response = await api_client.post(
         f"/api/v1/candidates/{candidate_id}/cv",

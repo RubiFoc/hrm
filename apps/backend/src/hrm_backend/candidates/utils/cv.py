@@ -1,13 +1,18 @@
-"""Validation and parsing helpers for candidate CV processing."""
+"""Validation, native text extraction, and parsing helpers for candidate CV processing."""
 
 from __future__ import annotations
 
 import hashlib
 import re
 from dataclasses import dataclass
+from io import BytesIO
 from typing import Literal
+from xml.etree import ElementTree
+from zipfile import BadZipFile, ZipFile
 
 from fastapi import HTTPException, status
+from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 
 
 @dataclass(frozen=True)
@@ -28,6 +33,9 @@ class CVValidationResult:
 
 
 DetectedCVLanguage = Literal["ru", "en", "mixed", "unknown"]
+PDF_MIME_TYPE = "application/pdf"
+DOCX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+DOCX_NAMESPACE = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
 
 
 @dataclass(frozen=True)
@@ -43,6 +51,50 @@ class CVParseResult:
     parsed_profile: dict[str, object]
     evidence: list[dict[str, object]]
     detected_language: DetectedCVLanguage
+
+
+@dataclass(frozen=True)
+class ExtractedTextSpan:
+    """Offset range in extracted text that maps back to a source page.
+
+    Attributes:
+        start_offset: Inclusive start offset in unified extracted text.
+        end_offset: Exclusive end offset in unified extracted text.
+        page: One-based source page number when known.
+    """
+
+    start_offset: int
+    end_offset: int
+    page: int | None
+
+
+@dataclass(frozen=True)
+class ExtractedDocumentText:
+    """Unified document text returned by native PDF/DOCX extraction.
+
+    Attributes:
+        text: Text content passed to downstream normalization and evidence mapping.
+        page_spans: Ordered offset ranges that preserve page traceability when available.
+    """
+
+    text: str
+    page_spans: tuple[ExtractedTextSpan, ...]
+
+    def resolve_page(self, *, start_offset: int, end_offset: int) -> int | None:
+        """Resolve one evidence range back to its source page when known.
+
+        Args:
+            start_offset: Inclusive evidence start offset.
+            end_offset: Exclusive evidence end offset.
+
+        Returns:
+            int | None: One-based page number for overlapping text, otherwise `None`.
+        """
+        return resolve_page_number(
+            self.page_spans,
+            start_offset=start_offset,
+            end_offset=end_offset,
+        )
 
 
 SKILL_SYNONYMS: dict[str, tuple[str, ...]] = {
@@ -129,6 +181,91 @@ def validate_cv_payload(
     )
 
 
+def extract_document_text(*, content: bytes, mime_type: str) -> ExtractedDocumentText:
+    """Extract native text from one supported CV document.
+
+    Args:
+        content: Raw CV binary payload.
+        mime_type: Validated document MIME type.
+
+    Returns:
+        ExtractedDocumentText: Unified extracted text plus page traceability metadata.
+
+    Raises:
+        ValueError: If the document cannot be parsed or yields no text.
+    """
+    normalized_mime = mime_type.strip().lower()
+    if normalized_mime == PDF_MIME_TYPE:
+        return extract_pdf_text(content=content)
+    if normalized_mime == DOCX_MIME_TYPE:
+        return extract_docx_text(content=content)
+    raise ValueError(f"CV text extraction failed: unsupported MIME type {normalized_mime}")
+
+
+def extract_pdf_text(*, content: bytes) -> ExtractedDocumentText:
+    """Extract text from one PDF payload using native PDF parsing.
+
+    Args:
+        content: Raw PDF binary payload.
+
+    Returns:
+        ExtractedDocumentText: Unified extracted text with per-page offset mapping.
+
+    Raises:
+        ValueError: If the PDF is unreadable or does not contain extractable text.
+    """
+    try:
+        reader = PdfReader(BytesIO(content), strict=False)
+    except PdfReadError as exc:
+        raise ValueError("CV text extraction failed: unreadable PDF") from exc
+    except Exception as exc:  # noqa: BLE001
+        raise ValueError("CV text extraction failed: PDF parser error") from exc
+
+    page_fragments: list[tuple[int | None, str]] = []
+    for page_number, page in enumerate(reader.pages, start=1):
+        try:
+            raw_text = page.extract_text() or ""
+        except Exception as exc:  # noqa: BLE001
+            raise ValueError(
+                f"CV text extraction failed: unreadable PDF page {page_number}"
+            ) from exc
+        normalized_text = _normalize_extracted_text(raw_text)
+        if normalized_text:
+            page_fragments.append((page_number, normalized_text))
+
+    return _build_extracted_document_text(page_fragments)
+
+
+def extract_docx_text(*, content: bytes) -> ExtractedDocumentText:
+    """Extract text from one DOCX payload using native OOXML parsing.
+
+    Args:
+        content: Raw DOCX binary payload.
+
+    Returns:
+        ExtractedDocumentText: Unified extracted text ready for downstream normalization.
+
+    Raises:
+        ValueError: If the DOCX archive is invalid or does not contain extractable text.
+    """
+    try:
+        with ZipFile(BytesIO(content)) as archive:
+            part_names = _list_docx_text_parts(archive.namelist())
+            fragments: list[tuple[int | None, str]] = []
+            for part_name in part_names:
+                normalized_text = _normalize_extracted_text(
+                    _extract_docx_part_text(archive.read(part_name))
+                )
+                if normalized_text:
+                    fragments.append((None, normalized_text))
+    except BadZipFile as exc:
+        raise ValueError("CV text extraction failed: unreadable DOCX archive") from exc
+    except ElementTree.ParseError as exc:
+        raise ValueError("CV text extraction failed: invalid DOCX XML") from exc
+
+    return _build_extracted_document_text(fragments)
+
+
 def parse_cv_document(*, content: bytes, mime_type: str) -> CVParseResult:
     """Parse CV bytes into canonical profile and evidence payload.
 
@@ -142,22 +279,37 @@ def parse_cv_document(*, content: bytes, mime_type: str) -> CVParseResult:
     Raises:
         ValueError: If parsing fails.
     """
-    if content.startswith(b"FAIL_PARSE"):
-        raise ValueError("CV parsing failed by deterministic test marker")
-
-    text = content.decode("utf-8", errors="ignore")
-    normalized_text = text.replace("\x00", " ").strip()
-    if not normalized_text:
-        raise ValueError("CV parsing failed: empty textual payload")
+    extracted_text = extract_document_text(content=content, mime_type=mime_type)
+    normalized_text = extracted_text.text
 
     detected_language = detect_cv_language(normalized_text)
     evidence: list[dict[str, object]] = []
 
-    full_name = extract_full_name(normalized_text, evidence)
-    emails = extract_emails(normalized_text, evidence)
-    phones = extract_phones(normalized_text, evidence)
-    years_total = extract_years_of_experience(normalized_text, evidence)
-    skills = extract_skills(normalized_text, evidence)
+    full_name = extract_full_name(
+        normalized_text,
+        evidence,
+        page_spans=extracted_text.page_spans,
+    )
+    emails = extract_emails(
+        normalized_text,
+        evidence,
+        page_spans=extracted_text.page_spans,
+    )
+    phones = extract_phones(
+        normalized_text,
+        evidence,
+        page_spans=extracted_text.page_spans,
+    )
+    years_total = extract_years_of_experience(
+        normalized_text,
+        evidence,
+        page_spans=extracted_text.page_spans,
+    )
+    skills = extract_skills(
+        normalized_text,
+        evidence,
+        page_spans=extracted_text.page_spans,
+    )
 
     parsed_profile: dict[str, object] = {
         "document": {
@@ -187,12 +339,153 @@ def parse_cv_document(*, content: bytes, mime_type: str) -> CVParseResult:
                 snippet=summary,
                 start_offset=0,
                 end_offset=min(len(summary), len(normalized_text)),
+                page=extracted_text.resolve_page(
+                    start_offset=0,
+                    end_offset=min(len(summary), len(normalized_text)),
+                ),
             )
     return CVParseResult(
         parsed_profile=parsed_profile,
         evidence=evidence,
         detected_language=detected_language,
     )
+
+
+def _build_extracted_document_text(
+    fragments: list[tuple[int | None, str]],
+) -> ExtractedDocumentText:
+    """Build unified extracted text and offset mapping from ordered fragments.
+
+    Args:
+        fragments: Ordered `(page, text)` fragments from a native extractor.
+
+    Returns:
+        ExtractedDocumentText: Unified text plus offset spans.
+
+    Raises:
+        ValueError: If no non-empty fragments are available.
+    """
+    if not fragments:
+        raise ValueError("CV text extraction failed: empty textual payload")
+
+    parts: list[str] = []
+    spans: list[ExtractedTextSpan] = []
+    cursor = 0
+    for page, text in fragments:
+        if parts:
+            parts.append("\n\n")
+            cursor += 2
+        start_offset = cursor
+        parts.append(text)
+        cursor += len(text)
+        spans.append(
+            ExtractedTextSpan(
+                start_offset=start_offset,
+                end_offset=cursor,
+                page=page,
+            )
+        )
+    return ExtractedDocumentText(text="".join(parts), page_spans=tuple(spans))
+
+
+def _normalize_extracted_text(text: str) -> str:
+    """Normalize extractor output into stable text for downstream parsing.
+
+    Args:
+        text: Raw text emitted by document extractor.
+
+    Returns:
+        str: Trimmed text with normalized line endings and blank-line runs.
+    """
+    normalized = (
+        text.replace("\x00", " ")
+        .replace("\xa0", " ")
+        .replace("\r", "\n")
+        .replace("\x0c", "\n")
+    )
+    normalized = re.sub(r"\n{3,}", "\n\n", normalized)
+    return normalized.strip()
+
+
+def _list_docx_text_parts(part_names: list[str]) -> list[str]:
+    """Return DOCX XML parts that may contain user-visible text.
+
+    Args:
+        part_names: Archive member names from one DOCX file.
+
+    Returns:
+        list[str]: Ordered XML part names to read for text extraction.
+
+    Raises:
+        ValueError: If the required main document part is missing.
+    """
+    if "word/document.xml" not in part_names:
+        raise ValueError("CV text extraction failed: DOCX document part is missing")
+    headers = sorted(name for name in part_names if re.fullmatch(r"word/header\d+\.xml", name))
+    footers = sorted(name for name in part_names if re.fullmatch(r"word/footer\d+\.xml", name))
+    extras = [name for name in ("word/footnotes.xml", "word/endnotes.xml") if name in part_names]
+    return [*headers, "word/document.xml", *footers, *extras]
+
+
+def _extract_docx_part_text(xml_bytes: bytes) -> str:
+    """Extract ordered paragraph text from one DOCX XML part.
+
+    Args:
+        xml_bytes: Raw XML bytes from one DOCX archive member.
+
+    Returns:
+        str: Joined paragraph text from the XML part.
+    """
+    root = ElementTree.fromstring(xml_bytes)
+    paragraphs: list[str] = []
+    for paragraph in root.findall(".//w:p", DOCX_NAMESPACE):
+        paragraph_text = _extract_docx_paragraph_text(paragraph)
+        if paragraph_text.strip():
+            paragraphs.append(paragraph_text.strip())
+    return "\n".join(paragraphs)
+
+
+def _extract_docx_paragraph_text(paragraph: ElementTree.Element) -> str:
+    """Extract visible text from one DOCX paragraph element.
+
+    Args:
+        paragraph: DOCX paragraph XML element.
+
+    Returns:
+        str: Visible paragraph text with line/tab markers preserved.
+    """
+    chunks: list[str] = []
+    for element in paragraph.iter():
+        local_name = element.tag.rsplit("}", 1)[-1]
+        if local_name == "t" and element.text:
+            chunks.append(element.text)
+        elif local_name == "tab":
+            chunks.append("\t")
+        elif local_name in {"br", "cr"}:
+            chunks.append("\n")
+    return "".join(chunks)
+
+
+def resolve_page_number(
+    page_spans: tuple[ExtractedTextSpan, ...],
+    *,
+    start_offset: int,
+    end_offset: int,
+) -> int | None:
+    """Resolve evidence offsets to a page number when extracted text is paginated.
+
+    Args:
+        page_spans: Ordered page-to-offset mapping spans.
+        start_offset: Inclusive evidence start offset.
+        end_offset: Exclusive evidence end offset.
+
+    Returns:
+        int | None: One-based page number if the range overlaps a page span.
+    """
+    for span in page_spans:
+        if start_offset < span.end_offset and end_offset > span.start_offset:
+            return span.page
+    return None
 
 
 def detect_cv_language(text: str) -> DetectedCVLanguage:
@@ -219,12 +512,18 @@ def detect_cv_language(text: str) -> DetectedCVLanguage:
     return "ru" if cyr_count > lat_count else "en"
 
 
-def extract_full_name(text: str, evidence: list[dict[str, object]]) -> str | None:
+def extract_full_name(
+    text: str,
+    evidence: list[dict[str, object]],
+    *,
+    page_spans: tuple[ExtractedTextSpan, ...] = (),
+) -> str | None:
     """Extract likely full name from CV header lines.
 
     Args:
         text: Decoded CV text.
         evidence: Mutable evidence accumulator.
+        page_spans: Optional source page mapping for evidence ranges.
 
     Returns:
         str | None: Extracted full name candidate.
@@ -248,17 +547,28 @@ def extract_full_name(text: str, evidence: list[dict[str, object]]) -> str | Non
             snippet=line,
             start_offset=line_start,
             end_offset=line_end,
+            page=resolve_page_number(
+                page_spans,
+                start_offset=line_start,
+                end_offset=line_end,
+            ),
         )
         return line
     return None
 
 
-def extract_emails(text: str, evidence: list[dict[str, object]]) -> list[str]:
+def extract_emails(
+    text: str,
+    evidence: list[dict[str, object]],
+    *,
+    page_spans: tuple[ExtractedTextSpan, ...] = (),
+) -> list[str]:
     """Extract and normalize e-mail addresses from CV text.
 
     Args:
         text: Decoded CV text.
         evidence: Mutable evidence accumulator.
+        page_spans: Optional source page mapping for evidence ranges.
 
     Returns:
         list[str]: Distinct normalized e-mail values.
@@ -277,16 +587,27 @@ def extract_emails(text: str, evidence: list[dict[str, object]]) -> list[str]:
             snippet=build_line_snippet(text, match.start(), match.end()),
             start_offset=match.start(),
             end_offset=match.end(),
+            page=resolve_page_number(
+                page_spans,
+                start_offset=match.start(),
+                end_offset=match.end(),
+            ),
         )
     return unique
 
 
-def extract_phones(text: str, evidence: list[dict[str, object]]) -> list[str]:
+def extract_phones(
+    text: str,
+    evidence: list[dict[str, object]],
+    *,
+    page_spans: tuple[ExtractedTextSpan, ...] = (),
+) -> list[str]:
     """Extract and normalize phone numbers from CV text.
 
     Args:
         text: Decoded CV text.
         evidence: Mutable evidence accumulator.
+        page_spans: Optional source page mapping for evidence ranges.
 
     Returns:
         list[str]: Distinct normalized phone values.
@@ -305,16 +626,27 @@ def extract_phones(text: str, evidence: list[dict[str, object]]) -> list[str]:
             snippet=build_line_snippet(text, match.start(), match.end()),
             start_offset=match.start(),
             end_offset=match.end(),
+            page=resolve_page_number(
+                page_spans,
+                start_offset=match.start(),
+                end_offset=match.end(),
+            ),
         )
     return unique
 
 
-def extract_years_of_experience(text: str, evidence: list[dict[str, object]]) -> int | None:
+def extract_years_of_experience(
+    text: str,
+    evidence: list[dict[str, object]],
+    *,
+    page_spans: tuple[ExtractedTextSpan, ...] = (),
+) -> int | None:
     """Extract total experience years from CV text.
 
     Args:
         text: Decoded CV text.
         evidence: Mutable evidence accumulator.
+        page_spans: Optional source page mapping for evidence ranges.
 
     Returns:
         int | None: Parsed years value when present.
@@ -329,16 +661,27 @@ def extract_years_of_experience(text: str, evidence: list[dict[str, object]]) ->
         snippet=build_line_snippet(text, match.start(), match.end()),
         start_offset=match.start(),
         end_offset=match.end(),
+        page=resolve_page_number(
+            page_spans,
+            start_offset=match.start(),
+            end_offset=match.end(),
+        ),
     )
     return years
 
 
-def extract_skills(text: str, evidence: list[dict[str, object]]) -> list[str]:
+def extract_skills(
+    text: str,
+    evidence: list[dict[str, object]],
+    *,
+    page_spans: tuple[ExtractedTextSpan, ...] = (),
+) -> list[str]:
     """Extract canonical skills using bilingual synonym matching.
 
     Args:
         text: Decoded CV text.
         evidence: Mutable evidence accumulator.
+        page_spans: Optional source page mapping for evidence ranges.
 
     Returns:
         list[str]: Sorted canonical skill identifiers.
@@ -358,6 +701,11 @@ def extract_skills(text: str, evidence: list[dict[str, object]]) -> list[str]:
                 snippet=build_line_snippet(text, match.start(), match.end()),
                 start_offset=match.start(),
                 end_offset=match.end(),
+                page=resolve_page_number(
+                    page_spans,
+                    start_offset=match.start(),
+                    end_offset=match.end(),
+                ),
             )
             break
     return sorted(extracted)
@@ -438,6 +786,7 @@ def append_evidence(
     snippet: str,
     start_offset: int,
     end_offset: int,
+    page: int | None = None,
 ) -> None:
     """Append one evidence record to mutable accumulator.
 
@@ -447,6 +796,7 @@ def append_evidence(
         snippet: Source snippet proving extracted field value.
         start_offset: Source start offset.
         end_offset: Source end offset.
+        page: One-based source page number when known.
     """
     evidence.append(
         {
@@ -454,6 +804,6 @@ def append_evidence(
             "snippet": snippet,
             "start_offset": start_offset,
             "end_offset": end_offset,
-            "page": None,
+            "page": page,
         }
     )

@@ -42,6 +42,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0035 | 2026-03-11 | accepted | Materialize onboarding tasks from the active template and keep staff operations on onboarding runs | architect + backend-engineer | onboarding task data model, bootstrap transaction boundary, RBAC, API contract |
 | ADR-0036 | 2026-03-11 | accepted | Expose employee self-service onboarding on `/employee` with durable profile identity linking | architect + backend-engineer + frontend-engineer | employee auth-to-profile mapping, self-service API contract, frontend route topology, RBAC |
 | ADR-0037 | 2026-03-11 | accepted | Expose onboarding progress dashboards on the existing `/` route and keep manager visibility read-only and assignment-scoped | architect + backend-engineer + frontend-engineer | onboarding progress read model, manager visibility policy, frontend route topology, RBAC |
+| ADR-0038 | 2026-03-11 | accepted | Perform native PDF/DOCX text extraction before CV normalization while keeping parsing and scoring contracts stable | architect + backend-engineer | candidate parsing pipeline, evidence traceability, worker/runtime dependencies, scoring preconditions |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -728,3 +729,22 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Manager visibility remains tightly scoped to explicit task assignments, which avoids accidental team-wide data exposure before `TASK-09-01` defines broader manager workspace rules.
   - The dashboard reuses transactional onboarding tables directly, so later reporting or aggregation optimizations can be deferred until real load justifies them.
   - Full manager/team hiring workspace, richer cross-run analytics, notifications, and broader visibility policies remain deferred to `TASK-09-01+`.
+
+## ADR-0038
+- Context: `TASK-03-07` requires the documented PDF/DOCX CV support at the API boundary to match the actual backend parsing behavior. The existing parser accepted PDF/DOCX uploads but normalized raw `bytes.decode("utf-8", errors="ignore")`, which made extraction format-blind and weakened explainability for real documents.
+- Decision:
+  - Introduce a mime-aware extraction layer ahead of RU/EN normalization and evidence mapping.
+  - Use native PDF text extraction through `pypdf`.
+  - Use native DOCX text extraction by reading OOXML zip parts and extracting paragraph text from `word/document.xml` plus related text-bearing parts.
+  - Fail closed when a PDF/DOCX payload is broken or yields empty extracted text; keep the existing parsing job lifecycle (`queued`, `running`, `succeeded`, `failed`) and retry behavior unchanged.
+  - Keep external candidate/scoring contracts unchanged:
+    - parsing status payload shape stays the same;
+    - analysis response payload shape stays the same;
+    - scoring still requires `parsed_profile_json + evidence_json + parsed_at`.
+  - Keep evidence offsets anchored to the extracted text passed into normalization; populate `page` for PDF evidence when the extractor can resolve the matched offsets to a page.
+  - Cover the slice with real PDF/DOCX fixtures in unit and integration tests and update browser smoke to submit a valid PDF fixture instead of plain text bytes labeled as PDF.
+- Consequences:
+  - Backend CV parsing now matches the documented PDF/DOCX product scope without changing public routes or schema contracts.
+  - The worker/runtime gains one new pure-Python dependency (`pypdf`) and explicit DOCX XML handling, but avoids OCR or heavier native toolchains in this slice.
+  - Explainability improves for PDF documents because evidence can now preserve source page numbers when available.
+  - Image-only PDFs and blank DOCX files still fail closed until a future OCR/richer extraction slice explicitly broadens scope.

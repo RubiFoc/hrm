@@ -676,15 +676,25 @@ flowchart LR
 ## Diagram 18: Async CV Parsing Worker Lifecycle
 
 ```mermaid
-stateDiagram-v2
-  [*] --> queued
-  queued --> running: celery task claims job
-  running --> succeeded: parse + persist success
-  running --> failed: parser/storage error
-  failed --> running: retry if attempt_count < max_attempts
-  failed --> [*]: terminal when attempts exhausted
-  succeeded --> [*]
+flowchart LR
+  Q[queued job] --> R[running claim]
+  R --> L[load candidate document from object storage]
+  L --> T{mime type}
+  T -->|application/pdf| PDF[extract native PDF text]
+  T -->|application/vnd.openxmlformats-officedocument.wordprocessingml.document| DOCX[extract native DOCX text]
+  PDF --> N[RU/EN normalization + evidence mapping]
+  DOCX --> N
+  N --> P[persist parsed_profile_json + evidence_json + detected_language + parsed_at]
+  P --> S[succeeded]
+  L --> F[failed]
+  PDF -->|broken or empty text| F
+  DOCX -->|broken or empty text| F
+  F --> RET{attempt_count < max_attempts}
+  RET -->|yes| R
+  RET -->|no| TF[terminal failed]
 ```
+
+Current implementation keeps evidence offsets anchored to the extracted text used for normalization and populates PDF `page` numbers when the extractor can resolve the matched range.
 
 ## Diagram 19: Admin Route Guard and Redirect Flow (ADMIN-01)
 
