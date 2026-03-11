@@ -5,7 +5,9 @@
 - Updated by: architect + backend-engineer + frontend-engineer
 
 ## System Context
-HRM platform for Belarus and Russia that supports candidate selection, fair interview workflows, onboarding, HR automation, and operational workflows for HR, managers, employees, leaders, and accountants.
+HRM platform for Belarus and Russia that supports candidate selection across professions and
+industries, fair interview workflows, onboarding, HR automation, and operational workflows for HR,
+managers, employees, leaders, and accountants.
 
 Canonical diagram set: `docs/architecture/diagrams.md`.
 
@@ -53,7 +55,8 @@ flowchart LR
 
 ## Key Flows
 1. Candidate Screening Flow:
-   candidate profile + CV -> native PDF/DOCX text extraction -> RU/EN normalization + evidence extraction ->
+   candidate profile + CV -> native PDF/DOCX text extraction -> RU/EN normalization + universal
+   workplace/education/title/date/skills enrichment + evidence extraction ->
    recruiter selects vacancy + candidate in `/` -> explicit scoring request ->
    `409` if parsed CV analysis is not ready, otherwise async scoring via Ollama ->
    persisted score artifact -> recruiter review -> shortlist.
@@ -103,7 +106,11 @@ flowchart LR
 - Source of truth entities:
   vacancies, candidates, CV metadata, interview records, employee profiles, onboarding runs/templates/tasks, HR operations, audit events.
 - CV analysis artifacts:
-  `parsed_profile_json`, `evidence_json`, `detected_language`, `parsed_at` stored per active candidate document; evidence offsets anchor to extracted text and PDF evidence now carries page numbers when extraction can resolve them.
+  `parsed_profile_json`, `evidence_json`, `detected_language`, `parsed_at` stored per active
+  candidate document; `parsed_profile_json` now contains profession-agnostic workplace history with
+  employer plus held position, education entries, normalized titles, normalized dates/ranges, and
+  generic skills; evidence offsets anchor to extracted text and PDF evidence now carries page
+  numbers when extraction can resolve them.
 - Match scoring artifacts:
   `match_scoring_jobs` (`queued`, `running`, `succeeded`, `failed`) and score payloads keyed by
   `vacancy_id + candidate_id + active_document_id`, including `score`, `confidence`, `summary`,

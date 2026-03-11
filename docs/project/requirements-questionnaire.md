@@ -8,7 +8,10 @@ Use this file to collect baseline project requirements before implementation.
 
 ## 1. Product Goal
 - Main problem: simplify candidate matching to vacancies before interviews.
-- Additional goals: improve interview fairness, simplify HR operations, simplify onboarding, automate HR processes, reduce load for managers/leaders/accountants.
+- Additional goals: improve interview fairness, simplify HR operations, simplify onboarding,
+  automate HR processes, reduce load for managers/leaders/accountants.
+- Product scope is profession-agnostic and must support hiring across industries rather than only
+  IT recruiting.
 
 ## 2. Target Users
 - Primary users: HR, candidates, managers, employees, leaders, accountants.
@@ -40,6 +43,8 @@ Use this file to collect baseline project requirements before implementation.
 - Sensitive personal data must be protected.
 - CV document formats for v1: PDF and DOCX.
 - CV parsing must support Russian and English resumes in a unified comparison model.
+- Parsed CV profiles must represent universal workplace history with employer plus held position,
+  education, normalized titles, normalized dates/ranges, and generic skills.
 - Extracted CV facts must preserve links to source text fragments for explainability.
 
 ## 7. Non-Functional Requirements

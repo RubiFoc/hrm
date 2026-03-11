@@ -34,6 +34,12 @@ def _read_fixture_bytes(filename: str) -> bytes:
     return (FIXTURES_DIR / filename).read_bytes()
 
 
+@pytest.fixture()
+def anyio_backend() -> str:
+    """Pin integration tests to asyncio backend for deterministic in-process requests."""
+    return "asyncio"
+
+
 class InMemoryCandidateStorage:
     """In-memory object storage replacement for parsing integration tests."""
 
@@ -204,11 +210,73 @@ async def test_parsing_job_success_and_status_tracking(
     assert analysis_payload["evidence"]
     if mime_type == PDF_MIME_TYPE:
         assert any(
-            item["field"] == "skills.docker" and item["page"] == 2
+            item["field"].startswith("skills[")
+            and item["snippet"] == "Docker SQL"
+            and item["page"] == 2
             for item in analysis_payload["evidence"]
         )
     else:
         assert all(item["page"] is None for item in analysis_payload["evidence"])
+
+
+@pytest.mark.parametrize(
+    ("filename", "mime_type", "fixture_name", "expected_current_position"),
+    [
+        ("structured.pdf", PDF_MIME_TYPE, "sample_cv_structured_en.pdf", "Warehouse Supervisor"),
+        (
+            "structured.docx",
+            DOCX_MIME_TYPE,
+            "sample_cv_structured_ru.docx",
+            "Старший кладовщик",
+        ),
+    ],
+)
+async def test_parsing_job_persists_structured_workplace_and_education_entries(
+    configured_app,
+    api_client: AsyncClient,
+    filename: str,
+    mime_type: str,
+    fixture_name: str,
+    expected_current_position: str,
+) -> None:
+    """Verify richer CV parsing persists workplace positions, education, and indexed evidence."""
+    _, settings, _, storage, database_url = configured_app
+
+    candidate_response = await api_client.post(
+        "/api/v1/candidates",
+        json={
+            "first_name": "Sara",
+            "last_name": "West",
+            "email": "sara@example.com",
+            "extra_data": {},
+        },
+    )
+    candidate_id = candidate_response.json()["candidate_id"]
+
+    content = _read_fixture_bytes(fixture_name)
+    checksum = hashlib.sha256(content).hexdigest()
+    upload_response = await api_client.post(
+        f"/api/v1/candidates/{candidate_id}/cv",
+        data={"checksum_sha256": checksum},
+        files={"file": (filename, content, mime_type)},
+    )
+    assert upload_response.status_code == 200
+    assert _run_worker_once(database_url, settings, storage) == "succeeded"
+
+    analysis_response = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/analysis")
+    assert analysis_response.status_code == 200
+    payload = analysis_response.json()["parsed_profile"]
+
+    assert payload["workplaces"]["entries"] == payload["experience"]["entries"]
+    assert payload["workplaces"]["entries"][0]["position"]["raw"] == expected_current_position
+    assert payload["titles"]["current"]["raw"] == expected_current_position
+    assert payload["education"]["entries"]
+    assert payload["education"]["entries"][0]["date_range"]["start"] is not None
+
+    evidence = analysis_response.json()["evidence"]
+    assert any(item["field"] == "experience.entries[0].position.raw" for item in evidence)
+    assert any(item["field"] == "education.entries[0].institution" for item in evidence)
+    assert any(item["field"] == "titles.current.raw" for item in evidence)
 
 
 async def test_public_tracking_endpoints_follow_job_lifecycle(

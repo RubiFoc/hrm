@@ -1,10 +1,12 @@
 # Architecture Decomposition
 
 ## Last Updated
-- Date: 2026-03-04
+- Date: 2026-03-11
 - Updated by: architect + backend-engineer
 
 This document breaks the system architecture from high-level domains into smaller technical units.
+The recruitment and CV-analysis scope is profession-agnostic and must support workers across
+industries rather than only IT roles.
 
 ## Level 1: Domain Decomposition
 
@@ -30,7 +32,7 @@ This document breaks the system architecture from high-level domains into smalle
 | Auth and Access Service | Platform | Authentication, role policies, session validation | REST/Token |
 | Vacancy Service | Recruitment | Vacancy CRUD, requirements and stages | REST |
 | Candidate Service | Recruitment | Candidate profiles, attachments, status transitions | REST |
-| CV Processing Service | Intelligence | Document extraction, normalized CV structure | Async jobs + REST status |
+| CV Processing Service | Intelligence | Document extraction and profession-agnostic normalized CV structure (workplaces, held positions, education, titles, dates, generic skills) | Async jobs + REST status |
 | Match Scoring Service | Intelligence | Candidate-vacancy scoring via Ollama adapter | Async jobs |
 | Interview Service | Recruitment | Interview planning, feedback capture, fairness guardrails | REST |
 | Calendar Sync Service | Platform | Google Calendar synchronization and retries | Async jobs + webhooks |

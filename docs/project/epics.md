@@ -7,6 +7,7 @@
 ## Planning Baseline
 - Jurisdictions: Belarus and Russia.
 - Legal baseline: `docs/project/legal-framework.md`.
+- Product scope: general HRM workflows and CV analysis for workers across industries, not only IT.
 - Mandatory integrations: Ollama, Google Calendar.
 - Mandatory frontend stack: React.js + TypeScript.
 - Frontend localization for v1: ru + en.
@@ -20,7 +21,9 @@
 
 ## Implementation Reality (2026-03-09)
 - `EPIC-03` backend scope is materially implemented for Phase 1 local baseline: public apply, CV upload, async parsing, RU/EN normalization, evidence traceability, and anonymous tracking by `parsing_job_id`.
-- The current `EPIC-03` parsing baseline is still heuristic/text-oriented; native PDF/DOCX extraction and richer section-aware profile extraction remain open and are now tracked as `TASK-03-07` and `TASK-03-08`.
+- `EPIC-03` backend scope now includes native PDF/DOCX extraction plus profession-agnostic
+  structured CV enrichment for workplaces with held positions, education, normalized titles,
+  normalized dates/ranges, generic skills, and evidence traceability.
 - `EPIC-02` backend scope is materially implemented for Phase 1 local baseline: vacancy CRUD, canonical pipeline transitions, and ordered transition history.
 - `EPIC-11` local baseline now includes candidate self-service, HR vacancy/pipeline workspace, RU/EN strings for critical flows, and browser smoke for login + public candidate apply.
 - The immediate next epic gap is the handoff from parsed candidate data into `EPIC-04` recruiter-facing scoring review.
@@ -105,7 +108,10 @@
 - Candidate profile schema is stable and validated.
 - Candidate can upload CV in PDF and DOCX formats.
 - CV files are stored securely with metadata and parsing status.
-- Parsing pipeline supports RU/EN resumes and outputs canonical normalized profile.
+- Parsing pipeline supports RU/EN resumes and outputs a canonical normalized profile for
+  profession-agnostic resumes.
+- Canonical parsed profile includes workplaces with employer plus held position, education,
+  normalized titles, normalized dates/ranges, and generic skills.
 - Extracted facts are linked to source fragments (sentence/paragraph evidence traceability).
 - HR can search/filter candidates by vacancy-relevant criteria.
 

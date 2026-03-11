@@ -188,7 +188,9 @@ sequenceDiagram
 ```
 
 Current implementation persists lifecycle state in `match_scoring_jobs` and UI-ready explainable
-artifacts in `match_score_artifacts`.
+artifacts in `match_score_artifacts`. The parsed CV payload now remains profession-agnostic and
+includes workplace history with held positions, education entries, normalized titles/dates, and
+generic skills before scoring.
 
 ## Diagram 5: Interview Scheduling Sequence
 
@@ -682,7 +684,7 @@ flowchart LR
   L --> T{mime type}
   T -->|application/pdf| PDF[extract native PDF text]
   T -->|application/vnd.openxmlformats-officedocument.wordprocessingml.document| DOCX[extract native DOCX text]
-  PDF --> N[RU/EN normalization + evidence mapping]
+  PDF --> N[RU/EN normalization + profession-agnostic profile enrichment + evidence mapping]
   DOCX --> N
   N --> P[persist parsed_profile_json + evidence_json + detected_language + parsed_at]
   P --> S[succeeded]
@@ -694,7 +696,10 @@ flowchart LR
   RET -->|no| TF[terminal failed]
 ```
 
-Current implementation keeps evidence offsets anchored to the extracted text used for normalization and populates PDF `page` numbers when the extractor can resolve the matched range.
+Current implementation keeps evidence offsets anchored to the extracted text used for normalization,
+persists profession-agnostic workplaces with held positions plus education/title/date/skills
+artifacts inside `parsed_profile_json`, and populates PDF `page` numbers when the extractor can
+resolve the matched range.
 
 ## Diagram 19: Admin Route Guard and Redirect Flow (ADMIN-01)
 
