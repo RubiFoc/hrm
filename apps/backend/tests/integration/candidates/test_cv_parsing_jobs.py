@@ -24,6 +24,14 @@ from hrm_backend.main import app
 from hrm_backend.settings import AppSettings, get_settings
 
 pytestmark = pytest.mark.anyio
+FIXTURES_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "candidates"
+PDF_MIME_TYPE = "application/pdf"
+DOCX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+
+def _read_fixture_bytes(filename: str) -> bytes:
+    """Read one CV fixture payload by filename."""
+    return (FIXTURES_DIR / filename).read_bytes()
 
 
 class InMemoryCandidateStorage:
@@ -60,7 +68,7 @@ def configured_app(sqlite_database_url: str):
         database_url=sqlite_database_url,
         redis_url="redis://localhost:6379/15",
         jwt_secret="integration-secret-with-minimum-32-bytes",
-        cv_max_size_bytes=1024,
+        cv_max_size_bytes=4096,
         cv_parsing_max_attempts=2,
     )
     storage = InMemoryCandidateStorage()
@@ -130,9 +138,21 @@ async def api_client(configured_app) -> AsyncClient:
         yield client
 
 
+@pytest.mark.parametrize(
+    ("filename", "mime_type", "fixture_name", "expected_language", "expected_full_name"),
+    [
+        ("cv.pdf", PDF_MIME_TYPE, "sample_cv_en.pdf", "en", "John Doe"),
+        ("cv.docx", DOCX_MIME_TYPE, "sample_cv_ru.docx", "ru", "Иван Иванов"),
+    ],
+)
 async def test_parsing_job_success_and_status_tracking(
     configured_app,
     api_client: AsyncClient,
+    filename: str,
+    mime_type: str,
+    fixture_name: str,
+    expected_language: str,
+    expected_full_name: str,
 ) -> None:
     """Verify queued job moves to succeeded state after worker iteration."""
     _, settings, _, storage, database_url = configured_app
@@ -148,12 +168,12 @@ async def test_parsing_job_success_and_status_tracking(
     )
     candidate_id = candidate_response.json()["candidate_id"]
 
-    content = b"normal-parse-content"
+    content = _read_fixture_bytes(fixture_name)
     checksum = hashlib.sha256(content).hexdigest()
     upload_response = await api_client.post(
         f"/api/v1/candidates/{candidate_id}/cv",
         data={"checksum_sha256": checksum},
-        files={"file": ("cv.pdf", content, "application/pdf")},
+        files={"file": (filename, content, mime_type)},
     )
     assert upload_response.status_code == 200
 
@@ -172,15 +192,23 @@ async def test_parsing_job_success_and_status_tracking(
     post_payload = post_status.json()
     assert post_payload["status"] == "succeeded"
     assert post_payload["analysis_ready"] is True
-    assert post_payload["detected_language"] == "en"
+    assert post_payload["detected_language"] == expected_language
 
     analysis_response = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/analysis")
     assert analysis_response.status_code == 200
     analysis_payload = analysis_response.json()
-    assert analysis_payload["detected_language"] == "en"
-    assert analysis_payload["parsed_profile"]["document"]["mime_type"] == "application/pdf"
+    assert analysis_payload["detected_language"] == expected_language
+    assert analysis_payload["parsed_profile"]["document"]["mime_type"] == mime_type
+    assert analysis_payload["parsed_profile"]["personal"]["full_name"] == expected_full_name
     assert isinstance(analysis_payload["evidence"], list)
     assert analysis_payload["evidence"]
+    if mime_type == PDF_MIME_TYPE:
+        assert any(
+            item["field"] == "skills.docker" and item["page"] == 2
+            for item in analysis_payload["evidence"]
+        )
+    else:
+        assert all(item["page"] is None for item in analysis_payload["evidence"])
 
 
 async def test_public_tracking_endpoints_follow_job_lifecycle(
@@ -201,12 +229,12 @@ async def test_public_tracking_endpoints_follow_job_lifecycle(
     )
     candidate_id = candidate_response.json()["candidate_id"]
 
-    content = b"public-tracking-success"
+    content = _read_fixture_bytes("sample_cv_en.pdf")
     checksum = hashlib.sha256(content).hexdigest()
     upload_response = await api_client.post(
         f"/api/v1/candidates/{candidate_id}/cv",
         data={"checksum_sha256": checksum},
-        files={"file": ("cv.pdf", content, "application/pdf")},
+        files={"file": ("cv.pdf", content, PDF_MIME_TYPE)},
     )
     assert upload_response.status_code == 200
 
@@ -240,9 +268,21 @@ async def test_public_tracking_endpoints_follow_job_lifecycle(
     assert public_analysis_response.json()["candidate_id"] == candidate_id
 
 
+@pytest.mark.parametrize(
+    ("filename", "mime_type", "fixture_name", "expected_error_fragment"),
+    [
+        ("broken.pdf", PDF_MIME_TYPE, "broken_cv.pdf", "PDF"),
+        ("broken.docx", DOCX_MIME_TYPE, "broken_cv.docx", "DOCX"),
+        ("empty.docx", DOCX_MIME_TYPE, "empty_cv.docx", "empty textual payload"),
+    ],
+)
 async def test_parsing_job_failure_path_and_retry_limit(
     configured_app,
     api_client: AsyncClient,
+    filename: str,
+    mime_type: str,
+    fixture_name: str,
+    expected_error_fragment: str,
 ) -> None:
     """Verify failure path retries up to configured limit and then stops."""
     _, settings, _, storage, database_url = configured_app
@@ -258,12 +298,12 @@ async def test_parsing_job_failure_path_and_retry_limit(
     )
     candidate_id = candidate_response.json()["candidate_id"]
 
-    content = b"FAIL_PARSE deterministic-failure"
+    content = _read_fixture_bytes(fixture_name)
     checksum = hashlib.sha256(content).hexdigest()
     upload_response = await api_client.post(
         f"/api/v1/candidates/{candidate_id}/cv",
         data={"checksum_sha256": checksum},
-        files={"file": ("cv.pdf", content, "application/pdf")},
+        files={"file": (filename, content, mime_type)},
     )
     assert upload_response.status_code == 200
 
@@ -281,5 +321,6 @@ async def test_parsing_job_failure_path_and_retry_limit(
     assert payload["status"] == "failed"
     assert payload["attempt_count"] == 2
     assert payload["last_error"] is not None
+    assert expected_error_fragment in payload["last_error"]
     assert payload["analysis_ready"] is False
     assert payload["detected_language"] == "unknown"

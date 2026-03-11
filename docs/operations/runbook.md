@@ -1,7 +1,7 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-10
+- Date: 2026-03-11
 - Updated by: devops-engineer + backend-engineer
 
 ## Local Environment (Docker Compose)
@@ -71,6 +71,10 @@ Runtime auth/browser integration settings:
 - Compose service: `backend-worker`.
 - Runtime lifecycle in DB (`cv_parsing_jobs` source of truth):
   `queued -> running -> succeeded/failed`.
+- Native extraction behavior before RU/EN normalization:
+  - `application/pdf` -> `pypdf` text extraction with PDF page traceability in evidence when available;
+  - `application/vnd.openxmlformats-officedocument.wordprocessingml.document` -> OOXML zip/XML text extraction;
+  - broken archives/documents or empty extracted text fail closed and keep `analysis_ready=false`.
 - Retry behavior is bounded by `CV_PARSING_MAX_ATTEMPTS`.
 - Celery runtime settings:
   - `CELERY_BROKER_URL`
@@ -130,7 +134,7 @@ Runtime auth/browser integration settings:
    - browser auth requests target `http://localhost:8000` rather than relative `/api/...` on the frontend origin;
    - browser CORS preflight succeeds for cross-origin auth requests during login/logout.
    - staff API creates one deterministic `open` vacancy for browser candidate smoke;
-   - headless Chrome completes `/candidate?vacancyId=...&vacancyTitle=... -> /api/v1/vacancies/{vacancy_id}/applications -> /api/v1/public/cv-parsing-jobs/{job_id}`;
+  - headless Chrome completes `/candidate?vacancyId=...&vacancyTitle=... -> /api/v1/vacancies/{vacancy_id}/applications -> /api/v1/public/cv-parsing-jobs/{job_id}` using the checked-in valid PDF fixture `apps/backend/tests/fixtures/candidates/sample_cv_en.pdf`;
    - candidate browser requests target `http://localhost:8000` rather than relative `/api/...` on the frontend origin;
    - candidate smoke succeeds when public tracking reaches at least `queued` or `running`; `analysis_ready=true` is preferred but not required.
    - scoring/Ollama verification is intentionally excluded from compose smoke; validate the scoring slice through targeted unit and integration suites to avoid nondeterministic browser smoke failures.
@@ -184,7 +188,8 @@ Runtime auth/browser integration settings:
   2. Inspect browser Network tab and confirm apply/tracking requests target `http://localhost:8000`, not relative `/api/...` on `localhost:5173`.
   3. Verify the staff-created smoke vacancy is still `status=open`.
   4. Check `sessionStorage["hrm_candidate_application_context"]` for `vacancyId`, `candidateId`, and `parsingJobId`.
-  5. If status never moves past `queued`, inspect `backend-worker` logs; compose smoke still treats `queued/running` as acceptable minimum.
+  5. If status becomes `failed`, inspect `backend-worker` logs for native extraction errors such as unreadable PDF/DOCX or empty extracted text.
+  6. If status never moves past `queued`, inspect `backend-worker` logs; compose smoke still treats `queued/running` as acceptable minimum.
 
 ### HR Shortlist Review Diagnostics (`/`)
 - API path sequence:
