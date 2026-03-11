@@ -22,7 +22,7 @@
 | TASK-11-13 | done/closed | GitHub issue #67 closed; merged in `main` via PR #68 and PR #69 (`d8ea39e`) |
 | TASK-12-01 | implemented/local-compose-baseline | `docker-compose.yml`, Dockerfiles, `./scripts/smoke-compose.sh`, and CI compose browser smoke already verify the local stack (`frontend`, `backend`, `backend-worker`, `postgres`, `redis`, `minio`) plus bootstrap jobs |
 | TASK-11-01/02/03/04 | done/closed | GitHub issues #25, #26, #27, and #28 were closed during backlog normalization; the current repo remains the source of truth for the implemented frontend foundation |
-| TASK-03-01/02/03/05/06/07/08 | implemented/local-universal-profile-enrichment-slice | Backend candidate profile, public apply, async parsing, native PDF/DOCX text extraction, RU/EN normalization, profession-agnostic structured CV enrichment (workplaces with held positions, education, normalized titles/dates, generic skills), evidence traceability, and public tracking endpoints are present in repo with unit/integration coverage |
+| TASK-03-01/02/03/05/06/07/08 | implemented/local-universal-profile-enrichment-slice | GitHub issue #90 is now closed; backend candidate profile, public apply, async parsing, native PDF/DOCX text extraction, RU/EN normalization, profession-agnostic structured CV enrichment (workplaces with held positions, education, normalized titles/dates, generic skills), evidence traceability, and public tracking endpoints are present in repo with unit/integration coverage |
 | TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
 | TASK-11-06 | implemented/local-baseline | `/candidate` now supports public deep-link apply, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling |
 | TASK-11-05 | implemented/local-baseline | `/` now exposes staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
@@ -54,9 +54,10 @@
 - GitHub issue sync is normalized to the current backlog state: stale implemented-task issues were closed, and missing normalized-open tasks were added as issues #85-#100.
 - Backend implementation is ahead of the original planning docs for `TASK-03-01/02/03/05/06` and `TASK-02-01/02/03`; these items are no longer backlog-only work.
 - `TASK-03-07` is now implemented in repo: backend parsing extracts text natively from PDF and DOCX before RU/EN normalization and evidence mapping, while current analysis/scoring contracts stay compatible.
-- `TASK-03-08` is now implemented in repo: parsed CV profiles are enriched additively with
-  profession-agnostic workplace history, held positions, education, normalized titles/dates, and
-  generic skills while keeping parsing/analysis/scoring contracts stable.
+- `TASK-03-08` is now implemented in repo and GitHub issue `#90` is closed: parsed CV profiles
+  are enriched additively with profession-agnostic workplace history, held positions, education,
+  normalized titles/dates, and generic skills while keeping parsing/analysis/scoring contracts
+  stable.
 - The scoring/shortlist-review slice (`TASK-04-01/02/03 + TASK-11-07`) is now implemented in repo as one vertical delivery unit.
 - Scoring explainability (`TASK-04-05`) is now implemented in the same slice; remaining AI backlog is the low-confidence fallback and the quality harness.
 - The compliance follow-on slice (`TASK-13-01/02`) is now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
@@ -94,8 +95,8 @@
 
 - Normalized open backlog count: `22` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
-- GitHub tracking for the normalized open backlog currently lives in issues `#18-#23`, `#61-#62`, and `#85-#100`.
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `24`-task count.
+- GitHub tracking for the normalized open backlog currently lives in issues `#18-#23`, `#61-#62`, `#85-#88`, and `#91-#100`.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `22`-task count.
 - Current open backlog by delivery wave:
   - Wave 1 product gaps: `TASK-12-02`, `TASK-03-04`, `TASK-04-04`, `TASK-04-06`
   - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-01`, `TASK-10-02`, `TASK-10-03`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
