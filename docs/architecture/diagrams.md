@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-10
+- Date: 2026-03-11
 - Updated by: architect + backend-engineer + frontend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
@@ -200,6 +200,7 @@ sequenceDiagram
   participant API as API Gateway
   participant INT as Interview Service
   participant PIPE as Pipeline Service
+  participant EMP as Employee Domain
   participant GCA as Calendar Sync Service
   participant GCAL as Google Calendar
   participant C as Candidate
@@ -249,13 +250,162 @@ sequenceDiagram
   HR->>UI: Attempt offer -> hired or offer -> rejected transition
   UI->>API: POST /api/v1/pipeline/transitions
   API->>PIPE: Validate canonical transition + required offer status
+  PIPE->>EMP: On `hired`, persist `hire_conversion` handoff from accepted offer + candidate snapshot
+  EMP-->>PIPE: ready handoff persisted
   PIPE-->>API: transition created | 409 offer_not_accepted | 409 offer_not_declined
   API-->>UI: Terminal offer transition success or localized blocker
+  HR->>UI: Bootstrap employee profile after successful hire
+  UI->>API: POST /api/v1/employees
+  API->>EMP: Resolve ready `hire_conversion` by vacancy_id + candidate_id
+  EMP->>EMP: Validate frozen snapshots + resolve active onboarding template
+  EMP->>EMP: Insert `employee_profiles + onboarding_runs(status=started)` in the same transaction
+  EMP->>EMP: Materialize ordered `onboarding_tasks(status=pending)` from the active template
+  EMP-->>API: employee profile payload + onboarding metadata | 404/409/422
+  API-->>UI: Employee bootstrap success or localized blocker
 ```
 
-The interview flow is now implemented from `docs/project/interview-planning-pass.md` and `docs/project/interview-feedback-fairness-pass.md`, and the downstream offer flow now stays on the same vacancy route tree without adding candidate auth or a new top-level route tree. In the current free-mode runtime, Google Calendar access is service-account based, each interviewer calendar is shared manually with that service account, candidate delivery still uses `candidate_invite_url` instead of Google guest invitations, the fairness guard stays on the existing `interview -> offer` transition, and offer acceptance/decline remains staff-recorded in `/`.
+The interview flow is now implemented from `docs/project/interview-planning-pass.md` and `docs/project/interview-feedback-fairness-pass.md`, and the downstream offer flow now stays on the same vacancy route tree without adding candidate auth or a new top-level route tree. In the current free-mode runtime, Google Calendar access is service-account based, each interviewer calendar is shared manually with that service account, candidate delivery still uses `candidate_invite_url` instead of Google guest invitations, the fairness guard stays on the existing `interview -> offer` transition, offer acceptance/decline remains staff-recorded in `/`, successful `offer -> hired` persists one durable `hire_conversion` handoff, the follow-on staff employee bootstrap runs on `POST /api/v1/employees` where `employee_profiles`, `onboarding_runs`, and materialized `onboarding_tasks` commit atomically against the current active template, the employee self-service portal stays on `/employee` plus `/api/v1/employees/me/onboarding*`, and HR/admin plus managers now observe onboarding progress on the existing `/` route through `GET /api/v1/onboarding/runs*`.
 
-## Diagram 6: Deployment and Trust Boundaries
+## Diagram 6: Onboarding Template Management Sequence
+
+```mermaid
+sequenceDiagram
+  participant HR as HR/Admin
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant EMP as Employee Domain
+  participant DB as PostgreSQL
+
+  HR->>UI: Create or update onboarding checklist template
+  UI->>API: POST/GET/PUT /api/v1/onboarding/templates
+  API->>EMP: Validate staff permission + template payload
+  EMP->>DB: Persist `onboarding_templates` + `onboarding_template_items`
+  alt Name conflict or invalid checklist items
+    EMP-->>API: 409 name_conflict | 422 template_invalid
+    API-->>UI: Localized staff-facing blocker
+  else Success
+    EMP->>DB: Deactivate previous active template when new template is active
+    EMP-->>API: Template payload with ordered checklist items
+    API-->>UI: Current template state for later onboarding-task generation
+  end
+```
+
+## Diagram 7: Onboarding Task Materialization and Backfill Sequence
+
+```mermaid
+sequenceDiagram
+  participant HR as HR/Admin
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant EMP as Employee Domain
+  participant DB as PostgreSQL
+
+  HR->>UI: Bootstrap employee after successful hire or backfill legacy onboarding run
+  alt New employee bootstrap
+    UI->>API: POST /api/v1/employees
+    API->>EMP: Resolve ready hire conversion + active template
+    EMP->>DB: Persist `employee_profiles + onboarding_runs + onboarding_tasks`
+    alt No active template
+      EMP-->>API: 422 onboarding_template_not_configured
+      API-->>UI: Localized blocker with no partial bootstrap rows
+    else Success
+      EMP-->>API: employee payload + onboarding metadata
+      API-->>UI: Bootstrap success
+    end
+  else Legacy onboarding run backfill
+    UI->>API: POST /api/v1/onboarding/runs/{onboarding_id}/tasks/backfill
+    API->>EMP: Validate run exists and currently has zero tasks
+    EMP->>DB: Insert ordered `onboarding_tasks` from active template snapshot
+    EMP-->>API: task list | 404 run_not_found | 409 tasks_already_exist | 422 template_not_configured
+    API-->>UI: Staff-facing backfill result
+  end
+  HR->>UI: Update assignment or SLA state
+  UI->>API: PATCH /api/v1/onboarding/runs/{onboarding_id}/tasks/{task_id}
+  API->>EMP: Validate task ownership and patch workflow fields
+  EMP->>DB: Persist status/assignment/due_at and manage `completed_at`
+  EMP-->>API: updated task payload
+  API-->>UI: Current task state
+```
+
+## Diagram 8: Employee Self-Service Onboarding Portal Sequence
+
+```mermaid
+sequenceDiagram
+  participant EMPU as Employee
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant EMP as Employee Domain
+  participant DB as PostgreSQL
+
+  EMPU->>UI: Open `/employee`
+  UI->>API: GET /api/v1/employees/me/onboarding
+  API->>EMP: Validate `employee_portal:read`
+  EMP->>DB: Resolve `employee_profiles.staff_account_id`
+  alt No direct link yet
+    EMP->>DB: Reconcile exact `staff_accounts.email -> employee_profiles.email`
+    alt No unique match
+      EMP-->>API: 404 employee_profile_not_found | 409 employee_profile_identity_conflict
+      API-->>UI: Localized employee-facing error state
+    else Unique match
+      EMP->>DB: Persist durable `staff_account_id` link
+      EMP->>DB: Load onboarding run + ordered tasks
+      EMP-->>API: portal payload + `can_update`
+      API-->>UI: Render employee onboarding workspace
+    end
+  else Existing direct link
+    EMP->>DB: Load onboarding run + ordered tasks
+    EMP-->>API: portal payload + `can_update`
+    API-->>UI: Render employee onboarding workspace
+  end
+  EMPU->>UI: Complete or reopen self-actionable task
+  UI->>API: PATCH /api/v1/employees/me/onboarding/tasks/{task_id}
+  API->>EMP: Validate employee ownership + self-actionable task rules
+  alt Task is staff-managed or assigned to another actor
+    EMP-->>API: 409 onboarding_task_not_actionable_by_employee
+    API-->>UI: Localized employee-facing blocker
+  else Task is actionable
+    EMP->>DB: Persist `status` and manage `completed_at`
+    EMP-->>API: updated task payload
+    API-->>UI: Refresh task card state
+  end
+```
+
+## Diagram 9: Onboarding Progress Dashboard Sequence
+
+```mermaid
+sequenceDiagram
+  participant STAFF as HR/Admin or Manager
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant EMP as Employee Domain
+  participant DB as PostgreSQL
+
+  STAFF->>UI: Open `/` and review onboarding progress
+  UI->>API: GET /api/v1/onboarding/runs?search&task_status&overdue_only
+  API->>EMP: Validate `onboarding_dashboard:read`
+  EMP->>DB: Load onboarding runs + employee profiles + materialized tasks
+  alt Manager actor
+    EMP->>EMP: Keep only runs with `assigned_role=manager` or `assigned_staff_id=<actor>`
+  else HR/Admin actor
+    EMP->>EMP: Keep full run set
+  end
+  EMP->>EMP: Build summary counters, progress percentages, and filtered list rows
+  EMP-->>API: dashboard list payload
+  API-->>UI: Render summary chips + run table
+  STAFF->>UI: Select onboarding run
+  UI->>API: GET /api/v1/onboarding/runs/{onboarding_id}
+  API->>EMP: Re-validate visibility for requested run
+  alt Run is missing or not visible to actor
+    EMP-->>API: 404 onboarding_run_not_found
+    API-->>UI: Localized dashboard error
+  else Run is visible
+    EMP->>DB: Load ordered onboarding tasks for selected run
+    EMP-->>API: detail payload with employee summary + tasks
+    API-->>UI: Render detail panel on the same `/` route
+  end
+```
+
+## Diagram 10: Deployment and Trust Boundaries
 
 ```mermaid
 flowchart TB
@@ -292,7 +442,7 @@ flowchart TB
   WEB --> SENTRYX
 ```
 
-## Diagram 7: Public Vacancy Application Sequence (v1)
+## Diagram 11: Public Vacancy Application Sequence (v1)
 
 ```mermaid
 sequenceDiagram
@@ -326,7 +476,7 @@ sequenceDiagram
   API-->>UI: parsed profile + evidence snippets
 ```
 
-## Diagram 8: Delivery Pipeline (GitHub + CI)
+## Diagram 12: Delivery Pipeline (GitHub + CI)
 
 ```mermaid
 flowchart LR
@@ -359,7 +509,7 @@ flowchart LR
   MERGE --> MAIN[Protected main]
 ```
 
-## Diagram 9: Docker Compose Runtime Topology (Phase 1)
+## Diagram 13: Docker Compose Runtime Topology (Phase 1)
 
 ```mermaid
 flowchart TB
@@ -392,7 +542,7 @@ flowchart TB
   WKR <--> GCAL
 ```
 
-## Diagram 10: Authentication and Session Lifecycle Sequence
+## Diagram 14: Authentication and Session Lifecycle Sequence
 
 ```mermaid
 sequenceDiagram
@@ -442,7 +592,7 @@ sequenceDiagram
   AUTH-->>UI: 204 No Content
 ```
 
-## Diagram 11: Unified Access Enforcement and Audit Flow
+## Diagram 15: Unified Access Enforcement and Audit Flow
 
 ```mermaid
 flowchart LR
@@ -471,7 +621,7 @@ flowchart LR
   ENF --> JOBAUD --> STORE
 ```
 
-## Diagram 12: Candidate Profile and CV Upload Sequence
+## Diagram 16: Candidate Profile and CV Upload Sequence
 
 ```mermaid
 sequenceDiagram
@@ -498,7 +648,7 @@ sequenceDiagram
   API-->>ACT: CV metadata payload
 ```
 
-## Diagram 13: Pipeline Transition Validator Flow
+## Diagram 17: Pipeline Transition Validator Flow
 
 ```mermaid
 flowchart LR
@@ -510,17 +660,20 @@ flowchart LR
   VAL -->|Yes| TARGET{Target stage}
   TARGET -->|offer| FAIR{Fairness gate passed?}
   FAIR -->|No| ERR409A[409 Fairness reason code]
-  FAIR -->|Yes| ENSURE[Ensure persisted offer draft exists]
-  ENSURE --> APPEND[Insert pipeline_transitions row]
+  FAIR -->|Yes| OFFERBUNDLE[Atomically insert pipeline_transitions row + ensure offer draft]
   TARGET -->|hired/rejected| OFFERCHK{Offer status compatible?}
   OFFERCHK -->|No| ERR409B[409 offer_not_accepted / offer_not_declined]
-  OFFERCHK -->|Yes| APPEND
+  OFFERCHK -->|Yes| RESOLVE{Target is hired?}
+  RESOLVE -->|Yes| HIREBUNDLE[Atomically insert hired transition + hire_conversion handoff]
+  RESOLVE -->|No, rejected| APPEND[Insert pipeline_transitions row]
   TARGET -->|other| APPEND
+  OFFERBUNDLE --> AUD[Audit pipeline:transition success]
+  HIREBUNDLE --> AUD
   APPEND --> AUD[Audit pipeline:transition success]
   AUD --> RES[200 Transition response]
 ```
 
-## Diagram 14: Async CV Parsing Worker Lifecycle
+## Diagram 18: Async CV Parsing Worker Lifecycle
 
 ```mermaid
 stateDiagram-v2
@@ -533,7 +686,7 @@ stateDiagram-v2
   succeeded --> [*]
 ```
 
-## Diagram 15: Admin Route Guard and Redirect Flow (ADMIN-01)
+## Diagram 19: Admin Route Guard and Redirect Flow (ADMIN-01)
 
 ```mermaid
 flowchart LR
@@ -548,7 +701,7 @@ flowchart LR
   TAGS --> SENTRY[Sentry]
 ```
 
-## Diagram 16: Admin Staff Management Flow (ADMIN-02)
+## Diagram 20: Admin Staff Management Flow (ADMIN-02)
 
 ```mermaid
 sequenceDiagram
@@ -579,7 +732,7 @@ sequenceDiagram
   Note over SRV: Strict guard:\n- self-demotion/self-disable forbidden\n- last-active-admin demotion/disable forbidden
 ```
 
-## Diagram 17: Employee Key Lifecycle Management Flow (ADMIN-03)
+## Diagram 21: Employee Key Lifecycle Management Flow (ADMIN-03)
 
 ```mermaid
 sequenceDiagram
@@ -618,12 +771,12 @@ sequenceDiagram
   Note over AUTH: Register path consumes only keys where\nused_at=null, revoked_at=null, expires_at>now
 ```
 
-## Diagram 18: Frontend Observability Flow (TASK-11-10)
+## Diagram 22: Frontend Observability Flow (TASK-11-10)
 
 ```mermaid
 flowchart LR
-  USER[User opens critical route] --> ROUTE[Observed route: /, /candidate, /login, /admin*]
-  ROUTE --> TAGS[Sentry tags: workspace, role, route]
+  USER[User opens critical route] --> ROUTE[Observed route: /, /employee, /candidate, /login, /admin*]
+  ROUTE --> TAGS[Sentry tags: workspace=hr|manager|employee|candidate|auth|admin, role, route]
   TAGS --> SENTRY[Sentry]
 
   ROUTE --> UI[React page and query or mutation logic]

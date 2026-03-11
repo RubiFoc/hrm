@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
@@ -17,6 +17,7 @@ from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.core.models.base import Base
+from hrm_backend.employee.models.hire_conversion import HireConversion
 from hrm_backend.interviews.models.feedback import InterviewFeedback
 from hrm_backend.interviews.models.interview import Interview
 from hrm_backend.main import app
@@ -132,6 +133,23 @@ def _seed_candidate(database_url: str, *, candidate_id: str, suffix: str) -> Non
                 )
             )
             session.commit()
+    finally:
+        engine.dispose()
+
+
+def _load_hire_conversions(database_url: str) -> list[HireConversion]:
+    """Load ordered hire-conversion handoff rows from database URL."""
+    engine = create_engine(database_url, future=True)
+    try:
+        with Session(engine) as session:
+            return list(
+                session.execute(
+                    select(HireConversion).order_by(
+                        HireConversion.converted_at.asc(),
+                        HireConversion.conversion_id.asc(),
+                    )
+                ).scalars()
+            )
     finally:
         engine.dispose()
 
@@ -396,6 +414,7 @@ async def test_interview_to_offer_feedback_gate_blocks_and_passes_by_reason_code
     )
     assert create_response.status_code == 200
     vacancy_id = create_response.json()["vacancy_id"]
+    future_window_start = datetime.now(UTC) + timedelta(days=1)
 
     async def prepare_candidate(candidate_suffix: str) -> str:
         candidate_id = str(uuid5(NAMESPACE_URL, f"feedback-gate-{candidate_suffix}"))
@@ -423,8 +442,8 @@ async def test_interview_to_offer_feedback_gate_blocks_and_passes_by_reason_code
         vacancy_id=vacancy_id,
         candidate_id=future_candidate_id,
         schedule_version=1,
-        scheduled_start_at=datetime(2026, 3, 11, 10, 0, tzinfo=UTC),
-        scheduled_end_at=datetime(2026, 3, 11, 11, 0, tzinfo=UTC),
+        scheduled_start_at=future_window_start,
+        scheduled_end_at=future_window_start + timedelta(hours=1),
         interviewer_staff_ids=[interviewer_a],
     )
     _ = future_interview_id
@@ -720,6 +739,36 @@ async def test_offer_lifecycle_api_blocks_and_unblocks_pipeline_resolution(
     )
     assert hired_transition.status_code == 200
     assert hired_transition.json()["to_stage"] == "hired"
+
+    conversions = _load_hire_conversions(database_url)
+    assert len(conversions) == 1
+    assert conversions[0].vacancy_id == vacancy_id
+    assert conversions[0].candidate_id == candidate_1_id
+    assert conversions[0].offer_id == accept_offer_response.json()["offer_id"]
+    assert conversions[0].hired_transition_id == hired_transition.json()["transition_id"]
+    assert conversions[0].status == "ready"
+    assert conversions[0].candidate_snapshot_json["email"] == "candidate-1@example.com"
+    assert conversions[0].offer_snapshot_json["status"] == "accepted"
+    assert conversions[0].offer_snapshot_json["decision_note"] == "Candidate confirmed by phone."
+
+    second_hired_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_1_id,
+            "to_stage": "hired",
+            "reason": "duplicate_hire_attempt",
+        },
+    )
+    assert second_hired_transition.status_code == 422
+
+    events = _load_events(database_url)
+    assert any(
+        event.action == "pipeline:transition"
+        and event.result == "success"
+        and event.resource_id == hired_transition.json()["transition_id"]
+        for event in events
+    )
 
 
 async def test_offer_stage_and_decline_flow_return_stable_reason_codes(

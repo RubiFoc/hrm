@@ -4,6 +4,8 @@ import {
   clearAuthSession,
   readAuthSession,
   resolveAdminGuardDecision,
+  resolveEmployeeGuardDecision,
+  resolveWorkspaceRoute,
   writeAuthSession,
 } from "./session";
 
@@ -73,5 +75,40 @@ describe("resolveAdminGuardDecision", () => {
       role: "admin",
     });
     expect(decision).toEqual({ allow: true, role: "admin" });
+  });
+});
+
+describe("resolveWorkspaceRoute", () => {
+  it("routes employee role to /employee", () => {
+    expect(resolveWorkspaceRoute("employee")).toBe("/employee");
+  });
+});
+
+describe("resolveEmployeeGuardDecision", () => {
+  it("returns unauthorized when access token is missing", () => {
+    const decision = resolveEmployeeGuardDecision({
+      accessToken: null,
+      refreshToken: null,
+      role: null,
+    });
+    expect(decision).toEqual({ allow: false, reason: "unauthorized" });
+  });
+
+  it("returns forbidden when role is not employee", () => {
+    const decision = resolveEmployeeGuardDecision({
+      accessToken: "token",
+      refreshToken: null,
+      role: "hr",
+    });
+    expect(decision).toEqual({ allow: false, reason: "forbidden" });
+  });
+
+  it("returns allow for employee role with token", () => {
+    const decision = resolveEmployeeGuardDecision({
+      accessToken: "token",
+      refreshToken: "refresh-token",
+      role: "employee",
+    });
+    expect(decision).toEqual({ allow: true, role: "employee" });
   });
 });

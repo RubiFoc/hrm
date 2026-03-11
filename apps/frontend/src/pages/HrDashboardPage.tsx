@@ -64,6 +64,7 @@ import {
 } from "../api";
 import { readAuthSession } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
+import { OnboardingDashboardPanel } from "../components/OnboardingDashboardPanel";
 
 const PIPELINE_STAGE_OPTIONS: PipelineTransitionCreateRequest["to_stage"][] = [
   "applied",
@@ -2044,6 +2045,8 @@ export function HrDashboardPage() {
           ) : null}
         </Stack>
       </Paper>
+
+      <OnboardingDashboardPanel mode="embedded" />
     </Stack>
   );
 }

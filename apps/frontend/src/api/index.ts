@@ -1,6 +1,14 @@
 export { ApiError, apiRequest } from "./httpClient";
 export { getMe, login, logout } from "./auth";
 export { listAdminStaff, updateAdminStaff } from "./adminStaff";
+export {
+  getMyEmployeeOnboardingPortal,
+  updateMyEmployeeOnboardingTask,
+} from "./employeeOnboarding";
+export {
+  getOnboardingDashboardRun,
+  listOnboardingDashboardRuns,
+} from "./onboardingDashboard";
 export { acceptOffer, declineOffer, getOffer, sendOffer, upsertOffer } from "./offers";
 export {
   getCandidateCvAnalysis,
@@ -54,6 +62,18 @@ export type {
   EmployeeKeyStatus,
   EmployeeRegistrationKeyResponse,
 } from "./adminEmployeeKeys";
+export type {
+  EmployeeOnboardingPortalResponse,
+  EmployeeOnboardingTaskResponse,
+  EmployeeOnboardingTaskStatus,
+  EmployeeOnboardingTaskUpdateRequest,
+} from "./employeeOnboarding";
+export type {
+  OnboardingDashboardDetailResponse,
+  OnboardingDashboardListQuery,
+  OnboardingDashboardListResponse,
+  OnboardingDashboardTaskStatus,
+} from "./onboardingDashboard";
 export type {
   CandidateCvAnalysisResponse,
   CandidateCvParsingStatusResponse,

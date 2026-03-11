@@ -166,6 +166,8 @@ function installHrWorkspaceFetchMock({
   interviewReschedule,
   interviewCancel,
   interviewResend,
+  onboardingRunsGet,
+  onboardingRunGet,
   offerGet,
   offerPut,
   offerSend,
@@ -195,6 +197,8 @@ function installHrWorkspaceFetchMock({
   interviewReschedule?: (url: string, init?: RequestInit) => Promise<Response>;
   interviewCancel?: (url: string, init?: RequestInit) => Promise<Response>;
   interviewResend?: (url: string, init?: RequestInit) => Promise<Response>;
+  onboardingRunsGet?: (url: string, init?: RequestInit) => Promise<Response>;
+  onboardingRunGet?: (url: string, init?: RequestInit) => Promise<Response>;
   offerGet?: (url: string, init?: RequestInit) => Promise<Response>;
   offerPut?: (url: string, init?: RequestInit) => Promise<Response>;
   offerSend?: (url: string, init?: RequestInit) => Promise<Response>;
@@ -211,6 +215,31 @@ function installHrWorkspaceFetchMock({
         return meGet(url, init);
       }
       return jsonResponse(BASE_ME);
+    }
+    if (url.includes("/api/v1/onboarding/runs/") && !url.endsWith("/tasks")) {
+      if (method === "GET" && onboardingRunGet) {
+        return onboardingRunGet(url, init);
+      }
+      return jsonResponse({});
+    }
+    if (url.includes("/api/v1/onboarding/runs")) {
+      if (method === "GET" && onboardingRunsGet) {
+        return onboardingRunsGet(url, init);
+      }
+      return jsonResponse({
+        items: [],
+        total: 0,
+        limit: 20,
+        offset: 0,
+        summary: {
+          run_count: 0,
+          total_tasks: 0,
+          pending_tasks: 0,
+          in_progress_tasks: 0,
+          completed_tasks: 0,
+          overdue_tasks: 0,
+        },
+      });
     }
     if (url.includes(`/api/v1/vacancies/${VACANCY_ID}/match-scores/${CANDIDATE_ID}`)) {
       if (method === "GET" && matchScoreGet) {
@@ -347,6 +376,90 @@ describe("HrDashboardPage", () => {
 
     expect(await screen.findByText(/public_application/i)).toBeDefined();
     expect((await screen.findAllByRole("cell", { name: /отклик/i })).length).toBeGreaterThan(0);
+  });
+
+  it("renders embedded onboarding progress dashboard for HR workspace", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+
+    installHrWorkspaceFetchMock({
+      onboardingRunsGet: () =>
+        jsonResponse({
+          items: [
+            {
+              onboarding_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              employee_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+              first_name: "Ada",
+              last_name: "Lovelace",
+              email: "ada@example.com",
+              current_title: "Engineer",
+              location: "Minsk",
+              start_date: "2026-04-01",
+              onboarding_status: "started",
+              onboarding_started_at: "2026-03-11T09:00:00Z",
+              total_tasks: 3,
+              pending_tasks: 1,
+              in_progress_tasks: 1,
+              completed_tasks: 1,
+              overdue_tasks: 1,
+              progress_percent: 33,
+            },
+          ],
+          total: 1,
+          limit: 20,
+          offset: 0,
+          summary: {
+            run_count: 1,
+            total_tasks: 3,
+            pending_tasks: 1,
+            in_progress_tasks: 1,
+            completed_tasks: 1,
+            overdue_tasks: 1,
+          },
+        }),
+      onboardingRunGet: () =>
+        jsonResponse({
+          onboarding_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          employee_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          first_name: "Ada",
+          last_name: "Lovelace",
+          email: "ada@example.com",
+          current_title: "Engineer",
+          location: "Minsk",
+          start_date: "2026-04-01",
+          offer_terms_summary: "Laptop and access baseline.",
+          onboarding_status: "started",
+          onboarding_started_at: "2026-03-11T09:00:00Z",
+          total_tasks: 3,
+          pending_tasks: 1,
+          in_progress_tasks: 1,
+          completed_tasks: 1,
+          overdue_tasks: 1,
+          progress_percent: 33,
+          tasks: [
+            {
+              task_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+              code: "manager_intro",
+              title: "Manager intro",
+              description: "Meet your manager",
+              sort_order: 10,
+              is_required: true,
+              status: "in_progress",
+              assigned_role: "manager",
+              assigned_staff_id: null,
+              due_at: "2026-03-12T09:00:00Z",
+              completed_at: null,
+              updated_at: "2026-03-11T09:00:00Z",
+            },
+          ],
+        }),
+    });
+
+    renderHrDashboardPage();
+
+    expect(await screen.findByText(/onboarding progress|прогресс онбординга/i)).toBeDefined();
+    expect(await screen.findByText(/ada lovelace/i)).toBeDefined();
+    expect(await screen.findByText(/manager intro/i)).toBeDefined();
   });
 
   it("renders localized invalid transition error", async () => {

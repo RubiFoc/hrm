@@ -77,6 +77,56 @@ def test_hr_can_list_and_revoke_employee_keys_permissions() -> None:
     assert revoke_decision.allowed is True
 
 
+def test_hr_can_create_employee_profile_permission() -> None:
+    """Verify HR role can bootstrap employee profiles from hire conversions."""
+    decision = evaluate_permission(role="hr", permission="employee_profile:create")
+
+    assert decision.allowed is True
+
+
+def test_hr_can_manage_onboarding_templates_permissions() -> None:
+    """Verify HR role can manage onboarding checklist templates."""
+    create_decision = evaluate_permission(role="hr", permission="onboarding_template:create")
+    update_decision = evaluate_permission(role="hr", permission="onboarding_template:update")
+
+    assert create_decision.allowed is True
+    assert update_decision.allowed is True
+
+
+def test_hr_can_manage_onboarding_tasks_permissions() -> None:
+    """Verify HR role can read, update, and backfill onboarding tasks."""
+    list_decision = evaluate_permission(role="hr", permission="onboarding_task:list")
+    update_decision = evaluate_permission(role="hr", permission="onboarding_task:update")
+    backfill_decision = evaluate_permission(role="hr", permission="onboarding_task:backfill")
+
+    assert list_decision.allowed is True
+    assert update_decision.allowed is True
+    assert backfill_decision.allowed is True
+
+
+def test_hr_can_read_onboarding_dashboard_permission() -> None:
+    """Verify HR role can access onboarding progress dashboard reads."""
+    decision = evaluate_permission(role="hr", permission="onboarding_dashboard:read")
+
+    assert decision.allowed is True
+
+
+def test_manager_can_read_onboarding_dashboard_permission() -> None:
+    """Verify manager role can access onboarding progress dashboard reads."""
+    decision = evaluate_permission(role="manager", permission="onboarding_dashboard:read")
+
+    assert decision.allowed is True
+
+
+def test_employee_can_access_and_update_self_service_portal_permissions() -> None:
+    """Verify employee role can read and update self-service onboarding portal endpoints."""
+    read_decision = evaluate_permission(role="employee", permission="employee_portal:read")
+    update_decision = evaluate_permission(role="employee", permission="employee_portal:update")
+
+    assert read_decision.allowed is True
+    assert update_decision.allowed is True
+
+
 def test_manager_is_denied_for_employee_key_list_permission() -> None:
     """Verify manager role is denied for employee-key list permission."""
     decision = evaluate_permission(role="manager", permission="admin:employee_key:list")
@@ -84,6 +134,51 @@ def test_manager_is_denied_for_employee_key_list_permission() -> None:
     assert decision.allowed is False
     assert decision.reason is not None
     assert "admin:employee_key:list" in decision.reason
+
+
+def test_manager_is_denied_for_employee_profile_read_permission() -> None:
+    """Verify manager role is denied for staff-only employee profile reads."""
+    decision = evaluate_permission(role="manager", permission="employee_profile:read")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "employee_profile:read" in decision.reason
+
+
+def test_hr_is_denied_for_employee_portal_read_permission() -> None:
+    """Verify staff roles cannot call employee-only self-service onboarding endpoints."""
+    decision = evaluate_permission(role="hr", permission="employee_portal:read")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "employee_portal:read" in decision.reason
+
+
+def test_manager_is_denied_for_onboarding_template_list_permission() -> None:
+    """Verify manager role is denied for staff-only onboarding template reads."""
+    decision = evaluate_permission(role="manager", permission="onboarding_template:list")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "onboarding_template:list" in decision.reason
+
+
+def test_manager_is_denied_for_onboarding_task_list_permission() -> None:
+    """Verify manager role is denied for staff-only onboarding task reads."""
+    decision = evaluate_permission(role="manager", permission="onboarding_task:list")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "onboarding_task:list" in decision.reason
+
+
+def test_employee_is_denied_for_onboarding_dashboard_permission() -> None:
+    """Verify employee role cannot access staff onboarding dashboard endpoints."""
+    decision = evaluate_permission(role="employee", permission="onboarding_dashboard:read")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "onboarding_dashboard:read" in decision.reason
 
 
 def test_background_enforcement_records_denied_decision() -> None:

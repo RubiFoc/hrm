@@ -1,7 +1,7 @@
 # Frontend Requirements (React.js)
 
 ## Last Updated
-- Date: 2026-03-09
+- Date: 2026-03-11
 - Updated by: architect + frontend-engineer
 
 ## Fixed Technical Requirement
@@ -101,7 +101,8 @@
   - `hrm_user_role`
 - Post-login redirect rules:
   - `admin` -> `/admin`
-  - `hr`, `manager`, `leader`, `accountant`, `employee` -> `/`
+  - `employee` -> `/employee`
+  - `hr`, `manager`, `leader`, `accountant` -> `/`
   - unknown role -> `/access-denied?reason=forbidden`
 - `/login` behavior rules:
   - already-authenticated valid session -> redirect to role workspace;
@@ -123,6 +124,7 @@
 ## TASK-11-10 Baseline
 - Do not add or restructure routes. Keep the current topology:
   - `/`
+  - `/employee`
   - `/candidate`
   - `/login`
   - `/admin`
@@ -133,7 +135,9 @@
   - `role`
   - `route`
 - Required route/workspace mapping:
-  - `/` -> `workspace=hr`, `route=/`
+  - `/` -> `workspace=hr`, `route=/` for `admin`, `hr`, `leader`, and `accountant`
+  - `/` -> `workspace=manager`, `route=/` for `manager`
+  - `/employee` -> `workspace=employee`, `route=/employee`
   - `/candidate` -> `workspace=candidate`, `route=/candidate`
   - `/login` -> `workspace=auth`, `route=/login`
   - `/admin`, `/admin/staff`, `/admin/employee-keys` -> `workspace=admin` with the matching canonical route
@@ -164,6 +168,52 @@
   - reject mixed `vacancyId` and `interviewToken` modes with a localized invalid-link state.
 - Do not introduce candidate auth, new CORS rules, or a new routing tree in this slice.
 - Invitation delivery remains manual in the next slice; do not add notification-service scope here.
+
+## TASK-07-03 Baseline
+- Add `/employee` route under an employee-only guard.
+- Keep the existing route tree intact; do not move HR, candidate, or admin workspaces.
+- Read employee onboarding state through the existing auth session and:
+  - `GET /api/v1/employees/me/onboarding`
+  - `PATCH /api/v1/employees/me/onboarding/tasks/{task_id}`
+- Render employee-facing onboarding summary and checklist state:
+  - onboarding status;
+  - current title, location, start date, and accepted-offer summary;
+  - required/optional task markers;
+  - assignment and due-date visibility;
+  - localized actionable vs staff-managed task state.
+- Employee updates are limited to self-actionable task status changes; staff assignment/SLA controls remain outside this workspace.
+- Frontend error handling must provide RU/EN-readable messages for:
+  - `404 employee_profile_not_found`
+  - `404 employee_onboarding_not_found`
+  - `409 employee_profile_identity_conflict`
+  - `409 onboarding_task_not_actionable_by_employee`
+  - generic HTTP failures
+- Emit canonical Sentry tags for the employee workspace:
+  - `workspace=employee`
+  - `route=/employee`
+- Keep auth, CORS, public candidate transport, and the staff onboarding route tree unchanged in this slice.
+
+## TASK-07-04 Baseline
+- Keep the current route tree intact; do not add a new manager dashboard path.
+- Use the existing `/` route for both staff workspaces:
+  - `hr`/`admin` keep the current recruitment workspace and render onboarding progress as an embedded block;
+  - `manager` uses `/` as a standalone onboarding dashboard.
+- Read onboarding progress through the new read-only onboarding endpoints:
+  - `GET /api/v1/onboarding/runs`
+  - `GET /api/v1/onboarding/runs/{onboarding_id}`
+- Dashboard UX requirements:
+  - summary chips for run/task counts and overdue work;
+  - filters for employee search, task status, and overdue-only mode;
+  - ordered run list with progress/task counters;
+  - detail panel with employee summary and materialized task state.
+- Visibility rules:
+  - `admin`/`hr` can read all onboarding runs;
+  - `manager` can read only runs where at least one task is assigned to `assigned_role=manager` or `assigned_staff_id=<current manager subject>`.
+- Manager access is read-only in this slice; task assignment, status patching, and backfill remain on the existing admin/HR staff routes.
+- Emit canonical Sentry tags for `/` based on resolved role:
+  - `workspace=hr` for HR/admin-style workspace
+  - `workspace=manager` for manager dashboard
+- Keep auth, CORS, public candidate transport, employee portal contracts, and onboarding task mutation routes unchanged in this slice.
 
 ## Library Baseline (Popular Ready-Made Stack)
 - UI components: Material UI (MUI).

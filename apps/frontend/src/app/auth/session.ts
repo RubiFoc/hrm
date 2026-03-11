@@ -15,6 +15,9 @@ export type WritableAuthSession = {
 export type AdminGuardDecision =
   | { allow: true; role: AuthRole }
   | { allow: false; reason: "unauthorized" | "forbidden" };
+export type EmployeeGuardDecision =
+  | { allow: true; role: "employee" }
+  | { allow: false; reason: "unauthorized" | "forbidden" };
 
 const AUTH_TOKEN_KEY = "hrm_access_token";
 const AUTH_REFRESH_TOKEN_KEY = "hrm_refresh_token";
@@ -81,6 +84,9 @@ export function resolveWorkspaceRoute(role: AuthRole | null): string {
   if (role === "admin") {
     return "/admin";
   }
+  if (role === "employee") {
+    return "/employee";
+  }
   return "/";
 }
 
@@ -92,6 +98,19 @@ export function resolveAdminGuardDecision(session: AuthSessionState): AdminGuard
     return { allow: false, reason: "unauthorized" };
   }
   if (session.role !== "admin") {
+    return { allow: false, reason: "forbidden" };
+  }
+  return { allow: true, role: session.role };
+}
+
+/**
+ * Evaluate `/employee` route access using current session snapshot.
+ */
+export function resolveEmployeeGuardDecision(session: AuthSessionState): EmployeeGuardDecision {
+  if (!session.accessToken) {
+    return { allow: false, reason: "unauthorized" };
+  }
+  if (session.role !== "employee") {
     return { allow: false, reason: "forbidden" };
   }
   return { allow: true, role: session.role };

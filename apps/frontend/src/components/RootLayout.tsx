@@ -36,15 +36,24 @@ export function RootLayout() {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             {t("appTitle")}
           </Typography>
-          <Button color="inherit" component={Link} to="/">
-            {t("hrWorkspace")}
-          </Button>
+          {session.role !== "employee" ? (
+            <Button color="inherit" component={Link} to="/">
+              {session.role === "manager" ? t("managerWorkspace") : t("hrWorkspace")}
+            </Button>
+          ) : null}
+          {session.role === "employee" ? (
+            <Button color="inherit" component={Link} to="/employee">
+              {t("employeeWorkspace")}
+            </Button>
+          ) : null}
           <Button color="inherit" component={Link} to="/candidate">
             {t("candidateWorkspace")}
           </Button>
-          <Button color="inherit" component={Link} to="/admin">
-            {t("adminWorkspace")}
-          </Button>
+          {session.role === "admin" ? (
+            <Button color="inherit" component={Link} to="/admin">
+              {t("adminWorkspace")}
+            </Button>
+          ) : null}
           {session.accessToken ? (
             <Button color="inherit" disabled={isLogoutPending} onClick={() => void handleLogout()}>
               {isLogoutPending ? t("logoutPendingAction") : t("logoutAction")}

@@ -15,6 +15,13 @@ from hrm_backend.candidates.models.document import CandidateDocument  # noqa: F4
 from hrm_backend.candidates.models.parsing_job import CVParsingJob  # noqa: F401
 from hrm_backend.candidates.models.profile import CandidateProfile  # noqa: F401
 from hrm_backend.core.models.base import Base
+from hrm_backend.employee.models.hire_conversion import HireConversion  # noqa: F401
+from hrm_backend.employee.models.onboarding import OnboardingRun, OnboardingTask  # noqa: F401
+from hrm_backend.employee.models.profile import EmployeeProfile  # noqa: F401
+from hrm_backend.employee.models.template import (  # noqa: F401
+    OnboardingTemplate,
+    OnboardingTemplateItem,
+)
 from hrm_backend.interviews.models.calendar_binding import InterviewCalendarBinding  # noqa: F401
 from hrm_backend.interviews.models.feedback import InterviewFeedback  # noqa: F401
 from hrm_backend.interviews.models.interview import Interview  # noqa: F401

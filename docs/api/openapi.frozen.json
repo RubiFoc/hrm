@@ -974,6 +974,470 @@
         "title": "CandidateUpdateRequest",
         "type": "object"
       },
+      "EmployeeOnboardingPortalResponse": {
+        "description": "Employee-facing onboarding portal payload scoped to the current user.",
+        "properties": {
+          "current_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Title"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "offer_terms_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Terms Summary"
+          },
+          "onboarding_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarding Id"
+          },
+          "onboarding_started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarding Started At"
+          },
+          "onboarding_status": {
+            "anyOf": [
+              {
+                "const": "started",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarding Status"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/EmployeeOnboardingTaskResponse"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "employee_id",
+          "first_name",
+          "last_name",
+          "email",
+          "location",
+          "current_title",
+          "start_date",
+          "offer_terms_summary",
+          "onboarding_id",
+          "onboarding_status",
+          "onboarding_started_at",
+          "tasks"
+        ],
+        "title": "EmployeeOnboardingPortalResponse",
+        "type": "object"
+      },
+      "EmployeeOnboardingTaskResponse": {
+        "description": "Employee-facing API representation of one onboarding checklist task.",
+        "properties": {
+          "assigned_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "admin",
+                  "hr",
+                  "manager",
+                  "employee",
+                  "leader",
+                  "accountant"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Role"
+          },
+          "assigned_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Staff Id"
+          },
+          "can_update": {
+            "title": "Can Update",
+            "type": "boolean"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "is_required": {
+            "title": "Is Required",
+            "type": "boolean"
+          },
+          "onboarding_id": {
+            "format": "uuid",
+            "title": "Onboarding Id",
+            "type": "string"
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "onboarding_id",
+          "code",
+          "title",
+          "description",
+          "sort_order",
+          "is_required",
+          "status",
+          "assigned_role",
+          "assigned_staff_id",
+          "due_at",
+          "completed_at",
+          "created_at",
+          "updated_at",
+          "can_update"
+        ],
+        "title": "EmployeeOnboardingTaskResponse",
+        "type": "object"
+      },
+      "EmployeeOnboardingTaskUpdateRequest": {
+        "additionalProperties": false,
+        "description": "Employee-facing request payload for updating one actionable onboarding task.\n\nAttributes:\n    status: Next employee-managed task status.",
+        "properties": {
+          "status": {
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "EmployeeOnboardingTaskUpdateRequest",
+        "type": "object"
+      },
+      "EmployeeProfileCreateRequest": {
+        "additionalProperties": false,
+        "description": "Staff-facing request payload for employee profile creation.\n\nAttributes:\n    vacancy_id: Vacancy identifier used to resolve the hire conversion.\n    candidate_id: Candidate identifier used to resolve the hire conversion.",
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vacancy_id",
+          "candidate_id"
+        ],
+        "title": "EmployeeProfileCreateRequest",
+        "type": "object"
+      },
+      "EmployeeProfileResponse": {
+        "description": "Employee profile API representation.",
+        "properties": {
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_staff_id": {
+            "format": "uuid",
+            "title": "Created By Staff Id",
+            "type": "string"
+          },
+          "current_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Title"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "extra_data": {
+            "additionalProperties": true,
+            "title": "Extra Data",
+            "type": "object"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "hire_conversion_id": {
+            "format": "uuid",
+            "title": "Hire Conversion Id",
+            "type": "string"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "offer_terms_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Terms Summary"
+          },
+          "onboarding_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarding Id"
+          },
+          "onboarding_status": {
+            "anyOf": [
+              {
+                "const": "started",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarding Status"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "employee_id",
+          "hire_conversion_id",
+          "vacancy_id",
+          "candidate_id",
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "location",
+          "current_title",
+          "extra_data",
+          "offer_terms_summary",
+          "start_date",
+          "created_by_staff_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "EmployeeProfileResponse",
+        "type": "object"
+      },
       "EmployeeRegistrationKeyResponse": {
         "description": "Issued employee registration key payload.",
         "properties": {
@@ -2249,6 +2713,947 @@
           "terms_summary"
         ],
         "title": "OfferUpsertRequest",
+        "type": "object"
+      },
+      "OnboardingChecklistTemplateCreateRequest": {
+        "additionalProperties": false,
+        "description": "Staff-facing request payload for creating onboarding checklist templates.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_active": {
+            "default": false,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingChecklistTemplateItemWrite"
+            },
+            "minItems": 1,
+            "title": "Items",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "items"
+        ],
+        "title": "OnboardingChecklistTemplateCreateRequest",
+        "type": "object"
+      },
+      "OnboardingChecklistTemplateItemResponse": {
+        "description": "API representation of one onboarding checklist template item.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_required": {
+            "title": "Is Required",
+            "type": "boolean"
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "template_item_id": {
+            "format": "uuid",
+            "title": "Template Item Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_item_id",
+          "code",
+          "title",
+          "description",
+          "sort_order",
+          "is_required"
+        ],
+        "title": "OnboardingChecklistTemplateItemResponse",
+        "type": "object"
+      },
+      "OnboardingChecklistTemplateItemWrite": {
+        "additionalProperties": false,
+        "description": "Checklist item payload used for create and update operations.",
+        "properties": {
+          "code": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_required": {
+            "default": true,
+            "title": "Is Required",
+            "type": "boolean"
+          },
+          "sort_order": {
+            "minimum": 0.0,
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "title",
+          "sort_order"
+        ],
+        "title": "OnboardingChecklistTemplateItemWrite",
+        "type": "object"
+      },
+      "OnboardingChecklistTemplateListResponse": {
+        "description": "List payload for onboarding checklist templates.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingChecklistTemplateResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "OnboardingChecklistTemplateListResponse",
+        "type": "object"
+      },
+      "OnboardingChecklistTemplateResponse": {
+        "description": "API representation of one onboarding checklist template.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_staff_id": {
+            "format": "uuid",
+            "title": "Created By Staff Id",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingChecklistTemplateItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "template_id": {
+            "format": "uuid",
+            "title": "Template Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_id",
+          "name",
+          "description",
+          "is_active",
+          "items",
+          "created_by_staff_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OnboardingChecklistTemplateResponse",
+        "type": "object"
+      },
+      "OnboardingChecklistTemplateUpdateRequest": {
+        "additionalProperties": false,
+        "description": "Staff-facing request payload for replacing onboarding checklist templates.",
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_active": {
+            "default": false,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingChecklistTemplateItemWrite"
+            },
+            "minItems": 1,
+            "title": "Items",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "items"
+        ],
+        "title": "OnboardingChecklistTemplateUpdateRequest",
+        "type": "object"
+      },
+      "OnboardingDashboardDetailResponse": {
+        "description": "Detailed onboarding dashboard payload for one onboarding run.",
+        "properties": {
+          "completed_tasks": {
+            "title": "Completed Tasks",
+            "type": "integer"
+          },
+          "current_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Title"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "in_progress_tasks": {
+            "title": "In Progress Tasks",
+            "type": "integer"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "offer_terms_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Terms Summary"
+          },
+          "onboarding_id": {
+            "format": "uuid",
+            "title": "Onboarding Id",
+            "type": "string"
+          },
+          "onboarding_started_at": {
+            "format": "date-time",
+            "title": "Onboarding Started At",
+            "type": "string"
+          },
+          "onboarding_status": {
+            "const": "started",
+            "title": "Onboarding Status",
+            "type": "string"
+          },
+          "overdue_tasks": {
+            "title": "Overdue Tasks",
+            "type": "integer"
+          },
+          "pending_tasks": {
+            "title": "Pending Tasks",
+            "type": "integer"
+          },
+          "progress_percent": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Progress Percent",
+            "type": "integer"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingDashboardTaskResponse"
+            },
+            "title": "Tasks",
+            "type": "array"
+          },
+          "total_tasks": {
+            "title": "Total Tasks",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "onboarding_id",
+          "employee_id",
+          "first_name",
+          "last_name",
+          "email",
+          "current_title",
+          "location",
+          "start_date",
+          "offer_terms_summary",
+          "onboarding_status",
+          "onboarding_started_at",
+          "total_tasks",
+          "pending_tasks",
+          "in_progress_tasks",
+          "completed_tasks",
+          "overdue_tasks",
+          "progress_percent",
+          "tasks"
+        ],
+        "title": "OnboardingDashboardDetailResponse",
+        "type": "object"
+      },
+      "OnboardingDashboardListItemResponse": {
+        "description": "Dashboard summary row for one onboarding run plus employee context.",
+        "properties": {
+          "completed_tasks": {
+            "title": "Completed Tasks",
+            "type": "integer"
+          },
+          "current_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Title"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "in_progress_tasks": {
+            "title": "In Progress Tasks",
+            "type": "integer"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "onboarding_id": {
+            "format": "uuid",
+            "title": "Onboarding Id",
+            "type": "string"
+          },
+          "onboarding_started_at": {
+            "format": "date-time",
+            "title": "Onboarding Started At",
+            "type": "string"
+          },
+          "onboarding_status": {
+            "const": "started",
+            "title": "Onboarding Status",
+            "type": "string"
+          },
+          "overdue_tasks": {
+            "title": "Overdue Tasks",
+            "type": "integer"
+          },
+          "pending_tasks": {
+            "title": "Pending Tasks",
+            "type": "integer"
+          },
+          "progress_percent": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Progress Percent",
+            "type": "integer"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "total_tasks": {
+            "title": "Total Tasks",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "onboarding_id",
+          "employee_id",
+          "first_name",
+          "last_name",
+          "email",
+          "current_title",
+          "location",
+          "start_date",
+          "onboarding_status",
+          "onboarding_started_at",
+          "total_tasks",
+          "pending_tasks",
+          "in_progress_tasks",
+          "completed_tasks",
+          "overdue_tasks",
+          "progress_percent"
+        ],
+        "title": "OnboardingDashboardListItemResponse",
+        "type": "object"
+      },
+      "OnboardingDashboardListResponse": {
+        "description": "Paginated onboarding dashboard payload for staff progress tracking.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingDashboardListItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/OnboardingDashboardSummaryResponse"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset",
+          "summary"
+        ],
+        "title": "OnboardingDashboardListResponse",
+        "type": "object"
+      },
+      "OnboardingDashboardSummaryResponse": {
+        "description": "Aggregated onboarding progress counters for the current filtered dashboard scope.",
+        "properties": {
+          "completed_tasks": {
+            "title": "Completed Tasks",
+            "type": "integer"
+          },
+          "in_progress_tasks": {
+            "title": "In Progress Tasks",
+            "type": "integer"
+          },
+          "overdue_tasks": {
+            "title": "Overdue Tasks",
+            "type": "integer"
+          },
+          "pending_tasks": {
+            "title": "Pending Tasks",
+            "type": "integer"
+          },
+          "run_count": {
+            "title": "Run Count",
+            "type": "integer"
+          },
+          "total_tasks": {
+            "title": "Total Tasks",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_count",
+          "total_tasks",
+          "pending_tasks",
+          "in_progress_tasks",
+          "completed_tasks",
+          "overdue_tasks"
+        ],
+        "title": "OnboardingDashboardSummaryResponse",
+        "type": "object"
+      },
+      "OnboardingDashboardTaskResponse": {
+        "description": "Read-only onboarding task representation used inside dashboard detail views.",
+        "properties": {
+          "assigned_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "admin",
+                  "hr",
+                  "manager",
+                  "employee",
+                  "leader",
+                  "accountant"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Role"
+          },
+          "assigned_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Staff Id"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "is_required": {
+            "title": "Is Required",
+            "type": "boolean"
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "code",
+          "title",
+          "description",
+          "sort_order",
+          "is_required",
+          "status",
+          "assigned_role",
+          "assigned_staff_id",
+          "due_at",
+          "completed_at",
+          "updated_at"
+        ],
+        "title": "OnboardingDashboardTaskResponse",
+        "type": "object"
+      },
+      "OnboardingTaskListResponse": {
+        "description": "List payload for onboarding tasks belonging to one onboarding run.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OnboardingTaskResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "OnboardingTaskListResponse",
+        "type": "object"
+      },
+      "OnboardingTaskResponse": {
+        "description": "API representation of one onboarding task.",
+        "properties": {
+          "assigned_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "admin",
+                  "hr",
+                  "manager",
+                  "employee",
+                  "leader",
+                  "accountant"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Role"
+          },
+          "assigned_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Staff Id"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "is_required": {
+            "title": "Is Required",
+            "type": "boolean"
+          },
+          "onboarding_id": {
+            "format": "uuid",
+            "title": "Onboarding Id",
+            "type": "string"
+          },
+          "sort_order": {
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "in_progress",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "template_id": {
+            "format": "uuid",
+            "title": "Template Id",
+            "type": "string"
+          },
+          "template_item_id": {
+            "format": "uuid",
+            "title": "Template Item Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "onboarding_id",
+          "template_id",
+          "template_item_id",
+          "code",
+          "title",
+          "description",
+          "sort_order",
+          "is_required",
+          "status",
+          "assigned_role",
+          "assigned_staff_id",
+          "due_at",
+          "completed_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "OnboardingTaskResponse",
+        "type": "object"
+      },
+      "OnboardingTaskUpdateRequest": {
+        "additionalProperties": false,
+        "description": "Staff-facing partial update payload for one onboarding task.",
+        "properties": {
+          "assigned_role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "admin",
+                  "hr",
+                  "manager",
+                  "employee",
+                  "leader",
+                  "accountant"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Role"
+          },
+          "assigned_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Staff Id"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending",
+                  "in_progress",
+                  "completed"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "title": "OnboardingTaskUpdateRequest",
         "type": "object"
       },
       "PipelineTransitionCreateRequest": {
@@ -3989,6 +5394,756 @@
         "summary": "Get Candidate Cv Parsing Status",
         "tags": [
           "candidates"
+        ]
+      }
+    },
+    "/api/v1/employees": {
+      "post": {
+        "description": "Create one employee profile from a persisted hire conversion.",
+        "operationId": "create_employee_profile_api_v1_employees_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeProfileCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Employee Profile",
+        "tags": [
+          "employees"
+        ]
+      }
+    },
+    "/api/v1/employees/me/onboarding": {
+      "get": {
+        "description": "Read onboarding portal payload for the authenticated employee.",
+        "operationId": "get_my_onboarding_portal_api_v1_employees_me_onboarding_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeOnboardingPortalResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get My Onboarding Portal",
+        "tags": [
+          "employees"
+        ]
+      }
+    },
+    "/api/v1/employees/me/onboarding/tasks/{task_id}": {
+      "patch": {
+        "description": "Update one employee-actionable onboarding task for the authenticated employee.",
+        "operationId": "update_my_onboarding_task_api_v1_employees_me_onboarding_tasks__task_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeOnboardingTaskUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeOnboardingTaskResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update My Onboarding Task",
+        "tags": [
+          "employees"
+        ]
+      }
+    },
+    "/api/v1/employees/{employee_id}": {
+      "get": {
+        "description": "Read one employee profile by identifier.",
+        "operationId": "get_employee_profile_api_v1_employees__employee_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "employee_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Employee Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Employee Profile",
+        "tags": [
+          "employees"
+        ]
+      }
+    },
+    "/api/v1/onboarding/runs": {
+      "get": {
+        "description": "List onboarding progress rows visible to the current HR or manager actor.",
+        "operationId": "list_onboarding_dashboard_runs_api_v1_onboarding_runs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "task_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending",
+                    "in_progress",
+                    "completed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Task Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assigned_role",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "admin",
+                    "hr",
+                    "manager",
+                    "employee",
+                    "leader",
+                    "accountant"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Assigned Role"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assigned_staff_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Assigned Staff Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "overdue_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Overdue Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingDashboardListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Onboarding Dashboard Runs",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/runs/{onboarding_id}": {
+      "get": {
+        "description": "Read one onboarding dashboard detail payload with employee summary and tasks.",
+        "operationId": "get_onboarding_dashboard_run_api_v1_onboarding_runs__onboarding_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "onboarding_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Onboarding Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingDashboardDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Onboarding Dashboard Run",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/runs/{onboarding_id}/tasks": {
+      "get": {
+        "description": "List onboarding tasks for one onboarding run.",
+        "operationId": "list_onboarding_tasks_api_v1_onboarding_runs__onboarding_id__tasks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "onboarding_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Onboarding Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingTaskListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Onboarding Tasks",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/runs/{onboarding_id}/tasks/backfill": {
+      "post": {
+        "description": "Backfill onboarding tasks for one legacy onboarding run that has none yet.",
+        "operationId": "backfill_onboarding_tasks_api_v1_onboarding_runs__onboarding_id__tasks_backfill_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "onboarding_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Onboarding Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingTaskListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Backfill Onboarding Tasks",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/runs/{onboarding_id}/tasks/{task_id}": {
+      "patch": {
+        "description": "Update staff-managed workflow fields for one onboarding task.",
+        "operationId": "update_onboarding_task_api_v1_onboarding_runs__onboarding_id__tasks__task_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "onboarding_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Onboarding Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingTaskUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingTaskResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Onboarding Task",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/templates": {
+      "get": {
+        "description": "List onboarding checklist templates.",
+        "operationId": "list_onboarding_templates_api_v1_onboarding_templates_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "active_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Active Only",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingChecklistTemplateListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Onboarding Templates",
+        "tags": [
+          "onboarding"
+        ]
+      },
+      "post": {
+        "description": "Create one onboarding checklist template.",
+        "operationId": "create_onboarding_template_api_v1_onboarding_templates_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingChecklistTemplateCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingChecklistTemplateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Onboarding Template",
+        "tags": [
+          "onboarding"
+        ]
+      }
+    },
+    "/api/v1/onboarding/templates/{template_id}": {
+      "get": {
+        "description": "Read one onboarding checklist template by identifier.",
+        "operationId": "get_onboarding_template_api_v1_onboarding_templates__template_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Template Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingChecklistTemplateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Onboarding Template",
+        "tags": [
+          "onboarding"
+        ]
+      },
+      "put": {
+        "description": "Replace one onboarding checklist template by identifier.",
+        "operationId": "update_onboarding_template_api_v1_onboarding_templates__template_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "template_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Template Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingChecklistTemplateUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingChecklistTemplateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update Onboarding Template",
+        "tags": [
+          "onboarding"
         ]
       }
     },

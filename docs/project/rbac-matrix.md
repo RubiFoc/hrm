@@ -1,11 +1,12 @@
 # RBAC Role Matrix (Phase 1 Baseline)
 
 ## Last Updated
-- Date: 2026-03-05
-- Updated by: backend-engineer
+- Date: 2026-03-11
+- Updated by: backend-engineer + frontend-engineer
 
 This matrix is the access baseline for `TASK-01-01`, `TASK-01-02`, `TASK-01-03`,
-`TASK-03-01`, `TASK-03-02`, `TASK-03-03`, `TASK-02-01`, and `TASK-02-02`.
+`TASK-03-01`, `TASK-03-02`, `TASK-03-03`, `TASK-02-01`, `TASK-02-02`, `TASK-06-03`,
+`TASK-07-01`, `TASK-07-02`, `TASK-07-03`, and `TASK-07-04`.
 Enforcement source of truth:
 - `apps/backend/src/hrm_backend/rbac.py`
 - `apps/backend/src/hrm_backend/auth/`
@@ -39,6 +40,18 @@ Enforcement source of truth:
 | `candidate_profile:read` | yes | yes | no | no | no | no |
 | `candidate_profile:update` | yes | yes | no | no | no | no |
 | `candidate_profile:list` | yes | yes | no | no | no | no |
+| `employee_profile:create` | yes | yes | no | no | no | no |
+| `employee_profile:read` | yes | yes | no | no | no | no |
+| `onboarding_dashboard:read` | yes | yes | yes | no | no | no |
+| `onboarding_task:list` | yes | yes | no | no | no | no |
+| `onboarding_task:update` | yes | yes | no | no | no | no |
+| `onboarding_task:backfill` | yes | yes | no | no | no | no |
+| `onboarding_template:create` | yes | yes | no | no | no | no |
+| `onboarding_template:list` | yes | yes | no | no | no | no |
+| `onboarding_template:read` | yes | yes | no | no | no | no |
+| `onboarding_template:update` | yes | yes | no | no | no | no |
+| `employee_portal:read` | no | no | no | yes | no | no |
+| `employee_portal:update` | no | no | no | yes | no | no |
 | `candidate_cv:upload` | yes | yes | no | no | no | no |
 | `candidate_cv:read` | yes | yes | no | no | no | no |
 | `candidate_cv:parsing_status` | yes | yes | no | no | no | no |
@@ -63,6 +76,21 @@ Public endpoint outside RBAC matrix:
 - Ownership checks for candidate profile/CV resources are enforced at domain-service level.
   For current policy, `admin/hr` are allowed and non-privileged staff roles receive explicit
   `denied` audit events when attempting staff-only candidate endpoints.
+- Employee profile bootstrap/read routes are staff-only and currently limited to `admin/hr`.
+  Employee self-access is intentionally deferred until later employee/onboarding slices.
+- Onboarding dashboard read routes are limited to `admin`, `hr`, and `manager`:
+  - `GET /api/v1/onboarding/runs`
+  - `GET /api/v1/onboarding/runs/{onboarding_id}`
+  Manager access is read-only and additionally scoped at the service layer to runs where at least one
+  task has `assigned_role=manager` or `assigned_staff_id=<current subject>`.
+- Onboarding task list/update/backfill routes are staff-only and currently limited to `admin/hr`.
+  Manager users can observe onboarding progress only through the dedicated read routes above.
+- Onboarding checklist template management routes are staff-only and currently limited to `admin/hr`.
+  Manager-facing template management remains out of scope.
+- Employee self-service onboarding routes are limited to the `employee` role:
+  - `GET /api/v1/employees/me/onboarding`
+  - `PATCH /api/v1/employees/me/onboarding/tasks/{task_id}`
+  Admin/HR continue to use the staff onboarding task routes for assignment, backfill, and SLA updates.
 - Background permission checks are enforced through:
   - `enforce_background_permission(...)`
   - the same centralized evaluator `evaluate_permission(...)`

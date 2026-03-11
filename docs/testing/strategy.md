@@ -249,6 +249,23 @@ Current implementation coverage includes at minimum:
 Acceptance rules for the implementation slice:
 - Freeze OpenAPI and update generated frontend types in the same change.
 - Keep auth, CORS, route topology, and anonymous candidate transport unchanged.
+
+## Hire Conversion and Employee Handoff Verification (`TASK-06-02`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Hire-conversion snapshot builder and accepted-offer invariant | `apps/backend/tests/unit/employee/test_hire_conversion_service.py` | N/A | candidate and accepted-offer snapshots are frozen deterministically; non-accepted offers are rejected before persistence |
+| Atomic `offer -> hired` dual write (`pipeline_transitions` + `hire_conversions`) | `apps/backend/tests/unit/vacancies/test_hire_conversion_atomicity.py` | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | no partial `hired` transition persists when handoff creation fails; successful `hired` creates one durable handoff row |
+| Persisted handoff contents (`offer_id`, `hired_transition_id`, snapshots, `status=ready`) | covered by service snapshot unit test above | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | durable row stores the expected candidate and accepted-offer payloads for employee bootstrap |
+| Canonical non-regression after hire | existing vacancy pipeline validator coverage + `apps/backend/tests/unit/vacancies/test_offer_lifecycle.py` | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | second `hired` attempt returns `422`; `offer -> rejected` still requires declined status |
+
+Acceptance rules for the implementation slice:
+- Keep `POST /api/v1/pipeline/transitions` as the only write path for `offer -> hired`.
+- Do not add public employee or onboarding routes in this slice.
+- Keep auth, CORS, route topology, anonymous candidate transport, and offer reason-code semantics unchanged.
+- Keep OpenAPI freeze unchanged because no public request/response contract changed.
 - Keep compose smoke green without adding feedback-specific browser automation.
 - Minimum verification set:
   - `./scripts/check-docs-structure.sh`
@@ -258,6 +275,171 @@ Acceptance rules for the implementation slice:
   - `npm --prefix apps/frontend run test -- --run`
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
   - `./scripts/smoke-compose.sh`
+
+## Employee Profile Bootstrap Verification (`TASK-06-03`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Employee-profile payload builder maps frozen `hire_conversion` snapshots deterministically | `apps/backend/tests/unit/employee/test_employee_profile_service.py` | N/A | candidate and accepted-offer snapshot fields are copied into the employee bootstrap payload without reading mutable candidate/offer tables |
+| Invalid handoff snapshots fail closed before persistence | `apps/backend/tests/unit/employee/test_employee_profile_service.py` | `apps/backend/tests/integration/employee/test_employee_profile_api.py` | malformed snapshot data returns `422 hire_conversion_invalid` and no `employee_profiles` row is inserted |
+| Staff bootstrap API creates and reads employee profiles from existing handoffs | N/A | `apps/backend/tests/integration/employee/test_employee_profile_api.py` | `POST /api/v1/employees` and `GET /api/v1/employees/{employee_id}` return the persisted profile created from `hire_conversions` |
+| Duplicate bootstrap and missing-handoff contracts remain stable | N/A | `apps/backend/tests/integration/employee/test_employee_profile_api.py` | duplicate create returns `409 employee_profile_already_exists`; missing handoff returns `404 hire_conversion_not_found` |
+| RBAC deny path for non-HR/admin employee-profile access | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/employee/test_employee_profile_api.py` | manager access returns `403` and writes a denied audit event |
+
+Acceptance rules for the implementation slice:
+- Keep employee profile creation explicit and staff-only; do not auto-create profiles during `offer -> hired`.
+- Keep onboarding trigger/execution out of this slice.
+- Freeze OpenAPI and update generated frontend types in the same change because a new staff API contract is introduced.
+- Keep auth, CORS, anonymous candidate transport, and existing `offer -> hired` reason-code semantics unchanged.
+- Minimum verification set:
+  - `./scripts/check-docs-structure.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+- `./scripts/smoke-compose.sh`
+
+## Onboarding Trigger Verification (`TASK-06-04`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Onboarding-start payload builder maps employee profile state deterministically | `apps/backend/tests/unit/employee/test_onboarding_run_service.py` | N/A | `employee_id`, copied `hire_conversion_id`, `status=started`, and `started_by_staff_id` are derived deterministically from the bootstrapped employee profile |
+| Atomic employee bootstrap (`employee_profiles` + `onboarding_runs`) | `apps/backend/tests/unit/employee/test_employee_profile_atomicity.py` | `apps/backend/tests/integration/employee/test_employee_profile_api.py` | onboarding persistence failure leaves no partial `employee_profiles` row; successful bootstrap commits both rows once |
+| One onboarding run per employee profile rule | `apps/backend/tests/unit/employee/test_onboarding_run_service.py` | `apps/backend/tests/integration/employee/test_employee_profile_api.py` | duplicate onboarding persistence for the same employee is rejected by storage constraints and API duplicate bootstrap still returns `409 employee_profile_already_exists` |
+| Employee API exposes additive onboarding metadata | N/A | `apps/backend/tests/integration/employee/test_employee_profile_api.py` | `POST /api/v1/employees` and `GET /api/v1/employees/{employee_id}` include `onboarding_id` and `onboarding_status=started` when bootstrap succeeds |
+
+Acceptance rules for the implementation slice:
+- Keep `POST /api/v1/employees` as the only write path; do not add a separate onboarding-start command.
+- Keep auth, CORS, route topology, and anonymous candidate transport unchanged.
+- Freeze OpenAPI and update generated frontend types in the same change because the existing employee response contract was extended additively.
+- Defer onboarding checklist templates, task assignment, portal/dashboard UX, and notifications.
+- Minimum verification set:
+  - `./scripts/generate-openapi-frozen.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:generate`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+  - `./scripts/check-docs-structure.sh`
+
+## Onboarding Template Management Verification (`TASK-07-01`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Template payload builder normalizes checklist items deterministically | `apps/backend/tests/unit/employee/test_onboarding_template_service.py` | N/A | names/item strings are trimmed, items are ordered by `sort_order`, and duplicate codes/sort orders fail closed before persistence |
+| Staff template API creates, reads, lists, and replaces checklist templates | N/A | `apps/backend/tests/integration/employee/test_onboarding_template_api.py` | `POST/GET/PUT /api/v1/onboarding/templates` persist one template plus ordered child items and return the current checklist state |
+| Active template switch keeps one active default for later task generation | N/A | `apps/backend/tests/integration/employee/test_onboarding_template_api.py` | making one template active deactivates the previously active template and `active_only=true` returns only the new default |
+| Conflict, validation, and RBAC deny contracts remain stable | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/employee/test_onboarding_template_api.py` | duplicate name returns `409 onboarding_template_name_conflict`; invalid checklist payload returns `422 onboarding_template_invalid`; non-HR/admin access returns `403` and writes denied audit events |
+
+Acceptance rules for the implementation slice:
+- Keep template management staff-only and separate from employee bootstrap.
+- Freeze OpenAPI and update generated frontend types in the same change because a new onboarding template API contract is introduced.
+- Keep auth, CORS, anonymous candidate transport, and employee bootstrap contracts unchanged.
+- Defer onboarding task generation/SLA logic, employee portal/dashboard UX, and notifications.
+- Minimum verification set:
+  - `./scripts/generate-openapi-frozen.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:generate`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+  - `./scripts/check-docs-structure.sh`
+
+## Onboarding Task Generation and Staff Operations Verification (`TASK-07-02`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Task payload builder maps one onboarding run plus active template bundle deterministically | `apps/backend/tests/unit/employee/test_onboarding_task_service.py` | N/A | template items are ordered by `sort_order`, provenance ids are copied, and generated tasks default to `status=pending` |
+| Employee bootstrap now atomically persists `employee_profiles + onboarding_runs + onboarding_tasks` | `apps/backend/tests/unit/employee/test_employee_profile_atomicity.py` | `apps/backend/tests/integration/employee/test_employee_profile_api.py` | task-generation failure leaves no partial employee/onboarding rows; successful bootstrap commits both onboarding run and ordered tasks |
+| One-time task materialization per onboarding run | `apps/backend/tests/unit/employee/test_onboarding_task_service.py` | `apps/backend/tests/integration/employee/test_onboarding_task_api.py` | duplicate generation/backfill for the same onboarding run fails closed via storage constraints or `409 onboarding_tasks_already_exist` |
+| Staff onboarding task API reads, patches, and backfills tasks | `apps/backend/tests/unit/employee/test_onboarding_task_service.py` | `apps/backend/tests/integration/employee/test_onboarding_task_api.py` | `GET/PATCH/POST /api/v1/onboarding/runs/{onboarding_id}/tasks*` return ordered tasks, update status/assignment/SLA fields, and manage `completed_at` server-side |
+| Missing active template and RBAC deny contracts stay stable | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/employee/test_employee_profile_api.py`, `apps/backend/tests/integration/employee/test_onboarding_task_api.py` | missing active template returns `422 onboarding_template_not_configured`; manager access returns `403` and writes denied audit events |
+
+Acceptance rules for the implementation slice:
+- Keep `POST /api/v1/employees` as the employee bootstrap command surface; do not add a separate onboarding-start or task-generation bootstrap endpoint.
+- Keep onboarding task operations staff-only under the existing `/api/v1/onboarding/...` namespace.
+- Freeze OpenAPI and update generated frontend types in the same change because new onboarding task APIs are introduced.
+- Keep auth, CORS, anonymous candidate transport, and employee/template contracts unchanged aside from the new bootstrap fail-closed behavior when no active template exists.
+- Defer employee portal/dashboard UX, notifications, and template-driven due-date automation.
+- Minimum verification set:
+  - `./scripts/generate-openapi-frozen.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:generate`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+  - `./scripts/check-docs-structure.sh`
+
+## Employee Self-Service Onboarding Portal Verification (`TASK-07-03`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Employee-profile identity reconciliation is deterministic and fail-closed | `apps/backend/tests/unit/employee/test_employee_onboarding_portal_service.py` | `apps/backend/tests/integration/employee/test_employee_onboarding_portal_api.py` | first self-service read links `employee_profiles.staff_account_id` by exact e-mail when unique; missing profile returns `404 employee_profile_not_found`; duplicate/conflicting matches return `409 employee_profile_identity_conflict` |
+| Employee portal read returns employee-scoped onboarding summary and task list | `apps/backend/tests/unit/employee/test_employee_onboarding_portal_service.py` | `apps/backend/tests/integration/employee/test_employee_onboarding_portal_api.py` | `GET /api/v1/employees/me/onboarding` returns the linked employee profile, current onboarding run, ordered task list, and `can_update` flags |
+| Employee task updates stay limited to self-actionable tasks and server-managed completion timestamps | `apps/backend/tests/unit/employee/test_employee_onboarding_portal_service.py` | `apps/backend/tests/integration/employee/test_employee_onboarding_portal_api.py` | employee can complete/reopen own actionable task; staff-managed or mismatched task returns `409 onboarding_task_not_actionable_by_employee`; `completed_at` is set/cleared server-side |
+| RBAC denies non-employee access to self-service onboarding routes | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/employee/test_employee_onboarding_portal_api.py` | HR access returns `403` and writes denied audit events; admin/HR continue to use staff onboarding task routes |
+| Frontend employee route guard, redirect, Sentry tags, and portal UX stay consistent | `apps/frontend/src/app/auth/session.test.ts`, `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.employee.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx`, `apps/frontend/src/pages/EmployeeOnboardingPage.test.tsx` | N/A | employee login redirects to `/employee`, employee guard blocks unauthorized/forbidden sessions, `/employee` emits canonical Sentry tags, and the page renders/upgrades localized task state via the typed API client |
+
+Acceptance rules for the implementation slice:
+- Keep employee self-service on the existing employee route tree; do not add new public onboarding routes or reopen auth/CORS behavior.
+- Keep staff assignment/backfill/SLA operations on `/api/v1/onboarding/runs/{onboarding_id}/tasks*`; employee updates stay limited to task `status`.
+- Freeze OpenAPI and update generated frontend types in the same change because new employee-facing onboarding APIs are introduced.
+- Keep candidate/public transport, onboarding template data model, and staff onboarding task contracts unchanged.
+- Minimum verification set:
+  - `./scripts/generate-openapi-frozen.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:generate`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+  - `./scripts/check-docs-structure.sh`
+
+## HR/Manager Onboarding Dashboard Verification (`TASK-07-04`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Dashboard aggregation and manager-scope filtering are deterministic | `apps/backend/tests/unit/employee/test_onboarding_dashboard_service.py` | N/A | summary counters, progress percent, overdue counts, and manager-visible run set are stable for the same onboarding/task input set |
+| Dashboard list/detail APIs return read-only onboarding progress views with stable filter semantics | N/A | `apps/backend/tests/integration/employee/test_onboarding_dashboard_api.py` | `GET /api/v1/onboarding/runs` and `GET /api/v1/onboarding/runs/{onboarding_id}` honor search, task-status, overdue, and visibility filters |
+| RBAC allows `admin/hr/manager` read access and denies `employee` role | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/employee/test_onboarding_dashboard_api.py` | denied roles receive `403` and audit writes; manager reads stay limited to assignment-scoped runs |
+| HR workspace embeds onboarding progress without regressing the existing recruitment flow on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | N/A | HR page still renders vacancy/pipeline controls and the embedded onboarding dashboard block with localized summary/detail state |
+| Manager workspace on `/` renders the standalone onboarding dashboard with canonical route tags | `apps/frontend/src/pages/OnboardingDashboardPage.test.tsx`, `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx` | N/A | manager login redirects to `/`, dashboard filters drive typed API queries, and Sentry emits `workspace=manager`, `role=manager`, `route=/` |
+
+Acceptance rules for the implementation slice:
+- Keep the current route tree; do not add a separate manager dashboard path.
+- Keep dashboard APIs read-only; manager users must not gain task patch/backfill permissions in this slice.
+- Freeze OpenAPI and update generated frontend types in the same change because new onboarding dashboard APIs are introduced.
+- Keep auth, CORS, employee self-service routes, and public candidate transport unchanged.
+- Minimum verification set:
+  - `./scripts/generate-openapi-frozen.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:generate`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+  - `./scripts/check-docs-structure.sh`
 
 ## Offer Workflow Verification (`TASK-06-01`)
 
