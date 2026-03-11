@@ -147,7 +147,7 @@ def test_worker_marks_job_succeeded_and_is_retry_safe() -> None:
             mime_type="application/pdf",
         )
     }
-    payloads = {"obj-1": _read_fixture_bytes("sample_cv_en.pdf")}
+    payloads = {"obj-1": _read_fixture_bytes("sample_cv_structured_en.pdf")}
     audit_service = _FakeAuditService()
     worker = _build_worker(
         jobs=jobs,
@@ -166,6 +166,9 @@ def test_worker_marks_job_succeeded_and_is_retry_safe() -> None:
     assert documents["doc-1"].parsed_profile_json is not None
     assert documents["doc-1"].evidence_json is not None
     assert documents["doc-1"].detected_language == "en"
+    workplaces = documents["doc-1"].parsed_profile_json["workplaces"]
+    assert isinstance(workplaces, dict)
+    assert workplaces["entries"][0]["position"]["raw"] == "Warehouse Supervisor"
     assert len(audit_service.events) == 1
     assert audit_service.events[0]["result"] == "success"
 

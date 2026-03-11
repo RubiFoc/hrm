@@ -41,7 +41,12 @@ def test_parse_cv_document_extracts_english_pdf_profile_and_page_evidence() -> N
     assert "sql" in skills
     assert experience["years_total"] == 5
     assert any(item["field"] == "contact.emails" for item in result.evidence)
-    assert any(item["field"] == "skills.docker" and item["page"] == 2 for item in result.evidence)
+    assert any(
+        item["field"].startswith("skills[")
+        and item["snippet"] == "Docker SQL"
+        and item["page"] == 2
+        for item in result.evidence
+    )
 
 
 def test_parse_cv_document_extracts_russian_docx_profile_and_skill_normalization() -> None:
@@ -69,6 +74,7 @@ def test_parse_cv_document_extracts_russian_docx_profile_and_skill_normalization
     assert "machine_learning" in skills
     assert experience["years_total"] == 3
     assert any(item["field"] == "experience.years_total" for item in result.evidence)
+    assert any(item["field"].startswith("skills[") for item in result.evidence)
     assert all(item["page"] is None for item in result.evidence)
 
 

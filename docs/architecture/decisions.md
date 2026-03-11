@@ -43,6 +43,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0036 | 2026-03-11 | accepted | Expose employee self-service onboarding on `/employee` with durable profile identity linking | architect + backend-engineer + frontend-engineer | employee auth-to-profile mapping, self-service API contract, frontend route topology, RBAC |
 | ADR-0037 | 2026-03-11 | accepted | Expose onboarding progress dashboards on the existing `/` route and keep manager visibility read-only and assignment-scoped | architect + backend-engineer + frontend-engineer | onboarding progress read model, manager visibility policy, frontend route topology, RBAC |
 | ADR-0038 | 2026-03-11 | accepted | Perform native PDF/DOCX text extraction before CV normalization while keeping parsing and scoring contracts stable | architect + backend-engineer | candidate parsing pipeline, evidence traceability, worker/runtime dependencies, scoring preconditions |
+| ADR-0039 | 2026-03-11 | accepted | Enrich parsed CV profiles with profession-agnostic workplaces, held positions, education, normalized titles/dates, and generic skills | architect + backend-engineer | candidate parsing pipeline, parsed-profile semantics, evidence mapping, product framing |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -748,3 +749,27 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - The worker/runtime gains one new pure-Python dependency (`pypdf`) and explicit DOCX XML handling, but avoids OCR or heavier native toolchains in this slice.
   - Explainability improves for PDF documents because evidence can now preserve source page numbers when available.
   - Image-only PDFs and blank DOCX files still fail closed until a future OCR/richer extraction slice explicitly broadens scope.
+
+## ADR-0039
+- Context: The earlier CV normalization baseline extracted only lightweight fields and used an
+  IT-biased skill vocabulary. The product scope, however, is general HRM hiring across professions,
+  so parsed CV artifacts needed to represent universal employment history instead of developer-only
+  resumes.
+- Decision:
+  - Keep the existing extraction layer, worker lifecycle, routes, and DB columns unchanged.
+  - Enrich `parsed_profile_json` additively with profession-agnostic structure:
+    - workplace history with employer plus held position;
+    - education entries;
+    - normalized titles derived from workplace positions;
+    - normalized dates/ranges;
+    - generic skills extracted from section-aware lists, with old IT synonym mapping retained only
+      as fallback compatibility.
+  - Preserve explainability by mapping the new structured fields back to source snippets with
+    offsets and PDF page numbers when available.
+  - Keep scoring/public contracts backward-compatible by treating the richer parsed profile as
+    additive JSON rather than introducing a new API or migration.
+- Consequences:
+  - Parsed CV artifacts now better match the stated cross-industry hiring scope of the product.
+  - Existing parsing status, analysis response envelope, and scoring preconditions remain stable.
+  - Later search/ranking slices can build on richer workplace and education data without reopening
+    storage or route topology.

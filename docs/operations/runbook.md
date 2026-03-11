@@ -74,6 +74,8 @@ Runtime auth/browser integration settings:
 - Native extraction behavior before RU/EN normalization:
   - `application/pdf` -> `pypdf` text extraction with PDF page traceability in evidence when available;
   - `application/vnd.openxmlformats-officedocument.wordprocessingml.document` -> OOXML zip/XML text extraction;
+  - parsed CV artifacts are profession-agnostic and now include workplaces with employer plus held
+    position, education, normalized titles/dates, generic skills, and indexed evidence fields;
   - broken archives/documents or empty extracted text fail closed and keep `analysis_ready=false`.
 - Retry behavior is bounded by `CV_PARSING_MAX_ATTEMPTS`.
 - Celery runtime settings:
@@ -201,11 +203,13 @@ Runtime auth/browser integration settings:
   - `succeeded`
   - `failed`
 - Triage sequence:
-  1. Verify the selected candidate already has parsed CV analysis (`parsed_profile_json`, `evidence_json`, `parsed_at`).
-  2. If API returns `409`, re-check candidate parsing status before retrying score.
-  3. If status remains `queued`, inspect `backend-worker` logs and confirm it listens on `match_scoring`.
-  4. If status becomes `failed`, verify `OLLAMA_BASE_URL` reachability and model availability for `MATCH_SCORING_MODEL_NAME`.
-  5. Confirm the latest `match_score_artifacts` row contains `score`, `confidence`, `summary`, requirements, evidence, and model metadata.
+1. Verify the selected candidate already has parsed CV analysis (`parsed_profile_json`, `evidence_json`, `parsed_at`).
+  2. Confirm the parsed profile contains the expected workplace history, held positions, education,
+     normalized titles/dates, and generic skills for the candidate domain you are scoring.
+  3. If API returns `409`, re-check candidate parsing status before retrying score.
+  4. If status remains `queued`, inspect `backend-worker` logs and confirm it listens on `match_scoring`.
+  5. If status becomes `failed`, verify `OLLAMA_BASE_URL` reachability and model availability for `MATCH_SCORING_MODEL_NAME`.
+  6. Confirm the latest `match_score_artifacts` row contains `score`, `confidence`, `summary`, requirements, evidence, and model metadata.
 
 ### Auth Denylist Failure Policy
 - Auth validation is fail-closed when Redis denylist is unavailable.

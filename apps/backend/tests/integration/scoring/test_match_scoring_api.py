@@ -305,7 +305,13 @@ def _mark_latest_scoring_job_failed(
         engine.dispose()
 
 
-async def _create_scoring_fixture(api_client: AsyncClient) -> tuple[str, str]:
+async def _create_scoring_fixture(
+    api_client: AsyncClient,
+    *,
+    fixture_name: str = "sample_cv_en.pdf",
+    filename: str = "cv.pdf",
+    mime_type: str = "application/pdf",
+) -> tuple[str, str]:
     """Create vacancy and candidate, upload CV, and return identifiers."""
     vacancy_response = await api_client.post(
         "/api/v1/vacancies",
@@ -331,12 +337,12 @@ async def _create_scoring_fixture(api_client: AsyncClient) -> tuple[str, str]:
     assert candidate_response.status_code == 200
     candidate_id = candidate_response.json()["candidate_id"]
 
-    content = _read_fixture_bytes("sample_cv_en.pdf")
+    content = _read_fixture_bytes(fixture_name)
     checksum = hashlib.sha256(content).hexdigest()
     upload_response = await api_client.post(
         f"/api/v1/candidates/{candidate_id}/cv",
         data={"checksum_sha256": checksum},
-        files={"file": ("cv.pdf", content, "application/pdf")},
+        files={"file": (filename, content, mime_type)},
     )
     assert upload_response.status_code == 200
     return vacancy_id, candidate_id
@@ -466,3 +472,46 @@ async def test_match_scoring_payload_propagates_evidence_and_can_list_latest_ent
     items = list_response.json()["items"]
     assert len(items) == 1
     assert items[0]["candidate_id"] == candidate_id
+
+
+async def test_match_scoring_accepts_enriched_parsed_profile_without_contract_changes(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify scoring flow stays compatible when parsed CV contains workplaces and education."""
+    _, settings, _, storage, adapter, database_url = configured_app
+    vacancy_id, candidate_id = await _create_scoring_fixture(
+        api_client,
+        fixture_name="sample_cv_structured_en.pdf",
+        filename="structured.pdf",
+        mime_type="application/pdf",
+    )
+    assert _run_parsing_worker_once(database_url, settings, storage) == "succeeded"
+
+    analysis_response = await api_client.get(f"/api/v1/candidates/{candidate_id}/cv/analysis")
+    assert analysis_response.status_code == 200
+    parsed_profile = analysis_response.json()["parsed_profile"]
+    assert parsed_profile["workplaces"]["entries"]
+    assert parsed_profile["education"]["entries"]
+    assert parsed_profile["titles"]["current"]["raw"] == "Warehouse Supervisor"
+
+    create_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/match-scores",
+        json={"candidate_id": candidate_id},
+    )
+    assert create_response.status_code == 200
+    assert create_response.json()["status"] == "queued"
+
+    assert _run_scoring_worker_once(
+        database_url,
+        settings,
+        adapter,
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+    ) == "succeeded"
+
+    score_response = await api_client.get(
+        f"/api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}"
+    )
+    assert score_response.status_code == 200
+    assert score_response.json()["status"] == "succeeded"

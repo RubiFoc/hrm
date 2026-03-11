@@ -22,7 +22,7 @@
 | TASK-11-13 | done/closed | GitHub issue #67 closed; merged in `main` via PR #68 and PR #69 (`d8ea39e`) |
 | TASK-12-01 | implemented/local-compose-baseline | `docker-compose.yml`, Dockerfiles, `./scripts/smoke-compose.sh`, and CI compose browser smoke already verify the local stack (`frontend`, `backend`, `backend-worker`, `postgres`, `redis`, `minio`) plus bootstrap jobs |
 | TASK-11-01/02/03/04 | done/closed | GitHub issues #25, #26, #27, and #28 were closed during backlog normalization; the current repo remains the source of truth for the implemented frontend foundation |
-| TASK-03-01/02/03/05/06/07 | implemented/local-native-extraction-slice | Backend candidate profile, public apply, async parsing, native PDF/DOCX text extraction, RU/EN normalization, evidence traceability, and public tracking endpoints are present in repo with unit/integration coverage; structured profile enrichment remains follow-up work (`TASK-03-08`) |
+| TASK-03-01/02/03/05/06/07/08 | implemented/local-universal-profile-enrichment-slice | Backend candidate profile, public apply, async parsing, native PDF/DOCX text extraction, RU/EN normalization, profession-agnostic structured CV enrichment (workplaces with held positions, education, normalized titles/dates, generic skills), evidence traceability, and public tracking endpoints are present in repo with unit/integration coverage |
 | TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
 | TASK-11-06 | implemented/local-baseline | `/candidate` now supports public deep-link apply, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling |
 | TASK-11-05 | implemented/local-baseline | `/` now exposes staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
@@ -54,7 +54,9 @@
 - GitHub issue sync is normalized to the current backlog state: stale implemented-task issues were closed, and missing normalized-open tasks were added as issues #85-#100.
 - Backend implementation is ahead of the original planning docs for `TASK-03-01/02/03/05/06` and `TASK-02-01/02/03`; these items are no longer backlog-only work.
 - `TASK-03-07` is now implemented in repo: backend parsing extracts text natively from PDF and DOCX before RU/EN normalization and evidence mapping, while current analysis/scoring contracts stay compatible.
-- `TASK-03-08` remains the next candidate-analysis enrichment slice after native extraction: richer section-aware normalization for experience, education, projects, and normalized titles/dates.
+- `TASK-03-08` is now implemented in repo: parsed CV profiles are enriched additively with
+  profession-agnostic workplace history, held positions, education, normalized titles/dates, and
+  generic skills while keeping parsing/analysis/scoring contracts stable.
 - The scoring/shortlist-review slice (`TASK-04-01/02/03 + TASK-11-07`) is now implemented in repo as one vertical delivery unit.
 - Scoring explainability (`TASK-04-05`) is now implemented in the same slice; remaining AI backlog is the low-confidence fallback and the quality harness.
 - The compliance follow-on slice (`TASK-13-01/02`) is now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
@@ -85,23 +87,24 @@
 - `TASK-07-03` is no longer active queue work; the implemented source of truth is the repo-backed employee self-service onboarding portal on `/employee` plus `/api/v1/employees/me/onboarding*`.
 - `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/` and rendered as the manager workspace on the existing `/` route.
 - `TASK-12-02` is now active infra gap work because Ollama scoring depends on an external host runtime and the current compose stack does not provide a self-contained AI path for local verification.
-- `TASK-03-08` is the immediate dependent enrichment slice for structured experience, education, projects, and normalized titles/dates expected by the stated hiring-analysis workflow.
+- The remaining candidate-domain follow-on work after `TASK-03-08` is limited to search/filtering
+  (`TASK-03-04`) and later AI quality/fallback work, not baseline parsed-profile structure.
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `23` tasks.
+- Normalized open backlog count: `22` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - GitHub tracking for the normalized open backlog currently lives in issues `#18-#23`, `#61-#62`, and `#85-#100`.
 - Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `24`-task count.
 - Current open backlog by delivery wave:
-  - Wave 1 product gaps: `TASK-12-02`, `TASK-03-08`, `TASK-03-04`, `TASK-04-04`, `TASK-04-06`
+  - Wave 1 product gaps: `TASK-12-02`, `TASK-03-04`, `TASK-04-04`, `TASK-04-06`
   - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-01`, `TASK-10-02`, `TASK-10-03`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
   - Wave 3 phase-2 workspaces: `TASK-09-01`, `TASK-09-02`, `TASK-09-03`, `TASK-09-04`, `TASK-11-12`
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
 | A-1 | TASK-12-02 | Needed to make local AI scoring verification self-contained instead of depending on an external host Ollama runtime |
-| A-2 | TASK-03-08 | Needed to reach the article-backed structured CV profile scope for experience, projects, education, and normalized titles/dates |
+| A-2 | TASK-03-04 | Needed to turn the enriched universal candidate profile into recruiter-facing search/filter productivity |
 | A-3 | TASK-09-01 | Full manager workspace is now the next dependent slice because manager users currently see only the onboarding-progress dashboard on `/`, while broader team hiring/onboarding visibility remains deferred |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
@@ -149,7 +152,7 @@
 | TASK-03-05 | EPIC-03 | Implement bilingual RU/EN CV normalization into canonical candidate profile schema | Phase 1 | P0 | TASK-03-03 |
 | TASK-03-06 | EPIC-03 | Persist evidence links from extracted facts to source CV fragments (sentence/paragraph) | Phase 1 | P0 | TASK-03-05 |
 | TASK-03-07 | EPIC-03 | Implement native PDF/DOCX text extraction before normalization and evidence mapping | Phase 1 | P0 | TASK-03-03 |
-| TASK-03-08 | EPIC-03 | Expand canonical CV profile extraction to experience entries, education, projects, and normalized titles/dates | Phase 1 | P1 | TASK-03-07, TASK-03-06 |
+| TASK-03-08 | EPIC-03 | Expand canonical CV profile extraction to profession-agnostic workplace entries with held positions, education, normalized titles/dates, and generic skills | Phase 1 | P1 | TASK-03-07, TASK-03-06 |
 | TASK-03-04 | EPIC-03 | Implement candidate search and filter API for HR | Phase 1 | P1 | TASK-03-01 |
 | TASK-04-01 | EPIC-04 | Implement Ollama adapter with model/version configuration for the dedicated scoring package | Phase 1 | P0 | TASK-03-03 |
 | TASK-04-02 | EPIC-04 | Implement async match scoring pipeline (`match_scoring_jobs` + worker + persisted score artifact) | Phase 1 | P0 | TASK-04-01 |

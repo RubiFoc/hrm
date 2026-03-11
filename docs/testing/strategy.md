@@ -41,7 +41,9 @@ apps/backend/tests/
 ## Integration Harness Stability Rules
 - Canonical HTTP integration harness: `pytest-anyio` + `httpx.AsyncClient` + `ASGITransport`.
 - Do not use `starlette.testclient.TestClient` in backend integration tests.
-- Keep integration runtime pinned to `anyio_backend = "asyncio"` in `apps/backend/tests/integration/conftest.py`.
+- Keep integration runtime pinned to `anyio_backend = "asyncio"` in
+  `apps/backend/tests/integration/conftest.py` or module-local fixtures for deterministic in-process
+  requests.
 - Keep `inline_threadpool_patch` integration-only; it exists to avoid environment-specific deadlocks in `anyio.to_thread` during in-process ASGI runs.
 - Integration tests should override external adapters (Redis/object storage/auth context) through FastAPI dependency overrides to keep runs deterministic.
 
@@ -143,6 +145,7 @@ apps/backend/tests/
 | Vacancy lifecycle and canonical pipeline transitions | `tests/unit/vacancies/test_pipeline_validator.py` | `tests/integration/vacancies/test_vacancy_pipeline_api.py` | Valid chain passes, invalid chain returns `422`, and ordered history read returns append-only timeline |
 | Async CV parsing lifecycle and retry-safe behavior (Celery executor) | `tests/unit/candidates/test_cv_parsing_worker.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` | `queued/running/succeeded/failed` with bounded retries and public tracking-by-job-id contract |
 | Native PDF/DOCX text extraction before normalization (`TASK-03-07`) | `tests/unit/candidates/test_cv_text_extraction.py` + `tests/unit/candidates/test_cv_parsing_normalization.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` + `tests/integration/scoring/test_match_scoring_api.py` | Real PDF/DOCX fixtures are extracted before normalization, broken/empty documents fail closed, and scoring preconditions stay unchanged |
+| Profession-agnostic parsed-profile enrichment (`TASK-03-08`) | `tests/unit/candidates/test_cv_profile_enrichment.py` + `tests/unit/candidates/test_cv_parsing_normalization.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` + `tests/integration/scoring/test_match_scoring_api.py` | Parsed CV profile includes workplace history with held positions, education, normalized titles/dates, generic skills, indexed evidence, and scoring stays compatible with the richer payload |
 | RU/EN CV normalization and language detection (`TASK-03-05`) | `tests/unit/candidates/test_cv_parsing_normalization.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` | `detected_language` and canonical profile fields are persisted after worker success |
 | Evidence traceability + analysis read contract (`TASK-03-06`) | `tests/unit/candidates/test_cv_parsing_normalization.py` (field-level evidence snippets/offsets) | `tests/integration/candidates/test_candidate_api.py` + `tests/integration/candidates/test_cv_parsing_jobs.py` | `GET /api/v1/candidates/{candidate_id}/cv/analysis` and `GET /api/v1/public/cv-parsing-jobs/{job_id}/analysis` return structured profile + evidence; pre-ready path returns `409` |
 | RBAC + audit coverage for recruitment endpoints | `tests/unit/rbac/test_rbac.py` | `tests/integration/security/test_audit_enforcement.py` + recruitment integration suites | `allowed/denied/success/failure` audit records in `audit_events` |
@@ -189,6 +192,7 @@ apps/backend/tests/
 | --- | --- | --- | --- |
 | Ollama adapter mapping and score schema validation | `apps/backend/tests/unit/scoring/test_ollama_adapter.py` | N/A | model response mapping is deterministic and score payload validates against schema |
 | Worker/job state transitions and retry behavior | `apps/backend/tests/unit/scoring/test_match_scoring_worker.py` | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | `queued/running/succeeded/failed` lifecycle is persisted correctly |
+| Prompt compatibility with enriched parsed CV profile | `apps/backend/tests/unit/scoring/test_prompt.py` | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | scoring prompt/build flow stays stable when parsed CV JSON includes workplaces, education, titles, dates, and generic skills |
 | Reject scoring when parsed CV analysis is not ready | N/A | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | `POST /api/v1/vacancies/{vacancy_id}/match-scores` returns `409` without silent fallback |
 | Score payload shape and evidence propagation | `apps/backend/tests/unit/scoring/test_ollama_adapter.py` | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | latest score response includes `score`, `confidence`, `summary`, requirements, evidence, model metadata, and `scored_at` |
 

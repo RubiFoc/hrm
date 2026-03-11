@@ -1,11 +1,14 @@
 # Project Brief
 
 ## Last Updated
-- Date: 2026-03-06
-- Updated by: architect
+- Date: 2026-03-11
+- Updated by: architect + backend-engineer
 
 ## Problem Statement
-Build an HRM platform that simplifies candidate-to-vacancy matching before interviews, improves interview fairness, reduces HR workload, streamlines onboarding, automates HR processes, and reduces operational load for managers, leaders, and accountants.
+Build a general HRM platform that simplifies candidate-to-vacancy matching before interviews,
+supports hiring across professions and industries, improves interview fairness, reduces HR
+workload, streamlines onboarding, automates HR processes, and reduces operational load for
+managers, leaders, and accountants.
 
 ## Target Users
 - HR specialists
@@ -33,7 +36,7 @@ Metric formula:
 ## Scope
 ### In Scope
 - Core HRM capabilities for first release.
-- CV analysis capability.
+- CV analysis capability for profession-agnostic resumes and employment history.
 - Role-specific workflows for HR, managers, leaders, accountants, and employees.
 - Broad v1 delivery with most planned functionality (preferably all planned features).
 - Mandatory integrations: Ollama and Google Calendar.
@@ -73,6 +76,8 @@ Metric formula:
 - CV analysis baseline:
   - input formats: PDF and DOCX,
   - bilingual processing: RU and EN,
+  - profession-agnostic structured extraction of workplaces with held positions, education,
+    normalized titles, normalized dates/ranges, and generic skills,
   - explainability: output must include evidence snippets from source CV fragments,
   - quality control metrics: precision/recall, NDCG/MRR, robustness checks.
 

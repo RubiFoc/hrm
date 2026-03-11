@@ -10,6 +10,8 @@ Project skeleton prepared for long-term maintenance with LLM-assisted workflows.
 
 ## Primary Goal
 Keep project knowledge explicit, versioned, and easy to consume by both humans and LLM agents.
+The product scope is profession-agnostic: HRM hiring workflows and CV analysis are intended for
+workers across industries, not only IT roles.
 
 ## Maintenance Principle
 Every behavior change must update code and documentation in the same task.
