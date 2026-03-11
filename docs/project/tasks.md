@@ -1,8 +1,8 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-10
-- Updated by: coordinator + architect + devops-engineer
+- Date: 2026-03-11
+- Updated by: coordinator + architect + backend-engineer + frontend-engineer
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -33,9 +33,16 @@
 | TASK-11-08 | implemented/local-interview-slice | Interview scheduling and candidate registration are implemented against `docs/project/interview-planning-pass.md`, with HR controls on `/`, public token registration on `/candidate`, and free-mode Google Calendar sync via service account + shared interviewer calendars |
 | TASK-05-03/04 | done/closed | GitHub issues #16 and #17 are closed; merged in `main` via PR #82 (`182875c`) with schedule-versioned feedback and the existing `interview -> offer` fairness gate |
 | TASK-06-01 | implemented/local-offer-slice | Offer persistence, staff lifecycle APIs on the existing vacancy route tree, `/` offer workflow UI, and `offer -> hired/rejected` guards are present in repo with OpenAPI/frontend/backend coverage |
+| TASK-06-02 | implemented/local-hire-conversion-slice | The existing `POST /api/v1/pipeline/transitions` flow now persists one durable `hire_conversions` handoff atomically with successful `offer -> hired`, while employee profile creation and onboarding execution remain deferred |
+| TASK-06-03 | implemented/local-employee-profile-slice | Staff-only `POST/GET /api/v1/employees` now bootstrap one durable `employee_profiles` row from `hire_conversions`, validate frozen snapshots, and prepare the employee-domain trigger surface for onboarding |
+| TASK-06-04 | implemented/local-onboarding-trigger-slice | Successful `POST /api/v1/employees` now atomically creates both `employee_profiles` and one durable `onboarding_runs` artifact, and employee read responses expose additive onboarding metadata |
+| TASK-07-01 | implemented/local-onboarding-template-slice | Staff-only `POST/GET/PUT /api/v1/onboarding/templates` now manage durable checklist templates and items, including one active default template for later onboarding-task generation |
+| TASK-07-02 | implemented/local-onboarding-task-slice | Employee bootstrap now atomically materializes `onboarding_tasks` from the active template, and staff can list/update/backfill tasks on `/api/v1/onboarding/runs/{onboarding_id}/tasks` |
+| TASK-07-03 | implemented/local-employee-portal-slice | Employee-only `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*` now expose self-service onboarding tasks with durable employee-profile identity linking and localized frontend coverage |
+| TASK-07-04 | implemented/local-onboarding-dashboard-slice | `GET /api/v1/onboarding/runs*` now exposes HR/admin read-all plus manager-scoped onboarding progress visibility, with the dashboard embedded on `/` for HR and rendered as the standalone manager workspace on the existing `/` route |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
-## 2026-03-10 Delivery Control Notes
+## 2026-03-11 Delivery Control Notes
 - `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
 - Backend implementation is ahead of the original planning docs for `TASK-03-01/02/03/05/06` and `TASK-02-01/02/03`; these items are no longer backlog-only work.
 - The main remaining frontend gaps after the login/browser hotfix were `TASK-11-06` and `TASK-11-05`; the current repository now contains a local acceptance baseline for both flows.
@@ -44,18 +51,32 @@
 - The dedicated planning pass for `TASK-11-08` is implemented in repo as one backend+frontend interview slice without reopening auth, CORS, or the public candidate transport model.
 - The structured interview feedback and fairness gate slice (`TASK-05-03/04`) is now implemented in repo on top of the scheduling baseline, without reopening auth, CORS, route topology, or candidate transport.
 - `TASK-06-01` is now implemented in repo as the next dependent slice: one persisted offer lifecycle (`draft`, `sent`, `accepted`, `declined`) on the existing vacancy route tree and `/` workspace, while the existing fairness gate remains the only `interview -> offer` blocker.
-- The remaining follow-on work for interview domain is limited to candidate-to-employee conversion, onboarding dependencies, and out-of-scope items such as notifications, not baseline scheduling, registration, feedback transport, or a new offer route tree.
+- `TASK-06-02` is now implemented on the existing transition endpoint as one atomic follow-on slice: accepted `offer -> hired` transitions create a durable `hire_conversions` handoff for downstream employee-domain work without adding a new route tree or public contract.
+- `TASK-06-03` is now implemented as the next employee-domain slice: HR/admin can create and read bootstrapped `employee_profiles` from the frozen hire-conversion handoff on a dedicated staff route.
+- `TASK-06-04` is now implemented as the minimal onboarding-trigger follow-on slice: the existing employee bootstrap API atomically persists one `onboarding_runs` row from the created `employee_profile` and returns additive onboarding metadata without adding a new route tree.
+- `TASK-07-01` is now implemented as the next onboarding slice: HR/admin can create, read, list, and replace onboarding checklist templates on a dedicated staff onboarding route, while task assignment/execution remains deferred.
+- `TASK-07-02` is now implemented as the task-materialization slice: successful `POST /api/v1/employees` fails closed without an active template, otherwise atomically writes `employee_profiles + onboarding_runs + onboarding_tasks`, and HR/admin can read, patch, and backfill tasks on the existing onboarding route tree.
+- `TASK-07-03` is now implemented as the employee self-service follow-on slice: authenticated employees use the new `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*`, while the backend resolves and durably links the employee profile from the existing auth session without reopening the auth or CORS model.
+- `TASK-07-04` is now implemented as the HR/manager visibility follow-on slice: `/api/v1/onboarding/runs*` exposes read-only onboarding progress data, HR/admin see all runs inside the existing `/` workspace, and managers use the same `/` route as a scoped onboarding dashboard without widening task-mutation permissions.
+- The remaining follow-on work after the onboarding-dashboard slice is limited to broader manager/team visibility and out-of-scope items such as notifications, not baseline scheduling, registration, feedback transport, or candidate-facing offer decisions.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
-## Active Queue After Planning Pass
+## Active Queue After Current Slice
 
 - `TASK-12-01` is no longer active queue work; compose baseline acceptance is already satisfied in repo and the remaining step is tracker/issue closure alignment.
 - `TASK-05-03/04` is no longer active queue work; the implemented source of truth remains `docs/project/interview-feedback-fairness-pass.md`.
 - `TASK-06-01` is no longer active queue work; the implemented source of truth is the current repo-backed offer lifecycle on the existing vacancy route tree.
-- The next downstream dependency on interview-domain state is `TASK-06-02` candidate-to-employee conversion.
+- `TASK-06-02` is no longer active queue work; the implemented source of truth is the repo-backed atomic `offer -> hired` conversion handoff on the existing transition endpoint.
+- `TASK-06-03` is no longer active queue work; the implemented source of truth is the repo-backed staff employee bootstrap flow on `/api/v1/employees`.
+- `TASK-06-04` is no longer active queue work; the implemented source of truth is the repo-backed atomic onboarding trigger on the same employee bootstrap endpoint.
+- `TASK-07-01` is no longer active queue work; the implemented source of truth is the repo-backed onboarding checklist template API on `/api/v1/onboarding/templates`.
+- `TASK-07-02` is no longer active queue work; the implemented source of truth is the repo-backed onboarding task generation/backfill/update API on `/api/v1/onboarding/runs/{onboarding_id}/tasks`.
+- `TASK-07-03` is no longer active queue work; the implemented source of truth is the repo-backed employee self-service onboarding portal on `/employee` plus `/api/v1/employees/me/onboarding*`.
+- `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/` and rendered as the manager workspace on the existing `/` route.
+
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-06-02 | Candidate-to-employee conversion is now the next dependent slice because accepted offers are persisted and enforced before `offer -> hired` |
+| A-1 | TASK-09-01 | Full manager workspace is now the next dependent slice because manager users currently see only the onboarding-progress dashboard on `/`, while broader team hiring/onboarding visibility remains deferred |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 

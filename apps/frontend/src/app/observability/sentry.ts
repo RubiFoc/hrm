@@ -118,8 +118,12 @@ function resolveObservabilityTags(pathname: string): ObservabilityTags {
 }
 
 function resolveWorkspaceTag(pathname: string): string {
+  const session = readAuthSession();
   if (pathname === "/") {
-    return "hr";
+    return session.role === "manager" ? "manager" : "hr";
+  }
+  if (pathname === "/employee" || pathname.startsWith("/employee/")) {
+    return "employee";
   }
   if (pathname === "/candidate") {
     return "candidate";
@@ -145,6 +149,9 @@ function resolveRouteTag(pathname: string): string {
       return "/admin/employee-keys";
     }
     return "/admin";
+  }
+  if (pathname === "/employee" || pathname.startsWith("/employee/")) {
+    return "/employee";
   }
   if (pathname === "/candidate" || pathname.startsWith("/candidate/")) {
     return "/candidate";

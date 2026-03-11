@@ -5,10 +5,13 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import HTTPException, Request, status
+from sqlalchemy.orm import Session
 
 from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
+from hrm_backend.candidates.models.profile import CandidateProfile
+from hrm_backend.employee.services.hire_conversion_service import HireConversionService
 from hrm_backend.interviews.dao.feedback_dao import InterviewFeedbackDAO
 from hrm_backend.interviews.dao.interview_dao import InterviewDAO
 from hrm_backend.interviews.utils.feedback import (
@@ -18,7 +21,10 @@ from hrm_backend.interviews.utils.feedback import (
 from hrm_backend.vacancies.dao.offer_dao import OfferDAO
 from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransitionDAO
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
+from hrm_backend.vacancies.models.offer import Offer
+from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition
 from hrm_backend.vacancies.schemas.pipeline import (
+    PipelineStage,
     PipelineTransitionCreateRequest,
     PipelineTransitionListResponse,
     PipelineTransitionResponse,
@@ -39,31 +45,37 @@ class VacancyService:
     def __init__(
         self,
         *,
+        session: Session,
         vacancy_dao: VacancyDAO,
         transition_dao: PipelineTransitionDAO,
         offer_dao: OfferDAO,
         candidate_profile_dao: CandidateProfileDAO,
         interview_dao: InterviewDAO,
         interview_feedback_dao: InterviewFeedbackDAO,
+        hire_conversion_service: HireConversionService,
         audit_service: AuditService,
     ) -> None:
         """Initialize vacancy service dependencies.
 
         Args:
+            session: SQLAlchemy session used to bundle atomic pipeline side effects.
             vacancy_dao: Vacancy DAO.
             transition_dao: Pipeline transition DAO.
             offer_dao: Offer DAO.
             candidate_profile_dao: Candidate profile DAO.
             interview_dao: Interview DAO.
             interview_feedback_dao: Interview feedback DAO.
+            hire_conversion_service: Durable employee-domain handoff service.
             audit_service: Audit service.
         """
+        self._session = session
         self._vacancy_dao = vacancy_dao
         self._transition_dao = transition_dao
         self._offer_dao = offer_dao
         self._candidate_profile_dao = candidate_profile_dao
         self._interview_dao = interview_dao
         self._interview_feedback_dao = interview_feedback_dao
+        self._hire_conversion_service = hire_conversion_service
         self._audit_service = audit_service
 
     def create_vacancy(
@@ -222,20 +234,15 @@ class VacancyService:
                     status_code=status.HTTP_409_CONFLICT,
                     detail=offer_gate_reason,
                 )
-        transition = self._transition_dao.create_transition(
+        transition = self._persist_transition_bundle(
             vacancy_id=vacancy_id,
-            candidate_id=candidate_id,
-            from_stage=from_stage,
-            to_stage=payload.to_stage,
-            reason=payload.reason,
-            changed_by_sub=actor_sub,
-            changed_by_role=actor_role,
-        )
-        if payload.to_stage == "offer":
-            self._ensure_offer_exists(
-                vacancy_id=vacancy_id,
-                candidate_id=candidate_id,
-            )
+            candidate=candidate,
+        from_stage=from_stage,
+        to_stage=payload.to_stage,
+        reason=payload.reason,
+        actor_sub=actor_sub,
+        actor_role=actor_role,
+    )
         self._audit_service.record_api_event(
             action="pipeline:transition",
             resource_type="pipeline",
@@ -342,7 +349,68 @@ class VacancyService:
             to_stage=to_stage,
         )
 
-    def _ensure_offer_exists(self, *, vacancy_id: str, candidate_id: str) -> None:
+    def _persist_transition_bundle(
+        self,
+        *,
+        vacancy_id: str,
+        candidate: CandidateProfile,
+        from_stage: PipelineStage | None,
+        to_stage: PipelineStage,
+        reason: str | None,
+        actor_sub: str,
+        actor_role: str,
+    ) -> PipelineTransition:
+        """Persist one pipeline transition with required same-transaction side effects."""
+        accepted_offer: Offer | None = None
+        if to_stage == "hired":
+            accepted_offer = self._offer_dao.get_by_pair(
+                vacancy_id=vacancy_id,
+                candidate_id=candidate.candidate_id,
+            )
+            if accepted_offer is None:
+                raise RuntimeError("Expected accepted offer before persisting hire conversion")
+
+        try:
+            transition = self._transition_dao.create_transition(
+                vacancy_id=vacancy_id,
+                candidate_id=candidate.candidate_id,
+                from_stage=from_stage,
+                to_stage=to_stage,  # type: ignore[arg-type]
+                reason=reason,
+                changed_by_sub=actor_sub,
+                changed_by_role=actor_role,
+                commit=False,
+            )
+            if to_stage == "offer":
+                self._ensure_offer_exists(
+                    vacancy_id=vacancy_id,
+                    candidate_id=candidate.candidate_id,
+                    commit=False,
+                )
+            if to_stage == "hired":
+                if accepted_offer is None:
+                    raise RuntimeError("Expected accepted offer before persisting hire conversion")
+                self._hire_conversion_service.create_ready_handoff(
+                    candidate=candidate,
+                    offer=accepted_offer,
+                    hired_transition=transition,
+                    converted_by_staff_id=actor_sub,
+                    commit=False,
+                )
+            self._session.commit()
+            self._session.refresh(transition)
+            return transition
+        except Exception:
+            self._session.rollback()
+            raise
+
+    def _ensure_offer_exists(
+        self,
+        *,
+        vacancy_id: str,
+        candidate_id: str,
+        commit: bool = True,
+    ) -> None:
         """Create blank draft offer for pairs that have just entered stage `offer`."""
         existing_offer = self._offer_dao.get_by_pair(
             vacancy_id=vacancy_id,
@@ -350,7 +418,11 @@ class VacancyService:
         )
         if existing_offer is not None:
             return
-        self._offer_dao.create_offer(vacancy_id=vacancy_id, candidate_id=candidate_id)
+        self._offer_dao.create_offer(
+            vacancy_id=vacancy_id,
+            candidate_id=candidate_id,
+            commit=commit,
+        )
 
     def _audit_transition_failure(
         self,

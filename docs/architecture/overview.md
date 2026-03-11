@@ -1,7 +1,7 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-10
+- Date: 2026-03-11
 - Updated by: architect + backend-engineer + frontend-engineer
 
 ## System Context
@@ -42,9 +42,9 @@ flowchart LR
 | Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
 | Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
 | Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key lifecycle (issue/list/revoke), audit hooks | platform |
-| Recruitment Domain | Vacancies, candidates, pipeline, interviews, schedule-versioned interviewer feedback, and offer lifecycle state | Candidate and vacancy data | Vacancy/pipeline state, interview fairness state, offer status, active-document readiness, candidate context | hr-tech |
+| Recruitment Domain | Vacancies, candidates, pipeline, interviews, schedule-versioned interviewer feedback, offer lifecycle state, and hire-conversion command flow | Candidate and vacancy data | Vacancy/pipeline state, interview fairness state, offer status, active-document readiness, candidate context | hr-tech |
 | Match Scoring Domain | Async scoring jobs and explainable score artifacts keyed by vacancy, candidate, and active document | Scoring requests, parsed CV analysis, vacancy snapshot | UI-ready score/status payloads for shortlist review | ai-platform |
-| Employee Domain | Employee profile and onboarding workflows | Hire decisions, profile data | Employee records, onboarding tasks | hr-tech |
+| Employee Domain | Durable hire-conversion handoff, explicit employee profile bootstrap, onboarding workflows, employee self-service onboarding portal, and HR/manager onboarding progress visibility | Hire conversion handoff, profile/bootstrap/template/portal/dashboard requests | Employee handoff rows, employee profiles, onboarding runs/templates/tasks, employee-facing onboarding views, and staff/manager onboarding progress read models | hr-tech |
 | HR Operations Domain | HR process automation and workflow execution | Rules and triggers | Automated tasks, status updates | hr-ops |
 | Finance Domain Adapter | Accounting-facing data exchange | Payroll/accounting requests | Exported records and statuses | finance-tech |
 | AI Adapter | External model integration for CV analysis and match scoring | CV files, vacancy profiles, scoring prompts | Structured candidate insights and score responses | ai-platform |
@@ -67,10 +67,21 @@ flowchart LR
    after successful `interview -> offer`, the recruitment domain persists one offer row for the current
    vacancy/candidate pair -> HR updates draft terms on the existing vacancy route tree ->
    HR marks the offer as `sent`, then records `accepted` or `declined` manually in `/` ->
-   `POST /api/v1/pipeline/transitions` allows `offer -> hired` only after `accepted` and
-   `offer -> rejected` only after `declined`.
+   `POST /api/v1/pipeline/transitions` allows `offer -> hired` only after `accepted`; on success the
+   same request appends the `hired` transition and persists one durable `hire_conversion` handoff for
+   the employee domain, while `offer -> rejected` still requires `declined`.
 4. Onboarding Flow:
-   accepted candidate -> employee profile creation -> onboarding checklist -> completion tracking.
+   durable `hire_conversion` handoff -> staff `POST /api/v1/employees` bootstrap ->
+   resolve active checklist baseline on `/api/v1/onboarding/templates` ->
+   atomic `employee_profiles + onboarding_runs(status=started) + onboarding_tasks(status=pending)` persistence ->
+   HR/admin read, patch, or backfill tasks on `/api/v1/onboarding/runs/{onboarding_id}/tasks` ->
+   authenticated employee opens `/employee` -> `/api/v1/employees/me/onboarding` resolves a linked employee profile
+   (or lazily reconciles by exact e-mail on first access) ->
+   employee updates self-actionable task status on `/api/v1/employees/me/onboarding/tasks/{task_id}` ->
+   completion tracking ->
+   HR/admin open `/` for an embedded onboarding progress panel or manager opens `/` for a standalone dashboard ->
+   `GET /api/v1/onboarding/runs` + `GET /api/v1/onboarding/runs/{onboarding_id}` return summary/detail views,
+   while manager visibility stays limited to runs with manager-assigned tasks.
 5. HR Automation Flow:
    rule trigger -> workflow engine -> task creation/assignment -> status update and reporting.
 6. Public Candidate Apply Flow:
@@ -90,7 +101,7 @@ flowchart LR
 
 ## Data Boundaries
 - Source of truth entities:
-  vacancies, candidates, CV metadata, interview records, employee profiles, onboarding tasks, HR operations, audit events.
+  vacancies, candidates, CV metadata, interview records, employee profiles, onboarding runs/templates/tasks, HR operations, audit events.
 - CV analysis artifacts:
   `parsed_profile_json`, `evidence_json`, `detected_language`, `parsed_at` stored per active candidate document.
 - Match scoring artifacts:
@@ -103,6 +114,31 @@ flowchart LR
 - Offer lifecycle artifacts:
   `offers` rows keyed by `vacancy_id + candidate_id`, including `status`, draft terms, send metadata,
   and decision metadata used to gate `offer -> hired/rejected`.
+- Hire conversion artifacts:
+  `hire_conversions` rows keyed by `vacancy_id + candidate_id`, including `offer_id`,
+  `hired_transition_id`, frozen candidate and accepted-offer snapshots, `status`, `converted_at`,
+  and `converted_by_staff_id` for downstream employee bootstrap.
+- Employee profile artifacts:
+  `employee_profiles` rows keyed by `hire_conversion_id`, including source `vacancy_id +
+  candidate_id`, frozen core identity fields, candidate `extra_data`, accepted-offer terms summary,
+  `start_date`, optional `staff_account_id` identity link for employee self-service, and
+  `created_by_staff_id`.
+- Onboarding-start artifacts:
+  `onboarding_runs` rows keyed by `employee_id`, including copied `hire_conversion_id`,
+  `status=started`, `started_at`, and `started_by_staff_id` as the durable input for later
+  checklist/task slices.
+- Onboarding template artifacts:
+  `onboarding_templates` rows keyed by `template_id` plus `onboarding_template_items` child rows,
+  including unique template name, `is_active` default selection flag, stable item codes,
+  titles/descriptions, sort order, and `is_required` markers for later task generation.
+- Onboarding task artifacts:
+  `onboarding_tasks` rows keyed by `task_id`, including owning `onboarding_id`, copied
+  `template_id + template_item_id` provenance, frozen task snapshot fields (`code`, `title`,
+  `description`, `sort_order`, `is_required`), workflow `status`, optional assignment metadata
+  (`assigned_role`, `assigned_staff_id`), optional `due_at`, server-managed `completed_at`, and
+  the employee-facing completion state read from `/api/v1/employees/me/onboarding`; HR/admin and
+  managers consume the same durable task rows through `/api/v1/onboarding/runs*` without a
+  separate reporting table in this slice.
 - Auth revocation artifacts:
   denylisted token ids (`jti`) and session ids (`sid`) in Redis.
 - External integrations: Ollama, Google Calendar
@@ -116,6 +152,17 @@ flowchart LR
   `hrm_backend/auth` handles auth/session lifecycle; `hrm_backend/admin` handles admin governance APIs.
 - Implemented package boundary:
   `hrm_backend/scoring` handles scoring jobs, score artifacts, Ollama integration, and scoring API contracts without mixing this logic into `candidates` or `vacancies`.
+- Implemented employee boundary:
+  `hrm_backend/employee` now owns durable `hire_conversions` handoff records created on the existing
+  `offer -> hired` transition plus staff-facing `employee_profiles` bootstrap APIs on
+  `/api/v1/employees`; successful bootstrap now atomically persists one `onboarding_runs`
+  artifact plus materialized `onboarding_tasks`, staff-facing template management lives on
+  `/api/v1/onboarding/templates`, staff task operations/backfill live on
+  `/api/v1/onboarding/runs/{onboarding_id}/tasks`, and employee self-service onboarding reads and
+  task status updates live on `/api/v1/employees/me/onboarding*` with a durable
+  `employee_profiles.staff_account_id` identity link; read-only onboarding progress list/detail
+  routes now live on `/api/v1/onboarding/runs*`, where HR/admin see all runs and managers see only
+  manager-scoped assignments.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
 - Compose baseline services: `frontend`, `backend`, `backend-worker`, `postgres`, `postgres-init`, `backend-migrate`, `redis`, `minio`, `minio-init`.
 - Compose bootstrap baseline: `postgres-init`, `backend-migrate`, and `minio-init` are one-shot prerequisites before steady-state services are considered ready.
@@ -157,6 +204,13 @@ flowchart LR
 - AI output quality variance across candidate domains and CV formats.
 - Interview workflow is implemented from `docs/project/interview-planning-pass.md`, but runtime still carries calendar-integration and manual-invite delivery risk because the free Google Calendar mode depends on manually shared interviewer calendars.
 - Offer workflow currently records candidate decisions through staff actions on `/`; candidate-facing offer acceptance/decline transport is intentionally out of scope for this slice.
+- Hire conversion handoff, employee bootstrap, onboarding-start persistence, checklist template
+  management, onboarding task generation, employee self-service portal, and the first
+  HR/manager onboarding progress dashboard are now implemented, but broader manager/team hiring
+  visibility remains deferred to `TASK-09-01`.
+- First-time employee self-service access currently relies on exact e-mail reconciliation when
+  `employee_profiles.staff_account_id` is still null; ambiguous duplicate e-mail data fails closed
+  with an identity-conflict error until HR cleans the source records.
 - Integration instability risk with calendar sync edge cases.
 - Compliance risk if country-specific legal acts are not mapped early.
 

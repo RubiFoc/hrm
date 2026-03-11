@@ -35,6 +35,13 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0028 | 2026-03-09 | accepted | Harden frontend observability with canonical Sentry route tags and shared failure capture | architect + frontend-engineer | frontend observability, route semantics, error telemetry |
 | ADR-0029 | 2026-03-09 | accepted | Freeze interview scheduling and candidate registration as a public-token workflow on existing routes | architect + backend-engineer + frontend-engineer | interview product rules, public token model, Google Calendar sync semantics, route topology |
 | ADR-0030 | 2026-03-10 | accepted | Freeze interviewer feedback as schedule-versioned interview data and enforce fairness gate on the existing `interview -> offer` transition | architect + backend-engineer + frontend-engineer | interview feedback data model, HR workspace UX, pipeline transition semantics, OpenAPI contract |
+| ADR-0031 | 2026-03-10 | accepted | Persist durable `hire_conversion` handoff on the existing `offer -> hired` transition | architect + backend-engineer | employee domain boundary, pipeline transition semantics, employee bootstrap sequencing |
+| ADR-0032 | 2026-03-10 | accepted | Bootstrap employee profiles from durable `hire_conversions` on a dedicated staff API | architect + backend-engineer | employee API contract, route topology, RBAC, onboarding sequencing |
+| ADR-0033 | 2026-03-10 | accepted | Trigger onboarding atomically on successful employee profile bootstrap | architect + backend-engineer | employee bootstrap transaction boundary, onboarding persistence, employee API contract |
+| ADR-0034 | 2026-03-10 | accepted | Manage onboarding checklist templates on a dedicated staff onboarding API | architect + backend-engineer | onboarding template data model, route topology, RBAC, later task generation |
+| ADR-0035 | 2026-03-11 | accepted | Materialize onboarding tasks from the active template and keep staff operations on onboarding runs | architect + backend-engineer | onboarding task data model, bootstrap transaction boundary, RBAC, API contract |
+| ADR-0036 | 2026-03-11 | accepted | Expose employee self-service onboarding on `/employee` with durable profile identity linking | architect + backend-engineer + frontend-engineer | employee auth-to-profile mapping, self-service API contract, frontend route topology, RBAC |
+| ADR-0037 | 2026-03-11 | accepted | Expose onboarding progress dashboards on the existing `/` route and keep manager visibility read-only and assignment-scoped | architect + backend-engineer + frontend-engineer | onboarding progress read model, manager visibility policy, frontend route topology, RBAC |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -524,3 +531,200 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Feedback remains traceable to the real interview schedule and interviewer assignment.
   - Pipeline semantics stay centralized in the existing transition flow, which reduces route and audit fragmentation.
   - More sophisticated fairness policy, interviewer reminders, and candidate-facing visibility remain explicitly deferred.
+
+## ADR-0031
+- Context: `TASK-06-01` already fixed the offer lifecycle on the existing vacancy route tree and kept `offer -> hired` on `POST /api/v1/pipeline/transitions`, but the downstream employee-domain boundary remained undefined. Adding a separate conversion endpoint, creating employee profiles immediately, or triggering onboarding inside the same slice would reopen route topology and sequencing decisions unnecessarily.
+- Decision:
+  - Keep `POST /api/v1/pipeline/transitions` as the only command surface for `offer -> hired`.
+  - Keep the existing offer gate unchanged:
+    - `offer.status=accepted` is still required for `hired`
+    - public `409 offer_not_accepted` / `409 offer_not_declined` semantics remain unchanged
+  - On successful `offer -> hired`, persist one durable `hire_conversion` row atomically with the `pipeline_transitions` write.
+  - Store the handoff as a frozen employee-domain bootstrap artifact keyed by `vacancy_id + candidate_id`, including:
+    - `offer_id`
+    - `hired_transition_id`
+    - candidate bootstrap snapshot
+    - accepted-offer snapshot
+    - `status=ready`
+    - `converted_at`
+    - `converted_by_staff_id`
+  - Keep route topology, auth, CORS behavior, and public candidate transport unchanged.
+  - Defer actual employee profile creation to `TASK-06-03`.
+  - Defer onboarding trigger/execution to `TASK-06-04`.
+- Consequences:
+  - Recruitment keeps ownership of the hiring command while the employee domain receives one deterministic persisted handoff.
+  - The `offer -> hired` flow is now durable without introducing a new public contract.
+  - Employee bootstrap sequencing is explicit: hire conversion first, employee profile second, onboarding third.
+  - The slice remains small and reversible because it does not start employee CRUD or onboarding execution prematurely.
+
+## ADR-0032
+- Context: `TASK-06-02` already persists one durable `hire_conversion` handoff, but the employee domain still lacked an explicit bootstrap command and read surface. Automatically creating employee records during `offer -> hired` would collapse two slices into one, while reusing the vacancy transition endpoint for employee CRUD would blur domain ownership and error contracts.
+- Decision:
+  - Introduce a dedicated staff-facing employee route tree:
+    - `POST /api/v1/employees`
+    - `GET /api/v1/employees/{employee_id}`
+  - Keep the create input minimal and contextual to existing HR workflow state:
+    - `vacancy_id`
+    - `candidate_id`
+    - resolve the durable `hire_conversion` internally instead of exposing `conversion_id` as a command input
+  - Create one `employee_profiles` row only from a persisted ready-state `hire_conversion`.
+  - Validate frozen candidate and accepted-offer snapshots before persistence; malformed handoff data returns `422 hire_conversion_invalid`.
+  - Enforce one employee profile per hire conversion:
+    - duplicate bootstrap returns `409 employee_profile_already_exists`
+    - missing handoff returns `404 hire_conversion_not_found`
+    - missing employee read returns `404 employee_profile_not_found`
+  - Limit access to `admin` and `hr` via new permissions:
+    - `employee_profile:create`
+    - `employee_profile:read`
+  - Do not trigger onboarding in this slice.
+- Consequences:
+  - Employee bootstrap now has a stable API contract and persistence boundary without changing candidate/public flows.
+  - Route-topology change is explicit and documented rather than implicit drift.
+  - `TASK-06-04` can start onboarding from an existing employee profile instead of directly from the hiring transition.
+  - Employee self-service, manager visibility, and richer employee lifecycle states remain deferred.
+
+## ADR-0033
+- Context: `TASK-06-03` introduced an explicit employee bootstrap endpoint, but onboarding still had no durable start marker. Adding a separate onboarding-start command would widen the route surface, while starting onboarding directly from `hire_conversions` would bypass the new employee-domain source of truth.
+- Decision:
+  - Keep `POST /api/v1/employees` as the only command surface for employee bootstrap and onboarding start.
+  - Start onboarding from the persisted `employee_profile`, not directly from `hire_conversion` resolution.
+  - Persist one durable `onboarding_runs` row atomically with `employee_profiles` on successful bootstrap.
+  - Keep the onboarding-start artifact minimal in this slice:
+    - `onboarding_id`
+    - `employee_id` (unique)
+    - copied `hire_conversion_id`
+    - `status=started`
+    - `started_at`
+    - `started_by_staff_id`
+  - Extend `EmployeeProfileResponse` additively with:
+    - `onboarding_id`
+    - `onboarding_status`
+  - Keep duplicate bootstrap semantics unchanged:
+    - `409 employee_profile_already_exists`
+    - no onboarding-specific duplicate write contract is introduced
+  - Defer onboarding checklist templates, task assignment, employee portal, manager dashboard, and notifications to `TASK-07-*`.
+- Consequences:
+  - Employee bootstrap and onboarding start now share one transaction boundary, so onboarding persistence failure rolls back the employee profile insert.
+  - The employee API remains the stable trigger surface and does not add a parallel onboarding route tree.
+  - Later onboarding slices can consume `onboarding_runs` as their durable source input without rereading mutable recruitment state.
+  - Contract churn stays minimal because onboarding visibility is additive on the existing employee response.
+
+## ADR-0034
+- Context: `TASK-06-04` now persists durable `onboarding_runs`, but later onboarding-task slices still lacked a configurable checklist source of truth. Reusing `POST /api/v1/employees` for template management would mix employee bootstrap with operational configuration, while jumping straight to task generation would hardcode checklist content too early.
+- Decision:
+  - Introduce a dedicated staff-only onboarding template route tree:
+    - `POST /api/v1/onboarding/templates`
+    - `GET /api/v1/onboarding/templates`
+    - `GET /api/v1/onboarding/templates/{template_id}`
+    - `PUT /api/v1/onboarding/templates/{template_id}`
+  - Keep template management inside the existing `hrm_backend/employee` package because it is still part of the employee/onboarding domain boundary.
+  - Persist one template row plus durable child checklist items:
+    - `onboarding_templates`
+    - `onboarding_template_items`
+  - Keep the template item shape minimal for this slice:
+    - stable item `code`
+    - `title`
+    - optional `description`
+    - `sort_order`
+    - `is_required`
+  - Enforce operational guardrails:
+    - unique template `name`
+    - unique item `code` and `sort_order` within one template
+    - activating one template automatically deactivates previously active templates
+  - Limit access to `admin` and `hr` via:
+    - `onboarding_template:create`
+    - `onboarding_template:list`
+    - `onboarding_template:read`
+    - `onboarding_template:update`
+  - Defer task generation, SLA/assignment logic, employee portal, manager dashboard, and notifications to later slices.
+- Consequences:
+  - `TASK-07-02` can generate onboarding tasks from one active, staff-managed checklist baseline instead of hardcoded defaults.
+  - Employee bootstrap and onboarding template management stay separated at the API level, which keeps write contracts easier to reason about.
+  - The onboarding domain now has durable configuration state without committing yet to task lifecycle semantics.
+
+## ADR-0035
+- Context: `TASK-07-01` introduced durable active onboarding templates, but onboarding runs still had no materialized task rows, no staff assignment/SLA surface, and no way to backfill legacy runs created before task generation existed.
+- Decision:
+  - Extend the existing employee bootstrap command on `POST /api/v1/employees` so successful bootstrap now atomically persists:
+    - `employee_profiles`
+    - `onboarding_runs`
+    - `onboarding_tasks`
+  - Resolve onboarding tasks from the current active onboarding template; if no active template exists, fail employee bootstrap with `422 onboarding_template_not_configured` and roll back the whole transaction.
+  - Persist one durable onboarding task row per generated template item with:
+    - owning `onboarding_id`
+    - copied `template_id` and `template_item_id` for provenance
+    - frozen task snapshot fields (`code`, `title`, `description`, `sort_order`, `is_required`)
+    - workflow fields (`status`, `assigned_role`, `assigned_staff_id`, `due_at`, `completed_at`)
+  - Keep `onboarding_runs.status` unchanged as `started`; task progress remains on `onboarding_tasks` until later portal/dashboard slices define aggregate run lifecycle semantics.
+  - Introduce a staff-only onboarding task route tree under the existing onboarding namespace:
+    - `GET /api/v1/onboarding/runs/{onboarding_id}/tasks`
+    - `PATCH /api/v1/onboarding/runs/{onboarding_id}/tasks/{task_id}`
+    - `POST /api/v1/onboarding/runs/{onboarding_id}/tasks/backfill`
+  - Use explicit backfill for legacy onboarding runs with zero tasks instead of automatic lazy generation.
+  - Limit task routes to `admin` and `hr` via:
+    - `onboarding_task:list`
+    - `onboarding_task:update`
+    - `onboarding_task:backfill`
+  - Keep employee/manager self-service onboarding views, template-driven due-date calculation, notifications, and progress dashboards deferred to later slices.
+- Consequences:
+  - New employee bootstrap now has one explicit transaction boundary from hire conversion resolution through task materialization.
+  - Later onboarding slices can build portal/dashboard UX on durable task rows instead of rereading template state.
+  - Backfill stays explicit and auditable for pre-existing onboarding runs instead of introducing hidden side effects on reads.
+  - The onboarding API surface grows only within the existing `/api/v1/onboarding/...` namespace and does not reopen auth, CORS, or public candidate transport decisions.
+
+## ADR-0036
+- Context: `TASK-07-02` already materialized durable onboarding tasks and staff operations, but the product still lacked an employee-facing portal and a stable way to resolve the authenticated `employee` subject to one `employee_profile`. Reopening the auth model, introducing a parallel identity service, or exposing public onboarding routes would add disproportionate scope for the next slice.
+- Decision:
+  - Introduce an employee-only self-service onboarding surface on the existing employee route tree:
+    - `GET /api/v1/employees/me/onboarding`
+    - `PATCH /api/v1/employees/me/onboarding/tasks/{task_id}`
+  - Extend frontend route topology with one employee workspace:
+    - `/employee`
+    - post-login redirect for `employee` role changes from `/` to `/employee`
+  - Add one durable optional identity bridge on `employee_profiles`:
+    - `staff_account_id -> staff_accounts.staff_id`
+  - Resolve employee self-service identity in two steps:
+    - first by direct `staff_account_id` link
+    - otherwise by exact e-mail reconciliation from the authenticated staff account to `employee_profiles.email`, then persist the durable link for later requests
+  - Fail closed when identity cannot be resolved safely:
+    - `404 employee_profile_not_found`
+    - `409 employee_profile_identity_conflict`
+  - Limit employee self-service task updates to `status` only, and only when the task is actionable for the current employee:
+    - `assigned_role` is `null` or `employee`
+    - `assigned_staff_id` is `null` or the current authenticated subject
+    - otherwise return `409 onboarding_task_not_actionable_by_employee`
+  - Keep admin/HR onboarding assignment/backfill/SLA operations on the existing staff onboarding routes.
+  - Keep auth, CORS, public candidate transport, onboarding template model, and staff task APIs unchanged in this slice.
+- Consequences:
+  - The employee domain now owns a complete self-service onboarding read/update contract without reopening the auth subsystem.
+  - Identity reconciliation becomes explicit and durable after the first successful portal read or update.
+  - Ambiguous employee-to-auth matches fail closed and are visible as an operational data-cleanup issue instead of a silent cross-account data leak.
+  - Manager dashboard, richer employee profile editing, alternative identity matching rules, and notifications remain deferred to later slices.
+
+## ADR-0037
+- Context: `TASK-07-03` completed employee self-service onboarding, but staff users still lacked a consolidated progress read surface and managers had no sanctioned workspace entrypoint for their onboarding responsibilities. Creating a new route tree for managers or widening manager access to existing task mutation APIs would overshoot the intended read-only dashboard slice.
+- Decision:
+  - Keep the existing `/` route as the only staff workspace entrypoint in this slice:
+    - `hr`/`admin` retain the recruitment workspace on `/` and receive onboarding progress as an embedded block
+    - `manager` uses `/` as a standalone onboarding progress dashboard
+  - Introduce read-only onboarding dashboard APIs on the existing onboarding namespace:
+    - `GET /api/v1/onboarding/runs`
+    - `GET /api/v1/onboarding/runs/{onboarding_id}`
+  - Build the dashboard read model directly from durable `employee_profiles`, `onboarding_runs`, and `onboarding_tasks` instead of a separate reporting table in this slice.
+  - Allow `admin` and `hr` to read all onboarding runs.
+  - Allow `manager` to read onboarding runs only when at least one materialized task satisfies either:
+    - `assigned_role=manager`
+    - `assigned_staff_id=<current manager subject>`
+  - Keep manager access read-only:
+    - no `PATCH /api/v1/onboarding/runs/{onboarding_id}/tasks/{task_id}`
+    - no `POST /api/v1/onboarding/runs/{onboarding_id}/tasks/backfill`
+  - Add dedicated read permission `onboarding_dashboard:read` for `admin`, `hr`, and `manager`.
+  - Update frontend observability so `/` emits:
+    - `workspace=hr` for the HR/admin recruitment workspace
+    - `workspace=manager` for the manager onboarding dashboard
+  - Keep auth, CORS, employee portal routes, candidate/public transport, and the existing task/template APIs unchanged.
+- Consequences:
+  - Staff now have one durable onboarding progress surface without introducing a separate manager-only routing tree.
+  - Manager visibility remains tightly scoped to explicit task assignments, which avoids accidental team-wide data exposure before `TASK-09-01` defines broader manager workspace rules.
+  - The dashboard reuses transactional onboarding tables directly, so later reporting or aggregation optimizations can be deferred until real load justifies them.
+  - Full manager/team hiring workspace, richer cross-run analytics, notifications, and broader visibility policies remain deferred to `TASK-09-01+`.

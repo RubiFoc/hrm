@@ -19,6 +19,7 @@ from hrm_backend.candidates.infra.postgres import (
     CVParsingJobDAO,
 )
 from hrm_backend.core.db.session import get_db_session
+from hrm_backend.employee.dependencies.employee import get_hire_conversion_service
 from hrm_backend.interviews.dao.feedback_dao import InterviewFeedbackDAO
 from hrm_backend.interviews.dao.interview_dao import InterviewDAO
 from hrm_backend.settings import AppSettings, get_settings
@@ -50,13 +51,16 @@ def get_vacancy_service(
     Returns:
         VacancyService: Vacancy domain service.
     """
+    hire_conversion_service = get_hire_conversion_service(session=session)
     return VacancyService(
+        session=session,
         vacancy_dao=VacancyDAO(session=session),
         transition_dao=PipelineTransitionDAO(session=session),
         offer_dao=OfferDAO(session=session),
         candidate_profile_dao=CandidateProfileDAO(session=session),
         interview_dao=InterviewDAO(session=session),
         interview_feedback_dao=InterviewFeedbackDAO(session=session),
+        hire_conversion_service=hire_conversion_service,
         audit_service=audit_service,
     )
 

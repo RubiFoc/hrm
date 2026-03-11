@@ -6,6 +6,8 @@ const resources = {
     translation: {
       appTitle: "HRM Recruitment Workspace",
       hrWorkspace: "HR Workspace",
+      managerWorkspace: "Manager Workspace",
+      employeeWorkspace: "Employee Workspace",
       candidateWorkspace: "Candidate Workspace",
       adminWorkspace: "Admin Workspace",
       candidateRoute: {
@@ -18,6 +20,11 @@ const resources = {
       logoutAction: "Logout",
       logoutPendingAction: "Logging out...",
       backToWorkspace: "Back to workspace",
+      accessDenied: {
+        title: "Access denied",
+        unauthorized: "You are not authenticated. Sign in and try again.",
+        forbidden: "Your account does not have permissions for this workspace.",
+      },
       appErrorBoundary: {
         title: "Something went wrong",
         message: "The page crashed before it finished rendering. Retry the screen.",
@@ -539,6 +546,124 @@ const resources = {
           generic: "Failed to complete the recruitment operation.",
         },
       },
+      employeePortal: {
+        title: "Onboarding portal",
+        subtitle:
+          "Review your onboarding checklist, track staff-owned items, and update the tasks assigned to you.",
+        authRequired: "Sign in with an employee account to open your onboarding portal.",
+        loading: "Loading your onboarding checklist...",
+        empty: "Your onboarding checklist is not ready yet.",
+        updateSuccess: "Task updated.",
+        noDescription: "No additional guidance provided.",
+        noValue: "n/a",
+        notAssigned: "Unassigned",
+        required: "Required",
+        optional: "Optional",
+        staffManaged: "Managed by staff",
+        status: {
+          started: "Started",
+        },
+        taskStatus: {
+          pending: "Pending",
+          in_progress: "In progress",
+          completed: "Completed",
+        },
+        actions: {
+          saving: "Saving...",
+          in_progress: "Start task",
+          completed: "Mark complete",
+          pending: "Reopen task",
+        },
+        summary: {
+          onboardingStatus: "Onboarding: {{value}}",
+          currentTitle: "Title: {{value}}",
+          location: "Location: {{value}}",
+          startDate: "Start date: {{value}}",
+          assignment: "Assigned to: {{value}}",
+          dueAt: "Due: {{value}}",
+          lastUpdated: "Last updated: {{value}}",
+        },
+        errors: {
+          employee_profile_not_found:
+            "Your employee profile is not available for onboarding yet.",
+          employee_profile_identity_conflict:
+            "Your employee profile could not be linked automatically. Contact HR.",
+          employee_onboarding_not_found:
+            "Your onboarding run is not available yet. Contact HR.",
+          onboarding_task_not_found: "The requested onboarding task was not found.",
+          onboarding_task_not_actionable_by_employee:
+            "This onboarding task is currently managed by HR or another assignee.",
+          http_403: "You do not have access to the employee onboarding portal.",
+          http_404: "Your onboarding data was not found.",
+          http_409: "The onboarding task could not be updated in its current state.",
+          generic: "Failed to load or update the onboarding portal.",
+        },
+      },
+      onboardingDashboard: {
+        title: "Onboarding Progress",
+        subtitle:
+          "Track onboarding runs, surface overdue work, and review task progress without leaving the staff workspace.",
+        managerSubtitle:
+          "Review onboarding runs currently routed to manager responsibility and inspect employee task progress.",
+        authRequired: "Sign in with a staff account to open the onboarding dashboard.",
+        loading: "Loading onboarding progress...",
+        empty: "No onboarding runs match the current filters.",
+        selectRun: "Select an onboarding run to inspect employee details and task state.",
+        detailLoading: "Loading onboarding run details...",
+        detailTasks: "Checklist tasks",
+        noTasks: "This onboarding run does not contain materialized tasks yet.",
+        noDescription: "No additional instructions were provided.",
+        noValue: "n/a",
+        unassigned: "Unassigned",
+        required: "Required",
+        optional: "Optional",
+        progressValue: "{{value}}%",
+        taskBreakdown: "{{completed}} / {{total}} completed",
+        filters: {
+          search: "Search employee",
+          taskStatus: "Task status",
+          allStatuses: "All statuses",
+          overdueOnly: "Overdue only",
+        },
+        table: {
+          employee: "Employee",
+          title: "Title",
+          progress: "Progress",
+          tasks: "Tasks",
+          overdue: "Overdue",
+          action: "Action",
+        },
+        actions: {
+          view: "View",
+        },
+        summary: {
+          runs: "Runs: {{value}}",
+          pendingTasks: "Pending: {{value}}",
+          inProgressTasks: "In progress: {{value}}",
+          completedTasks: "Completed: {{value}}",
+          overdueTasks: "Overdue: {{value}}",
+          currentTitle: "Title: {{value}}",
+          location: "Location: {{value}}",
+          startDate: "Start date: {{value}}",
+          runStatus: "Run: {{value}}",
+          assignment: "Assigned to: {{value}}",
+          dueAt: "Due: {{value}}",
+        },
+        runStatus: {
+          started: "Started",
+        },
+        taskStatus: {
+          pending: "Pending",
+          in_progress: "In progress",
+          completed: "Completed",
+        },
+        errors: {
+          onboarding_run_not_found: "The requested onboarding run was not found.",
+          http_403: "You do not have access to the onboarding dashboard.",
+          http_404: "The requested onboarding run was not found.",
+          generic: "Failed to load onboarding progress data.",
+        },
+      },
       adminCard: {
         open: "Open",
         staff: {
@@ -668,6 +793,8 @@ const resources = {
     translation: {
       appTitle: "HRM Платформа найма",
       hrWorkspace: "Рабочее место HR",
+      managerWorkspace: "Кабинет менеджера",
+      employeeWorkspace: "Кабинет сотрудника",
       candidateWorkspace: "Кабинет кандидата",
       adminWorkspace: "Админ пространство",
       candidateRoute: {
@@ -680,6 +807,11 @@ const resources = {
       logoutAction: "Выйти",
       logoutPendingAction: "Выход...",
       backToWorkspace: "Вернуться в рабочее пространство",
+      accessDenied: {
+        title: "Доступ запрещён",
+        unauthorized: "Вы не авторизованы. Выполните вход и повторите попытку.",
+        forbidden: "У вашей учётной записи нет прав для этого рабочего места.",
+      },
       appErrorBoundary: {
         title: "Что-то пошло не так",
         message: "Страница завершилась ошибкой до завершения рендера. Повторите попытку.",
@@ -1213,6 +1345,124 @@ const resources = {
           http_409: "Recruitment-запрос конфликтует с текущим состоянием ресурса.",
           http_422: "Ошибка валидации recruitment-запроса.",
           generic: "Не удалось выполнить recruitment-операцию.",
+        },
+      },
+      employeePortal: {
+        title: "Портал онбординга",
+        subtitle:
+          "Просматривайте onboarding checklist, отслеживайте задачи staff и обновляйте пункты, назначенные вам.",
+        authRequired: "Войдите под employee-аккаунтом, чтобы открыть портал онбординга.",
+        loading: "Загрузка onboarding checklist...",
+        empty: "Ваш onboarding checklist пока недоступен.",
+        updateSuccess: "Задача обновлена.",
+        noDescription: "Дополнительные инструкции не указаны.",
+        noValue: "н/д",
+        notAssigned: "Не назначено",
+        required: "Обязательно",
+        optional: "Опционально",
+        staffManaged: "Управляется staff",
+        status: {
+          started: "Начат",
+        },
+        taskStatus: {
+          pending: "Ожидает",
+          in_progress: "В работе",
+          completed: "Завершено",
+        },
+        actions: {
+          saving: "Сохранение...",
+          in_progress: "Начать задачу",
+          completed: "Отметить завершённой",
+          pending: "Переоткрыть задачу",
+        },
+        summary: {
+          onboardingStatus: "Онбординг: {{value}}",
+          currentTitle: "Должность: {{value}}",
+          location: "Локация: {{value}}",
+          startDate: "Дата выхода: {{value}}",
+          assignment: "Назначено: {{value}}",
+          dueAt: "Срок: {{value}}",
+          lastUpdated: "Обновлено: {{value}}",
+        },
+        errors: {
+          employee_profile_not_found:
+            "Ваш employee profile пока недоступен для онбординга.",
+          employee_profile_identity_conflict:
+            "Не удалось автоматически связать employee profile с вашим аккаунтом. Обратитесь в HR.",
+          employee_onboarding_not_found:
+            "Ваш onboarding run пока недоступен. Обратитесь в HR.",
+          onboarding_task_not_found: "Запрошенная onboarding-задача не найдена.",
+          onboarding_task_not_actionable_by_employee:
+            "Эта onboarding-задача сейчас управляется HR или другим исполнителем.",
+          http_403: "У вас нет доступа к employee onboarding portal.",
+          http_404: "Ваши onboarding-данные не найдены.",
+          http_409: "Onboarding-задачу нельзя обновить в её текущем состоянии.",
+          generic: "Не удалось загрузить или обновить портал онбординга.",
+        },
+      },
+      onboardingDashboard: {
+        title: "Прогресс онбординга",
+        subtitle:
+          "Отслеживайте onboarding runs, просроченные задачи и прогресс checklist, не выходя из staff workspace.",
+        managerSubtitle:
+          "Просматривайте onboarding runs, попавшие в manager-зону ответственности, и проверяйте прогресс задач сотрудника.",
+        authRequired: "Войдите под staff-аккаунтом, чтобы открыть dashboard онбординга.",
+        loading: "Загрузка прогресса онбординга...",
+        empty: "По текущим фильтрам onboarding runs не найдены.",
+        selectRun: "Выберите onboarding run, чтобы посмотреть детали сотрудника и состояние задач.",
+        detailLoading: "Загрузка деталей onboarding run...",
+        detailTasks: "Checklist-задачи",
+        noTasks: "В этом onboarding run пока нет materialized tasks.",
+        noDescription: "Дополнительные инструкции не указаны.",
+        noValue: "н/д",
+        unassigned: "Не назначено",
+        required: "Обязательно",
+        optional: "Опционально",
+        progressValue: "{{value}}%",
+        taskBreakdown: "{{completed}} / {{total}} завершено",
+        filters: {
+          search: "Поиск сотрудника",
+          taskStatus: "Статус задачи",
+          allStatuses: "Все статусы",
+          overdueOnly: "Только просроченные",
+        },
+        table: {
+          employee: "Сотрудник",
+          title: "Должность",
+          progress: "Прогресс",
+          tasks: "Задачи",
+          overdue: "Просрочено",
+          action: "Действие",
+        },
+        actions: {
+          view: "Открыть",
+        },
+        summary: {
+          runs: "Runs: {{value}}",
+          pendingTasks: "Ожидают: {{value}}",
+          inProgressTasks: "В работе: {{value}}",
+          completedTasks: "Завершено: {{value}}",
+          overdueTasks: "Просрочено: {{value}}",
+          currentTitle: "Должность: {{value}}",
+          location: "Локация: {{value}}",
+          startDate: "Дата выхода: {{value}}",
+          runStatus: "Run: {{value}}",
+          assignment: "Назначено: {{value}}",
+          dueAt: "Срок: {{value}}",
+        },
+        runStatus: {
+          started: "Начат",
+        },
+        taskStatus: {
+          pending: "Ожидает",
+          in_progress: "В работе",
+          completed: "Завершено",
+        },
+        errors: {
+          onboarding_run_not_found: "Запрошенный onboarding run не найден.",
+          http_403: "У вас нет доступа к dashboard онбординга.",
+          http_404: "Запрошенный onboarding run не найден.",
+          generic: "Не удалось загрузить данные прогресса онбординга.",
         },
       },
       adminCard: {

@@ -36,8 +36,23 @@ class OfferDAO:
         proposed_start_date: date | None = None,
         expires_at: date | None = None,
         note: str | None = None,
+        commit: bool = True,
     ) -> Offer:
-        """Insert one draft offer row for the selected vacancy-candidate pair."""
+        """Insert one draft offer row for the selected vacancy-candidate pair.
+
+        Args:
+            vacancy_id: Vacancy identifier.
+            candidate_id: Candidate identifier.
+            terms_summary: Optional draft terms summary.
+            proposed_start_date: Optional proposed start date.
+            expires_at: Optional offer expiry date.
+            note: Optional HR note.
+            commit: When `True`, commit immediately; otherwise flush into the current
+                transaction so callers can bundle multiple writes atomically.
+
+        Returns:
+            Offer: Persisted offer entity.
+        """
         entity = Offer(
             vacancy_id=vacancy_id,
             candidate_id=candidate_id,
@@ -48,8 +63,12 @@ class OfferDAO:
             note=note,
         )
         self._session.add(entity)
-        self._session.commit()
-        self._session.refresh(entity)
+        if commit:
+            self._session.commit()
+            self._session.refresh(entity)
+            return entity
+
+        self._session.flush()
         return entity
 
     def update_offer_draft(

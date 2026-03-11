@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
 
@@ -24,12 +24,17 @@ function renderWithPath(pathname: string) {
       <RouterProvider router={memoryRouter} />
     </QueryClientProvider>,
   );
+  return memoryRouter;
 }
 
 describe("login route", () => {
   beforeEach(() => {
     window.localStorage.clear();
     fetchMock.mockReset();
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("renders /login page for unauthenticated user", async () => {
@@ -41,24 +46,195 @@ describe("login route", () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
     window.localStorage.setItem("hrm_refresh_token", "refresh-token");
     window.localStorage.setItem("hrm_user_role", "hr");
-    fetchMock.mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          subject_id: "11111111-1111-1111-1111-111111111111",
-          role: "hr",
-          session_id: "22222222-2222-2222-2222-222222222222",
-          access_token_expires_at: 1893456000,
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        },
-      ),
-    );
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/api/v1/auth/me")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              subject_id: "11111111-1111-1111-1111-111111111111",
+              role: "hr",
+              session_id: "22222222-2222-2222-2222-222222222222",
+              access_token_expires_at: 1893456000,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        );
+      }
+      if (url.includes("/api/v1/vacancies")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ items: [], total: 0, limit: 20, offset: 0 }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
+      if (url.includes("/api/v1/candidates")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ items: [], total: 0, limit: 20, offset: 0 }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
+      if (url.includes("/api/v1/onboarding/runs?")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              items: [],
+              total: 0,
+              limit: 20,
+              offset: 0,
+              summary: {
+                run_count: 0,
+                total_tasks: 0,
+                pending_tasks: 0,
+                in_progress_tasks: 0,
+                completed_tasks: 0,
+                overdue_tasks: 0,
+              },
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+    });
 
-    renderWithPath("/login");
+    const router = renderWithPath("/login");
 
-    expect(await screen.findByRole("heading", { name: /recruitment workspace/i })).toBeDefined();
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/");
+    });
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some((call) => String(call[0]).endsWith("/api/v1/auth/me"))).toBe(true);
+    });
+  });
+
+  it("redirects already-authenticated employee from /login to /employee", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_refresh_token", "refresh-token");
+    window.localStorage.setItem("hrm_user_role", "employee");
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/api/v1/auth/me")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              subject_id: "11111111-1111-1111-1111-111111111111",
+              role: "employee",
+              session_id: "22222222-2222-2222-2222-222222222222",
+              access_token_expires_at: 1893456000,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        );
+      }
+      if (url.endsWith("/api/v1/employees/me/onboarding")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              employee_id: "33333333-3333-4333-8333-333333333333",
+              first_name: "Ada",
+              last_name: "Lovelace",
+              email: "ada@example.com",
+              location: "Minsk",
+              current_title: "Engineer",
+              start_date: null,
+              offer_terms_summary: null,
+              onboarding_id: "44444444-4444-4444-8444-444444444444",
+              onboarding_status: "started",
+              onboarding_started_at: "2026-03-11T09:00:00Z",
+              tasks: [],
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+    });
+
+    const router = renderWithPath("/login");
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/employee");
+    });
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some((call) => String(call[0]).endsWith("/api/v1/employees/me/onboarding")),
+      ).toBe(true);
+    });
+  });
+
+  it("redirects already-authenticated manager from /login to onboarding dashboard on /", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_refresh_token", "refresh-token");
+    window.localStorage.setItem("hrm_user_role", "manager");
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/api/v1/auth/me")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              subject_id: "11111111-1111-1111-1111-111111111111",
+              role: "manager",
+              session_id: "22222222-2222-2222-2222-222222222222",
+              access_token_expires_at: 1893456000,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        );
+      }
+      if (url.includes("/api/v1/onboarding/runs?")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              items: [],
+              total: 0,
+              limit: 20,
+              offset: 0,
+              summary: {
+                run_count: 0,
+                total_tasks: 0,
+                pending_tasks: 0,
+                in_progress_tasks: 0,
+                completed_tasks: 0,
+                overdue_tasks: 0,
+              },
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+    });
+
+    const router = renderWithPath("/login");
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/");
+    });
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some((call) => String(call[0]).includes("/api/v1/onboarding/runs?"))).toBe(true);
+    });
   });
 
   it("clears broken session and keeps /login open when me bootstrap fails", async () => {

@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider, createMemoryRouter } from "react-router-dom";
 
@@ -68,8 +68,48 @@ describe("frontend observability route tags", () => {
           }),
         );
       }
+      if (url.includes("/api/v1/onboarding/runs?")) {
+        return Promise.resolve(
+          jsonResponse({
+            items: [],
+            total: 0,
+            limit: 20,
+            offset: 0,
+            summary: {
+              run_count: 0,
+              total_tasks: 0,
+              pending_tasks: 0,
+              in_progress_tasks: 0,
+              completed_tasks: 0,
+              overdue_tasks: 0,
+            },
+          }),
+        );
+      }
+      if (url.includes("/api/v1/employees/me/onboarding")) {
+        return Promise.resolve(
+          jsonResponse({
+            employee_id: "11111111-1111-4111-8111-111111111111",
+            first_name: "Ada",
+            last_name: "Lovelace",
+            email: "ada@example.com",
+            location: "Minsk",
+            current_title: "Engineer",
+            start_date: null,
+            offer_terms_summary: null,
+            onboarding_id: "22222222-2222-4222-8222-222222222222",
+            onboarding_status: "started",
+            onboarding_started_at: "2026-03-11T09:00:00Z",
+            tasks: [],
+          }),
+        );
+      }
       return Promise.resolve(jsonResponse({}));
     });
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("tags the HR workspace route on /", async () => {
@@ -81,6 +121,18 @@ describe("frontend observability route tags", () => {
     expect(await screen.findByRole("heading", { name: /recruitment workspace/i })).toBeDefined();
     expect(setTagMock).toHaveBeenCalledWith("workspace", "hr");
     expect(setTagMock).toHaveBeenCalledWith("role", "hr");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/");
+  });
+
+  it("tags the manager onboarding dashboard on / with manager workspace", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "manager");
+
+    renderWithPath("/");
+
+    expect(await screen.findByRole("heading", { name: /прогресс онбординга/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "manager");
+    expect(setTagMock).toHaveBeenCalledWith("role", "manager");
     expect(setTagMock).toHaveBeenCalledWith("route", "/");
   });
 
@@ -100,5 +152,17 @@ describe("frontend observability route tags", () => {
     expect(setTagMock).toHaveBeenCalledWith("workspace", "auth");
     expect(setTagMock).toHaveBeenCalledWith("role", "anonymous");
     expect(setTagMock).toHaveBeenCalledWith("route", "/login");
+  });
+
+  it("tags the employee workspace route on /employee", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "employee");
+
+    renderWithPath("/employee");
+
+    expect(await screen.findByRole("heading", { name: /портал онбординга/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "employee");
+    expect(setTagMock).toHaveBeenCalledWith("role", "employee");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/employee");
   });
 });

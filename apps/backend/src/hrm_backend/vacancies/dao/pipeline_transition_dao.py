@@ -29,6 +29,7 @@ class PipelineTransitionDAO:
         reason: str | None,
         changed_by_sub: str,
         changed_by_role: str,
+        commit: bool = True,
     ) -> PipelineTransition:
         """Insert append-only pipeline transition event.
 
@@ -40,6 +41,8 @@ class PipelineTransitionDAO:
             reason: Optional reason.
             changed_by_sub: Actor subject id.
             changed_by_role: Actor role.
+            commit: When `True`, commit immediately; otherwise flush into the current
+                transaction so callers can bundle multiple writes atomically.
 
         Returns:
             PipelineTransition: Persisted transition event.
@@ -54,8 +57,12 @@ class PipelineTransitionDAO:
             changed_by_role=changed_by_role,
         )
         self._session.add(entity)
-        self._session.commit()
-        self._session.refresh(entity)
+        if commit:
+            self._session.commit()
+            self._session.refresh(entity)
+            return entity
+
+        self._session.flush()
         return entity
 
     def get_last_transition(

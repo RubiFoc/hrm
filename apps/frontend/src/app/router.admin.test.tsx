@@ -56,7 +56,7 @@ describe("admin route guard", () => {
 
   it("redirects unauthorized user to access-denied", async () => {
     renderWithPath("/admin");
-    expect(await screen.findByText(/доступ в админ раздел запрещён/i)).toBeDefined();
+    expect(await screen.findByText(/доступ запрещён/i)).toBeDefined();
   });
 
   it("redirects non-admin user to forbidden path", async () => {
@@ -64,7 +64,7 @@ describe("admin route guard", () => {
     window.localStorage.setItem("hrm_user_role", "hr");
 
     renderWithPath("/admin");
-    expect(await screen.findByText(/нет прав admin/i)).toBeDefined();
+    expect(await screen.findByText(/нет прав для этого рабочего места/i)).toBeDefined();
   });
 
   it("allows admin user into admin shell", async () => {
