@@ -41,6 +41,8 @@ class AppSettings(BaseSettings):
         object_storage_sse_enabled: Whether uploads use SSE-S3 headers.
         cv_parsing_max_attempts: Maximum worker retries for CV parsing.
         match_scoring_max_attempts: Maximum worker retries for match scoring.
+        scoring_low_confidence_threshold:
+            Strict confidence cutoff below which succeeded scores require manual review.
         match_scoring_model_name: Ollama model identifier used for match scoring.
         match_scoring_request_timeout_seconds: Timeout for one Ollama scoring request.
         match_scoring_queue_name: Celery queue name used for match scoring tasks.
@@ -123,6 +125,12 @@ class AppSettings(BaseSettings):
     object_storage_sse_enabled: bool = Field(default=True, env="OBJECT_STORAGE_SSE_ENABLED")
     cv_parsing_max_attempts: int = Field(default=3, env="CV_PARSING_MAX_ATTEMPTS", gt=0)
     match_scoring_max_attempts: int = Field(default=3, env="MATCH_SCORING_MAX_ATTEMPTS", gt=0)
+    scoring_low_confidence_threshold: float = Field(
+        default=0.7,
+        env="SCORING_LOW_CONFIDENCE_THRESHOLD",
+        ge=0,
+        le=1,
+    )
     match_scoring_model_name: str = Field(
         default="llama3.2:latest",
         env="MATCH_SCORING_MODEL_NAME",

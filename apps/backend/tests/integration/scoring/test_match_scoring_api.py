@@ -155,6 +155,7 @@ def configured_app(sqlite_database_url: str):
         cv_max_size_bytes=4096,
         cv_parsing_max_attempts=2,
         match_scoring_max_attempts=2,
+        scoring_low_confidence_threshold=0.7,
     )
     storage = InMemoryCandidateStorage()
     adapter = FakeMatchScoringAdapter()
@@ -449,6 +450,17 @@ async def test_match_scoring_payload_propagates_evidence_and_can_list_latest_ent
         candidate_id=candidate_id,
     ) == "succeeded"
 
+    latest_create_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/match-scores",
+        json={"candidate_id": candidate_id},
+    )
+    assert latest_create_response.status_code == 200
+    latest_create_payload = latest_create_response.json()
+    assert latest_create_payload["status"] == "succeeded"
+    assert latest_create_payload["requires_manual_review"] is False
+    assert latest_create_payload["manual_review_reason"] is None
+    assert latest_create_payload["confidence_threshold"] == 0.7
+
     get_response = await api_client.get(
         f"/api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}"
     )
@@ -458,6 +470,9 @@ async def test_match_scoring_payload_propagates_evidence_and_can_list_latest_ent
     assert payload["candidate_id"] == candidate_id
     assert payload["status"] == "succeeded"
     assert payload["confidence"] == 0.84
+    assert payload["requires_manual_review"] is False
+    assert payload["manual_review_reason"] is None
+    assert payload["confidence_threshold"] == 0.7
     assert payload["summary"]
     assert payload["matched_requirements"] == ["Python", "REST APIs", "Docker"]
     assert payload["missing_requirements"] == ["Kubernetes"]
@@ -472,6 +487,55 @@ async def test_match_scoring_payload_propagates_evidence_and_can_list_latest_ent
     items = list_response.json()["items"]
     assert len(items) == 1
     assert items[0]["candidate_id"] == candidate_id
+    assert items[0]["requires_manual_review"] is False
+    assert items[0]["confidence_threshold"] == 0.7
+
+
+async def test_match_scoring_low_confidence_success_returns_manual_review_metadata(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify low-confidence succeeded scores return additive manual-review flags."""
+    _, settings, _, storage, adapter, database_url = configured_app
+    adapter.payload = adapter.payload.model_copy(update={"confidence": 0.69})
+    vacancy_id, candidate_id = await _create_scoring_fixture(api_client)
+    assert _run_parsing_worker_once(database_url, settings, storage) == "succeeded"
+
+    create_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/match-scores",
+        json={"candidate_id": candidate_id},
+    )
+    assert create_response.status_code == 200
+    assert create_response.json()["status"] == "queued"
+    assert _run_scoring_worker_once(
+        database_url,
+        settings,
+        adapter,
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_id,
+    ) == "succeeded"
+
+    latest_create_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/match-scores",
+        json={"candidate_id": candidate_id},
+    )
+    assert latest_create_response.status_code == 200
+    latest_create_payload = latest_create_response.json()
+    assert latest_create_payload["status"] == "succeeded"
+    assert latest_create_payload["requires_manual_review"] is True
+    assert latest_create_payload["manual_review_reason"] == "low_confidence"
+    assert latest_create_payload["confidence_threshold"] == 0.7
+
+    get_response = await api_client.get(
+        f"/api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}"
+    )
+    assert get_response.status_code == 200
+    payload = get_response.json()
+    assert payload["status"] == "succeeded"
+    assert payload["confidence"] == 0.69
+    assert payload["requires_manual_review"] is True
+    assert payload["manual_review_reason"] == "low_confidence"
+    assert payload["confidence_threshold"] == 0.7
 
 
 async def test_match_scoring_accepts_enriched_parsed_profile_without_contract_changes(

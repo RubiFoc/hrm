@@ -9,6 +9,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 MatchScoringStatus = Literal["queued", "running", "succeeded", "failed"]
+MatchScoreManualReviewReason = Literal["low_confidence"]
 
 
 class MatchScoreCreateRequest(BaseModel):
@@ -39,6 +40,9 @@ class MatchScoreResponse(BaseModel):
     status: MatchScoringStatus
     score: float | None = Field(default=None)
     confidence: float | None = Field(default=None)
+    requires_manual_review: bool = Field(default=False)
+    manual_review_reason: MatchScoreManualReviewReason | None = Field(default=None)
+    confidence_threshold: float | None = Field(default=None)
     summary: str | None = Field(default=None)
     matched_requirements: list[str] = Field(default_factory=list)
     missing_requirements: list[str] = Field(default_factory=list)
@@ -54,4 +58,3 @@ class MatchScoreListResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     items: list[MatchScoreResponse]
-

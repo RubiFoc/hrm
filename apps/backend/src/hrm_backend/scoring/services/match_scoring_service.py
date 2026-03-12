@@ -21,6 +21,9 @@ from hrm_backend.scoring.schemas.match_scoring import (
     MatchScoreListResponse,
     MatchScoreResponse,
 )
+from hrm_backend.scoring.services.manual_review_policy import (
+    evaluate_manual_review_requirement,
+)
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
 
 
@@ -36,6 +39,7 @@ class MatchScoringService:
         scoring_job_dao: MatchScoringJobDAO,
         score_artifact_dao: MatchScoreArtifactDAO,
         audit_service: AuditService,
+        low_confidence_threshold: float,
     ) -> None:
         """Initialize scoring service dependencies."""
         self._vacancy_dao = vacancy_dao
@@ -44,6 +48,7 @@ class MatchScoringService:
         self._scoring_job_dao = scoring_job_dao
         self._score_artifact_dao = score_artifact_dao
         self._audit_service = audit_service
+        self._low_confidence_threshold = low_confidence_threshold
 
     def request_score(
         self,
@@ -158,12 +163,21 @@ class MatchScoringService:
     def _build_response(self, job: MatchScoringJob) -> MatchScoreResponse:
         """Map one job row and optional artifact into the UI contract."""
         artifact = self._score_artifact_dao.get_by_job_id(job.job_id)
+        confidence = None if artifact is None else artifact.confidence
+        decision = evaluate_manual_review_requirement(
+            status=job.status,  # type: ignore[arg-type]
+            confidence=confidence,
+            threshold=self._low_confidence_threshold,
+        )
         return MatchScoreResponse(
             vacancy_id=UUID(job.vacancy_id),
             candidate_id=UUID(job.candidate_id),
             status=job.status,  # type: ignore[arg-type]
             score=None if artifact is None else artifact.score,
-            confidence=None if artifact is None else artifact.confidence,
+            confidence=confidence,
+            requires_manual_review=decision.requires_manual_review,
+            manual_review_reason=decision.manual_review_reason,
+            confidence_threshold=decision.confidence_threshold,
             summary=None if artifact is None else artifact.summary,
             matched_requirements=[]
             if artifact is None
@@ -231,4 +245,3 @@ class MatchScoringService:
                 detail="CV analysis is not ready",
             )
         return document
-

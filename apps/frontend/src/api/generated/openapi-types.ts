@@ -2131,8 +2131,12 @@ export interface components {
             candidate_id: string;
             /** Confidence */
             confidence?: number | null;
+            /** Confidence Threshold */
+            confidence_threshold?: number | null;
             /** Evidence */
             evidence?: components["schemas"]["MatchScoreEvidenceResponse"][];
+            /** Manual Review Reason */
+            manual_review_reason?: "low_confidence" | null;
             /** Matched Requirements */
             matched_requirements?: string[];
             /** Missing Requirements */
@@ -2141,6 +2145,11 @@ export interface components {
             model_name?: string | null;
             /** Model Version */
             model_version?: string | null;
+            /**
+             * Requires Manual Review
+             * @default false
+             */
+            requires_manual_review: boolean;
             /** Score */
             score?: number | null;
             /** Scored At */

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import i18n from "i18next";
 
 import "../app/i18n";
 import type {
@@ -50,6 +51,9 @@ const SUCCESSFUL_MATCH_SCORE = {
   status: "succeeded",
   score: 91,
   confidence: 0.84,
+  requires_manual_review: false,
+  manual_review_reason: null,
+  confidence_threshold: 0.7,
   summary: "Strong shortlist fit based on Python, APIs, and Docker evidence.",
   matched_requirements: ["Python", "REST APIs", "Docker"],
   missing_requirements: ["Kubernetes"],
@@ -373,9 +377,10 @@ async function selectVacancyAndCandidate() {
 }
 
 describe("HrDashboardPage", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     fetchMock.mockReset();
     window.localStorage.clear();
+    await i18n.changeLanguage("ru");
   });
 
   afterEach(() => {
@@ -668,6 +673,9 @@ describe("HrDashboardPage", () => {
             status: "queued",
             score: null,
             confidence: null,
+            requires_manual_review: false,
+            manual_review_reason: null,
+            confidence_threshold: null,
             summary: null,
             matched_requirements: [],
             missing_requirements: [],
@@ -686,6 +694,9 @@ describe("HrDashboardPage", () => {
           status: "queued",
           score: null,
           confidence: null,
+          requires_manual_review: false,
+          manual_review_reason: null,
+          confidence_threshold: null,
           summary: null,
           matched_requirements: [],
           missing_requirements: [],
@@ -729,6 +740,9 @@ describe("HrDashboardPage", () => {
           status: "failed",
           score: null,
           confidence: null,
+          requires_manual_review: false,
+          manual_review_reason: null,
+          confidence_threshold: null,
           summary: null,
           matched_requirements: [],
           missing_requirements: [],
@@ -770,6 +784,33 @@ describe("HrDashboardPage", () => {
     });
   });
 
+  it("renders low-confidence manual review warning in russian without hiding score details", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+
+    installHrWorkspaceFetchMock({
+      matchScoreGet: () =>
+        jsonResponse({
+          ...SUCCESSFUL_MATCH_SCORE,
+          confidence: 0.62,
+          requires_manual_review: true,
+          manual_review_reason: "low_confidence",
+          confidence_threshold: 0.7,
+        }),
+    });
+
+    renderHrDashboardPage();
+
+    await selectVacancyAndCandidate();
+
+    expect(await screen.findByText(/требуется ручная проверка/i)).toBeDefined();
+    expect(
+      screen.getByText(/уверенность ai 62% ниже порога проверки 70%/i),
+    ).toBeDefined();
+    expect(screen.getByText("91")).toBeDefined();
+    expect(screen.getByText("62%")).toBeDefined();
+  });
+
   it("renders confidence and explanation for an existing successful score", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
     window.localStorage.setItem("hrm_user_role", "hr");
@@ -787,6 +828,37 @@ describe("HrDashboardPage", () => {
       screen.getByText(/strong shortlist fit based on python, apis, and docker evidence/i),
     ).toBeDefined();
     expect(screen.getByText(/model: llama3.2 \(latest\)/i)).toBeDefined();
+    expect(screen.queryByText(/требуется ручная проверка/i)).toBeNull();
+  });
+
+  it("renders low-confidence manual review warning in english", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+    await i18n.changeLanguage("en");
+
+    installHrWorkspaceFetchMock({
+      matchScoreGet: () =>
+        jsonResponse({
+          ...SUCCESSFUL_MATCH_SCORE,
+          confidence: 0.62,
+          requires_manual_review: true,
+          manual_review_reason: "low_confidence",
+          confidence_threshold: 0.7,
+        }),
+    });
+
+    renderHrDashboardPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: /^select$/i }));
+    await screen.findByRole("option", { name: /john doe \(john@example.com\)/i });
+    fireEvent.change(screen.getByRole("combobox", { name: /^candidate$/i }), {
+      target: { value: CANDIDATE_ID },
+    });
+
+    expect(await screen.findByText(/manual review required/i)).toBeDefined();
+    expect(
+      screen.getByText(/ai confidence 62% is below the review threshold 70%/i),
+    ).toBeDefined();
   });
 
   it("creates an interview and renders queued then synced state with invite URL", async () => {
