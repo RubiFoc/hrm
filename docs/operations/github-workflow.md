@@ -1,8 +1,8 @@
 # GitHub Workflow and Branch Protection
 
 ## Last Updated
-- Date: 2026-03-05
-- Updated by: coordinator
+- Date: 2026-03-12
+- Updated by: coordinator + architect
 
 ## Branching Model
 - `main`: protected release-ready branch.
@@ -43,6 +43,12 @@
 - Commit scope: one concern per commit.
 - Commit message style: `type(scope): summary`.
 - PR description must include verification commands and risks.
+
+## Post-Merge Closeout
+- After merge, review all GitHub issues linked to the task/PR.
+- Close only the issues that are actually resolved by the merged change.
+- If the merge changes backlog status, update `docs/project/tasks.md` in the same closeout step.
+- Task delivery is not complete until issue closeout and `docs/project/tasks.md` synchronization are finished.
 
 ## GitHub CLI Operations (`gh`)
 - Always check auth state before PR automation: `gh auth status`.

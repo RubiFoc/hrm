@@ -24,7 +24,17 @@ Every behavior change must update code and documentation in the same task.
 ## Docker Bootstrap
 1. `cp .env.example .env`
 2. `docker compose up -d --build`
-3. Frontend: `http://localhost:5173`, Backend health: `http://localhost:8000/health`
+3. `./scripts/smoke-compose.sh`
+4. Frontend: `http://localhost:5173`, Backend health: `http://localhost:8000/health`
+
+Compose runtime notes:
+- Default scoring path is unchanged: `OLLAMA_BASE_URL` still defaults to `http://host.docker.internal:11434`.
+- `backend` and `backend-worker` now inject `host.docker.internal:host-gateway` so the external-host Ollama path is Linux-safe without changing the default compose command.
+- Optional self-contained AI scoring runtime:
+  `OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ai-local up -d --build`
+- Optional operator-facing real scoring verification:
+  `./scripts/smoke-scoring-compose.sh`
+- The canonical compose/browser smoke baseline remains `./scripts/smoke-compose.sh`; it does not start compose-local Ollama and it does not verify real scoring.
 
 Shortcut commands:
 - `make up`, `make rebuild`, `make clean-orphans`, `make down`, `make ps`, `make logs`, `make smoke`

@@ -25,6 +25,7 @@
 - Documentation updates are prepared using `docs/llm/docs-update-checklist.md`.
 - Architect confirms diagram consistency and best-practice alignment.
 - Coordinator merges outputs into one final delivery.
+- After merge, coordinator checks linked GitHub issues, closes the issues actually resolved by the merged task, and syncs any backlog status change in `docs/project/tasks.md`.
 
 ## 6. Done Criteria
 - Acceptance criteria are explicitly satisfied.
@@ -36,4 +37,5 @@
 - Architecture diagrams are updated for relevant changes.
 - Best practices from `docs/engineering/best-practices.md` are explicitly followed.
 - Latest application version is started locally via Docker (`docker compose up -d --build`) after implementation.
+- Post-merge issue closeout is complete: linked GitHub issues are reviewed, resolved issues are closed, and `docs/project/tasks.md` is synced before the task is considered fully delivered.
 - Final handoff includes a concise operator note: what changed and how to use/verify the updated functionality.
