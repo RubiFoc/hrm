@@ -32,8 +32,8 @@
 | TASK-11-11 | implemented/local-baseline | Compose browser smoke covers both staff login and public candidate apply journeys through headless Chrome |
 | TASK-04-01/02/03 | implemented/local-scoring-slice | Dedicated `hrm_backend/scoring` package, Ollama adapter, async scoring jobs/artifacts, and frozen scoring API contract are present in repo with unit and integration coverage |
 | TASK-04-05 | implemented/local-scoring-slice | Score payloads and HR shortlist review now expose matched requirements, missing competencies, and evidence snippets from parsed CV analysis |
-| TASK-04-06 | implemented/local-scoring-slice | Local scoring quality harness now ships under `hrm_backend.scoring.evaluation` with strict JSON dataset validation, deterministic fixture-mode reporting for `precision`/`recall` + `NDCG`/`MRR` + paraphrase robustness, optional Ollama mode reuse, and backend unit/integration coverage |
-| TASK-04-04 | done/closed | GitHub issue #92 closed; merged in `main` via PR #109 (`c60b48b`) with additive low-confidence manual-review metadata, configurable `SCORING_LOW_CONFIDENCE_THRESHOLD`, and localized shortlist warning UX that preserves score details |
+| TASK-04-06 | done/closed | GitHub issue #92 closed; merged in `main` via PR #111 (`eedcc0f`) with additive scoring quality harness tooling under `hrm_backend.scoring.evaluation`, deterministic fixture-mode `precision`/`recall` + `NDCG`/`MRR` + paraphrase robustness reporting, optional Ollama mode reuse, and backend unit/integration coverage |
+| TASK-04-04 | done/closed | Merged in `main` via PR #109 (`c60b48b`) with additive low-confidence manual-review metadata, configurable `SCORING_LOW_CONFIDENCE_THRESHOLD`, and localized shortlist warning UX that preserves score details |
 | TASK-11-07 | implemented/local-scoring-slice | `/` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
 | TASK-11-10 | implemented/local-observability-slice | Frontend Sentry now tags `/`, `/candidate`, `/login`, `/admin`, `/admin/staff`, and `/admin/employee-keys`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
 | TASK-13-01/02 | implemented/local-compliance-slice | Legal-controls matrix now maps article-level obligations to current repo-backed controls and evidence registry entries with owners, verification sources, and update triggers |
@@ -68,7 +68,8 @@
   #107 (`0d9c787`), and this backlog snapshot is synchronized to the merged `main` state while
   keeping the existing route tree and runtime topology unchanged.
 - The scoring/shortlist-review slice (`TASK-04-01/02/03 + TASK-11-07`) is now implemented in repo as one vertical delivery unit.
-- `TASK-04-04` post-merge closeout is complete: GitHub issue `#92` closed automatically from PR #109 (`c60b48b`), and this backlog snapshot is synchronized to the merged `main` state while keeping the existing route tree and runtime topology unchanged.
+- `TASK-04-04` post-merge closeout is complete: the low-confidence fallback slice is merged in `main` via PR #109 (`c60b48b`), and this backlog snapshot is synchronized to the merged state while keeping the existing route tree and runtime topology unchanged.
+- `TASK-04-06` post-merge closeout is complete: GitHub issue `#92` was already closed before PR #111 (`eedcc0f`) merged, and this backlog snapshot is synchronized to the merged `main` state after verifying issue state, PR merge, and branch cleanup.
 - Scoring explainability (`TASK-04-05`) and the additive quality harness (`TASK-04-06`) are now implemented in repo without changing runtime routes, lifecycle states, or public scoring contracts.
 - The compliance follow-on slice (`TASK-13-01/02`) is now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
 - The dedicated planning pass for `TASK-11-08` is implemented in repo as one backend+frontend interview slice without reopening auth, CORS, or the public candidate transport model.
