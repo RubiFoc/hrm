@@ -120,3 +120,39 @@ class PipelineTransitionDAO:
             )
             .all()
         )
+
+    def get_latest_transitions_by_vacancy(
+        self,
+        *,
+        vacancy_id: str,
+        candidate_ids: list[str],
+    ) -> dict[str, PipelineTransition]:
+        """Batch-load latest vacancy transitions for multiple candidates.
+
+        Args:
+            vacancy_id: Vacancy identifier that scopes the lookup.
+            candidate_ids: Candidate identifiers resolved in one query.
+
+        Returns:
+            dict[str, PipelineTransition]: Mapping of `candidate_id -> latest transition`.
+        """
+        if not candidate_ids:
+            return {}
+
+        rows = (
+            self._session.query(PipelineTransition)
+            .filter(
+                PipelineTransition.vacancy_id == vacancy_id,
+                PipelineTransition.candidate_id.in_(candidate_ids),
+            )
+            .order_by(
+                PipelineTransition.candidate_id.asc(),
+                PipelineTransition.transitioned_at.desc(),
+                PipelineTransition.transition_id.desc(),
+            )
+            .all()
+        )
+        transitions: dict[str, PipelineTransition] = {}
+        for row in rows:
+            transitions.setdefault(row.candidate_id, row)
+        return transitions

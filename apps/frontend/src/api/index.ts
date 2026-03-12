@@ -82,7 +82,12 @@ export type {
   PublicVacancyApplicationRequest,
   PublicVacancyApplicationResponse,
 } from "./candidateApplications";
-export type { CandidateListResponse, CandidateResponse } from "./candidateProfiles";
+export type {
+  CandidateListItemResponse,
+  CandidateListQuery,
+  CandidateListResponse,
+  CandidateResponse,
+} from "./candidateProfiles";
 export type {
   CalendarSyncStatus,
   HRInterviewListResponse,

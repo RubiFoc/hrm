@@ -6,7 +6,7 @@ from io import BytesIO
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile
 from fastapi.responses import StreamingResponse
 
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
@@ -22,6 +22,7 @@ from hrm_backend.candidates.schemas.profile import (
 )
 from hrm_backend.candidates.services.candidate_service import CandidateService
 from hrm_backend.rbac import Role, require_permission
+from hrm_backend.vacancies.schemas.pipeline import PipelineStage
 
 router = APIRouter(prefix="/api/v1/candidates", tags=["candidates"])
 public_router = APIRouter(prefix="/api/v1/public/cv-parsing-jobs", tags=["candidates"])
@@ -34,6 +35,15 @@ CandidateListRole = Annotated[Role, Depends(require_permission("candidate_profil
 CandidateCVUploadRole = Annotated[Role, Depends(require_permission("candidate_cv:upload"))]
 CandidateCVReadRole = Annotated[Role, Depends(require_permission("candidate_cv:read"))]
 CandidateCVStatusRole = Annotated[Role, Depends(require_permission("candidate_cv:parsing_status"))]
+CandidateSearchQuery = Annotated[str | None, Query(min_length=1, max_length=256)]
+CandidateLocationQuery = Annotated[str | None, Query(min_length=1, max_length=256)]
+CandidateCurrentTitleQuery = Annotated[str | None, Query(min_length=1, max_length=256)]
+CandidateSkillQuery = Annotated[str | None, Query(min_length=1, max_length=256)]
+CandidateAnalysisReadyQuery = Annotated[bool | None, Query()]
+CandidateMinYearsExperienceQuery = Annotated[float | None, Query(ge=0)]
+CandidateVacancyQuery = Annotated[UUID | None, Query()]
+CandidateInPipelineOnlyQuery = Annotated[bool, Query()]
+CandidateStageQuery = Annotated[PipelineStage | None, Query()]
 
 
 @router.post("", response_model=CandidateResponse)
@@ -99,9 +109,34 @@ def list_candidate_profiles(
     _: CandidateListRole,
     auth_context: CurrentAuthContext,
     service: CandidateServiceDependency,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    search: CandidateSearchQuery = None,
+    location: CandidateLocationQuery = None,
+    current_title: CandidateCurrentTitleQuery = None,
+    skill: CandidateSkillQuery = None,
+    analysis_ready: CandidateAnalysisReadyQuery = None,
+    min_years_experience: CandidateMinYearsExperienceQuery = None,
+    vacancy_id: CandidateVacancyQuery = None,
+    in_pipeline_only: CandidateInPipelineOnlyQuery = False,
+    stage: CandidateStageQuery = None,
 ) -> CandidateListResponse:
-    """List candidate profiles for authorized role."""
-    return service.list_profiles(auth_context=auth_context, request=request)
+    """List candidate profiles with recruiter-facing search, filter, and pagination."""
+    return service.list_profiles(
+        auth_context=auth_context,
+        request=request,
+        limit=limit,
+        offset=offset,
+        search=search,
+        location=location,
+        current_title=current_title,
+        skill=skill,
+        analysis_ready=analysis_ready,
+        min_years_experience=min_years_experience,
+        vacancy_id=vacancy_id,
+        in_pipeline_only=in_pipeline_only,
+        stage=stage,
+    )
 
 
 @router.post("/{candidate_id}/cv", response_model=CandidateCVUploadResponse)

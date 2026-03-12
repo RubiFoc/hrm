@@ -773,19 +773,195 @@
         "title": "CandidateCreateRequest",
         "type": "object"
       },
-      "CandidateListResponse": {
-        "description": "Candidate profile list payload.",
+      "CandidateListItemResponse": {
+        "description": "Candidate list row enriched with parsed CV and vacancy-context metadata.",
         "properties": {
-          "items": {
+          "analysis_ready": {
+            "title": "Analysis Ready",
+            "type": "boolean"
+          },
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "current_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Title"
+          },
+          "detected_language": {
+            "enum": [
+              "ru",
+              "en",
+              "mixed",
+              "unknown"
+            ],
+            "title": "Detected Language",
+            "type": "string"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "extra_data": {
+            "additionalProperties": true,
+            "title": "Extra Data",
+            "type": "object"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "owner_subject_id": {
+            "title": "Owner Subject Id",
+            "type": "string"
+          },
+          "parsed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parsed At"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "skills": {
             "items": {
-              "$ref": "#/components/schemas/CandidateResponse"
+              "type": "string"
             },
-            "title": "Items",
+            "title": "Skills",
             "type": "array"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "vacancy_stage": {
+            "anyOf": [
+              {
+                "enum": [
+                  "applied",
+                  "screening",
+                  "shortlist",
+                  "interview",
+                  "offer",
+                  "hired",
+                  "rejected"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vacancy Stage"
+          },
+          "years_experience": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Years Experience"
           }
         },
         "required": [
-          "items"
+          "candidate_id",
+          "owner_subject_id",
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "location",
+          "current_title",
+          "extra_data",
+          "created_at",
+          "updated_at",
+          "analysis_ready",
+          "detected_language",
+          "parsed_at",
+          "years_experience",
+          "vacancy_stage"
+        ],
+        "title": "CandidateListItemResponse",
+        "type": "object"
+      },
+      "CandidateListResponse": {
+        "description": "Paginated candidate profile list payload.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateListItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
         ],
         "title": "CandidateListResponse",
         "type": "object"
@@ -5019,8 +5195,190 @@
     },
     "/api/v1/candidates": {
       "get": {
-        "description": "List candidate profiles for authorized role.",
+        "description": "List candidate profiles with recruiter-facing search, filter, and pagination.",
         "operationId": "list_candidate_profiles_api_v1_candidates_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "location",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Location"
+            }
+          },
+          {
+            "in": "query",
+            "name": "current_title",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Current Title"
+            }
+          },
+          {
+            "in": "query",
+            "name": "skill",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Skill"
+            }
+          },
+          {
+            "in": "query",
+            "name": "analysis_ready",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Analysis Ready"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_years_experience",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Years Experience"
+            }
+          },
+          {
+            "in": "query",
+            "name": "vacancy_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Vacancy Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "in_pipeline_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "In Pipeline Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "applied",
+                    "screening",
+                    "shortlist",
+                    "interview",
+                    "offer",
+                    "hired",
+                    "rejected"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stage"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -5031,6 +5389,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "security": [

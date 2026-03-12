@@ -20,6 +20,7 @@ from hrm_backend.candidates.services.candidate_service import CandidateService
 from hrm_backend.candidates.services.cv_parsing_worker_service import CVParsingWorkerService
 from hrm_backend.core.db.session import get_db_session
 from hrm_backend.settings import AppSettings, get_settings
+from hrm_backend.vacancies.infra.postgres import PipelineTransitionDAO
 
 SettingsDependency = Annotated[AppSettings, Depends(get_settings)]
 SessionDependency = Annotated[Session, Depends(get_db_session)]
@@ -91,6 +92,7 @@ def get_candidate_service(
         profile_dao=CandidateProfileDAO(session=session),
         document_dao=CandidateDocumentDAO(session=session),
         parsing_job_dao=CVParsingJobDAO(session=session),
+        transition_dao=PipelineTransitionDAO(session=session),
         storage=storage,
         audit_service=audit_service,
     )

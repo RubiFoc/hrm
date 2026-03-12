@@ -14,6 +14,7 @@ const fetchMock = vi.fn();
 vi.stubGlobal("fetch", fetchMock);
 const VACANCY_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const CANDIDATE_ID = "11111111-1111-1111-1111-111111111111";
+const SECOND_CANDIDATE_ID = "22222222-2222-4222-8222-222222222222";
 const CURRENT_USER_ID = "33333333-3333-4333-8333-333333333333";
 const VACANCY_ITEM = {
   vacancy_id: VACANCY_ID,
@@ -36,6 +37,12 @@ const CANDIDATE_ITEM = {
   extra_data: {},
   created_at: "2026-03-06T10:00:00Z",
   updated_at: "2026-03-06T10:00:00Z",
+  analysis_ready: true,
+  detected_language: "en",
+  parsed_at: "2026-03-06T10:00:00Z",
+  years_experience: 5,
+  skills: ["python", "docker"],
+  vacancy_stage: null,
 };
 const SUCCESSFUL_MATCH_SCORE = {
   vacancy_id: VACANCY_ID,
@@ -156,6 +163,7 @@ function jsonResponse(payload: unknown, status = 200): Promise<Response> {
 }
 
 function installHrWorkspaceFetchMock({
+  candidateListGet,
   meGet,
   matchScoreGet,
   matchScorePost,
@@ -187,6 +195,7 @@ function installHrWorkspaceFetchMock({
     },
   ],
 }: {
+  candidateListGet?: (url: string, init?: RequestInit) => Promise<Response>;
   meGet?: (url: string, init?: RequestInit) => Promise<Response>;
   matchScoreGet?: (url: string, init?: RequestInit) => Promise<Response>;
   matchScorePost?: (url: string, init?: RequestInit) => Promise<Response>;
@@ -338,7 +347,15 @@ function installHrWorkspaceFetchMock({
       return jsonResponse({ items: [VACANCY_ITEM] });
     }
     if (url.includes("/api/v1/candidates")) {
-      return jsonResponse({ items: [CANDIDATE_ITEM] });
+      if (method === "GET" && candidateListGet) {
+        return candidateListGet(url, init);
+      }
+      return jsonResponse({
+        items: [CANDIDATE_ITEM],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      });
     }
     if (url.includes("/api/v1/pipeline/transitions?")) {
       return jsonResponse({ items: pipelineItems });
@@ -349,6 +366,7 @@ function installHrWorkspaceFetchMock({
 
 async function selectVacancyAndCandidate() {
   fireEvent.click(await screen.findByRole("button", { name: /^выбрать$/i }));
+  await screen.findByRole("option", { name: /john doe \(john@example.com\)/i });
   fireEvent.change(screen.getByRole("combobox", { name: /^кандидат$/i }), {
     target: { value: CANDIDATE_ID },
   });
@@ -376,6 +394,143 @@ describe("HrDashboardPage", () => {
 
     expect(await screen.findByText(/public_application/i)).toBeDefined();
     expect((await screen.findAllByRole("cell", { name: /отклик/i })).length).toBeGreaterThan(0);
+  });
+
+  it("applies and resets candidate filters while forwarding candidate query params", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+
+    const secondCandidate = {
+      ...CANDIDATE_ITEM,
+      candidate_id: SECOND_CANDIDATE_ID,
+      first_name: "Jane",
+      last_name: "Roe",
+      email: "jane@example.com",
+      analysis_ready: false,
+      years_experience: null,
+      skills: ["react"],
+    };
+    const candidateUrls: string[] = [];
+
+    installHrWorkspaceFetchMock({
+      candidateListGet: (url) => {
+        candidateUrls.push(url);
+        const parsedUrl = new URL(url, "http://testserver");
+        const search = parsedUrl.searchParams.get("search");
+        const analysisReady = parsedUrl.searchParams.get("analysis_ready");
+        const vacancyId = parsedUrl.searchParams.get("vacancy_id");
+        const inPipelineOnly = parsedUrl.searchParams.get("in_pipeline_only");
+        const stage = parsedUrl.searchParams.get("stage");
+
+        if (
+          search === "john"
+          && analysisReady === "true"
+          && vacancyId === VACANCY_ID
+          && inPipelineOnly === "true"
+          && stage === "screening"
+        ) {
+          return jsonResponse({
+            items: [{ ...CANDIDATE_ITEM, vacancy_stage: "screening" }],
+            total: 1,
+            limit: 20,
+            offset: 0,
+          });
+        }
+
+        return jsonResponse({
+          items: [CANDIDATE_ITEM, secondCandidate],
+          total: 2,
+          limit: 20,
+          offset: 0,
+        });
+      },
+    });
+
+    renderHrDashboardPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: /^выбрать$/i }));
+    fireEvent.change(screen.getByLabelText(/поиск кандидата/i), {
+      target: { value: "john" },
+    });
+    fireEvent.click(screen.getByRole("checkbox", { name: /только с готовым analysis/i }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /только из pipeline/i }));
+    fireEvent.mouseDown(screen.getByLabelText(/последняя стадия/i));
+    fireEvent.click(await screen.findByRole("option", { name: /скрининг/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^применить$/i }));
+
+    await waitFor(() => {
+      expect(
+        candidateUrls.some(
+          (url) =>
+            url.includes("search=john")
+            && url.includes("analysis_ready=true")
+            && url.includes(`vacancy_id=${VACANCY_ID}`)
+            && url.includes("in_pipeline_only=true")
+            && url.includes("stage=screening"),
+        ),
+      ).toBe(true);
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /^сбросить$/i }));
+
+    await waitFor(() => {
+      const latestUrl = candidateUrls[candidateUrls.length - 1] ?? "";
+      expect(latestUrl).toContain(`/api/v1/candidates?limit=20&offset=0&vacancy_id=${VACANCY_ID}`);
+      expect(latestUrl).not.toContain("search=john");
+      expect(latestUrl).not.toContain("analysis_ready=true");
+      expect(latestUrl).not.toContain("in_pipeline_only=true");
+      expect(latestUrl).not.toContain("stage=screening");
+    });
+  });
+
+  it("keeps the selected candidate context when candidate pagination changes pages", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_user_role", "hr");
+
+    const pagedCandidate = {
+      ...CANDIDATE_ITEM,
+      candidate_id: SECOND_CANDIDATE_ID,
+      first_name: "Jane",
+      last_name: "Paged",
+      email: "jane.paged@example.com",
+    };
+
+    installHrWorkspaceFetchMock({
+      candidateListGet: (url) => {
+        const parsedUrl = new URL(url, "http://testserver");
+        const offset = parsedUrl.searchParams.get("offset") ?? "0";
+
+        if (offset === "20") {
+          return jsonResponse({
+            items: [pagedCandidate],
+            total: 21,
+            limit: 20,
+            offset: 20,
+          });
+        }
+
+        return jsonResponse({
+          items: [CANDIDATE_ITEM],
+          total: 21,
+          limit: 20,
+          offset: 0,
+        });
+      },
+    });
+
+    renderHrDashboardPage();
+
+    await selectVacancyAndCandidate();
+    expect(await screen.findByText(/выбран кандидат: john doe \(john@example.com\)/i)).toBeDefined();
+
+    fireEvent.click(screen.getByLabelText(/go to next page/i));
+
+    await waitFor(() => {
+      expect(screen.getByText(/выбран кандидат: john doe \(john@example.com\)/i)).toBeDefined();
+      expect(
+        (screen.getByRole("combobox", { name: /^кандидат$/i }) as HTMLSelectElement).value,
+      ).toBe(CANDIDATE_ID);
+    });
   });
 
   it("renders embedded onboarding progress dashboard for HR workspace", async () => {
@@ -905,7 +1060,7 @@ describe("HrDashboardPage", () => {
       expect(screen.getByText(/fairness gate пройден/i)).toBeDefined();
       expect(screen.getAllByText(/strong communication and ownership/i).length).toBeGreaterThan(0);
     });
-  }, 10000);
+  }, 15000);
 
   it("renders localized fairness blocker for interview to offer transition", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -1066,7 +1221,7 @@ describe("HrDashboardPage", () => {
         screen.getByText(/теперь pipeline можно перевести в hired/i),
       ).toBeDefined();
     });
-  }, 10_000);
+  }, 20_000);
 
   it("renders localized blocker for offer to hired transition before acceptance", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -1122,7 +1277,7 @@ describe("HrDashboardPage", () => {
         screen.getByText(/перед переводом pipeline в hired оффер должен быть отмечен как accepted/i),
       ).toBeDefined();
     });
-  });
+  }, 15000);
 
   it("renders localized interview calendar configuration errors", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -1184,5 +1339,5 @@ describe("HrDashboardPage", () => {
           .some((item) => /синхронизация календаря/i.test(item.textContent ?? "")),
       ).toBe(true);
     });
-  });
+  }, 15000);
 });

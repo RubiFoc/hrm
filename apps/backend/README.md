@@ -86,6 +86,19 @@
   - `GET /api/v1/candidates/{candidate_id}`
   - `PATCH /api/v1/candidates/{candidate_id}`
   - `GET /api/v1/candidates`
+    - Recruiter list contract is paginated: `items`, `total`, `limit`, `offset`.
+    - Supported optional query params:
+      `limit`, `offset`, `search`, `location`, `current_title`, `skill`,
+      `analysis_ready`, `min_years_experience`, `vacancy_id`, `in_pipeline_only`, `stage`.
+    - `search` performs case-insensitive contains across candidate base fields plus active parsed CV
+      `summary`, `skills`, workplace employer/position, and normalized titles.
+    - `analysis_ready=true` requires an active CV with both `parsed_profile_json` and `parsed_at`.
+      `analysis_ready=false` returns candidates with missing or incomplete parsed analysis.
+    - `vacancy_id` adds `vacancy_stage` from the latest transition for that vacancy.
+      `in_pipeline_only=true` and `stage` are valid only together with `vacancy_id`.
+    - List rows use an additive `CandidateListItemResponse` contract and include:
+      `analysis_ready`, `detected_language`, `parsed_at`, `years_experience`, `skills`,
+      and `vacancy_stage`.
   - `POST /api/v1/candidates/{candidate_id}/cv`
   - `GET /api/v1/candidates/{candidate_id}/cv`
   - `GET /api/v1/candidates/{candidate_id}/cv/parsing-status`

@@ -5,15 +5,22 @@ import {
   Button,
   Chip,
   Divider,
+  FormControl,
+  FormControlLabel,
+  InputLabel,
   List,
   ListItem,
   ListItemText,
+  MenuItem,
   Paper,
+  Select,
   Stack,
+  Switch,
   Table,
   TableBody,
   TableCell,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
   Typography,
@@ -44,7 +51,8 @@ import {
   sendOffer,
   upsertOffer,
   updateVacancy,
-  type CandidateResponse,
+  type CandidateListItemResponse,
+  type CandidateListQuery,
   type HRInterviewListResponse,
   type InterviewFeedbackItemResponse,
   type InterviewFeedbackPanelSummaryResponse,
@@ -83,6 +91,7 @@ type FeedbackState = {
 };
 
 type VacancyDraft = VacancyCreateRequest;
+type CandidateStageFilterValue = PipelineTransitionCreateRequest["to_stage"] | "all";
 type MatchScoreStatus = MatchScoreResponse["status"];
 type InterviewDraft = {
   scheduledStartLocal: string;
@@ -117,6 +126,7 @@ const DEFAULT_VACANCY_DRAFT: VacancyDraft = {
   department: "",
   status: "open",
 };
+const DEFAULT_CANDIDATE_LIMIT = 20;
 const INTERVIEW_POLL_INTERVAL_MS = 1000;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const FEEDBACK_SCORE_OPTIONS = [1, 2, 3, 4, 5] as const;
@@ -153,12 +163,32 @@ export function HrDashboardPage() {
   const [feedbackDraft, setFeedbackDraft] =
     useState<InterviewerFeedbackDraft>(createEmptyInterviewerFeedbackDraft);
   const [offerDraft, setOfferDraft] = useState<OfferDraft>(createEmptyOfferDraft);
+  const [candidateSearchInput, setCandidateSearchInput] = useState("");
+  const [candidateAnalysisReadyOnly, setCandidateAnalysisReadyOnly] = useState(false);
+  const [candidateInPipelineOnly, setCandidateInPipelineOnly] = useState(false);
+  const [candidateStageFilter, setCandidateStageFilter] =
+    useState<CandidateStageFilterValue>("all");
+  const [candidateQuery, setCandidateQuery] = useState<CandidateListQuery>({
+    limit: DEFAULT_CANDIDATE_LIMIT,
+    offset: 0,
+  });
+  const [selectedCandidateSnapshot, setSelectedCandidateSnapshot] =
+    useState<CandidateListItemResponse | null>(null);
   const matchScoreQueryKey = [
     "hr-match-score",
     accessToken,
     selectedVacancyId,
     selectedCandidateId,
   ];
+  const effectiveCandidateQuery: CandidateListQuery = {
+    limit: candidateQuery.limit ?? DEFAULT_CANDIDATE_LIMIT,
+    offset: candidateQuery.offset ?? 0,
+    search: candidateQuery.search,
+    analysisReady: candidateQuery.analysisReady,
+    vacancyId: selectedVacancyId || undefined,
+    inPipelineOnly: selectedVacancyId ? candidateQuery.inPipelineOnly : undefined,
+    stage: selectedVacancyId ? candidateQuery.stage : undefined,
+  };
   const interviewsQueryKey = [
     "hr-interviews",
     accessToken,
@@ -174,8 +204,8 @@ export function HrDashboardPage() {
   });
 
   const candidatesQuery = useQuery({
-    queryKey: ["hr-candidates", accessToken],
-    queryFn: () => listCandidateProfiles(accessToken!),
+    queryKey: ["hr-candidates", accessToken, effectiveCandidateQuery],
+    queryFn: () => listCandidateProfiles(accessToken!, effectiveCandidateQuery),
     enabled: Boolean(accessToken),
   });
 
@@ -461,10 +491,18 @@ export function HrDashboardPage() {
 
   const vacancyItems = vacanciesQuery.data?.items ?? [];
   const candidateItems = candidatesQuery.data?.items ?? [];
+  const candidateTotal = candidatesQuery.data?.total ?? 0;
+  const candidatePage = Math.floor(
+    (effectiveCandidateQuery.offset ?? 0) / (effectiveCandidateQuery.limit ?? DEFAULT_CANDIDATE_LIMIT),
+  );
   const selectedVacancy =
     vacancyItems.find((item) => item.vacancy_id === selectedVacancyId) ?? null;
   const selectedCandidate =
-    candidateItems.find((item) => item.candidate_id === selectedCandidateId) ?? null;
+    candidateItems.find((item) => item.candidate_id === selectedCandidateId)
+    ?? (selectedCandidateSnapshot?.candidate_id === selectedCandidateId
+      ? selectedCandidateSnapshot
+      : null);
+  const candidateSelectItems = mergeCandidateSelectItems(candidateItems, selectedCandidate);
   const matchScore = matchScoreQuery.data ?? null;
   const matchedRequirements = matchScore?.matched_requirements ?? [];
   const missingRequirements = matchScore?.missing_requirements ?? [];
@@ -506,6 +544,9 @@ export function HrDashboardPage() {
       ? "warning"
       : "info";
   const offerStatusHint = buildOfferStatusHint(offerStatus, t);
+  const candidateListErrorMessage = candidatesQuery.error
+    ? resolveRecruitmentApiError(candidatesQuery.error, t)
+    : "";
 
   useEffect(() => {
     if (!latestInterview) {
@@ -526,6 +567,18 @@ export function HrDashboardPage() {
   useEffect(() => {
     setOfferDraft(buildOfferDraftFromResponse(offer));
   }, [offer]);
+
+  useEffect(() => {
+    if (!selectedCandidateId) {
+      setSelectedCandidateSnapshot(null);
+      return;
+    }
+    const nextSelectedCandidate =
+      candidateItems.find((item) => item.candidate_id === selectedCandidateId) ?? null;
+    if (nextSelectedCandidate) {
+      setSelectedCandidateSnapshot(nextSelectedCandidate);
+    }
+  }, [candidateItems, selectedCandidateId]);
 
   const handleSelectVacancy = (vacancy: VacancyResponse) => {
     setSelectedVacancyId(vacancy.vacancy_id);
@@ -573,10 +626,44 @@ export function HrDashboardPage() {
 
   const handleSelectCandidate = (candidateId: string) => {
     setSelectedCandidateId(candidateId);
+    setSelectedCandidateSnapshot(
+      candidateSelectItems.find((item) => item.candidate_id === candidateId) ?? null,
+    );
     setScoreFeedback(null);
     setInterviewFeedback(null);
     setFeedbackPanelState(null);
     setOfferPanelState(null);
+  };
+
+  const handleApplyCandidateFilters = () => {
+    setFeedback(null);
+    setCandidateQuery((prev) => ({
+      ...prev,
+      offset: 0,
+      search: normalizeCandidateFilterValue(candidateSearchInput),
+      analysisReady: candidateAnalysisReadyOnly ? true : undefined,
+      inPipelineOnly: selectedVacancyId && candidateInPipelineOnly ? true : undefined,
+      stage:
+        selectedVacancyId && candidateStageFilter !== "all"
+          ? candidateStageFilter
+          : undefined,
+    }));
+  };
+
+  const handleResetCandidateFilters = () => {
+    setCandidateSearchInput("");
+    setCandidateAnalysisReadyOnly(false);
+    setCandidateInPipelineOnly(false);
+    setCandidateStageFilter("all");
+    setFeedback(null);
+    setCandidateQuery((prev) => ({
+      ...prev,
+      offset: 0,
+      search: undefined,
+      analysisReady: undefined,
+      inPipelineOnly: undefined,
+      stage: undefined,
+    }));
   };
 
   const handleRunScore = () => {
@@ -873,6 +960,66 @@ export function HrDashboardPage() {
       <Paper sx={{ p: 2 }}>
         <Stack spacing={2}>
           <Typography variant="h6">{t("hrDashboard.pipelineTitle")}</Typography>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="center">
+            <TextField
+              size="small"
+              label={t("hrDashboard.filters.candidateSearch")}
+              value={candidateSearchInput}
+              onChange={(event) => setCandidateSearchInput(event.target.value)}
+              sx={{ minWidth: 220 }}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={candidateAnalysisReadyOnly}
+                  onChange={(event) => setCandidateAnalysisReadyOnly(event.target.checked)}
+                />
+              }
+              label={t("hrDashboard.filters.analysisReady")}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={candidateInPipelineOnly}
+                  onChange={(event) => setCandidateInPipelineOnly(event.target.checked)}
+                  disabled={!selectedVacancyId}
+                />
+              }
+              label={t("hrDashboard.filters.inPipelineOnly")}
+            />
+            <FormControl size="small" sx={{ minWidth: 180 }}>
+              <InputLabel id="hr-dashboard-stage-filter-label">
+                {t("hrDashboard.filters.stage")}
+              </InputLabel>
+              <Select
+                labelId="hr-dashboard-stage-filter-label"
+                value={candidateStageFilter}
+                label={t("hrDashboard.filters.stage")}
+                disabled={!selectedVacancyId}
+                onChange={(event) =>
+                  setCandidateStageFilter(event.target.value as CandidateStageFilterValue)
+                }
+              >
+                <MenuItem value="all">{t("hrDashboard.filters.anyStage")}</MenuItem>
+                {PIPELINE_STAGE_OPTIONS.map((stage) => (
+                  <MenuItem key={stage} value={stage}>
+                    {t(`hrDashboard.stages.${stage}`)}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button variant="contained" onClick={handleApplyCandidateFilters}>
+              {t("hrDashboard.filters.apply")}
+            </Button>
+            <Button variant="outlined" onClick={handleResetCandidateFilters}>
+              {t("hrDashboard.filters.reset")}
+            </Button>
+          </Stack>
+
+          {candidatesQuery.error ? (
+            <Alert severity="error">{candidateListErrorMessage}</Alert>
+          ) : null}
+
           <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
             <TextField
               select
@@ -883,7 +1030,7 @@ export function HrDashboardPage() {
               SelectProps={{ native: true }}
             >
               <option value="">{t("hrDashboard.selectCandidateAction")}</option>
-              {candidateItems.map((candidate) => (
+              {candidateSelectItems.map((candidate) => (
                 <option key={candidate.candidate_id} value={candidate.candidate_id}>
                   {formatCandidateLabel(candidate)}
                 </option>
@@ -906,6 +1053,27 @@ export function HrDashboardPage() {
               ))}
             </TextField>
           </Stack>
+          <TablePagination
+            component="div"
+            count={candidateTotal}
+            page={candidatePage}
+            rowsPerPage={effectiveCandidateQuery.limit ?? DEFAULT_CANDIDATE_LIMIT}
+            onPageChange={(_, nextPage) => {
+              setCandidateQuery((prev) => ({
+                ...prev,
+                offset: nextPage * (prev.limit ?? DEFAULT_CANDIDATE_LIMIT),
+              }));
+            }}
+            onRowsPerPageChange={(event) => {
+              const nextLimit = Number.parseInt(event.target.value, 10);
+              setCandidateQuery((prev) => ({
+                ...prev,
+                limit: nextLimit,
+                offset: 0,
+              }));
+            }}
+            rowsPerPageOptions={[10, 20, 50, 100]}
+          />
           <TextField
             label={t("hrDashboard.fields.transitionReason")}
             value={transitionReason}
@@ -2080,7 +2248,25 @@ function buildVacancyPatchPayload(
   return payload;
 }
 
-function formatCandidateLabel(candidate: CandidateResponse): string {
+function normalizeCandidateFilterValue(value: string): string | undefined {
+  const normalized = value.trim();
+  return normalized ? normalized : undefined;
+}
+
+function mergeCandidateSelectItems(
+  items: CandidateListItemResponse[],
+  selectedCandidate: CandidateListItemResponse | null,
+): CandidateListItemResponse[] {
+  if (!selectedCandidate) {
+    return items;
+  }
+  if (items.some((item) => item.candidate_id === selectedCandidate.candidate_id)) {
+    return items;
+  }
+  return [selectedCandidate, ...items];
+}
+
+function formatCandidateLabel(candidate: CandidateListItemResponse): string {
   return `${candidate.first_name} ${candidate.last_name} (${candidate.email})`;
 }
 
@@ -2526,6 +2712,12 @@ function resolveRecruitmentApiError(
     }
     if (detail.includes("cv analysis is not ready")) {
       return t("hrDashboard.errors.cvAnalysisNotReady");
+    }
+    if (detail.includes("stage_requires_vacancy_id")) {
+      return t("hrDashboard.errors.stageRequiresVacancy");
+    }
+    if (detail.includes("in_pipeline_only_requires_vacancy_id")) {
+      return t("hrDashboard.errors.inPipelineOnlyRequiresVacancy");
     }
     if (detail.includes("match score not found")) {
       return t("hrDashboard.errors.matchScoreNotFound");
