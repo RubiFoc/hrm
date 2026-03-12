@@ -10,6 +10,8 @@ from sqlalchemy.orm import Session
 
 from hrm_backend.audit.dependencies.audit import get_audit_service
 from hrm_backend.audit.services.audit_service import AuditService
+from hrm_backend.auth.dependencies.auth import get_staff_account_dao
+from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
 from hrm_backend.auth.infra.redis import get_redis_client
 from hrm_backend.candidates.dependencies.candidates import get_candidate_storage
 from hrm_backend.candidates.infra.minio import CandidateStorage
@@ -26,6 +28,7 @@ from hrm_backend.settings import AppSettings, get_settings
 from hrm_backend.vacancies.dao.public_apply_guard_dao import PublicApplyGuardDAO
 from hrm_backend.vacancies.infra.postgres import OfferDAO, PipelineTransitionDAO, VacancyDAO
 from hrm_backend.vacancies.services.application_service import VacancyApplicationService
+from hrm_backend.vacancies.services.manager_workspace_service import ManagerWorkspaceService
 from hrm_backend.vacancies.services.offer_service import OfferService
 from hrm_backend.vacancies.services.public_apply_policy import PublicApplyPolicyService
 from hrm_backend.vacancies.services.public_apply_rate_limiter import PublicApplyRateLimiter
@@ -36,11 +39,13 @@ AuditDependency = Annotated[AuditService, Depends(get_audit_service)]
 SettingsDependency = Annotated[AppSettings, Depends(get_settings)]
 CandidateStorageDependency = Annotated[CandidateStorage, Depends(get_candidate_storage)]
 RedisClientDependency = Annotated[Redis, Depends(get_redis_client)]
+StaffAccountDAODependency = Annotated[StaffAccountDAO, Depends(get_staff_account_dao)]
 
 
 def get_vacancy_service(
     session: SessionDependency,
     audit_service: AuditDependency,
+    staff_account_dao: StaffAccountDAODependency,
 ) -> VacancyService:
     """Build vacancy service dependency.
 
@@ -61,6 +66,24 @@ def get_vacancy_service(
         interview_dao=InterviewDAO(session=session),
         interview_feedback_dao=InterviewFeedbackDAO(session=session),
         hire_conversion_service=hire_conversion_service,
+        staff_account_dao=staff_account_dao,
+        audit_service=audit_service,
+    )
+
+
+def get_manager_workspace_service(
+    session: SessionDependency,
+    audit_service: AuditDependency,
+    staff_account_dao: StaffAccountDAODependency,
+) -> ManagerWorkspaceService:
+    """Build read-only manager workspace service dependency."""
+    return ManagerWorkspaceService(
+        vacancy_dao=VacancyDAO(session=session),
+        transition_dao=PipelineTransitionDAO(session=session),
+        profile_dao=CandidateProfileDAO(session=session),
+        document_dao=CandidateDocumentDAO(session=session),
+        interview_dao=InterviewDAO(session=session),
+        staff_account_dao=staff_account_dao,
         audit_service=audit_service,
     )
 

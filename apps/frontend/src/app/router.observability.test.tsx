@@ -48,6 +48,20 @@ describe("frontend observability route tags", () => {
     setTagMock.mockReset();
     fetchMock.mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
+      if (url.endsWith("/api/v1/vacancies/manager-workspace")) {
+        return Promise.resolve(
+          jsonResponse({
+            summary: {
+              vacancy_count: 0,
+              open_vacancy_count: 0,
+              candidate_count: 0,
+              active_interview_count: 0,
+              upcoming_interview_count: 0,
+            },
+            items: [],
+          }),
+        );
+      }
       if (url.includes("/api/v1/vacancies")) {
         return Promise.resolve(
           jsonResponse({
@@ -124,13 +138,13 @@ describe("frontend observability route tags", () => {
     expect(setTagMock).toHaveBeenCalledWith("route", "/");
   });
 
-  it("tags the manager onboarding dashboard on / with manager workspace", async () => {
+  it("tags the manager workspace route on / with manager workspace", async () => {
     window.localStorage.setItem("hrm_access_token", "token");
     window.localStorage.setItem("hrm_user_role", "manager");
 
     renderWithPath("/");
 
-    expect(await screen.findByRole("heading", { name: /прогресс онбординга/i })).toBeDefined();
+    expect(await screen.findByRole("heading", { name: /кабинет менеджера/i })).toBeDefined();
     expect(setTagMock).toHaveBeenCalledWith("workspace", "manager");
     expect(setTagMock).toHaveBeenCalledWith("role", "manager");
     expect(setTagMock).toHaveBeenCalledWith("route", "/");

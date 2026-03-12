@@ -382,18 +382,18 @@ sequenceDiagram
   participant EMP as Employee Domain
   participant DB as PostgreSQL
 
-  STAFF->>UI: Open `/` and review onboarding progress
+  STAFF->>UI: Open `/` and load the onboarding visibility block
   UI->>API: GET /api/v1/onboarding/runs?search&task_status&overdue_only
   API->>EMP: Validate `onboarding_dashboard:read`
   EMP->>DB: Load onboarding runs + employee profiles + materialized tasks
   alt Manager actor
-    EMP->>EMP: Keep only runs with `assigned_role=manager` or `assigned_staff_id=<actor>`
+    EMP->>EMP: Keep only runs with `assigned_role=manager` or `assigned_staff_id=<actor>` for the embedded manager block
   else HR/Admin actor
-    EMP->>EMP: Keep full run set
+    EMP->>EMP: Keep full run set for the embedded HR workspace panel
   end
   EMP->>EMP: Build summary counters, progress percentages, and filtered list rows
   EMP-->>API: dashboard list payload
-  API-->>UI: Render summary chips + run table
+  API-->>UI: Render summary chips + run table inside the current workspace
   STAFF->>UI: Select onboarding run
   UI->>API: GET /api/v1/onboarding/runs/{onboarding_id}
   API->>EMP: Re-validate visibility for requested run
@@ -404,6 +404,43 @@ sequenceDiagram
     EMP->>DB: Load ordered onboarding tasks for selected run
     EMP-->>API: detail payload with employee summary + tasks
     API-->>UI: Render detail panel on the same `/` route
+  end
+```
+
+## Diagram 9A: Manager Workspace Sequence
+
+```mermaid
+sequenceDiagram
+  participant MGR as Manager
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant VAC as Recruitment Domain
+  participant EMP as Employee Domain
+  participant DB as PostgreSQL
+
+  MGR->>UI: Open `/`
+  UI->>API: GET /api/v1/vacancies/manager-workspace
+  API->>VAC: Validate `manager_workspace:read`
+  VAC->>DB: Load vacancies where `hiring_manager_staff_id=<actor>`
+  VAC->>DB: Load latest transitions, active interviews, and candidate profiles for visible vacancies
+  VAC->>VAC: Build hiring summary + ordered vacancy list
+  VAC-->>API: overview payload
+  API-->>UI: Render hiring summary + vacancy list
+
+  UI->>API: GET /api/v1/vacancies/{vacancy_id}/manager-workspace/candidates
+  API->>VAC: Re-validate vacancy ownership scope
+  alt Vacancy is missing or outside manager scope
+    VAC-->>API: 404 manager_workspace_vacancy_not_found
+    API-->>UI: Localized manager workspace error
+  else Vacancy is visible
+    VAC->>DB: Load latest pipeline rows, candidate profiles, and active interviews
+    VAC-->>API: candidate snapshot payload
+    API-->>UI: Render read-only candidate/pipeline snapshot
+    UI->>API: GET /api/v1/onboarding/runs?search&task_status&overdue_only
+    API->>EMP: Validate `onboarding_dashboard:read`
+    EMP->>DB: Load manager-scoped onboarding runs
+    EMP-->>API: onboarding dashboard payload
+    API-->>UI: Render embedded onboarding visibility block
   end
 ```
 

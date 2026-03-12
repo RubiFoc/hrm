@@ -47,7 +47,8 @@
 | TASK-07-01 | implemented/local-onboarding-template-slice | Staff-only `POST/GET/PUT /api/v1/onboarding/templates` now manage durable checklist templates and items, including one active default template for later onboarding-task generation |
 | TASK-07-02 | implemented/local-onboarding-task-slice | Employee bootstrap now atomically materializes `onboarding_tasks` from the active template, and staff can list/update/backfill tasks on `/api/v1/onboarding/runs/{onboarding_id}/tasks` |
 | TASK-07-03 | implemented/local-employee-portal-slice | Employee-only `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*` now expose self-service onboarding tasks with durable employee-profile identity linking and localized frontend coverage |
-| TASK-07-04 | implemented/local-onboarding-dashboard-slice | `GET /api/v1/onboarding/runs*` now exposes HR/admin read-all plus manager-scoped onboarding progress visibility, with the dashboard embedded on `/` for HR and rendered as the standalone manager workspace on the existing `/` route |
+| TASK-07-04 | implemented/local-onboarding-dashboard-slice | `GET /api/v1/onboarding/runs*` now exposes HR/admin read-all plus manager-scoped onboarding progress visibility, with the dashboard embedded on `/` for HR and reused as the onboarding block inside the existing manager workspace on the same `/` route |
+| TASK-09-01 | implemented/local-manager-workspace-slice | Manager users now land on `/` in a read-only hiring + onboarding workspace backed by manager-scoped vacancy APIs, explicit `vacancies.hiring_manager_staff_id` ownership, and the reused onboarding dashboard block, while HR/admin keep the existing recruitment workspace on `/` |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-12 Delivery Control Notes
@@ -82,8 +83,9 @@
 - `TASK-07-01` is now implemented as the next onboarding slice: HR/admin can create, read, list, and replace onboarding checklist templates on a dedicated staff onboarding route, while task assignment/execution remains deferred.
 - `TASK-07-02` is now implemented as the task-materialization slice: successful `POST /api/v1/employees` fails closed without an active template, otherwise atomically writes `employee_profiles + onboarding_runs + onboarding_tasks`, and HR/admin can read, patch, and backfill tasks on the existing onboarding route tree.
 - `TASK-07-03` is now implemented as the employee self-service follow-on slice: authenticated employees use the new `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*`, while the backend resolves and durably links the employee profile from the existing auth session without reopening the auth or CORS model.
-- `TASK-07-04` is now implemented as the HR/manager visibility follow-on slice: `/api/v1/onboarding/runs*` exposes read-only onboarding progress data, HR/admin see all runs inside the existing `/` workspace, and managers use the same `/` route as a scoped onboarding dashboard without widening task-mutation permissions.
-- The remaining follow-on work after the onboarding-dashboard slice is limited to broader manager/team visibility and out-of-scope items such as notifications, not baseline scheduling, registration, feedback transport, or candidate-facing offer decisions.
+- `TASK-07-04` is now implemented as the HR/manager visibility follow-on slice: `/api/v1/onboarding/runs*` exposes read-only onboarding progress data, HR/admin see all runs inside the existing `/` workspace, and managers reuse the same dashboard block inside their role-specific workspace without widening task-mutation permissions.
+- `TASK-09-01` is now implemented as the additive manager workspace follow-on slice: managers use the existing `/` route for one read-only hiring + onboarding workspace, vacancy hiring visibility is scoped by explicit `vacancies.hiring_manager_staff_id`, and onboarding visibility stays task-assignment-scoped through the existing onboarding APIs.
+- The remaining follow-on work after the onboarding-dashboard and manager-workspace slices is limited to the other phase-2 role workspaces, notifications, reporting, and admin/ops backlog, not baseline scheduling, registration, feedback transport, or candidate-facing offer decisions.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
 ## Active Queue After Current Slice
@@ -97,23 +99,24 @@
 - `TASK-07-01` is no longer active queue work; the implemented source of truth is the repo-backed onboarding checklist template API on `/api/v1/onboarding/templates`.
 - `TASK-07-02` is no longer active queue work; the implemented source of truth is the repo-backed onboarding task generation/backfill/update API on `/api/v1/onboarding/runs/{onboarding_id}/tasks`.
 - `TASK-07-03` is no longer active queue work; the implemented source of truth is the repo-backed employee self-service onboarding portal on `/employee` plus `/api/v1/employees/me/onboarding*`.
-- `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/` and rendered as the manager workspace on the existing `/` route.
+- `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/` and reused inside the manager workspace on the existing `/` route.
+- `TASK-09-01` is no longer active queue work; the implemented source of truth is the repo-backed manager workspace on `/` plus manager-scoped vacancy read endpoints on the existing `/api/v1/vacancies` namespace.
 - The remaining candidate-domain follow-on work after `TASK-03-08` and `TASK-04-06` is limited to
   later ops/reporting slices, not baseline parsed-profile structure or scoring-quality tooling.
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `18` tasks.
+- Normalized open backlog count: `17` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `18`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `17`-task count.
 - Current open backlog by delivery wave:
   - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-01`, `TASK-10-02`, `TASK-10-03`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
-  - Wave 3 phase-2 workspaces: `TASK-09-01`, `TASK-09-02`, `TASK-09-03`, `TASK-09-04`, `TASK-11-12`
+  - Wave 3 phase-2 workspaces: `TASK-09-02`, `TASK-09-03`, `TASK-09-04`, `TASK-11-12`
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-09-01 | Full manager workspace is now the next dependent slice because manager users currently see only the onboarding-progress dashboard on `/`, while broader team hiring/onboarding visibility remains deferred |
+| A-1 | TASK-09-03 | Accountant workspace is now the next unblocked concrete role-workspace slice because manager visibility is implemented, while leader KPI visibility still depends on `TASK-10-02` and notifications remain follow-on work |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 

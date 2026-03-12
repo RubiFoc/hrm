@@ -156,3 +156,64 @@ class PipelineTransitionDAO:
         for row in rows:
             transitions.setdefault(row.candidate_id, row)
         return transitions
+
+    def get_latest_transitions_for_vacancy(
+        self,
+        *,
+        vacancy_id: str,
+    ) -> dict[str, PipelineTransition]:
+        """Load latest transition rows for every candidate linked to one vacancy.
+
+        Args:
+            vacancy_id: Vacancy identifier that scopes the lookup.
+
+        Returns:
+            dict[str, PipelineTransition]: Mapping of `candidate_id -> latest transition`.
+        """
+        rows = (
+            self._session.query(PipelineTransition)
+            .filter(PipelineTransition.vacancy_id == vacancy_id)
+            .order_by(
+                PipelineTransition.candidate_id.asc(),
+                PipelineTransition.transitioned_at.desc(),
+                PipelineTransition.transition_id.desc(),
+            )
+            .all()
+        )
+        transitions: dict[str, PipelineTransition] = {}
+        for row in rows:
+            transitions.setdefault(row.candidate_id, row)
+        return transitions
+
+    def get_latest_transitions_for_vacancies(
+        self,
+        *,
+        vacancy_ids: list[str],
+    ) -> dict[tuple[str, str], PipelineTransition]:
+        """Load latest transition rows for every candidate across multiple vacancies.
+
+        Args:
+            vacancy_ids: Vacancy identifiers resolved in one query.
+
+        Returns:
+            dict[tuple[str, str], PipelineTransition]: Mapping of `(vacancy_id, candidate_id)` to
+                the latest transition row.
+        """
+        if not vacancy_ids:
+            return {}
+
+        rows = (
+            self._session.query(PipelineTransition)
+            .filter(PipelineTransition.vacancy_id.in_(vacancy_ids))
+            .order_by(
+                PipelineTransition.vacancy_id.asc(),
+                PipelineTransition.candidate_id.asc(),
+                PipelineTransition.transitioned_at.desc(),
+                PipelineTransition.transition_id.desc(),
+            )
+            .all()
+        )
+        transitions: dict[tuple[str, str], PipelineTransition] = {}
+        for row in rows:
+            transitions.setdefault((row.vacancy_id, row.candidate_id), row)
+        return transitions

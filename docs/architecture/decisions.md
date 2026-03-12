@@ -802,3 +802,35 @@ Use this log for decisions that change interfaces, data models, deployment topol
     browser smoke scope.
   - First `ai-local` bootstrap can take longer and consume persistent disk because the model pull is
     explicit and cached in `ollama_data`.
+
+## ADR-0041
+- Context: `TASK-07-04` delivered manager-scoped onboarding visibility on `/`, but the manager
+  experience still lacked useful hiring visibility. Existing explicit linkages such as
+  manager-assigned onboarding tasks or interview participation were not sufficient to derive a
+  stable vacancy-scoped workspace without risking accidental company-wide reads. Reusing HR vacancy,
+  pipeline, or interview-management permissions for the manager UI would also blur RBAC semantics.
+- Decision:
+  - Introduce one additive vacancy-level ownership signal:
+    nullable `vacancies.hiring_manager_staff_id`.
+  - Keep manager hiring visibility fail-closed:
+    only vacancies where `hiring_manager_staff_id=<current manager subject>` are visible in the
+    manager workspace.
+  - Add dedicated permission `manager_workspace:read` and stop relying on broad HR recruitment
+    permissions for manager workspace reads.
+  - Expose the read-only manager workspace through the existing vacancy namespace:
+    - `GET /api/v1/vacancies/manager-workspace`
+    - `GET /api/v1/vacancies/{vacancy_id}/manager-workspace/candidates`
+  - Keep manager onboarding visibility separate and reused through the existing
+    `/api/v1/onboarding/runs*` read model.
+  - Keep the manager workspace on the existing `/` route, preserve `workspace=manager` Sentry
+    tags, and do not add vacancy/pipeline/candidate/onboarding mutation capabilities in this slice.
+  - Keep auth, CORS, and public candidate transport unchanged.
+- Consequences:
+  - Managers now have one useful read-only workspace for hiring plus onboarding without inheriting
+    HR operator privileges.
+  - HR/admin must explicitly populate `hiring_manager_staff_id` on vacancies to make hiring data
+    visible to a manager; unassigned vacancies remain invisible by design.
+  - Hiring visibility and onboarding visibility now use different explicit scopes (`vacancy
+    ownership` vs `task assignment`), which keeps the policy auditable and understandable.
+  - Future leader/team-wide visibility or richer ownership models can build on this additive signal
+    instead of widening the current manager scope implicitly.

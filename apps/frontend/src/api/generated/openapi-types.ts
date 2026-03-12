@@ -710,6 +710,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/vacancies/manager-workspace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Manager Workspace Overview
+         * @description Return manager-scoped hiring summary plus visible vacancies.
+         */
+        get: operations["get_manager_workspace_overview_api_v1_vacancies_manager_workspace_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vacancies/{vacancy_id}": {
         parameters: {
             query?: never;
@@ -892,6 +912,26 @@ export interface paths {
          * @description Reissue a fresh public token for the current synchronized schedule.
          */
         post: operations["resend_invite_api_v1_vacancies__vacancy_id__interviews__interview_id__resend_invite_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancies/{vacancy_id}/manager-workspace/candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Manager Workspace Candidate Snapshot
+         * @description Return the read-only candidate snapshot for one manager-visible vacancy.
+         */
+        get: operations["get_manager_workspace_candidate_snapshot_api_v1_vacancies__vacancy_id__manager_workspace_candidates_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2089,6 +2129,161 @@ export interface components {
             password: string;
         };
         /**
+         * ManagerWorkspaceCandidateSnapshotItemResponse
+         * @description Read-only candidate row rendered inside the manager vacancy snapshot.
+         */
+        ManagerWorkspaceCandidateSnapshotItemResponse: {
+            /** Analysis Ready */
+            analysis_ready: boolean;
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /**
+             * Candidate Updated At
+             * Format: date-time
+             */
+            candidate_updated_at: string;
+            /** Current Title */
+            current_title: string | null;
+            /** Email */
+            email: string;
+            /** First Name */
+            first_name: string;
+            /** Interview Scheduled End At */
+            interview_scheduled_end_at: string | null;
+            /** Interview Scheduled Start At */
+            interview_scheduled_start_at: string | null;
+            /** Interview Status */
+            interview_status: ("pending_sync" | "awaiting_candidate_confirmation" | "confirmed" | "reschedule_requested" | "cancelled") | null;
+            /** Interview Timezone */
+            interview_timezone: string | null;
+            /** Last Name */
+            last_name: string;
+            /** Location */
+            location: string | null;
+            /** Skills */
+            skills?: string[];
+            /**
+             * Stage
+             * @enum {string}
+             */
+            stage: "applied" | "screening" | "shortlist" | "interview" | "offer" | "hired" | "rejected";
+            /**
+             * Stage Updated At
+             * Format: date-time
+             */
+            stage_updated_at: string;
+            /** Years Experience */
+            years_experience: number | null;
+        };
+        /**
+         * ManagerWorkspaceCandidateSnapshotResponse
+         * @description Vacancy-scoped candidate snapshot payload for the manager workspace.
+         */
+        ManagerWorkspaceCandidateSnapshotResponse: {
+            /** Items */
+            items: components["schemas"]["ManagerWorkspaceCandidateSnapshotItemResponse"][];
+            summary: components["schemas"]["ManagerWorkspaceCandidateSnapshotSummaryResponse"];
+            vacancy: components["schemas"]["ManagerWorkspaceVacancyListItemResponse"];
+        };
+        /**
+         * ManagerWorkspaceCandidateSnapshotSummaryResponse
+         * @description Aggregate counters for the selected vacancy inside manager workspace.
+         */
+        ManagerWorkspaceCandidateSnapshotSummaryResponse: {
+            /** Active Interview Count */
+            active_interview_count: number;
+            /** Candidate Count */
+            candidate_count: number;
+            stage_counts: components["schemas"]["ManagerWorkspaceStageSummaryResponse"];
+            /** Upcoming Interview Count */
+            upcoming_interview_count: number;
+        };
+        /**
+         * ManagerWorkspaceHiringSummaryResponse
+         * @description Aggregate hiring counters for the current manager workspace scope.
+         */
+        ManagerWorkspaceHiringSummaryResponse: {
+            /** Active Interview Count */
+            active_interview_count: number;
+            /** Candidate Count */
+            candidate_count: number;
+            /** Open Vacancy Count */
+            open_vacancy_count: number;
+            /** Upcoming Interview Count */
+            upcoming_interview_count: number;
+            /** Vacancy Count */
+            vacancy_count: number;
+        };
+        /**
+         * ManagerWorkspaceOverviewResponse
+         * @description Top-level manager workspace payload with aggregate hiring summary and visible vacancies.
+         */
+        ManagerWorkspaceOverviewResponse: {
+            /** Items */
+            items: components["schemas"]["ManagerWorkspaceVacancyListItemResponse"][];
+            summary: components["schemas"]["ManagerWorkspaceHiringSummaryResponse"];
+        };
+        /**
+         * ManagerWorkspaceStageSummaryResponse
+         * @description Stage counters for one manager-visible vacancy snapshot.
+         */
+        ManagerWorkspaceStageSummaryResponse: {
+            /** Applied */
+            applied: number;
+            /** Hired */
+            hired: number;
+            /** Interview */
+            interview: number;
+            /** Offer */
+            offer: number;
+            /** Rejected */
+            rejected: number;
+            /** Screening */
+            screening: number;
+            /** Shortlist */
+            shortlist: number;
+        };
+        /**
+         * ManagerWorkspaceVacancyListItemResponse
+         * @description One vacancy row visible in the manager hiring workspace.
+         */
+        ManagerWorkspaceVacancyListItemResponse: {
+            /** Active Interview Count */
+            active_interview_count: number;
+            /** Candidate Count */
+            candidate_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Department */
+            department: string;
+            /** Hiring Manager Login */
+            hiring_manager_login: string | null;
+            /** Hiring Manager Staff Id */
+            hiring_manager_staff_id: string | null;
+            /** Latest Activity At */
+            latest_activity_at: string | null;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+        };
+        /**
          * MatchScoreCreateRequest
          * @description Input payload for explicit scoring request.
          */
@@ -2899,6 +3094,8 @@ export interface components {
             department: string;
             /** Description */
             description: string;
+            /** Hiring Manager Login */
+            hiring_manager_login?: string | null;
             /**
              * Status
              * @default open
@@ -2929,6 +3126,10 @@ export interface components {
             department: string;
             /** Description */
             description: string;
+            /** Hiring Manager Login */
+            hiring_manager_login: string | null;
+            /** Hiring Manager Staff Id */
+            hiring_manager_staff_id: string | null;
             /** Status */
             status: string;
             /** Title */
@@ -2953,6 +3154,8 @@ export interface components {
             department?: string | null;
             /** Description */
             description?: string | null;
+            /** Hiring Manager Login */
+            hiring_manager_login?: string | null;
             /** Status */
             status?: string | null;
             /** Title */
@@ -4339,6 +4542,26 @@ export interface operations {
             };
         };
     };
+    get_manager_workspace_overview_api_v1_vacancies_manager_workspace_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerWorkspaceOverviewResponse"];
+                };
+            };
+        };
+    };
     get_vacancy_api_v1_vacancies__vacancy_id__get: {
         parameters: {
             query?: never;
@@ -4722,6 +4945,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HRInterviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_manager_workspace_candidate_snapshot_api_v1_vacancies__vacancy_id__manager_workspace_candidates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vacancy_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManagerWorkspaceCandidateSnapshotResponse"];
                 };
             };
             /** @description Validation Error */

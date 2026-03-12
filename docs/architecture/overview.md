@@ -44,7 +44,7 @@ flowchart LR
 | Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
 | Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
 | Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key lifecycle (issue/list/revoke), audit hooks | platform |
-| Recruitment Domain | Vacancies, candidates, pipeline, interviews, schedule-versioned interviewer feedback, offer lifecycle state, and hire-conversion command flow | Candidate and vacancy data | Vacancy/pipeline state, interview fairness state, offer status, active-document readiness, candidate context | hr-tech |
+| Recruitment Domain | Vacancies, candidates, pipeline, interviews, schedule-versioned interviewer feedback, offer lifecycle state, hire-conversion command flow, and manager-scoped hiring read models | Candidate and vacancy data | Vacancy/pipeline state, interview fairness state, offer status, active-document readiness, candidate context, and manager workspace hiring summaries/snapshots | hr-tech |
 | Match Scoring Domain | Async scoring jobs and explainable score artifacts keyed by vacancy, candidate, and active document | Scoring requests, parsed CV analysis, vacancy snapshot | UI-ready score/status payloads for shortlist review | ai-platform |
 | Employee Domain | Durable hire-conversion handoff, explicit employee profile bootstrap, onboarding workflows, employee self-service onboarding portal, and HR/manager onboarding progress visibility | Hire conversion handoff, profile/bootstrap/template/portal/dashboard requests | Employee handoff rows, employee profiles, onboarding runs/templates/tasks, employee-facing onboarding views, and staff/manager onboarding progress read models | hr-tech |
 | HR Operations Domain | HR process automation and workflow execution | Rules and triggers | Automated tasks, status updates | hr-ops |
@@ -83,22 +83,29 @@ flowchart LR
    (or lazily reconciles by exact e-mail on first access) ->
    employee updates self-actionable task status on `/api/v1/employees/me/onboarding/tasks/{task_id}` ->
    completion tracking ->
-   HR/admin open `/` for an embedded onboarding progress panel or manager opens `/` for a standalone dashboard ->
-   `GET /api/v1/onboarding/runs` + `GET /api/v1/onboarding/runs/{onboarding_id}` return summary/detail views,
-   while manager visibility stays limited to runs with manager-assigned tasks.
-5. HR Automation Flow:
+   HR/admin open `/` for an embedded onboarding progress panel or manager opens `/` for the full manager workspace ->
+   `GET /api/v1/onboarding/runs` + `GET /api/v1/onboarding/runs/{onboarding_id}` return summary/detail views
+   that stay limited to runs with manager-assigned tasks when the actor is a manager.
+5. Manager Workspace Flow:
+   manager opens `/` -> frontend resolves `ManagerWorkspacePage` ->
+   `GET /api/v1/vacancies/manager-workspace` validates `manager_workspace:read` ->
+   recruitment domain loads only vacancies where `vacancies.hiring_manager_staff_id=<actor>` ->
+   latest pipeline transitions, candidate counts, and active interviews build a deterministic hiring summary and vacancy list ->
+   `GET /api/v1/vacancies/{vacancy_id}/manager-workspace/candidates` re-validates the selected vacancy scope and returns a read-only candidate/pipeline snapshot ->
+   the same page reuses the onboarding dashboard block from `/api/v1/onboarding/runs*`.
+6. HR Automation Flow:
    rule trigger -> workflow engine -> task creation/assignment -> status update and reporting.
-6. Public Candidate Apply Flow:
+7. Public Candidate Apply Flow:
    anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> native PDF/DOCX extraction + persisted analysis artifacts -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
-7. Authentication Flow:
+8. Authentication Flow:
    staff key issuance -> staff register/login (login/email + password) -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
-8. Admin Staff Governance Flow:
+9. Admin Staff Governance Flow:
    admin opens `/admin/staff` -> paginated/filterable staff list -> patch `role`/`is_active` ->
    strict guard (self-protection + last-active-admin protection) -> audit success/failure reason codes.
-9. Admin Employee Key Lifecycle Flow:
+10. Admin Employee Key Lifecycle Flow:
    admin/hr issues key -> list/filter key registry -> revoke active key when needed ->
    registration rejects revoked/expired/used keys -> audit success/failure reason codes.
-10. Frontend Observability Flow:
+11. Frontend Observability Flow:
    user opens a critical frontend route -> Sentry tags `workspace`/`role`/`route` are emitted ->
    shared HTTP client captures request failures with route metadata -> top-level render boundary
    captures React render failures -> Sentry stores tagged events with environment/release/tracing context.
@@ -106,6 +113,10 @@ flowchart LR
 ## Data Boundaries
 - Source of truth entities:
   vacancies, candidates, CV metadata, interview records, employee profiles, onboarding runs/templates/tasks, HR operations, audit events.
+- Manager hiring ownership artifact:
+  `vacancies.hiring_manager_staff_id` is the one additive vacancy-level ownership signal for
+  manager hiring visibility; manager workspace hiring reads fail closed when this assignment is
+  absent and are derived on demand rather than through a separate reporting table.
 - CV analysis artifacts:
   `parsed_profile_json`, `evidence_json`, `detected_language`, `parsed_at` stored per active
   candidate document; `parsed_profile_json` now contains profession-agnostic workplace history with
@@ -171,6 +182,12 @@ flowchart LR
   `employee_profiles.staff_account_id` identity link; read-only onboarding progress list/detail
   routes now live on `/api/v1/onboarding/runs*`, where HR/admin see all runs and managers see only
   manager-scoped assignments.
+- Implemented manager workspace boundary:
+  `hrm_backend/vacancies` now also owns read-only manager workspace endpoints on the existing
+  vacancy namespace (`/api/v1/vacancies/manager-workspace`,
+  `/api/v1/vacancies/{vacancy_id}/manager-workspace/candidates`) gated by
+  `manager_workspace:read` and explicit vacancy ownership through
+  `vacancies.hiring_manager_staff_id`.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
 - Compose baseline services: `frontend`, `backend`, `backend-worker`, `postgres`, `postgres-init`, `backend-migrate`, `redis`, `minio`, `minio-init`.
 - Compose bootstrap baseline: `postgres-init`, `backend-migrate`, and `minio-init` are one-shot prerequisites before steady-state services are considered ready.
@@ -222,9 +239,10 @@ flowchart LR
 - Interview workflow is implemented from `docs/project/interview-planning-pass.md`, but runtime still carries calendar-integration and manual-invite delivery risk because the free Google Calendar mode depends on manually shared interviewer calendars.
 - Offer workflow currently records candidate decisions through staff actions on `/`; candidate-facing offer acceptance/decline transport is intentionally out of scope for this slice.
 - Hire conversion handoff, employee bootstrap, onboarding-start persistence, checklist template
-  management, onboarding task generation, employee self-service portal, and the first
-  HR/manager onboarding progress dashboard are now implemented, but broader manager/team hiring
-  visibility remains deferred to `TASK-09-01`.
+  management, onboarding task generation, employee self-service portal, HR/manager onboarding
+  progress dashboard, and the additive manager workspace are now implemented, but manager hiring
+  visibility still depends on explicit vacancy ownership being populated; unassigned vacancies
+  intentionally remain invisible to managers until HR sets `hiring_manager_staff_id`.
 - First-time employee self-service access currently relies on exact e-mail reconciliation when
   `employee_profiles.staff_account_id` is still null; ambiguous duplicate e-mail data fails closed
   with an identity-conflict error until HR cleans the source records.

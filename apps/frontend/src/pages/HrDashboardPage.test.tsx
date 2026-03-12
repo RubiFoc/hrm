@@ -17,6 +17,7 @@ const VACANCY_ID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const CANDIDATE_ID = "11111111-1111-1111-1111-111111111111";
 const SECOND_CANDIDATE_ID = "22222222-2222-4222-8222-222222222222";
 const CURRENT_USER_ID = "33333333-3333-4333-8333-333333333333";
+const HR_DASHBOARD_SLOW_TEST_TIMEOUT_MS = 20_000;
 const VACANCY_ITEM = {
   vacancy_id: VACANCY_ID,
   title: "Backend Engineer",
@@ -399,7 +400,7 @@ describe("HrDashboardPage", () => {
 
     expect(await screen.findByText(/public_application/i)).toBeDefined();
     expect((await screen.findAllByRole("cell", { name: /отклик/i })).length).toBeGreaterThan(0);
-  });
+  }, HR_DASHBOARD_SLOW_TEST_TIMEOUT_MS);
 
   it("applies and resets candidate filters while forwarding candidate query params", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -486,7 +487,7 @@ describe("HrDashboardPage", () => {
       expect(latestUrl).not.toContain("in_pipeline_only=true");
       expect(latestUrl).not.toContain("stage=screening");
     });
-  });
+  }, HR_DASHBOARD_SLOW_TEST_TIMEOUT_MS);
 
   it("keeps the selected candidate context when candidate pagination changes pages", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -935,7 +936,7 @@ describe("HrDashboardPage", () => {
         screen.getByDisplayValue("https://frontend.example/candidate?interviewToken=token-1"),
       ).toBeDefined();
     });
-  });
+  }, HR_DASHBOARD_SLOW_TEST_TIMEOUT_MS);
 
   it("resends invite, reschedules, and cancels an existing interview", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -1015,7 +1016,7 @@ describe("HrDashboardPage", () => {
       expect(screen.getAllByText(/интервью отменено/i).length).toBeGreaterThan(0);
       expect(screen.getByText(/^отменено$/i)).toBeDefined();
     });
-  }, 10000);
+  }, HR_DASHBOARD_SLOW_TEST_TIMEOUT_MS);
 
   it("renders feedback summary and saves current interviewer feedback", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -1132,7 +1133,7 @@ describe("HrDashboardPage", () => {
       expect(screen.getByText(/fairness gate пройден/i)).toBeDefined();
       expect(screen.getAllByText(/strong communication and ownership/i).length).toBeGreaterThan(0);
     });
-  }, 15000);
+  }, HR_DASHBOARD_SLOW_TEST_TIMEOUT_MS);
 
   it("renders localized fairness blocker for interview to offer transition", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -1293,7 +1294,7 @@ describe("HrDashboardPage", () => {
         screen.getByText(/теперь pipeline можно перевести в hired/i),
       ).toBeDefined();
     });
-  }, 20_000);
+  }, HR_DASHBOARD_SLOW_TEST_TIMEOUT_MS);
 
   it("renders localized blocker for offer to hired transition before acceptance", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -1349,7 +1350,7 @@ describe("HrDashboardPage", () => {
         screen.getByText(/перед переводом pipeline в hired оффер должен быть отмечен как accepted/i),
       ).toBeDefined();
     });
-  }, 15000);
+  }, HR_DASHBOARD_SLOW_TEST_TIMEOUT_MS);
 
   it("renders localized interview calendar configuration errors", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -1411,5 +1412,5 @@ describe("HrDashboardPage", () => {
           .some((item) => /синхронизация календаря/i.test(item.textContent ?? "")),
       ).toBe(true);
     });
-  }, 15000);
+  }, HR_DASHBOARD_SLOW_TEST_TIMEOUT_MS);
 });

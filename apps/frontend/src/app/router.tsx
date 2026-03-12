@@ -12,7 +12,7 @@ import { CandidatePage } from "../pages/CandidatePage";
 import { EmployeeOnboardingPage } from "../pages/EmployeeOnboardingPage";
 import { HrDashboardPage } from "../pages/HrDashboardPage";
 import { LoginPage } from "../pages/LoginPage";
-import { OnboardingDashboardPage } from "../pages/OnboardingDashboardPage";
+import { ManagerWorkspacePage } from "../pages/ManagerWorkspacePage";
 
 function WorkspaceHomePage() {
   const session = readAuthSession();
@@ -20,7 +20,7 @@ function WorkspaceHomePage() {
     return <Navigate to="/employee" replace />;
   }
   if (session.accessToken && session.role === "manager") {
-    return <OnboardingDashboardPage />;
+    return <ManagerWorkspacePage />;
   }
   return <HrDashboardPage />;
 }

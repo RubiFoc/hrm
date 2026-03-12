@@ -621,6 +621,80 @@ const resources = {
           generic: "Failed to load or update the onboarding portal.",
         },
       },
+      managerDashboard: {
+        subtitle:
+          "Review assigned vacancies, current candidate movement, and onboarding progress from one read-only manager workspace.",
+        authRequired: "Sign in with a manager account to open the manager workspace.",
+        loading: "Loading manager workspace...",
+        empty: "No vacancies are currently assigned to your manager workspace.",
+        noValue: "n/a",
+        summary: {
+          vacancies: "Vacancies: {{value}}",
+          openVacancies: "Open: {{value}}",
+          candidates: "Visible candidates: {{value}}",
+          activeInterviews: "Active interviews: {{value}}",
+          upcomingInterviews: "Upcoming interviews: {{value}}",
+        },
+        vacancies: {
+          title: "Hiring visibility",
+          subtitle: "Assigned vacancies with read-only counts for candidate and interview activity.",
+          meta: "{{department}} · {{status}}",
+          table: {
+            title: "Vacancy",
+            counts: "Counts",
+            activity: "Latest activity",
+            actions: "Actions",
+          },
+          counts: {
+            candidates: "Candidates: {{value}}",
+            interviews: "Interviews: {{value}}",
+          },
+          actions: {
+            view: "View snapshot",
+          },
+        },
+        snapshot: {
+          selectVacancy: "Select a vacancy to inspect its current candidate snapshot.",
+          loading: "Loading vacancy snapshot...",
+          subtitle: "{{department}} · {{status}}",
+          empty: "No candidate movement is visible for this vacancy yet.",
+          analysisReady: "CV analysis ready",
+          analysisPending: "CV analysis pending",
+          noInterview: "No active interview",
+          interviewValue: "{{status}} · {{value}}",
+          candidateMeta: "{{title}} · {{location}} · {{years}}",
+          skills: "Skills: {{value}}",
+          yearsExperience: "{{value}} years",
+          summary: {
+            candidates: "Candidates: {{value}}",
+            activeInterviews: "Interviews: {{value}}",
+            upcomingInterviews: "Upcoming: {{value}}",
+          },
+          stageCounts: {
+            applied: "Отклик: {{value}}",
+            screening: "Скрининг: {{value}}",
+            shortlist: "Шортлист: {{value}}",
+            interview: "Интервью: {{value}}",
+            offer: "Оффер: {{value}}",
+            hired: "Нанят: {{value}}",
+            rejected: "Отклонён: {{value}}",
+          },
+          table: {
+            candidate: "Candidate",
+            stage: "Stage",
+            analysis: "Analysis",
+            interview: "Interview",
+          },
+        },
+        errors: {
+          vacancyNotFound:
+            "The selected vacancy is no longer visible in your manager workspace.",
+          http_401: "Your manager session is not available anymore. Sign in again.",
+          http_403: "You do not have access to this manager workspace view.",
+          http_404: "The requested manager workspace data was not found.",
+          generic: "Failed to load manager workspace data.",
+        },
+      },
       onboardingDashboard: {
         title: "Onboarding Progress",
         subtitle:
@@ -1442,6 +1516,81 @@ const resources = {
           http_404: "Ваши onboarding-данные не найдены.",
           http_409: "Onboarding-задачу нельзя обновить в её текущем состоянии.",
           generic: "Не удалось загрузить или обновить портал онбординга.",
+        },
+      },
+      managerDashboard: {
+        subtitle:
+          "Следите за назначенными вакансиями, движением кандидатов и прогрессом онбординга из одного read-only кабинета менеджера.",
+        authRequired: "Войдите под аккаунтом менеджера, чтобы открыть кабинет менеджера.",
+        loading: "Загрузка кабинета менеджера...",
+        empty: "Сейчас в вашем кабинете менеджера нет назначенных вакансий.",
+        noValue: "н/д",
+        summary: {
+          vacancies: "Вакансии: {{value}}",
+          openVacancies: "Открытые: {{value}}",
+          candidates: "Видимые кандидаты: {{value}}",
+          activeInterviews: "Активные интервью: {{value}}",
+          upcomingInterviews: "Ближайшие интервью: {{value}}",
+        },
+        vacancies: {
+          title: "Видимость найма",
+          subtitle:
+            "Назначенные вакансии с read-only счётчиками кандидатов и интервью.",
+          meta: "{{department}} · {{status}}",
+          table: {
+            title: "Вакансия",
+            counts: "Счётчики",
+            activity: "Последняя активность",
+            actions: "Действия",
+          },
+          counts: {
+            candidates: "Кандидаты: {{value}}",
+            interviews: "Интервью: {{value}}",
+          },
+          actions: {
+            view: "Открыть срез",
+          },
+        },
+        snapshot: {
+          selectVacancy: "Выберите вакансию, чтобы посмотреть текущий срез по кандидатам.",
+          loading: "Загрузка среза по вакансии...",
+          subtitle: "{{department}} · {{status}}",
+          empty: "Для этой вакансии пока нет видимого движения кандидатов.",
+          analysisReady: "Анализ CV готов",
+          analysisPending: "Анализ CV ещё не готов",
+          noInterview: "Активного интервью нет",
+          interviewValue: "{{status}} · {{value}}",
+          candidateMeta: "{{title}} · {{location}} · {{years}}",
+          skills: "Навыки: {{value}}",
+          yearsExperience: "{{value}} лет",
+          summary: {
+            candidates: "Кандидаты: {{value}}",
+            activeInterviews: "Интервью: {{value}}",
+            upcomingInterviews: "Ближайшие: {{value}}",
+          },
+          stageCounts: {
+            applied: "Applied: {{value}}",
+            screening: "Screening: {{value}}",
+            shortlist: "Shortlist: {{value}}",
+            interview: "Interview: {{value}}",
+            offer: "Offer: {{value}}",
+            hired: "Hired: {{value}}",
+            rejected: "Rejected: {{value}}",
+          },
+          table: {
+            candidate: "Кандидат",
+            stage: "Этап",
+            analysis: "Анализ",
+            interview: "Интервью",
+          },
+        },
+        errors: {
+          vacancyNotFound:
+            "Выбранная вакансия больше не видна в кабинете менеджера.",
+          http_401: "Сессия менеджера больше недоступна. Войдите снова.",
+          http_403: "У вас нет доступа к этому представлению кабинета менеджера.",
+          http_404: "Запрошенные данные кабинета менеджера не найдены.",
+          generic: "Не удалось загрузить данные кабинета менеджера.",
         },
       },
       onboardingDashboard: {

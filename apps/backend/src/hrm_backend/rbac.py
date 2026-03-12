@@ -41,6 +41,7 @@ Permission = Literal[
     "employee_profile:read",
     "employee_portal:read",
     "employee_portal:update",
+    "manager_workspace:read",
     "onboarding_dashboard:read",
     "onboarding_task:list",
     "onboarding_task:update",
@@ -134,10 +135,8 @@ ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
         "analytics:read",
     },
     "manager": {
-        "vacancy:read",
-        "pipeline:read",
+        "manager_workspace:read",
         "onboarding_dashboard:read",
-        "interview:manage",
         "analytics:read",
     },
     "employee": {

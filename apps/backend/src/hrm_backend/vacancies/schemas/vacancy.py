@@ -17,6 +17,7 @@ class VacancyCreateRequest(BaseModel):
     description: str = Field(min_length=1)
     department: str = Field(min_length=1, max_length=128)
     status: str = Field(default="open", min_length=1, max_length=32)
+    hiring_manager_login: str | None = Field(default=None, min_length=1, max_length=64)
 
 
 class VacancyUpdateRequest(BaseModel):
@@ -28,6 +29,7 @@ class VacancyUpdateRequest(BaseModel):
     description: str | None = Field(default=None, min_length=1)
     department: str | None = Field(default=None, min_length=1, max_length=128)
     status: str | None = Field(default=None, min_length=1, max_length=32)
+    hiring_manager_login: str | None = Field(default=None, min_length=1, max_length=64)
 
 
 class VacancyResponse(BaseModel):
@@ -38,6 +40,8 @@ class VacancyResponse(BaseModel):
     description: str
     department: str
     status: str
+    hiring_manager_staff_id: UUID | None
+    hiring_manager_login: str | None
     created_at: datetime
     updated_at: datetime
 

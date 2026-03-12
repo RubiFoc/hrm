@@ -178,7 +178,7 @@ describe("login route", () => {
     });
   });
 
-  it("redirects already-authenticated manager from /login to onboarding dashboard on /", async () => {
+  it("redirects already-authenticated manager from /login to manager workspace on /", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
     window.localStorage.setItem("hrm_refresh_token", "refresh-token");
     window.localStorage.setItem("hrm_user_role", "manager");
@@ -192,6 +192,26 @@ describe("login route", () => {
               role: "manager",
               session_id: "22222222-2222-2222-2222-222222222222",
               access_token_expires_at: 1893456000,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        );
+      }
+      if (url.endsWith("/api/v1/vacancies/manager-workspace")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              summary: {
+                vacancy_count: 0,
+                open_vacancy_count: 0,
+                candidate_count: 0,
+                active_interview_count: 0,
+                upcoming_interview_count: 0,
+              },
+              items: [],
             }),
             {
               status: 200,
@@ -233,7 +253,11 @@ describe("login route", () => {
       expect(router.state.location.pathname).toBe("/");
     });
     await waitFor(() => {
-      expect(fetchMock.mock.calls.some((call) => String(call[0]).includes("/api/v1/onboarding/runs?"))).toBe(true);
+      expect(
+        fetchMock.mock.calls.some(
+          (call) => String(call[0]).endsWith("/api/v1/vacancies/manager-workspace"),
+        ),
+      ).toBe(true);
     });
   });
 

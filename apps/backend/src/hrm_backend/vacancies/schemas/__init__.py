@@ -1,6 +1,15 @@
 """Pydantic schemas for vacancy and pipeline APIs."""
 
 from hrm_backend.vacancies.schemas.application import PublicVacancyApplicationResponse
+from hrm_backend.vacancies.schemas.manager_workspace import (
+    ManagerWorkspaceCandidateSnapshotItemResponse,
+    ManagerWorkspaceCandidateSnapshotResponse,
+    ManagerWorkspaceCandidateSnapshotSummaryResponse,
+    ManagerWorkspaceHiringSummaryResponse,
+    ManagerWorkspaceOverviewResponse,
+    ManagerWorkspaceStageSummaryResponse,
+    ManagerWorkspaceVacancyListItemResponse,
+)
 from hrm_backend.vacancies.schemas.offer import (
     OfferDecisionRequest,
     OfferResponse,
@@ -28,4 +37,11 @@ __all__ = [
     "OfferUpsertRequest",
     "OfferDecisionRequest",
     "OfferResponse",
+    "ManagerWorkspaceHiringSummaryResponse",
+    "ManagerWorkspaceVacancyListItemResponse",
+    "ManagerWorkspaceOverviewResponse",
+    "ManagerWorkspaceStageSummaryResponse",
+    "ManagerWorkspaceCandidateSnapshotSummaryResponse",
+    "ManagerWorkspaceCandidateSnapshotItemResponse",
+    "ManagerWorkspaceCandidateSnapshotResponse",
 ]
