@@ -49,6 +49,7 @@
 - `CV_MAX_SIZE_BYTES`
 - `CV_PARSING_MAX_ATTEMPTS`
 - `MATCH_SCORING_MAX_ATTEMPTS`
+- `SCORING_LOW_CONFIDENCE_THRESHOLD`
 - `MATCH_SCORING_MODEL_NAME`
 - `MATCH_SCORING_REQUEST_TIMEOUT_SECONDS`
 - `MATCH_SCORING_QUEUE_NAME`
@@ -108,3 +109,16 @@
   - `GET /api/v1/vacancies/{vacancy_id}`
   - `PATCH /api/v1/vacancies/{vacancy_id}`
   - `POST /api/v1/pipeline/transitions`
+- Match scoring:
+  - `POST /api/v1/vacancies/{vacancy_id}/match-scores`
+  - `GET /api/v1/vacancies/{vacancy_id}/match-scores`
+  - `GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}`
+  - `MatchScoreResponse` remains additive and now includes:
+    `requires_manual_review`, `manual_review_reason`, and `confidence_threshold`.
+  - Manual-review semantics:
+    `requires_manual_review=true` only when `status="succeeded"` and persisted
+    `confidence < SCORING_LOW_CONFIDENCE_THRESHOLD`.
+  - Current fallback reason code:
+    `manual_review_reason="low_confidence"`.
+  - `confidence_threshold` is echoed only for succeeded score responses so the frontend can explain
+    why a score is treated as assistive-only.

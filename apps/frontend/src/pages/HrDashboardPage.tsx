@@ -1229,6 +1229,17 @@ export function HrDashboardPage() {
                     ) : null}
                   </Stack>
 
+                  {matchScore.status === "succeeded" && matchScore.requires_manual_review ? (
+                    <Alert severity="warning">
+                      <Typography variant="subtitle2">
+                        {t("hrDashboard.shortlist.manualReview.title")}
+                      </Typography>
+                      <Typography variant="body2">
+                        {buildMatchScoreManualReviewMessage(matchScore, t)}
+                      </Typography>
+                    </Alert>
+                  ) : null}
+
                   {matchScore.status === "failed" ? (
                     <Alert severity="warning">{t("hrDashboard.shortlist.failedHint")}</Alert>
                   ) : null}
@@ -2292,6 +2303,28 @@ function formatConfidence(
     return t("hrDashboard.shortlist.notAvailable");
   }
   return `${Math.round(value * 100)}%`;
+}
+
+function buildMatchScoreManualReviewMessage(
+  matchScore: MatchScoreResponse,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string {
+  if (matchScore.manual_review_reason === "low_confidence") {
+    if (
+      matchScore.confidence_threshold !== null
+      && matchScore.confidence_threshold !== undefined
+    ) {
+      return t("hrDashboard.shortlist.manualReview.lowConfidenceWithThreshold", {
+        confidence: formatConfidence(matchScore.confidence, t),
+        threshold: formatConfidence(matchScore.confidence_threshold, t),
+      });
+    }
+    return t("hrDashboard.shortlist.manualReview.lowConfidence", {
+      confidence: formatConfidence(matchScore.confidence, t),
+    });
+  }
+
+  return t("hrDashboard.shortlist.manualReview.generic");
 }
 
 function formatAverageScore(

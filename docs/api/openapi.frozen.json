@@ -2522,12 +2522,35 @@
             ],
             "title": "Confidence"
           },
+          "confidence_threshold": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Threshold"
+          },
           "evidence": {
             "items": {
               "$ref": "#/components/schemas/MatchScoreEvidenceResponse"
             },
             "title": "Evidence",
             "type": "array"
+          },
+          "manual_review_reason": {
+            "anyOf": [
+              {
+                "const": "low_confidence",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Review Reason"
           },
           "matched_requirements": {
             "items": {
@@ -2564,6 +2587,11 @@
               }
             ],
             "title": "Model Version"
+          },
+          "requires_manual_review": {
+            "default": false,
+            "title": "Requires Manual Review",
+            "type": "boolean"
           },
           "score": {
             "anyOf": [

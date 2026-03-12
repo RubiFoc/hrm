@@ -219,6 +219,7 @@ apps/backend/tests/
 | Prompt compatibility with enriched parsed CV profile | `apps/backend/tests/unit/scoring/test_prompt.py` | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | scoring prompt/build flow stays stable when parsed CV JSON includes workplaces, education, titles, dates, and generic skills |
 | Reject scoring when parsed CV analysis is not ready | N/A | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | `POST /api/v1/vacancies/{vacancy_id}/match-scores` returns `409` without silent fallback |
 | Score payload shape and evidence propagation | `apps/backend/tests/unit/scoring/test_ollama_adapter.py` | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | latest score response includes `score`, `confidence`, `summary`, requirements, evidence, model metadata, and `scored_at` |
+| Low-confidence fallback policy and threshold boundary (`TASK-04-04`) | `apps/backend/tests/unit/scoring/test_manual_review_policy.py` | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | succeeded scores below threshold return `requires_manual_review=true`, `manual_review_reason="low_confidence"`, and echoed `confidence_threshold`, while `confidence == threshold`, non-succeeded states, and missing confidence do not fallback |
 
 ### Frontend
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
@@ -227,6 +228,7 @@ apps/backend/tests/
 | Failed scoring job render | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | failed state is visible and recoverable in UI |
 | Localized `409` when CV analysis is not ready | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | RU/EN-readable not-ready error is rendered |
 | Confidence/explanation rendering | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | confidence, summary, matched requirements, missing requirements, and evidence sections are rendered |
+| Low-confidence manual-review warning (`TASK-04-04`) | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | localized RU/EN warning renders for low-confidence succeeded scores without hiding score cards, while high-confidence responses do not show the warning |
 
 ### Acceptance Rules
 - Freeze OpenAPI and update generated frontend types in the same change.

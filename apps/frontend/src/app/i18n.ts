@@ -274,6 +274,15 @@ const resources = {
           noEvidence: "No evidence snippets available.",
           noSummary: "No summary is available yet.",
           notAvailable: "n/a",
+          manualReview: {
+            title: "Manual review required",
+            generic:
+              "Treat this score as an assistive signal and complete manual review before making shortlist decisions.",
+            lowConfidence:
+              "AI confidence is low ({{confidence}}). Treat this score as an assistive signal and complete manual review.",
+            lowConfidenceWithThreshold:
+              "AI confidence {{confidence}} is below the review threshold {{threshold}}. Treat this score as an assistive signal and complete manual review.",
+          },
           failedHint:
             "Scoring failed. Run score again after checking worker health and Ollama availability.",
           status: {
@@ -1076,6 +1085,15 @@ const resources = {
           noEvidence: "Evidence snippets пока отсутствуют.",
           noSummary: "Summary пока недоступен.",
           notAvailable: "н/д",
+          manualReview: {
+            title: "Требуется ручная проверка",
+            generic:
+              "Используйте этот score только как вспомогательный сигнал и завершите ручную проверку перед решением по шортлисту.",
+            lowConfidence:
+              "Уверенность AI низкая ({{confidence}}). Используйте этот score только как вспомогательный сигнал и завершите ручную проверку.",
+            lowConfidenceWithThreshold:
+              "Уверенность AI {{confidence}} ниже порога проверки {{threshold}}. Используйте этот score только как вспомогательный сигнал и завершите ручную проверку.",
+          },
           failedHint:
             "Scoring завершился ошибкой. Повторите запуск после проверки worker и доступности Ollama.",
           status: {

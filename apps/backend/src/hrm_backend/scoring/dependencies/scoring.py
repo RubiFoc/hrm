@@ -50,6 +50,7 @@ def get_match_scoring_adapter(settings: SettingsDependency) -> MatchScoringAdapt
 
 
 def get_match_scoring_service(
+    settings: SettingsDependency,
     session: SessionDependency,
     audit_service: AuditDependency,
 ) -> MatchScoringService:
@@ -61,6 +62,7 @@ def get_match_scoring_service(
         scoring_job_dao=MatchScoringJobDAO(session=session),
         score_artifact_dao=MatchScoreArtifactDAO(session=session),
         audit_service=audit_service,
+        low_confidence_threshold=settings.scoring_low_confidence_threshold,
     )
 
 
@@ -81,4 +83,3 @@ def get_match_scoring_worker_service(
         adapter=adapter,
         audit_service=audit_service,
     )
-
