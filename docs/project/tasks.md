@@ -21,7 +21,7 @@
 | TASK-01-01/02/03/04/05 | done/closed | GitHub issues #1, #2, #3, #4, and #24 were closed during backlog normalization; current repo/docs remain the source of truth for the implemented security foundation |
 | TASK-11-13 | done/closed | GitHub issue #67 closed; merged in `main` via PR #68 and PR #69 (`d8ea39e`) |
 | TASK-12-01 | implemented/local-compose-baseline | `docker-compose.yml`, Dockerfiles, `./scripts/smoke-compose.sh`, and CI compose browser smoke already verify the local stack (`frontend`, `backend`, `backend-worker`, `postgres`, `redis`, `minio`) plus bootstrap jobs |
-| TASK-12-02 | implemented/local-ai-local-compose | Repo now includes Linux-safe host-gateway wiring for external-host Ollama, optional compose profile `ai-local` (`ollama` + `ollama-init` + persistent volume), and operator-facing `./scripts/smoke-scoring-compose.sh` while keeping baseline compose/browser smoke and scoring/public contracts unchanged; GitHub issue `#85` still needs authenticated closeout because the current local `gh` token is invalid |
+| TASK-12-02 | done/closed | GitHub issue #85 closed; merged in `main` via PR #105 (`a67bb8c`) with Linux-safe host-gateway wiring for external-host Ollama, optional compose profile `ai-local` (`ollama` + `ollama-init` + persistent volume), and operator-facing `./scripts/smoke-scoring-compose.sh` while keeping baseline compose/browser smoke and scoring/public contracts unchanged |
 | TASK-11-01/02/03/04 | done/closed | GitHub issues #25, #26, #27, and #28 were closed during backlog normalization; the current repo remains the source of truth for the implemented frontend foundation |
 | TASK-03-01/02/03/05/06/07/08 | implemented/local-universal-profile-enrichment-slice | GitHub issue #90 is now closed; backend candidate profile, public apply, async parsing, native PDF/DOCX text extraction, RU/EN normalization, profession-agnostic structured CV enrichment (workplaces with held positions, education, normalized titles/dates, generic skills), evidence traceability, and public tracking endpoints are present in repo with unit/integration coverage |
 | TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
@@ -51,7 +51,7 @@
 - `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
 - `TASK-12-02` is now implemented in repo as an opt-in runtime hardening slice: default compose still targets external-host Ollama via `OLLAMA_BASE_URL`, Linux hosts now get `host.docker.internal:host-gateway`, and self-contained AI verification runs through `OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ai-local up -d --build` plus `./scripts/smoke-scoring-compose.sh`.
 - Baseline compose acceptance remains unchanged after `TASK-12-02`: `./scripts/smoke-compose.sh` still verifies login + public apply only and does not require compose-local Ollama.
-- GitHub issue closeout for `TASK-12-02` is blocked locally because `gh auth status` reports an invalid token; remote issue `#85` must be closed during the mandatory post-merge closeout step once authenticated GitHub access is restored.
+- Mandatory post-merge closeout for `TASK-12-02` is complete: GitHub issue `#85` closed automatically from PR #105 (`a67bb8c`), and this backlog snapshot is synchronized to the merged `main` state.
 - Security foundation work (`TASK-01-01/02/03/04/05`) is materially implemented in repo and supporting docs; this backlog normalization removes it from the effective open count.
 - Frontend foundation work (`TASK-11-01/02/03/04`) is materially implemented in repo and supporting tests; remaining frontend backlog is follow-on admin/reporting and phase-2 role UX.
 - GitHub issue sync is normalized to the current backlog state: stale implemented-task issues were closed, and missing normalized-open tasks were added as issues #85-#100.
@@ -97,7 +97,7 @@
 
 - Normalized open backlog count: `21` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
-- Repo backlog state now excludes `TASK-12-02`; GitHub issue `#85` still needs authenticated closeout before the remote tracker list shrinks accordingly.
+- Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
 - Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `21`-task count.
 - Current open backlog by delivery wave:
   - Wave 1 product gaps: `TASK-03-04`, `TASK-04-04`, `TASK-04-06`
