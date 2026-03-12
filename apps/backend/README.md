@@ -8,6 +8,8 @@
 - Run only unit tests: `uv run --project . pytest -q tests/unit`
 - Run only integration tests: `uv run --project . pytest -q tests/integration`
 - Run lint: `uv run --project . ruff check .`
+- Run scoring quality harness (fixture mode):
+  `uv run --project . python -m hrm_backend.scoring.cli.quality_harness --dataset tests/fixtures/scoring_quality/baseline.json --mode fixture --format json`
 - Run migrations: `uv run --project . alembic -c alembic.ini upgrade head`
 
 ## Docker
@@ -122,3 +124,15 @@
     `manual_review_reason="low_confidence"`.
   - `confidence_threshold` is echoed only for succeeded score responses so the frontend can explain
     why a score is treated as assistive-only.
+- Scoring quality harness (`TASK-04-06`):
+  - CLI module:
+    `python -m hrm_backend.scoring.cli.quality_harness`
+  - Deterministic verification path:
+    `uv run --project . python -m hrm_backend.scoring.cli.quality_harness --dataset tests/fixtures/scoring_quality/baseline.json --mode fixture --format json`
+  - Optional real-model follow-up:
+    use the same command with `--mode ollama` to reuse the configured Ollama adapter and current
+    scoring settings.
+  - Dataset/report scope:
+    harness cases operate on vacancy snapshots plus parsed candidate document fixtures after CV
+    parsing, emit machine-readable JSON summaries for `ranking_metrics`, `requirement_metrics`, and
+    `paraphrase_robustness`, and stay outside the runtime request path.
