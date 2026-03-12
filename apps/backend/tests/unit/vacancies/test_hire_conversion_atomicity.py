@@ -11,6 +11,7 @@ from fastapi import Request
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
+from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
 from hrm_backend.candidates.models.profile import CandidateProfile
@@ -128,6 +129,7 @@ def test_hired_transition_rolls_back_when_handoff_persistence_fails(tmp_path: Pa
             candidate_profile_dao=CandidateProfileDAO(session=session),
             interview_dao=InterviewDAO(session=session),
             interview_feedback_dao=InterviewFeedbackDAO(session=session),
+            staff_account_dao=StaffAccountDAO(session=session),
             hire_conversion_service=_FailingHireConversionService(),  # type: ignore[arg-type]
             audit_service=_FakeAuditService(),  # type: ignore[arg-type]
         )

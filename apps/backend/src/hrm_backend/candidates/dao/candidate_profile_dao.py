@@ -80,6 +80,25 @@ class CandidateProfileDAO:
             .all()
         )
 
+    def get_by_ids(self, candidate_ids: list[str]) -> dict[str, CandidateProfile]:
+        """Load candidate profiles keyed by identifier.
+
+        Args:
+            candidate_ids: Candidate identifiers that should be resolved in one query.
+
+        Returns:
+            dict[str, CandidateProfile]: Mapping of `candidate_id -> profile`.
+        """
+        if not candidate_ids:
+            return {}
+
+        rows = (
+            self._session.query(CandidateProfile)
+            .filter(CandidateProfile.candidate_id.in_(candidate_ids))
+            .all()
+        )
+        return {row.candidate_id: row for row in rows}
+
     def update_profile(
         self,
         entity: CandidateProfile,

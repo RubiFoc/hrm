@@ -6,6 +6,10 @@ export {
   updateMyEmployeeOnboardingTask,
 } from "./employeeOnboarding";
 export {
+  getManagerWorkspaceCandidateSnapshot,
+  getManagerWorkspaceOverview,
+} from "./managerWorkspace";
+export {
   getOnboardingDashboardRun,
   listOnboardingDashboardRuns,
 } from "./onboardingDashboard";
@@ -68,6 +72,14 @@ export type {
   EmployeeOnboardingTaskStatus,
   EmployeeOnboardingTaskUpdateRequest,
 } from "./employeeOnboarding";
+export type {
+  ManagerWorkspaceCandidateSnapshotItemResponse,
+  ManagerWorkspaceCandidateSnapshotResponse,
+  ManagerWorkspaceCandidateSnapshotSummaryResponse,
+  ManagerWorkspaceOverviewResponse,
+  ManagerWorkspaceStageSummaryResponse,
+  ManagerWorkspaceVacancyListItemResponse,
+} from "./managerWorkspace";
 export type {
   OnboardingDashboardDetailResponse,
   OnboardingDashboardListQuery,

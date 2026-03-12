@@ -462,13 +462,41 @@ Current implementation coverage includes at minimum:
 | Dashboard list/detail APIs return read-only onboarding progress views with stable filter semantics | N/A | `apps/backend/tests/integration/employee/test_onboarding_dashboard_api.py` | `GET /api/v1/onboarding/runs` and `GET /api/v1/onboarding/runs/{onboarding_id}` honor search, task-status, overdue, and visibility filters |
 | RBAC allows `admin/hr/manager` read access and denies `employee` role | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/employee/test_onboarding_dashboard_api.py` | denied roles receive `403` and audit writes; manager reads stay limited to assignment-scoped runs |
 | HR workspace embeds onboarding progress without regressing the existing recruitment flow on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | N/A | HR page still renders vacancy/pipeline controls and the embedded onboarding dashboard block with localized summary/detail state |
-| Manager workspace on `/` renders the standalone onboarding dashboard with canonical route tags | `apps/frontend/src/pages/OnboardingDashboardPage.test.tsx`, `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx` | N/A | manager login redirects to `/`, dashboard filters drive typed API queries, and Sentry emits `workspace=manager`, `role=manager`, `route=/` |
+| Manager-facing onboarding visibility remains reusable inside the full manager workspace on `/` | `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx`, `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx` | N/A | manager login redirects to `/`, the manager page renders the embedded onboarding visibility block, and Sentry emits `workspace=manager`, `role=manager`, `route=/` |
 
 Acceptance rules for the implementation slice:
 - Keep the current route tree; do not add a separate manager dashboard path.
 - Keep dashboard APIs read-only; manager users must not gain task patch/backfill permissions in this slice.
 - Freeze OpenAPI and update generated frontend types in the same change because new onboarding dashboard APIs are introduced.
 - Keep auth, CORS, employee self-service routes, and public candidate transport unchanged.
+- Minimum verification set:
+  - `./scripts/generate-openapi-frozen.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:generate`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+- `./scripts/check-docs-structure.sh`
+
+## Manager Workspace Verification (`TASK-09-01`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Vacancy-scoped hiring summary and candidate snapshot ordering are deterministic | `apps/backend/tests/unit/vacancies/test_manager_workspace_service.py` | N/A | overview vacancies sort by latest activity, candidate snapshot rows sort by latest stage activity, and aggregate counts remain stable for the same visible vacancy set |
+| Manager workspace APIs stay fail-closed outside explicit vacancy ownership scope | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/vacancies/test_manager_workspace_api.py` | `manager_workspace:read` is allowed, legacy HR vacancy list access stays `403`, and out-of-scope vacancy snapshot reads return `404 manager_workspace_vacancy_not_found` |
+| Vacancy assignment to a hiring manager is explicit and validated on create/update | N/A | `apps/backend/tests/integration/vacancies/test_manager_workspace_api.py` | HR/admin can set or clear `hiring_manager_login`, while missing, inactive, or wrong-role managers fail closed with stable reason codes |
+| Manager `/` route renders loading, empty, error, and success states for the full workspace | `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx` | N/A | the page renders hiring summary, vacancy list, localized error mapping, selected-vacancy snapshot, and embedded onboarding visibility without exposing mutation controls |
+| HR/admin `/` workspace stays unchanged while manager route observability remains canonical | `apps/frontend/src/pages/HrDashboardPage.test.tsx`, `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx` | N/A | HR/admin continue to land on the existing recruitment workspace, manager login still redirects to `/`, and Sentry tags remain `workspace=manager`, `route=/` |
+
+Acceptance rules for the implementation slice:
+- Keep the existing `/` route split by role; do not add a separate manager-only path.
+- Keep manager APIs read-only and scoped by explicit vacancy ownership; do not widen manager access to vacancy, pipeline, candidate, onboarding-task, scoring, or offer mutations.
+- Keep auth, CORS, and public candidate transport unchanged.
+- Freeze OpenAPI and update generated frontend types in the same change because the vacancy contract and read surface expanded.
 - Minimum verification set:
   - `./scripts/generate-openapi-frozen.sh`
   - `./scripts/check-openapi-freeze.sh`

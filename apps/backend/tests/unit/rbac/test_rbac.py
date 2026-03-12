@@ -118,6 +118,13 @@ def test_manager_can_read_onboarding_dashboard_permission() -> None:
     assert decision.allowed is True
 
 
+def test_manager_can_read_manager_workspace_permission() -> None:
+    """Verify manager role can access the dedicated manager workspace read surface."""
+    decision = evaluate_permission(role="manager", permission="manager_workspace:read")
+
+    assert decision.allowed is True
+
+
 def test_employee_can_access_and_update_self_service_portal_permissions() -> None:
     """Verify employee role can read and update self-service onboarding portal endpoints."""
     read_decision = evaluate_permission(role="employee", permission="employee_portal:read")
@@ -143,6 +150,24 @@ def test_manager_is_denied_for_employee_profile_read_permission() -> None:
     assert decision.allowed is False
     assert decision.reason is not None
     assert "employee_profile:read" in decision.reason
+
+
+def test_manager_is_denied_for_vacancy_read_permission() -> None:
+    """Verify manager role cannot reuse the HR vacancy list/read endpoints directly."""
+    decision = evaluate_permission(role="manager", permission="vacancy:read")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "vacancy:read" in decision.reason
+
+
+def test_manager_is_denied_for_interview_manage_permission() -> None:
+    """Verify manager role does not keep broad HR interview mutation permissions."""
+    decision = evaluate_permission(role="manager", permission="interview:manage")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "interview:manage" in decision.reason
 
 
 def test_hr_is_denied_for_employee_portal_read_permission() -> None:

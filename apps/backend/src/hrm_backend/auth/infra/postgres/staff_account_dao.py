@@ -57,3 +57,22 @@ class StaffAccountDAO:
     def get_by_id(self, staff_id: str) -> StaffAccount | None:
         """Find account by UUID primary key."""
         return self._session.get(StaffAccount, staff_id)
+
+    def get_by_ids(self, staff_ids: list[str]) -> dict[str, StaffAccount]:
+        """Load staff accounts keyed by identifier.
+
+        Args:
+            staff_ids: Staff account identifiers that should be resolved in one query.
+
+        Returns:
+            dict[str, StaffAccount]: Mapping of `staff_id -> staff account`.
+        """
+        if not staff_ids:
+            return {}
+
+        rows = (
+            self._session.query(StaffAccount)
+            .filter(StaffAccount.staff_id.in_(staff_ids))
+            .all()
+        )
+        return {row.staff_id: row for row in rows}

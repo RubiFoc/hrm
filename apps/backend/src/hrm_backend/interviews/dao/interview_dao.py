@@ -93,6 +93,51 @@ class InterviewDAO:
             query.order_by(Interview.created_at.desc(), Interview.interview_id.desc()).all()
         )
 
+    def list_active_for_vacancy(self, *, vacancy_id: str) -> list[Interview]:
+        """List non-cancelled interviews for one vacancy.
+
+        Args:
+            vacancy_id: Vacancy identifier that scopes the query.
+
+        Returns:
+            list[Interview]: Active interview rows ordered by update timestamp.
+        """
+        return list(
+            self._session.query(Interview)
+            .filter(
+                Interview.vacancy_id == vacancy_id,
+                Interview.status != "cancelled",
+            )
+            .order_by(Interview.updated_at.desc(), Interview.interview_id.desc())
+            .all()
+        )
+
+    def list_active_for_vacancies(self, *, vacancy_ids: list[str]) -> list[Interview]:
+        """List non-cancelled interviews for multiple vacancies.
+
+        Args:
+            vacancy_ids: Vacancy identifiers resolved in one query.
+
+        Returns:
+            list[Interview]: Active interview rows ordered deterministically for grouping.
+        """
+        if not vacancy_ids:
+            return []
+
+        return list(
+            self._session.query(Interview)
+            .filter(
+                Interview.vacancy_id.in_(vacancy_ids),
+                Interview.status != "cancelled",
+            )
+            .order_by(
+                Interview.vacancy_id.asc(),
+                Interview.updated_at.desc(),
+                Interview.interview_id.desc(),
+            )
+            .all()
+        )
+
     def save(self, entity: Interview) -> Interview:
         """Persist in-memory changes and refresh interview row."""
         self._session.add(entity)

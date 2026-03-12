@@ -11,11 +11,16 @@ from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.rbac import Role, require_permission
 from hrm_backend.vacancies.dependencies.vacancies import (
+    get_manager_workspace_service,
     get_offer_service,
     get_vacancy_application_service,
     get_vacancy_service,
 )
 from hrm_backend.vacancies.schemas.application import PublicVacancyApplicationResponse
+from hrm_backend.vacancies.schemas.manager_workspace import (
+    ManagerWorkspaceCandidateSnapshotResponse,
+    ManagerWorkspaceOverviewResponse,
+)
 from hrm_backend.vacancies.schemas.offer import (
     OfferDecisionRequest,
     OfferResponse,
@@ -33,11 +38,16 @@ from hrm_backend.vacancies.schemas.vacancy import (
     VacancyUpdateRequest,
 )
 from hrm_backend.vacancies.services.application_service import VacancyApplicationService
+from hrm_backend.vacancies.services.manager_workspace_service import ManagerWorkspaceService
 from hrm_backend.vacancies.services.offer_service import OfferService
 from hrm_backend.vacancies.services.vacancy_service import VacancyService
 
 router = APIRouter(tags=["vacancies"])
 VacancyServiceDependency = Annotated[VacancyService, Depends(get_vacancy_service)]
+ManagerWorkspaceServiceDependency = Annotated[
+    ManagerWorkspaceService,
+    Depends(get_manager_workspace_service),
+]
 OfferServiceDependency = Annotated[OfferService, Depends(get_offer_service)]
 VacancyApplicationServiceDependency = Annotated[
     VacancyApplicationService,
@@ -49,6 +59,7 @@ VacancyReadRole = Annotated[Role, Depends(require_permission("vacancy:read"))]
 VacancyUpdateRole = Annotated[Role, Depends(require_permission("vacancy:update"))]
 PipelineTransitionRole = Annotated[Role, Depends(require_permission("pipeline:transition"))]
 PipelineReadRole = Annotated[Role, Depends(require_permission("pipeline:read"))]
+ManagerWorkspaceRole = Annotated[Role, Depends(require_permission("manager_workspace:read"))]
 
 
 @router.post("/api/v1/vacancies", response_model=VacancyResponse)
@@ -72,6 +83,39 @@ def list_vacancies(
 ) -> VacancyListResponse:
     """List vacancy resources."""
     return service.list_vacancies(auth_context=auth_context, request=request)
+
+
+@router.get(
+    "/api/v1/vacancies/manager-workspace",
+    response_model=ManagerWorkspaceOverviewResponse,
+)
+def get_manager_workspace_overview(
+    request: Request,
+    _: ManagerWorkspaceRole,
+    auth_context: CurrentAuthContext,
+    service: ManagerWorkspaceServiceDependency,
+) -> ManagerWorkspaceOverviewResponse:
+    """Return manager-scoped hiring summary plus visible vacancies."""
+    return service.get_overview(auth_context=auth_context, request=request)
+
+
+@router.get(
+    "/api/v1/vacancies/{vacancy_id}/manager-workspace/candidates",
+    response_model=ManagerWorkspaceCandidateSnapshotResponse,
+)
+def get_manager_workspace_candidate_snapshot(
+    vacancy_id: UUID,
+    request: Request,
+    _: ManagerWorkspaceRole,
+    auth_context: CurrentAuthContext,
+    service: ManagerWorkspaceServiceDependency,
+) -> ManagerWorkspaceCandidateSnapshotResponse:
+    """Return the read-only candidate snapshot for one manager-visible vacancy."""
+    return service.get_candidate_snapshot(
+        vacancy_id=vacancy_id,
+        auth_context=auth_context,
+        request=request,
+    )
 
 
 @router.get("/api/v1/vacancies/{vacancy_id}", response_model=VacancyResponse)

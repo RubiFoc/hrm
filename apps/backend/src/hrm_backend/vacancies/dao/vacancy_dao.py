@@ -19,11 +19,17 @@ class VacancyDAO:
         """
         self._session = session
 
-    def create_vacancy(self, payload: VacancyCreateRequest) -> Vacancy:
+    def create_vacancy(
+        self,
+        payload: VacancyCreateRequest,
+        *,
+        hiring_manager_staff_id: str | None = None,
+    ) -> Vacancy:
         """Insert vacancy row.
 
         Args:
             payload: Vacancy create payload.
+            hiring_manager_staff_id: Optional assigned manager identifier resolved by service.
 
         Returns:
             Vacancy: Persisted vacancy entity.
@@ -33,6 +39,7 @@ class VacancyDAO:
             description=payload.description,
             department=payload.department,
             status=payload.status,
+            hiring_manager_staff_id=hiring_manager_staff_id,
         )
         self._session.add(entity)
         self._session.commit()
@@ -58,6 +65,22 @@ class VacancyDAO:
             .all()
         )
 
+    def list_by_hiring_manager_staff_id(self, hiring_manager_staff_id: str) -> list[Vacancy]:
+        """Load vacancies assigned to one manager.
+
+        Args:
+            hiring_manager_staff_id: Manager staff-account identifier that scopes the query.
+
+        Returns:
+            list[Vacancy]: Assigned vacancies ordered by most recent update.
+        """
+        return list(
+            self._session.query(Vacancy)
+            .filter(Vacancy.hiring_manager_staff_id == hiring_manager_staff_id)
+            .order_by(Vacancy.updated_at.desc(), Vacancy.vacancy_id.asc())
+            .all()
+        )
+
     def update_vacancy(self, entity: Vacancy, payload: VacancyUpdateRequest) -> Vacancy:
         """Apply partial vacancy update and persist changes.
 
@@ -68,7 +91,10 @@ class VacancyDAO:
         Returns:
             Vacancy: Updated vacancy row.
         """
-        for field_name, value in payload.model_dump(exclude_none=True).items():
+        for field_name, value in payload.model_dump(
+            exclude_none=True,
+            exclude={"hiring_manager_login"},
+        ).items():
             setattr(entity, field_name, value)
         self._session.add(entity)
         self._session.commit()

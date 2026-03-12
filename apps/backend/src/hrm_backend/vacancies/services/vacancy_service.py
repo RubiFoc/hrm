@@ -8,6 +8,7 @@ from fastapi import HTTPException, Request, status
 from sqlalchemy.orm import Session
 
 from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
+from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
 from hrm_backend.candidates.models.profile import CandidateProfile
@@ -23,6 +24,7 @@ from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransition
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
 from hrm_backend.vacancies.models.offer import Offer
 from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition
+from hrm_backend.vacancies.models.vacancy import Vacancy
 from hrm_backend.vacancies.schemas.pipeline import (
     PipelineStage,
     PipelineTransitionCreateRequest,
@@ -53,6 +55,7 @@ class VacancyService:
         interview_dao: InterviewDAO,
         interview_feedback_dao: InterviewFeedbackDAO,
         hire_conversion_service: HireConversionService,
+        staff_account_dao: StaffAccountDAO,
         audit_service: AuditService,
     ) -> None:
         """Initialize vacancy service dependencies.
@@ -66,6 +69,7 @@ class VacancyService:
             interview_dao: Interview DAO.
             interview_feedback_dao: Interview feedback DAO.
             hire_conversion_service: Durable employee-domain handoff service.
+            staff_account_dao: Staff-account DAO used to resolve assigned-manager labels.
             audit_service: Audit service.
         """
         self._session = session
@@ -76,6 +80,7 @@ class VacancyService:
         self._interview_dao = interview_dao
         self._interview_feedback_dao = interview_feedback_dao
         self._hire_conversion_service = hire_conversion_service
+        self._staff_account_dao = staff_account_dao
         self._audit_service = audit_service
 
     def create_vacancy(
@@ -86,7 +91,12 @@ class VacancyService:
         request: Request,
     ) -> VacancyResponse:
         """Create vacancy row and emit audit event."""
-        entity = self._vacancy_dao.create_vacancy(payload)
+        entity = self._vacancy_dao.create_vacancy(
+            payload,
+            hiring_manager_staff_id=self._resolve_hiring_manager_staff_id(
+                payload.hiring_manager_login
+            ),
+        )
         actor_sub, actor_role = actor_from_auth_context(auth_context)
         self._audit_service.record_api_event(
             action="vacancy:create",
@@ -97,7 +107,7 @@ class VacancyService:
             actor_role=actor_role,
             resource_id=entity.vacancy_id,
         )
-        return _to_vacancy_response(entity)
+        return self._to_vacancy_response(entity)
 
     def list_vacancies(
         self,
@@ -106,7 +116,7 @@ class VacancyService:
         request: Request,
     ) -> VacancyListResponse:
         """List vacancies and emit read audit event."""
-        items = [_to_vacancy_response(item) for item in self._vacancy_dao.list_vacancies()]
+        items = self._to_vacancy_list_response_items(self._vacancy_dao.list_vacancies())
         actor_sub, actor_role = actor_from_auth_context(auth_context)
         self._audit_service.record_api_event(
             action="vacancy:read",
@@ -140,7 +150,7 @@ class VacancyService:
             actor_role=actor_role,
             resource_id=entity.vacancy_id,
         )
-        return _to_vacancy_response(entity)
+        return self._to_vacancy_response(entity)
 
     def update_vacancy(
         self,
@@ -154,6 +164,10 @@ class VacancyService:
         entity = self._vacancy_dao.get_by_id(str(vacancy_id))
         if entity is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vacancy not found")
+        if "hiring_manager_login" in payload.model_fields_set:
+            entity.hiring_manager_staff_id = self._resolve_hiring_manager_staff_id(
+                payload.hiring_manager_login
+            )
         updated = self._vacancy_dao.update_vacancy(entity=entity, payload=payload)
         actor_sub, actor_role = actor_from_auth_context(auth_context)
         self._audit_service.record_api_event(
@@ -165,7 +179,71 @@ class VacancyService:
             actor_role=actor_role,
             resource_id=updated.vacancy_id,
         )
-        return _to_vacancy_response(updated)
+        return self._to_vacancy_response(updated)
+
+    def _resolve_hiring_manager_staff_id(self, hiring_manager_login: str | None) -> str | None:
+        """Resolve optional hiring-manager login to a durable staff-account identifier.
+
+        Args:
+            hiring_manager_login: Optional login value submitted on vacancy create/update.
+
+        Returns:
+            str | None: Resolved manager staff-account identifier, or `None` when the assignment
+                should stay empty.
+
+        Raises:
+            HTTPException: If the login does not map to an active manager account.
+        """
+        if hiring_manager_login is None:
+            return None
+
+        normalized_login = hiring_manager_login.strip().lower()
+        account = self._staff_account_dao.get_by_login(normalized_login)
+        if account is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="hiring_manager_not_found",
+            )
+        if account.role != "manager":
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail="hiring_manager_role_invalid",
+            )
+        if not account.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="hiring_manager_inactive",
+            )
+        return account.staff_id
+
+    def _to_vacancy_list_response_items(self, vacancies: list[Vacancy]) -> list[VacancyResponse]:
+        """Map vacancy entities to API responses with resolved manager-login labels."""
+        staff_ids = [
+            vacancy.hiring_manager_staff_id
+            for vacancy in vacancies
+            if vacancy.hiring_manager_staff_id is not None
+        ]
+        accounts = self._staff_account_dao.get_by_ids(staff_ids)
+        return [
+            _to_vacancy_response(
+                vacancy,
+                hiring_manager_login=accounts.get(vacancy.hiring_manager_staff_id).login
+                if vacancy.hiring_manager_staff_id in accounts
+                else None,
+            )
+            for vacancy in vacancies
+        ]
+
+    def _to_vacancy_response(self, vacancy: Vacancy) -> VacancyResponse:
+        """Map one vacancy entity to the public response with manager metadata."""
+        if vacancy.hiring_manager_staff_id is None:
+            return _to_vacancy_response(vacancy, hiring_manager_login=None)
+
+        account = self._staff_account_dao.get_by_id(vacancy.hiring_manager_staff_id)
+        return _to_vacancy_response(
+            vacancy,
+            hiring_manager_login=None if account is None else account.login,
+        )
 
     def transition_pipeline(
         self,
@@ -447,11 +525,12 @@ class VacancyService:
         )
 
 
-def _to_vacancy_response(entity) -> VacancyResponse:
+def _to_vacancy_response(entity: Vacancy, *, hiring_manager_login: str | None) -> VacancyResponse:
     """Map vacancy persistence row to API response.
 
     Args:
         entity: Vacancy row.
+        hiring_manager_login: Optional resolved manager login label.
 
     Returns:
         VacancyResponse: API payload.
@@ -462,6 +541,12 @@ def _to_vacancy_response(entity) -> VacancyResponse:
         description=entity.description,
         department=entity.department,
         status=entity.status,
+        hiring_manager_staff_id=(
+            None
+            if entity.hiring_manager_staff_id is None
+            else UUID(entity.hiring_manager_staff_id)
+        ),
+        hiring_manager_login=hiring_manager_login,
         created_at=entity.created_at,
         updated_at=entity.updated_at,
     )

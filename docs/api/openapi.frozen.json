@@ -2437,6 +2437,426 @@
         "title": "LoginRequest",
         "type": "object"
       },
+      "ManagerWorkspaceCandidateSnapshotItemResponse": {
+        "description": "Read-only candidate row rendered inside the manager vacancy snapshot.",
+        "properties": {
+          "analysis_ready": {
+            "title": "Analysis Ready",
+            "type": "boolean"
+          },
+          "candidate_id": {
+            "format": "uuid",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "candidate_updated_at": {
+            "format": "date-time",
+            "title": "Candidate Updated At",
+            "type": "string"
+          },
+          "current_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Title"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "interview_scheduled_end_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interview Scheduled End At"
+          },
+          "interview_scheduled_start_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interview Scheduled Start At"
+          },
+          "interview_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending_sync",
+                  "awaiting_candidate_confirmation",
+                  "confirmed",
+                  "reschedule_requested",
+                  "cancelled"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interview Status"
+          },
+          "interview_timezone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interview Timezone"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "skills": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Skills",
+            "type": "array"
+          },
+          "stage": {
+            "enum": [
+              "applied",
+              "screening",
+              "shortlist",
+              "interview",
+              "offer",
+              "hired",
+              "rejected"
+            ],
+            "title": "Stage",
+            "type": "string"
+          },
+          "stage_updated_at": {
+            "format": "date-time",
+            "title": "Stage Updated At",
+            "type": "string"
+          },
+          "years_experience": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Years Experience"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "first_name",
+          "last_name",
+          "email",
+          "location",
+          "current_title",
+          "analysis_ready",
+          "years_experience",
+          "stage",
+          "stage_updated_at",
+          "candidate_updated_at",
+          "interview_status",
+          "interview_scheduled_start_at",
+          "interview_scheduled_end_at",
+          "interview_timezone"
+        ],
+        "title": "ManagerWorkspaceCandidateSnapshotItemResponse",
+        "type": "object"
+      },
+      "ManagerWorkspaceCandidateSnapshotResponse": {
+        "description": "Vacancy-scoped candidate snapshot payload for the manager workspace.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ManagerWorkspaceCandidateSnapshotItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ManagerWorkspaceCandidateSnapshotSummaryResponse"
+          },
+          "vacancy": {
+            "$ref": "#/components/schemas/ManagerWorkspaceVacancyListItemResponse"
+          }
+        },
+        "required": [
+          "vacancy",
+          "summary",
+          "items"
+        ],
+        "title": "ManagerWorkspaceCandidateSnapshotResponse",
+        "type": "object"
+      },
+      "ManagerWorkspaceCandidateSnapshotSummaryResponse": {
+        "description": "Aggregate counters for the selected vacancy inside manager workspace.",
+        "properties": {
+          "active_interview_count": {
+            "minimum": 0.0,
+            "title": "Active Interview Count",
+            "type": "integer"
+          },
+          "candidate_count": {
+            "minimum": 0.0,
+            "title": "Candidate Count",
+            "type": "integer"
+          },
+          "stage_counts": {
+            "$ref": "#/components/schemas/ManagerWorkspaceStageSummaryResponse"
+          },
+          "upcoming_interview_count": {
+            "minimum": 0.0,
+            "title": "Upcoming Interview Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "candidate_count",
+          "active_interview_count",
+          "upcoming_interview_count",
+          "stage_counts"
+        ],
+        "title": "ManagerWorkspaceCandidateSnapshotSummaryResponse",
+        "type": "object"
+      },
+      "ManagerWorkspaceHiringSummaryResponse": {
+        "description": "Aggregate hiring counters for the current manager workspace scope.",
+        "properties": {
+          "active_interview_count": {
+            "minimum": 0.0,
+            "title": "Active Interview Count",
+            "type": "integer"
+          },
+          "candidate_count": {
+            "minimum": 0.0,
+            "title": "Candidate Count",
+            "type": "integer"
+          },
+          "open_vacancy_count": {
+            "minimum": 0.0,
+            "title": "Open Vacancy Count",
+            "type": "integer"
+          },
+          "upcoming_interview_count": {
+            "minimum": 0.0,
+            "title": "Upcoming Interview Count",
+            "type": "integer"
+          },
+          "vacancy_count": {
+            "minimum": 0.0,
+            "title": "Vacancy Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "vacancy_count",
+          "open_vacancy_count",
+          "candidate_count",
+          "active_interview_count",
+          "upcoming_interview_count"
+        ],
+        "title": "ManagerWorkspaceHiringSummaryResponse",
+        "type": "object"
+      },
+      "ManagerWorkspaceOverviewResponse": {
+        "description": "Top-level manager workspace payload with aggregate hiring summary and visible vacancies.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ManagerWorkspaceVacancyListItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ManagerWorkspaceHiringSummaryResponse"
+          }
+        },
+        "required": [
+          "summary",
+          "items"
+        ],
+        "title": "ManagerWorkspaceOverviewResponse",
+        "type": "object"
+      },
+      "ManagerWorkspaceStageSummaryResponse": {
+        "description": "Stage counters for one manager-visible vacancy snapshot.",
+        "properties": {
+          "applied": {
+            "minimum": 0.0,
+            "title": "Applied",
+            "type": "integer"
+          },
+          "hired": {
+            "minimum": 0.0,
+            "title": "Hired",
+            "type": "integer"
+          },
+          "interview": {
+            "minimum": 0.0,
+            "title": "Interview",
+            "type": "integer"
+          },
+          "offer": {
+            "minimum": 0.0,
+            "title": "Offer",
+            "type": "integer"
+          },
+          "rejected": {
+            "minimum": 0.0,
+            "title": "Rejected",
+            "type": "integer"
+          },
+          "screening": {
+            "minimum": 0.0,
+            "title": "Screening",
+            "type": "integer"
+          },
+          "shortlist": {
+            "minimum": 0.0,
+            "title": "Shortlist",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "applied",
+          "screening",
+          "shortlist",
+          "interview",
+          "offer",
+          "hired",
+          "rejected"
+        ],
+        "title": "ManagerWorkspaceStageSummaryResponse",
+        "type": "object"
+      },
+      "ManagerWorkspaceVacancyListItemResponse": {
+        "description": "One vacancy row visible in the manager hiring workspace.",
+        "properties": {
+          "active_interview_count": {
+            "minimum": 0.0,
+            "title": "Active Interview Count",
+            "type": "integer"
+          },
+          "candidate_count": {
+            "minimum": 0.0,
+            "title": "Candidate Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "department": {
+            "title": "Department",
+            "type": "string"
+          },
+          "hiring_manager_login": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hiring Manager Login"
+          },
+          "hiring_manager_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hiring Manager Staff Id"
+          },
+          "latest_activity_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Activity At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vacancy_id",
+          "title",
+          "department",
+          "status",
+          "hiring_manager_staff_id",
+          "hiring_manager_login",
+          "candidate_count",
+          "active_interview_count",
+          "latest_activity_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ManagerWorkspaceVacancyListItemResponse",
+        "type": "object"
+      },
       "MatchScoreCreateRequest": {
         "additionalProperties": false,
         "description": "Input payload for explicit scoring request.",
@@ -4394,6 +4814,19 @@
             "title": "Description",
             "type": "string"
           },
+          "hiring_manager_login": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hiring Manager Login"
+          },
           "status": {
             "default": "open",
             "maxLength": 32,
@@ -4449,6 +4882,29 @@
             "title": "Description",
             "type": "string"
           },
+          "hiring_manager_login": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hiring Manager Login"
+          },
+          "hiring_manager_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hiring Manager Staff Id"
+          },
           "status": {
             "title": "Status",
             "type": "string"
@@ -4474,6 +4930,8 @@
           "description",
           "department",
           "status",
+          "hiring_manager_staff_id",
+          "hiring_manager_login",
           "created_at",
           "updated_at"
         ],
@@ -4508,6 +4966,19 @@
               }
             ],
             "title": "Description"
+          },
+          "hiring_manager_login": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hiring Manager Login"
           },
           "status": {
             "anyOf": [
@@ -6999,6 +7470,33 @@
         ]
       }
     },
+    "/api/v1/vacancies/manager-workspace": {
+      "get": {
+        "description": "Return manager-scoped hiring summary plus visible vacancies.",
+        "operationId": "get_manager_workspace_overview_api_v1_vacancies_manager_workspace_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerWorkspaceOverviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Manager Workspace Overview",
+        "tags": [
+          "vacancies"
+        ]
+      }
+    },
     "/api/v1/vacancies/{vacancy_id}": {
       "get": {
         "description": "Load one vacancy resource by identifier.",
@@ -7718,6 +8216,55 @@
         "summary": "Resend Invite",
         "tags": [
           "interviews"
+        ]
+      }
+    },
+    "/api/v1/vacancies/{vacancy_id}/manager-workspace/candidates": {
+      "get": {
+        "description": "Return the read-only candidate snapshot for one manager-visible vacancy.",
+        "operationId": "get_manager_workspace_candidate_snapshot_api_v1_vacancies__vacancy_id__manager_workspace_candidates_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagerWorkspaceCandidateSnapshotResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Manager Workspace Candidate Snapshot",
+        "tags": [
+          "vacancies"
         ]
       }
     },
