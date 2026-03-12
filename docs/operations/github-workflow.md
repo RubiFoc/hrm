@@ -48,6 +48,8 @@
 - After merge, review all GitHub issues linked to the task/PR.
 - Close only the issues that are actually resolved by the merged change.
 - If the merge changes backlog status, update `docs/project/tasks.md` in the same closeout step.
+- After the PR is closed, delete branches that are no longer needed locally and on GitHub to keep
+  the branch list clean.
 - Task delivery is not complete until issue closeout and `docs/project/tasks.md` synchronization are finished.
 
 ## GitHub CLI Operations (`gh`)
@@ -56,6 +58,9 @@
 - If `gh auth status` shows `token ... is invalid`, re-authenticate with `gh auth login -h github.com`.
 - Device login can fail with temporary `HTTP 503`; retry login instead of rotating workflow or branches.
 - Do not trust only CLI success text (`Logged in as ...`); re-check with `gh auth status` after login.
+- Preferred branch cleanup after PR close:
+  `git branch -d <branch>` locally and `gh pr merge --delete-branch` or `git push origin --delete <branch>`
+  for the remote branch when it is no longer needed.
 
 ## Chained PR Creation Order
 - Use this order for split delivery: `PR-A -> PR-B -> PR-C -> Stage4 -> PR-D`.
