@@ -24,7 +24,7 @@
 | TASK-12-02 | done/closed | GitHub issue #85 closed; merged in `main` via PR #105 (`a67bb8c`) with Linux-safe host-gateway wiring for external-host Ollama, optional compose profile `ai-local` (`ollama` + `ollama-init` + persistent volume), and operator-facing `./scripts/smoke-scoring-compose.sh` while keeping baseline compose/browser smoke and scoring/public contracts unchanged |
 | TASK-11-01/02/03/04 | done/closed | GitHub issues #25, #26, #27, and #28 were closed during backlog normalization; the current repo remains the source of truth for the implemented frontend foundation |
 | TASK-03-01/02/03/05/06/07/08 | implemented/local-universal-profile-enrichment-slice | GitHub issue #90 is now closed; backend candidate profile, public apply, async parsing, native PDF/DOCX text extraction, RU/EN normalization, profession-agnostic structured CV enrichment (workplaces with held positions, education, normalized titles/dates, generic skills), evidence traceability, and public tracking endpoints are present in repo with unit/integration coverage |
-| TASK-03-04 | implemented/local-candidate-search-slice | `GET /api/v1/candidates` now supports recruiter-facing search/filter/pagination, active-CV enrichment, and vacancy-context latest-stage filters, while `/` consumes the server-filtered list with apply/reset controls and pagination; GitHub issue `#91` remains open until the merge-driven closeout step |
+| TASK-03-04 | done/closed | GitHub issue #91 closed; merged in `main` via PR #107 (`0d9c787`) with recruiter-facing `GET /api/v1/candidates` search/filter/pagination, active-CV enrichment, vacancy-context latest-stage filters, and server-filtered HR dashboard controls |
 | TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
 | TASK-11-06 | implemented/local-baseline | `/candidate` now supports public deep-link apply, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling |
 | TASK-11-05 | implemented/local-baseline | `/` now exposes staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
@@ -62,11 +62,9 @@
   are enriched additively with profession-agnostic workplace history, held positions, education,
   normalized titles/dates, and generic skills while keeping parsing/analysis/scoring contracts
   stable.
-- `TASK-03-04` is now implemented in this delivery branch as one recruiter-facing slice: the
-  existing `GET /api/v1/candidates` route exposes server filtering, pagination, active-CV
-  enrichment, and vacancy-scoped latest-stage context, while the existing HR workspace on `/`
-  now applies those filters without adding a new route tree; post-merge issue `#91` closeout is
-  still pending and must be verified after merge before marking the task fully delivered.
+- `TASK-03-04` post-merge closeout is complete: GitHub issue `#91` closed automatically from PR
+  #107 (`0d9c787`), and this backlog snapshot is synchronized to the merged `main` state while
+  keeping the existing route tree and runtime topology unchanged.
 - The scoring/shortlist-review slice (`TASK-04-01/02/03 + TASK-11-07`) is now implemented in repo as one vertical delivery unit.
 - Scoring explainability (`TASK-04-05`) is now implemented in the same slice; remaining AI backlog is the low-confidence fallback and the quality harness.
 - The compliance follow-on slice (`TASK-13-01/02`) is now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
