@@ -209,7 +209,7 @@ apps/backend/tests/
 | Offer lifecycle block on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend offer/pipeline integration below | HR can save draft, mark sent, record accepted/declined, and see localized blockers in the existing workspace |
 | Localized HR workspace errors (`403`, `404`, `422`, generic) | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | manual role smoke with expired/forbidden session variants | recruiter-facing failures remain readable in RU/EN |
 
-## Scoring and Shortlist Review Verification (`TASK-04-01/02/03`, `TASK-11-07`)
+## Scoring and Shortlist Review Verification (`TASK-04-01/02/03`, `TASK-04-06`, `TASK-11-07`)
 
 ### Backend
 | Capability | Unit Coverage | Integration Coverage | Required Evidence |
@@ -220,6 +220,7 @@ apps/backend/tests/
 | Reject scoring when parsed CV analysis is not ready | N/A | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | `POST /api/v1/vacancies/{vacancy_id}/match-scores` returns `409` without silent fallback |
 | Score payload shape and evidence propagation | `apps/backend/tests/unit/scoring/test_ollama_adapter.py` | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | latest score response includes `score`, `confidence`, `summary`, requirements, evidence, model metadata, and `scored_at` |
 | Low-confidence fallback policy and threshold boundary (`TASK-04-04`) | `apps/backend/tests/unit/scoring/test_manual_review_policy.py` | `apps/backend/tests/integration/scoring/test_match_scoring_api.py` | succeeded scores below threshold return `requires_manual_review=true`, `manual_review_reason="low_confidence"`, and echoed `confidence_threshold`, while `confidence == threshold`, non-succeeded states, and missing confidence do not fallback |
+| Quality harness metrics, dataset validation, and deterministic reporting (`TASK-04-06`) | `apps/backend/tests/unit/scoring/test_quality_metrics.py` + `apps/backend/tests/unit/scoring/test_quality_dataset.py` + `apps/backend/tests/unit/scoring/test_quality_runner.py` | `apps/backend/tests/integration/scoring/test_quality_harness_cli.py` | fixture-mode CLI validates dataset shape, computes `precision`/`recall` + `NDCG`/`MRR`, emits machine-readable `ranking_metrics` / `requirement_metrics` / `paraphrase_robustness`, and keeps optional Ollama mode outside the required verification path |
 
 ### Frontend
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
@@ -237,6 +238,12 @@ apps/backend/tests/
 - Keep scoring verification at unit/integration level; do not extend compose browser smoke to scoring until runtime nondeterminism is addressed.
 - Use `./scripts/smoke-scoring-compose.sh` only as an opt-in operator/runtime verification for the compose-local Ollama profile.
 - Shortlist review must work against the real backend scoring contract, not mock-only placeholder data.
+- Required local quality-harness verification command:
+  `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend python -m hrm_backend.scoring.cli.quality_harness --dataset tests/fixtures/scoring_quality/baseline.json --mode fixture --format json`
+- Optional local real-model follow-up for the same harness:
+  rerun the same command with `--mode ollama`.
+- Keep the quality harness outside runtime request handling and public scoring contracts; do not
+  regenerate OpenAPI or frontend types unless a separate change modifies the public API.
 
 ## Interview Scheduling and Candidate Registration Verification (`TASK-11-08`, `TASK-05-01`, `TASK-05-02`)
 

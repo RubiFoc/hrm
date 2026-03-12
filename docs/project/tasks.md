@@ -32,6 +32,7 @@
 | TASK-11-11 | implemented/local-baseline | Compose browser smoke covers both staff login and public candidate apply journeys through headless Chrome |
 | TASK-04-01/02/03 | implemented/local-scoring-slice | Dedicated `hrm_backend/scoring` package, Ollama adapter, async scoring jobs/artifacts, and frozen scoring API contract are present in repo with unit and integration coverage |
 | TASK-04-05 | implemented/local-scoring-slice | Score payloads and HR shortlist review now expose matched requirements, missing competencies, and evidence snippets from parsed CV analysis |
+| TASK-04-06 | implemented/local-scoring-slice | Local scoring quality harness now ships under `hrm_backend.scoring.evaluation` with strict JSON dataset validation, deterministic fixture-mode reporting for `precision`/`recall` + `NDCG`/`MRR` + paraphrase robustness, optional Ollama mode reuse, and backend unit/integration coverage |
 | TASK-04-04 | done/closed | GitHub issue #92 closed; merged in `main` via PR #109 (`c60b48b`) with additive low-confidence manual-review metadata, configurable `SCORING_LOW_CONFIDENCE_THRESHOLD`, and localized shortlist warning UX that preserves score details |
 | TASK-11-07 | implemented/local-scoring-slice | `/` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
 | TASK-11-10 | implemented/local-observability-slice | Frontend Sentry now tags `/`, `/candidate`, `/login`, `/admin`, `/admin/staff`, and `/admin/employee-keys`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
@@ -68,7 +69,7 @@
   keeping the existing route tree and runtime topology unchanged.
 - The scoring/shortlist-review slice (`TASK-04-01/02/03 + TASK-11-07`) is now implemented in repo as one vertical delivery unit.
 - `TASK-04-04` post-merge closeout is complete: GitHub issue `#92` closed automatically from PR #109 (`c60b48b`), and this backlog snapshot is synchronized to the merged `main` state while keeping the existing route tree and runtime topology unchanged.
-- Scoring explainability (`TASK-04-05`) is now implemented in the same slice; the remaining scoring-specific AI backlog is the quality harness (`TASK-04-06`).
+- Scoring explainability (`TASK-04-05`) and the additive quality harness (`TASK-04-06`) are now implemented in repo without changing runtime routes, lifecycle states, or public scoring contracts.
 - The compliance follow-on slice (`TASK-13-01/02`) is now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
 - The dedicated planning pass for `TASK-11-08` is implemented in repo as one backend+frontend interview slice without reopening auth, CORS, or the public candidate transport model.
 - Interview planning and Google Calendar sync baseline (`TASK-05-01/02`) are now implemented in repo; remaining interview backlog starts after the already-landed scheduling/registration and fairness slices.
@@ -96,17 +97,16 @@
 - `TASK-07-02` is no longer active queue work; the implemented source of truth is the repo-backed onboarding task generation/backfill/update API on `/api/v1/onboarding/runs/{onboarding_id}/tasks`.
 - `TASK-07-03` is no longer active queue work; the implemented source of truth is the repo-backed employee self-service onboarding portal on `/employee` plus `/api/v1/employees/me/onboarding*`.
 - `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/` and rendered as the manager workspace on the existing `/` route.
-- The remaining candidate-domain follow-on work after `TASK-03-08` is limited to later AI
-  quality/fallback work, not baseline parsed-profile structure.
+- The remaining candidate-domain follow-on work after `TASK-03-08` and `TASK-04-06` is limited to
+  later ops/reporting slices, not baseline parsed-profile structure or scoring-quality tooling.
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `19` tasks.
+- Normalized open backlog count: `18` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `19`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `18`-task count.
 - Current open backlog by delivery wave:
-  - Wave 1 product gaps: `TASK-04-06`
   - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-01`, `TASK-10-02`, `TASK-10-03`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
   - Wave 3 phase-2 workspaces: `TASK-09-01`, `TASK-09-02`, `TASK-09-03`, `TASK-09-04`, `TASK-11-12`
 

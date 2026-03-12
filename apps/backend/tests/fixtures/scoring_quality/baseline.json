@@ -1,0 +1,826 @@
+{
+  "dataset_id": "scoring-quality-baseline",
+  "scenarios": [
+    {
+      "scenario_id": "backend-engineer-base",
+      "vacancy": {
+        "title": "Backend Engineer",
+        "description": "Build Python APIs, maintain Docker services, and improve platform reliability.",
+        "department": "Engineering",
+        "status": "open"
+      },
+      "candidates": [
+        {
+          "candidate_id": "candidate-alex",
+          "document": {
+            "filename": "alex_carter_cv.pdf",
+            "mime_type": "application/pdf",
+            "detected_language": "en",
+            "parsed_at": "2026-03-12T09:00:00+00:00",
+            "parsed_profile_json": {
+              "document": {
+                "mime_type": "application/pdf",
+                "size_bytes": 1200,
+                "detected_language": "en"
+              },
+              "personal": {
+                "full_name": "Alex Carter"
+              },
+              "contact": {
+                "emails": [
+                  "alex@example.com"
+                ],
+                "phones": [
+                  "+12025550100"
+                ]
+              },
+              "skills": [
+                "Python",
+                "REST APIs",
+                "Docker",
+                "Mentoring"
+              ],
+              "experience": {
+                "years_total": 7,
+                "entries": [
+                  {
+                    "employer": "Platform Labs",
+                    "position": {
+                      "raw": "Senior Backend Engineer",
+                      "normalized": "senior backend engineer"
+                    },
+                    "date_range": {
+                      "raw": "2020 - Present",
+                      "start": "2020",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Built Python APIs and Docker-based services."
+                  }
+                ]
+              },
+              "workplaces": {
+                "entries": [
+                  {
+                    "employer": "Platform Labs",
+                    "position": {
+                      "raw": "Senior Backend Engineer",
+                      "normalized": "senior backend engineer"
+                    },
+                    "date_range": {
+                      "raw": "2020 - Present",
+                      "start": "2020",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Built Python APIs and Docker-based services."
+                  }
+                ]
+              },
+              "education": {
+                "entries": [
+                  {
+                    "institution": "State Technical University",
+                    "degree": "Computer Science",
+                    "date_range": {
+                      "raw": "2012 - 2016",
+                      "start": "2012",
+                      "end": "2016",
+                      "is_current": false
+                    },
+                    "summary": null
+                  }
+                ]
+              },
+              "titles": {
+                "current": {
+                  "raw": "Senior Backend Engineer",
+                  "normalized": "senior backend engineer"
+                },
+                "past": [
+                  {
+                    "raw": "Backend Engineer",
+                    "normalized": "backend engineer"
+                  }
+                ]
+              },
+              "summary": "Backend engineer with Python API and Docker delivery experience."
+            },
+            "evidence_json": [
+              {
+                "field": "skills[0]",
+                "snippet": "Python",
+                "page": 1
+              },
+              {
+                "field": "experience.entries[0].summary",
+                "snippet": "Built Python APIs and Docker-based services.",
+                "page": 1
+              }
+            ]
+          },
+          "expected_relevance": 3,
+          "expected_matched_requirements": [
+            "Python",
+            "REST APIs",
+            "Docker"
+          ],
+          "expected_missing_requirements": [
+            "Kubernetes"
+          ],
+          "fixture_prediction": {
+            "score": 97,
+            "confidence": 0.92,
+            "summary": "Strong backend fit with direct Python, API, and Docker evidence.",
+            "matched_requirements": [
+              "Python",
+              "REST APIs",
+              "Docker"
+            ],
+            "missing_requirements": [
+              "Kubernetes"
+            ],
+            "evidence": [
+              {
+                "requirement": "Python",
+                "snippet": "Backend engineer with Python API and Docker delivery experience.",
+                "source_field": "summary"
+              }
+            ],
+            "model_name": "fixture-baseline",
+            "model_version": "v1"
+          }
+        },
+        {
+          "candidate_id": "candidate-ira",
+          "document": {
+            "filename": "ira_lee_cv.pdf",
+            "mime_type": "application/pdf",
+            "detected_language": "en",
+            "parsed_at": "2026-03-12T09:10:00+00:00",
+            "parsed_profile_json": {
+              "document": {
+                "mime_type": "application/pdf",
+                "size_bytes": 1100,
+                "detected_language": "en"
+              },
+              "personal": {
+                "full_name": "Ira Lee"
+              },
+              "contact": {
+                "emails": [
+                  "ira@example.com"
+                ],
+                "phones": [
+                  "+12025550101"
+                ]
+              },
+              "skills": [
+                "Python",
+                "SQL",
+                "Dashboards"
+              ],
+              "experience": {
+                "years_total": 4,
+                "entries": [
+                  {
+                    "employer": "Data Works",
+                    "position": {
+                      "raw": "Data Analyst",
+                      "normalized": "data analyst"
+                    },
+                    "date_range": {
+                      "raw": "2021 - Present",
+                      "start": "2021",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Maintained Python ETL jobs and stakeholder dashboards."
+                  }
+                ]
+              },
+              "workplaces": {
+                "entries": [
+                  {
+                    "employer": "Data Works",
+                    "position": {
+                      "raw": "Data Analyst",
+                      "normalized": "data analyst"
+                    },
+                    "date_range": {
+                      "raw": "2021 - Present",
+                      "start": "2021",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Maintained Python ETL jobs and stakeholder dashboards."
+                  }
+                ]
+              },
+              "education": {
+                "entries": [
+                  {
+                    "institution": "City College",
+                    "degree": "Information Systems",
+                    "date_range": {
+                      "raw": "2015 - 2019",
+                      "start": "2015",
+                      "end": "2019",
+                      "is_current": false
+                    },
+                    "summary": null
+                  }
+                ]
+              },
+              "titles": {
+                "current": {
+                  "raw": "Data Analyst",
+                  "normalized": "data analyst"
+                },
+                "past": []
+              },
+              "summary": "Python-heavy analyst with SQL and reporting experience."
+            },
+            "evidence_json": [
+              {
+                "field": "skills[0]",
+                "snippet": "Python",
+                "page": 1
+              },
+              {
+                "field": "experience.entries[0].summary",
+                "snippet": "Maintained Python ETL jobs and stakeholder dashboards.",
+                "page": 1
+              }
+            ]
+          },
+          "expected_relevance": 2,
+          "expected_matched_requirements": [
+            "Python"
+          ],
+          "expected_missing_requirements": [
+            "REST APIs",
+            "Docker",
+            "Kubernetes"
+          ],
+          "fixture_prediction": {
+            "score": 83,
+            "confidence": 0.78,
+            "summary": "Moderate fit with Python strength and some adjacent API exposure.",
+            "matched_requirements": [
+              "Python",
+              "REST APIs"
+            ],
+            "missing_requirements": [
+              "Docker",
+              "Kubernetes"
+            ],
+            "evidence": [
+              {
+                "requirement": "Python",
+                "snippet": "Python-heavy analyst with SQL and reporting experience.",
+                "source_field": "summary"
+              }
+            ],
+            "model_name": "fixture-baseline",
+            "model_version": "v1"
+          }
+        },
+        {
+          "candidate_id": "candidate-zoe",
+          "document": {
+            "filename": "zoe_ng_cv.pdf",
+            "mime_type": "application/pdf",
+            "detected_language": "en",
+            "parsed_at": "2026-03-12T09:20:00+00:00",
+            "parsed_profile_json": {
+              "document": {
+                "mime_type": "application/pdf",
+                "size_bytes": 900,
+                "detected_language": "en"
+              },
+              "personal": {
+                "full_name": "Zoe Ng"
+              },
+              "contact": {
+                "emails": [
+                  "zoe@example.com"
+                ],
+                "phones": [
+                  "+12025550102"
+                ]
+              },
+              "skills": [
+                "Graphic Design",
+                "Figma",
+                "Brand Systems"
+              ],
+              "experience": {
+                "years_total": 6,
+                "entries": [
+                  {
+                    "employer": "Studio North",
+                    "position": {
+                      "raw": "Product Designer",
+                      "normalized": "product designer"
+                    },
+                    "date_range": {
+                      "raw": "2019 - Present",
+                      "start": "2019",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Designed product interfaces and brand systems."
+                  }
+                ]
+              },
+              "workplaces": {
+                "entries": [
+                  {
+                    "employer": "Studio North",
+                    "position": {
+                      "raw": "Product Designer",
+                      "normalized": "product designer"
+                    },
+                    "date_range": {
+                      "raw": "2019 - Present",
+                      "start": "2019",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Designed product interfaces and brand systems."
+                  }
+                ]
+              },
+              "education": {
+                "entries": [
+                  {
+                    "institution": "Design Institute",
+                    "degree": "Visual Communication",
+                    "date_range": {
+                      "raw": "2011 - 2015",
+                      "start": "2011",
+                      "end": "2015",
+                      "is_current": false
+                    },
+                    "summary": null
+                  }
+                ]
+              },
+              "titles": {
+                "current": {
+                  "raw": "Product Designer",
+                  "normalized": "product designer"
+                },
+                "past": []
+              },
+              "summary": "Designer focused on brand systems and UI consistency."
+            },
+            "evidence_json": [
+              {
+                "field": "skills[0]",
+                "snippet": "Graphic Design",
+                "page": 1
+              }
+            ]
+          },
+          "expected_relevance": 0,
+          "expected_matched_requirements": [],
+          "expected_missing_requirements": [
+            "Python",
+            "REST APIs",
+            "Docker",
+            "Kubernetes"
+          ],
+          "fixture_prediction": {
+            "score": 40,
+            "confidence": 0.64,
+            "summary": "Low fit because the profile is design-oriented rather than backend-focused.",
+            "matched_requirements": [],
+            "missing_requirements": [
+              "Python",
+              "REST APIs",
+              "Docker",
+              "Kubernetes"
+            ],
+            "evidence": [
+              {
+                "requirement": "Product background",
+                "snippet": "Designer focused on brand systems and UI consistency.",
+                "source_field": "summary"
+              }
+            ],
+            "model_name": "fixture-baseline",
+            "model_version": "v1"
+          }
+        }
+      ]
+    },
+    {
+      "scenario_id": "backend-engineer-paraphrase",
+      "paraphrase_of": "backend-engineer-base",
+      "vacancy": {
+        "title": "Platform Backend Engineer",
+        "description": "Own Python backend services, support API reliability, and work with containerized deployments.",
+        "department": "Engineering",
+        "status": "open"
+      },
+      "candidates": [
+        {
+          "candidate_id": "candidate-alex",
+          "document": {
+            "filename": "alex_carter_cv_paraphrase.pdf",
+            "mime_type": "application/pdf",
+            "detected_language": "en",
+            "parsed_at": "2026-03-12T10:00:00+00:00",
+            "parsed_profile_json": {
+              "document": {
+                "mime_type": "application/pdf",
+                "size_bytes": 1200,
+                "detected_language": "en"
+              },
+              "personal": {
+                "full_name": "Alex Carter"
+              },
+              "contact": {
+                "emails": [
+                  "alex@example.com"
+                ],
+                "phones": [
+                  "+12025550100"
+                ]
+              },
+              "skills": [
+                "Python",
+                "REST APIs",
+                "Docker",
+                "Mentoring"
+              ],
+              "experience": {
+                "years_total": 7,
+                "entries": [
+                  {
+                    "employer": "Platform Labs",
+                    "position": {
+                      "raw": "Senior Backend Engineer",
+                      "normalized": "senior backend engineer"
+                    },
+                    "date_range": {
+                      "raw": "2020 - Present",
+                      "start": "2020",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Runs Python services and containerized API deployments."
+                  }
+                ]
+              },
+              "workplaces": {
+                "entries": [
+                  {
+                    "employer": "Platform Labs",
+                    "position": {
+                      "raw": "Senior Backend Engineer",
+                      "normalized": "senior backend engineer"
+                    },
+                    "date_range": {
+                      "raw": "2020 - Present",
+                      "start": "2020",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Runs Python services and containerized API deployments."
+                  }
+                ]
+              },
+              "education": {
+                "entries": [
+                  {
+                    "institution": "State Technical University",
+                    "degree": "Computer Science",
+                    "date_range": {
+                      "raw": "2012 - 2016",
+                      "start": "2012",
+                      "end": "2016",
+                      "is_current": false
+                    },
+                    "summary": null
+                  }
+                ]
+              },
+              "titles": {
+                "current": {
+                  "raw": "Senior Backend Engineer",
+                  "normalized": "senior backend engineer"
+                },
+                "past": [
+                  {
+                    "raw": "Backend Engineer",
+                    "normalized": "backend engineer"
+                  }
+                ]
+              },
+              "summary": "Platform engineer delivering Python APIs and Dockerized services."
+            },
+            "evidence_json": [
+              {
+                "field": "experience.entries[0].summary",
+                "snippet": "Runs Python services and containerized API deployments.",
+                "page": 1
+              }
+            ]
+          },
+          "expected_relevance": 3,
+          "expected_matched_requirements": [
+            "Python",
+            "REST APIs",
+            "Docker"
+          ],
+          "expected_missing_requirements": [
+            "Kubernetes"
+          ],
+          "fixture_prediction": {
+            "score": 95,
+            "confidence": 0.9,
+            "summary": "Strong fit remains after paraphrase with the same backend strengths.",
+            "matched_requirements": [
+              "Python",
+              "REST APIs",
+              "Docker"
+            ],
+            "missing_requirements": [
+              "Kubernetes"
+            ],
+            "evidence": [
+              {
+                "requirement": "Docker",
+                "snippet": "Platform engineer delivering Python APIs and Dockerized services.",
+                "source_field": "summary"
+              }
+            ],
+            "model_name": "fixture-baseline",
+            "model_version": "v1"
+          }
+        },
+        {
+          "candidate_id": "candidate-ira",
+          "document": {
+            "filename": "ira_lee_cv_paraphrase.pdf",
+            "mime_type": "application/pdf",
+            "detected_language": "en",
+            "parsed_at": "2026-03-12T10:10:00+00:00",
+            "parsed_profile_json": {
+              "document": {
+                "mime_type": "application/pdf",
+                "size_bytes": 1100,
+                "detected_language": "en"
+              },
+              "personal": {
+                "full_name": "Ira Lee"
+              },
+              "contact": {
+                "emails": [
+                  "ira@example.com"
+                ],
+                "phones": [
+                  "+12025550101"
+                ]
+              },
+              "skills": [
+                "Python",
+                "SQL",
+                "Dashboards"
+              ],
+              "experience": {
+                "years_total": 4,
+                "entries": [
+                  {
+                    "employer": "Data Works",
+                    "position": {
+                      "raw": "Data Analyst",
+                      "normalized": "data analyst"
+                    },
+                    "date_range": {
+                      "raw": "2021 - Present",
+                      "start": "2021",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Keeps Python data jobs healthy and coordinates metrics reporting."
+                  }
+                ]
+              },
+              "workplaces": {
+                "entries": [
+                  {
+                    "employer": "Data Works",
+                    "position": {
+                      "raw": "Data Analyst",
+                      "normalized": "data analyst"
+                    },
+                    "date_range": {
+                      "raw": "2021 - Present",
+                      "start": "2021",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Keeps Python data jobs healthy and coordinates metrics reporting."
+                  }
+                ]
+              },
+              "education": {
+                "entries": [
+                  {
+                    "institution": "City College",
+                    "degree": "Information Systems",
+                    "date_range": {
+                      "raw": "2015 - 2019",
+                      "start": "2015",
+                      "end": "2019",
+                      "is_current": false
+                    },
+                    "summary": null
+                  }
+                ]
+              },
+              "titles": {
+                "current": {
+                  "raw": "Data Analyst",
+                  "normalized": "data analyst"
+                },
+                "past": []
+              },
+              "summary": "Analyst with Python automation and reporting ownership."
+            },
+            "evidence_json": [
+              {
+                "field": "summary",
+                "snippet": "Analyst with Python automation and reporting ownership.",
+                "page": 1
+              }
+            ]
+          },
+          "expected_relevance": 2,
+          "expected_matched_requirements": [
+            "Python"
+          ],
+          "expected_missing_requirements": [
+            "REST APIs",
+            "Docker",
+            "Kubernetes"
+          ],
+          "fixture_prediction": {
+            "score": 80,
+            "confidence": 0.76,
+            "summary": "Still a partial fit, but the paraphrase removes the earlier API hint.",
+            "matched_requirements": [
+              "Python"
+            ],
+            "missing_requirements": [
+              "REST APIs",
+              "Docker",
+              "Kubernetes"
+            ],
+            "evidence": [
+              {
+                "requirement": "Python",
+                "snippet": "Analyst with Python automation and reporting ownership.",
+                "source_field": "summary"
+              }
+            ],
+            "model_name": "fixture-baseline",
+            "model_version": "v1"
+          }
+        },
+        {
+          "candidate_id": "candidate-zoe",
+          "document": {
+            "filename": "zoe_ng_cv_paraphrase.pdf",
+            "mime_type": "application/pdf",
+            "detected_language": "en",
+            "parsed_at": "2026-03-12T10:20:00+00:00",
+            "parsed_profile_json": {
+              "document": {
+                "mime_type": "application/pdf",
+                "size_bytes": 900,
+                "detected_language": "en"
+              },
+              "personal": {
+                "full_name": "Zoe Ng"
+              },
+              "contact": {
+                "emails": [
+                  "zoe@example.com"
+                ],
+                "phones": [
+                  "+12025550102"
+                ]
+              },
+              "skills": [
+                "Graphic Design",
+                "Figma",
+                "Brand Systems"
+              ],
+              "experience": {
+                "years_total": 6,
+                "entries": [
+                  {
+                    "employer": "Studio North",
+                    "position": {
+                      "raw": "Product Designer",
+                      "normalized": "product designer"
+                    },
+                    "date_range": {
+                      "raw": "2019 - Present",
+                      "start": "2019",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Shapes brand systems and interface patterns."
+                  }
+                ]
+              },
+              "workplaces": {
+                "entries": [
+                  {
+                    "employer": "Studio North",
+                    "position": {
+                      "raw": "Product Designer",
+                      "normalized": "product designer"
+                    },
+                    "date_range": {
+                      "raw": "2019 - Present",
+                      "start": "2019",
+                      "end": null,
+                      "is_current": true
+                    },
+                    "summary": "Shapes brand systems and interface patterns."
+                  }
+                ]
+              },
+              "education": {
+                "entries": [
+                  {
+                    "institution": "Design Institute",
+                    "degree": "Visual Communication",
+                    "date_range": {
+                      "raw": "2011 - 2015",
+                      "start": "2011",
+                      "end": "2015",
+                      "is_current": false
+                    },
+                    "summary": null
+                  }
+                ]
+              },
+              "titles": {
+                "current": {
+                  "raw": "Product Designer",
+                  "normalized": "product designer"
+                },
+                "past": []
+              },
+              "summary": "Designer who focuses on visual systems and UI polish."
+            },
+            "evidence_json": [
+              {
+                "field": "summary",
+                "snippet": "Designer who focuses on visual systems and UI polish.",
+                "page": 1
+              }
+            ]
+          },
+          "expected_relevance": 0,
+          "expected_matched_requirements": [],
+          "expected_missing_requirements": [
+            "Python",
+            "REST APIs",
+            "Docker",
+            "Kubernetes"
+          ],
+          "fixture_prediction": {
+            "score": 42,
+            "confidence": 0.61,
+            "summary": "The paraphrase keeps the candidate outside the backend target profile.",
+            "matched_requirements": [],
+            "missing_requirements": [
+              "Python",
+              "REST APIs",
+              "Docker",
+              "Kubernetes"
+            ],
+            "evidence": [
+              {
+                "requirement": "Design orientation",
+                "snippet": "Designer who focuses on visual systems and UI polish.",
+                "source_field": "summary"
+              }
+            ],
+            "model_name": "fixture-baseline",
+            "model_version": "v1"
+          }
+        }
+      ]
+    }
+  ]
+}
