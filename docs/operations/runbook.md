@@ -1,8 +1,8 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-11
-- Updated by: devops-engineer + backend-engineer
+- Date: 2026-03-12
+- Updated by: devops-engineer + backend-engineer + architect
 
 ## Local Environment (Docker Compose)
 ### Prerequisites
@@ -17,11 +17,24 @@
 4. Verify status: `docker compose ps`
 5. Run smoke suite: `./scripts/smoke-compose.sh`
 
+Optional self-contained AI runtime:
+1. Override scoring runtime target:
+   `OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ai-local up -d --build`
+2. Verify real scoring lifecycle:
+   `./scripts/smoke-scoring-compose.sh`
+
 Compose bootstrap notes:
 - `postgres-init` ensures `${POSTGRES_DB}` exists even when reusing an old data volume.
 - `backend-migrate` runs `alembic upgrade head` before backend starts.
 - `backend-worker` runs one Celery worker process for `cv_parsing`, `match_scoring`, and `interview_sync` against the same compose dependencies as `backend`.
 - Backend container starts only after DB bootstrap and migrations complete successfully.
+- Default compose startup remains external-host compatible for scoring:
+  `OLLAMA_BASE_URL` stays `http://host.docker.internal:11434`.
+- `backend` and `backend-worker` inject `host.docker.internal:host-gateway` so the external-host Ollama path is Linux-safe.
+- Optional `ai-local` compose profile adds:
+  - `ollama` with persistent model storage in `ollama_data`;
+  - `ollama-init` one-shot bootstrap that pulls `MATCH_SCORING_MODEL_NAME`;
+  - no published Ollama port, so the profile does not conflict with a host-installed Ollama.
 
 Shortcut wrappers:
 - `make up` / `just up`
@@ -101,6 +114,12 @@ Runtime auth/browser integration settings:
   - `MATCH_SCORING_REQUEST_TIMEOUT_SECONDS`
   - `MATCH_SCORING_QUEUE_NAME`
   - `OLLAMA_BASE_URL`
+- Compose runtime modes:
+  - default: external-host Ollama via `http://host.docker.internal:11434`;
+  - opt-in self-contained: `OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ai-local up -d --build`.
+- Optional compose-local AI services:
+  - `ollama` exposes `11434` only inside the compose network and stores models in `ollama_data`;
+  - `ollama-init` waits for `ollama`, pulls `MATCH_SCORING_MODEL_NAME`, and exits with code `0`.
 - API endpoints:
   - `POST /api/v1/vacancies/{vacancy_id}/match-scores`
   - `GET /api/v1/vacancies/{vacancy_id}/match-scores`
@@ -145,6 +164,19 @@ Runtime auth/browser integration settings:
    - `docker compose down`
    - `docker compose up -d --build`
    - `./scripts/smoke-compose.sh`
+
+### Optional AI-Local Scoring Smoke
+1. Start the opt-in runtime:
+   `OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ai-local up -d --build`
+2. Run the operator-facing verification:
+   `./scripts/smoke-scoring-compose.sh`
+3. Script validation scope:
+   - `docker compose ps` reports `ollama=healthy` and `ollama-init` exited `0`;
+   - `backend` and `backend-worker` both expose `OLLAMA_BASE_URL=http://ollama:11434`;
+   - the pulled model matches `MATCH_SCORING_MODEL_NAME`;
+   - one real candidate CV reaches `analysis_ready=true`;
+   - scoring reaches `succeeded` through the canonical API lifecycle and returns the canonical score payload keys.
+4. This smoke is opt-in and operator-facing; do not treat it as a mandatory CI/browser smoke gate.
 
 ### Login Browser Integration Diagnostics (`/login`)
 - Symptoms:
@@ -210,6 +242,7 @@ Runtime auth/browser integration settings:
   4. If status remains `queued`, inspect `backend-worker` logs and confirm it listens on `match_scoring`.
   5. If status becomes `failed`, verify `OLLAMA_BASE_URL` reachability and model availability for `MATCH_SCORING_MODEL_NAME`.
   6. Confirm the latest `match_score_artifacts` row contains `score`, `confidence`, `summary`, requirements, evidence, and model metadata.
+  7. For compose-local diagnosis, rerun `./scripts/smoke-scoring-compose.sh` after confirming `ollama` is healthy and `ollama-init` has exited `0`.
 
 ### Auth Denylist Failure Policy
 - Auth validation is fail-closed when Redis denylist is unavailable.

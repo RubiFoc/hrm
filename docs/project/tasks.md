@@ -1,7 +1,7 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-11
+- Date: 2026-03-12
 - Updated by: coordinator + architect + backend-engineer + frontend-engineer
 
 ## Priority Model
@@ -21,6 +21,7 @@
 | TASK-01-01/02/03/04/05 | done/closed | GitHub issues #1, #2, #3, #4, and #24 were closed during backlog normalization; current repo/docs remain the source of truth for the implemented security foundation |
 | TASK-11-13 | done/closed | GitHub issue #67 closed; merged in `main` via PR #68 and PR #69 (`d8ea39e`) |
 | TASK-12-01 | implemented/local-compose-baseline | `docker-compose.yml`, Dockerfiles, `./scripts/smoke-compose.sh`, and CI compose browser smoke already verify the local stack (`frontend`, `backend`, `backend-worker`, `postgres`, `redis`, `minio`) plus bootstrap jobs |
+| TASK-12-02 | implemented/local-ai-local-compose | Repo now includes Linux-safe host-gateway wiring for external-host Ollama, optional compose profile `ai-local` (`ollama` + `ollama-init` + persistent volume), and operator-facing `./scripts/smoke-scoring-compose.sh` while keeping baseline compose/browser smoke and scoring/public contracts unchanged; GitHub issue `#85` still needs authenticated closeout because the current local `gh` token is invalid |
 | TASK-11-01/02/03/04 | done/closed | GitHub issues #25, #26, #27, and #28 were closed during backlog normalization; the current repo remains the source of truth for the implemented frontend foundation |
 | TASK-03-01/02/03/05/06/07/08 | implemented/local-universal-profile-enrichment-slice | GitHub issue #90 is now closed; backend candidate profile, public apply, async parsing, native PDF/DOCX text extraction, RU/EN normalization, profession-agnostic structured CV enrichment (workplaces with held positions, education, normalized titles/dates, generic skills), evidence traceability, and public tracking endpoints are present in repo with unit/integration coverage |
 | TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
@@ -46,9 +47,11 @@
 | TASK-07-04 | implemented/local-onboarding-dashboard-slice | `GET /api/v1/onboarding/runs*` now exposes HR/admin read-all plus manager-scoped onboarding progress visibility, with the dashboard embedded on `/` for HR and rendered as the standalone manager workspace on the existing `/` route |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
-## 2026-03-11 Delivery Control Notes
+## 2026-03-12 Delivery Control Notes
 - `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
-- `TASK-12-02` is now tracked as the Ollama infra follow-up: scoring works against external `OLLAMA_BASE_URL`, but local compose is not yet self-contained for AI runtime verification.
+- `TASK-12-02` is now implemented in repo as an opt-in runtime hardening slice: default compose still targets external-host Ollama via `OLLAMA_BASE_URL`, Linux hosts now get `host.docker.internal:host-gateway`, and self-contained AI verification runs through `OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ai-local up -d --build` plus `./scripts/smoke-scoring-compose.sh`.
+- Baseline compose acceptance remains unchanged after `TASK-12-02`: `./scripts/smoke-compose.sh` still verifies login + public apply only and does not require compose-local Ollama.
+- GitHub issue closeout for `TASK-12-02` is blocked locally because `gh auth status` reports an invalid token; remote issue `#85` must be closed during the mandatory post-merge closeout step once authenticated GitHub access is restored.
 - Security foundation work (`TASK-01-01/02/03/04/05`) is materially implemented in repo and supporting docs; this backlog normalization removes it from the effective open count.
 - Frontend foundation work (`TASK-11-01/02/03/04`) is materially implemented in repo and supporting tests; remaining frontend backlog is follow-on admin/reporting and phase-2 role UX.
 - GitHub issue sync is normalized to the current backlog state: stale implemented-task issues were closed, and missing normalized-open tasks were added as issues #85-#100.
@@ -87,25 +90,24 @@
 - `TASK-07-02` is no longer active queue work; the implemented source of truth is the repo-backed onboarding task generation/backfill/update API on `/api/v1/onboarding/runs/{onboarding_id}/tasks`.
 - `TASK-07-03` is no longer active queue work; the implemented source of truth is the repo-backed employee self-service onboarding portal on `/employee` plus `/api/v1/employees/me/onboarding*`.
 - `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/` and rendered as the manager workspace on the existing `/` route.
-- `TASK-12-02` is now active infra gap work because Ollama scoring depends on an external host runtime and the current compose stack does not provide a self-contained AI path for local verification.
 - The remaining candidate-domain follow-on work after `TASK-03-08` is limited to search/filtering
   (`TASK-03-04`) and later AI quality/fallback work, not baseline parsed-profile structure.
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `22` tasks.
+- Normalized open backlog count: `21` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
-- GitHub tracking for the normalized open backlog currently lives in issues `#18-#23`, `#61-#62`, `#85-#88`, and `#91-#100`.
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `22`-task count.
+- Repo backlog state now excludes `TASK-12-02`; GitHub issue `#85` still needs authenticated closeout before the remote tracker list shrinks accordingly.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `21`-task count.
 - Current open backlog by delivery wave:
-  - Wave 1 product gaps: `TASK-12-02`, `TASK-03-04`, `TASK-04-04`, `TASK-04-06`
+  - Wave 1 product gaps: `TASK-03-04`, `TASK-04-04`, `TASK-04-06`
   - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-01`, `TASK-10-02`, `TASK-10-03`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
   - Wave 3 phase-2 workspaces: `TASK-09-01`, `TASK-09-02`, `TASK-09-03`, `TASK-09-04`, `TASK-11-12`
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-12-02 | Needed to make local AI scoring verification self-contained instead of depending on an external host Ollama runtime |
-| A-2 | TASK-03-04 | Needed to turn the enriched universal candidate profile into recruiter-facing search/filter productivity |
+| A-1 | TASK-03-04 | Needed to turn the enriched universal candidate profile into recruiter-facing search/filter productivity |
+| A-2 | TASK-04-04 | Needed to define low-confidence scoring fallback behavior now that runtime verification is self-contained and shortlist scoring is operational locally |
 | A-3 | TASK-09-01 | Full manager workspace is now the next dependent slice because manager users currently see only the onboarding-progress dashboard on `/`, while broader team hiring/onboarding visibility remains deferred |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.

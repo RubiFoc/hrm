@@ -13,6 +13,13 @@
 ## Docker
 - Built by root compose stack using `docker/backend.Dockerfile`.
 - Container health endpoint: `GET /health`.
+- Default compose scoring path stays external-host compatible:
+  `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
+- `backend` and `backend-worker` now include `host.docker.internal:host-gateway` for Linux-safe access to host Ollama without changing the default compose command.
+- Optional self-contained AI runtime:
+  `OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ai-local up -d --build`
+- Optional operator-facing compose scoring smoke:
+  `./scripts/smoke-scoring-compose.sh`
 
 ## Authentication Baseline (TASK-01-02)
 - Auth endpoints:
@@ -41,6 +48,10 @@
 - `CV_ALLOWED_MIME_TYPES`
 - `CV_MAX_SIZE_BYTES`
 - `CV_PARSING_MAX_ATTEMPTS`
+- `MATCH_SCORING_MAX_ATTEMPTS`
+- `MATCH_SCORING_MODEL_NAME`
+- `MATCH_SCORING_REQUEST_TIMEOUT_SECONDS`
+- `MATCH_SCORING_QUEUE_NAME`
 - `OLLAMA_BASE_URL`
 - `GOOGLE_CALENDAR_ENABLED`
 - `HRM_JWT_SECRET`
@@ -48,6 +59,10 @@
 - `HRM_ACCESS_TOKEN_TTL_SECONDS`
 - `HRM_REFRESH_TOKEN_TTL_SECONDS`
 - `HRM_AUTH_REDIS_PREFIX`
+- `CELERY_BROKER_URL`
+- `CELERY_RESULT_BACKEND`
+- `CELERY_TASK_DEFAULT_QUEUE`
+- `CELERY_TASK_TIME_LIMIT_SECONDS`
 - Settings loading policy:
   - Use `pydantic BaseSettings` models for all runtime config.
   - Canonical settings module: `hrm_backend/settings.py` (`AppSettings`, `get_settings`).

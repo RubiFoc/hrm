@@ -17,6 +17,7 @@
 | Unit | Validate isolated logic | Mandatory for all changed logic |
 | Integration/E2E | Validate boundaries and user/system paths | Mandatory for all changed logic and interfaces |
 | Infrastructure Smoke | Validate Docker Compose runtime readiness | Mandatory for container/runtime baseline changes (`TASK-12-01`) |
+| Operator-Facing AI Smoke | Validate opt-in compose-local Ollama scoring lifecycle | Mandatory when `TASK-12-02` changes the `ai-local` runtime path |
 
 ## Test Package Layout (Backend)
 - Keep test tree aligned with application package boundaries and split by level.
@@ -108,6 +109,27 @@ apps/backend/tests/
   - browser public candidate requests use `VITE_API_BASE_URL` backend origin rather than relative frontend origin;
   - smoke passes when the public tracking status reaches at least `queued`/`running`; `analysis_ready=true` is preferred but not mandatory for compose success.
   - Google Calendar and Ollama integrations are intentionally excluded from compose smoke; their reachability is not required for local compose baseline acceptance.
+
+## Optional AI-Local Compose Verification (`TASK-12-02`)
+- Canonical self-contained runtime command:
+  `OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ai-local up -d --build`
+- Operator-facing verification command:
+  `./scripts/smoke-scoring-compose.sh`
+- Required supporting checks when `ai-local` runtime behavior changes:
+  - `docker compose config`
+  - `uv run --project apps/backend ruff check .`
+  - `uv run --project apps/backend pytest -q tests/unit/scoring tests/integration/scoring/test_match_scoring_api.py`
+  - `./scripts/check-docs-structure.sh`
+- Verification scope for `./scripts/smoke-scoring-compose.sh`:
+  - `ollama` is `healthy` and `ollama-init` completes successfully;
+  - `backend` and `backend-worker` both see `OLLAMA_BASE_URL=http://ollama:11434`;
+  - one real vacancy/candidate/CV path reaches `analysis_ready=true`;
+  - real scoring runs through the existing API and reaches canonical lifecycle states;
+  - final score payload contains canonical keys without asserting specific score values.
+- Acceptance rules:
+  - Keep `./scripts/smoke-compose.sh` unchanged as the mandatory baseline smoke.
+  - Do not add `./scripts/smoke-scoring-compose.sh` to required CI or browser smoke jobs.
+  - Keep scoring/public API routes and payload contracts unchanged while expanding only runtime-level verification.
 
 ## Evidence Format
 - Command
@@ -209,6 +231,7 @@ apps/backend/tests/
 - Keep the current compose smoke green.
 - Do not regress auth or CORS behavior.
 - Keep scoring verification at unit/integration level; do not extend compose browser smoke to scoring until runtime nondeterminism is addressed.
+- Use `./scripts/smoke-scoring-compose.sh` only as an opt-in operator/runtime verification for the compose-local Ollama profile.
 - Shortlist review must work against the real backend scoring contract, not mock-only placeholder data.
 
 ## Interview Scheduling and Candidate Registration Verification (`TASK-11-08`, `TASK-05-01`, `TASK-05-02`)

@@ -44,6 +44,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0037 | 2026-03-11 | accepted | Expose onboarding progress dashboards on the existing `/` route and keep manager visibility read-only and assignment-scoped | architect + backend-engineer + frontend-engineer | onboarding progress read model, manager visibility policy, frontend route topology, RBAC |
 | ADR-0038 | 2026-03-11 | accepted | Perform native PDF/DOCX text extraction before CV normalization while keeping parsing and scoring contracts stable | architect + backend-engineer | candidate parsing pipeline, evidence traceability, worker/runtime dependencies, scoring preconditions |
 | ADR-0039 | 2026-03-11 | accepted | Enrich parsed CV profiles with profession-agnostic workplaces, held positions, education, normalized titles/dates, and generic skills | architect + backend-engineer | candidate parsing pipeline, parsed-profile semantics, evidence mapping, product framing |
+| ADR-0040 | 2026-03-12 | accepted | Keep default Ollama runtime external-host compatible while adding an opt-in compose-local `ai-local` profile and separate scoring smoke | architect + backend-engineer | compose topology, scoring runtime, operator verification |
 
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
@@ -773,3 +774,31 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Existing parsing status, analysis response envelope, and scoring preconditions remain stable.
   - Later search/ranking slices can build on richer workplace and education data without reopening
     storage or route topology.
+
+## ADR-0040
+- Context: `TASK-12-02` needed a self-contained local AI verification path, but the existing
+  compose baseline and scoring/public contracts were already stable and could not regress. The
+  repository also had to stay compatible with host-installed Ollama instances and Linux hosts.
+- Decision:
+  - Keep the default backend scoring target unchanged:
+    `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
+  - Add `extra_hosts: ["host.docker.internal:host-gateway"]` to `backend` and `backend-worker`
+    so the external-host Ollama path remains Linux-safe.
+  - Add an optional compose profile `ai-local` with:
+    - `ollama` service using a persistent volume and `/api/tags` healthcheck;
+    - `ollama-init` one-shot bootstrap that pulls `MATCH_SCORING_MODEL_NAME` and exits `0`.
+  - Do not publish the Ollama port in compose, so the profile does not conflict with an existing
+    host Ollama runtime.
+  - Keep API routes, score payload contracts, route topology, and the baseline compose smoke
+    unchanged.
+  - Add a separate operator-facing verification path:
+    `OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ai-local up -d --build`
+    followed by `./scripts/smoke-scoring-compose.sh`.
+- Consequences:
+  - Default local development and CI keep the existing compose/browser smoke behavior.
+  - Linux users no longer depend on Docker Desktop-style `host.docker.internal` handling for the
+    external-host scoring path.
+  - Real compose-local scoring verification becomes reproducible without widening mandatory CI or
+    browser smoke scope.
+  - First `ai-local` bootstrap can take longer and consume persistent disk because the model pull is
+    explicit and cached in `ollama_data`.

@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-11
+- Date: 2026-03-12
 - Updated by: architect + backend-engineer + frontend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
@@ -508,7 +508,8 @@ flowchart LR
   OAPI --> MERGE
   FECG --> MERGE
   BSMOKE --> MERGE
-  MERGE --> MAIN[Protected main]
+  MERGE --> CLOSEOUT[Post-merge closeout\ncheck linked issues\nclose resolved issues\nsync docs/project/tasks.md]
+  CLOSEOUT --> MAIN[Protected main]
 ```
 
 ## Diagram 13: Docker Compose Runtime Topology (Phase 1)
@@ -525,6 +526,10 @@ flowchart TB
     DBINIT[postgres-init one-shot job]
     MIG[backend-migrate one-shot job]
     MINIT[minio-init one-shot job]
+    subgraph AILOC[optional ai-local profile]
+      OLL[ollama container\ninternal :11434\npersistent ollama_data]
+      OINIT[ollama-init one-shot\npull MATCH_SCORING_MODEL_NAME]
+    end
   end
 
   USER[Chrome Browser] --> FE
@@ -538,11 +543,18 @@ flowchart TB
   WKR --> DB
   WKR --> MQ
   WKR --> OBJ
-  BE --> OLL[Ollama]
-  WKR --> OLL
+  OINIT --> OLL
+  BE -. ai-local only .-> OLL
+  WKR -. ai-local only .-> OLL
+  BE --> EXOLL[External host Ollama default\nhost.docker.internal:11434]
+  WKR --> EXOLL
   BE <--> GCAL[Google Calendar]
   WKR <--> GCAL
 ```
+
+Default compose startup keeps the external-host Ollama path, while the optional `ai-local`
+profile switches `backend` and `backend-worker` to compose-local Ollama without publishing the
+Ollama port on the host.
 
 ## Diagram 14: Authentication and Session Lifecycle Sequence
 

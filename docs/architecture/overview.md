@@ -1,7 +1,7 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-11
+- Date: 2026-03-12
 - Updated by: architect + backend-engineer + frontend-engineer
 
 ## System Context
@@ -58,7 +58,8 @@ flowchart LR
    candidate profile + CV -> native PDF/DOCX text extraction -> RU/EN normalization + universal
    workplace/education/title/date/skills enrichment + evidence extraction ->
    recruiter selects vacancy + candidate in `/` -> explicit scoring request ->
-   `409` if parsed CV analysis is not ready, otherwise async scoring via Ollama ->
+   `409` if parsed CV analysis is not ready, otherwise async scoring via Ollama
+   (external host by default; compose-local only when `ai-local` profile is enabled explicitly) ->
    persisted score artifact -> recruiter review -> shortlist.
 2. Interview Scheduling Flow:
    recruiter selects vacancy + candidate in `/` -> interview create/reschedule ->
@@ -173,6 +174,15 @@ flowchart LR
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
 - Compose baseline services: `frontend`, `backend`, `backend-worker`, `postgres`, `postgres-init`, `backend-migrate`, `redis`, `minio`, `minio-init`.
 - Compose bootstrap baseline: `postgres-init`, `backend-migrate`, and `minio-init` are one-shot prerequisites before steady-state services are considered ready.
+- Compose scoring default remains external-host compatible:
+  `OLLAMA_BASE_URL=http://host.docker.internal:11434`.
+- Linux-safe external-host scoring baseline:
+  `backend` and `backend-worker` inject `host.docker.internal:host-gateway`.
+- Optional compose-local AI runtime:
+  `OLLAMA_BASE_URL=http://ollama:11434 docker compose --profile ai-local up -d --build`
+  adds `ollama`, `ollama-init`, and persistent `ollama_data` without changing the default startup path.
+- Compose smoke baseline remains unchanged:
+  `./scripts/smoke-compose.sh` still validates login + public apply only, while real scoring verification lives in opt-in `./scripts/smoke-scoring-compose.sh`.
 - Async runtime baseline: dedicated `backend-worker` (Celery) processing DB-backed jobs on
   `cv_parsing`, `match_scoring`, and `interview_sync` queues.
 - Frontend style: React.js + TypeScript SPA with role-based route guards and shared component system.
@@ -219,6 +229,7 @@ flowchart LR
   `employee_profiles.staff_account_id` is still null; ambiguous duplicate e-mail data fails closed
   with an identity-conflict error until HR cleans the source records.
 - Integration instability risk with calendar sync edge cases.
+- Optional compose-local Ollama verification now removes the external-host dependency for real scoring checks, but first-run bootstrap can be slower because the model pull is explicit and persistent-volume backed.
 - Compliance risk if country-specific legal acts are not mapped early.
 
 ## Delivery Phases
