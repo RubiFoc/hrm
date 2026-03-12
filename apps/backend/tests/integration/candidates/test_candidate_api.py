@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid4, uuid5
 
@@ -15,9 +16,12 @@ from hrm_backend.audit.models.event import AuditEvent
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.candidates.dependencies.candidates import get_candidate_storage
+from hrm_backend.candidates.models.document import CandidateDocument
+from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.core.models.base import Base
 from hrm_backend.main import app
 from hrm_backend.settings import AppSettings, get_settings
+from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition
 
 pytestmark = pytest.mark.anyio
 
@@ -107,6 +111,90 @@ def _load_events(database_url: str) -> list[AuditEvent]:
         engine.dispose()
 
 
+def _set_candidate_updated_at(
+    database_url: str,
+    *,
+    candidate_id: str,
+    updated_at: datetime,
+) -> None:
+    """Force deterministic candidate ordering for pagination assertions."""
+    engine = create_engine(database_url, future=True)
+    try:
+        with Session(engine) as session:
+            profile = session.get(CandidateProfile, candidate_id)
+            assert profile is not None
+            profile.updated_at = updated_at
+            session.add(profile)
+            session.commit()
+    finally:
+        engine.dispose()
+
+
+def _seed_candidate_document(
+    database_url: str,
+    *,
+    candidate_id: str,
+    parsed_profile_json: dict[str, object] | None,
+    detected_language: str = "en",
+    parsed_at: datetime | None = None,
+) -> None:
+    """Seed one active candidate document row for list API filtering tests."""
+    engine = create_engine(database_url, future=True)
+    try:
+        with Session(engine) as session:
+            session.add(
+                CandidateDocument(
+                    document_id=str(uuid4()),
+                    candidate_id=candidate_id,
+                    object_key=f"candidates/{candidate_id}/cv/{uuid4()}.pdf",
+                    filename="cv.pdf",
+                    mime_type="application/pdf",
+                    size_bytes=128,
+                    checksum_sha256=hashlib.sha256(candidate_id.encode("utf-8")).hexdigest(),
+                    is_active=True,
+                    parsed_profile_json=parsed_profile_json,
+                    evidence_json=None,
+                    detected_language=detected_language,
+                    parsed_at=parsed_at,
+                    created_at=parsed_at or datetime(2026, 3, 12, 9, 0, tzinfo=UTC),
+                )
+            )
+            session.commit()
+    finally:
+        engine.dispose()
+
+
+def _seed_pipeline_transition(
+    database_url: str,
+    *,
+    vacancy_id: str,
+    candidate_id: str,
+    from_stage: str | None,
+    to_stage: str,
+    transitioned_at: datetime,
+) -> None:
+    """Seed one append-only vacancy transition row for candidate list context tests."""
+    engine = create_engine(database_url, future=True)
+    try:
+        with Session(engine) as session:
+            session.add(
+                PipelineTransition(
+                    transition_id=str(uuid4()),
+                    vacancy_id=vacancy_id,
+                    candidate_id=candidate_id,
+                    from_stage=from_stage,
+                    to_stage=to_stage,
+                    reason="seeded-for-list-tests",
+                    changed_by_sub="hr",
+                    changed_by_role="hr",
+                    transitioned_at=transitioned_at,
+                )
+            )
+            session.commit()
+    finally:
+        engine.dispose()
+
+
 @pytest.fixture()
 async def api_client(configured_app) -> AsyncClient:
     """Provide async API client for candidate integration tests."""
@@ -177,6 +265,9 @@ async def test_candidate_crud_and_ownership_deny_are_enforced(
     list_response = await api_client.get("/api/v1/candidates")
     assert list_response.status_code == 200
     assert len(list_response.json()["items"]) == 1
+    assert list_response.json()["total"] == 1
+    assert list_response.json()["limit"] == 20
+    assert list_response.json()["offset"] == 0
 
     events = _load_events(database_url)
     permission_denials = [
@@ -294,3 +385,295 @@ async def test_candidate_uuid_boundaries_reject_invalid_ids(
 
     analysis_response = await api_client.get(f"/api/v1/candidates/{invalid_id}/cv/analysis")
     assert analysis_response.status_code == 422
+
+
+async def test_candidate_list_supports_search_filters_and_pagination(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify recruiter-facing candidate list filtering, enrichment, and pagination contract."""
+    _, _, _, database_url = configured_app
+
+    alpha_response = await api_client.post(
+        "/api/v1/candidates",
+        json={
+            "first_name": "Alice",
+            "last_name": "Miller",
+            "email": "alice@example.com",
+            "location": "Minsk",
+            "current_title": "Backend Recruiter",
+            "extra_data": {},
+        },
+    )
+    beta_response = await api_client.post(
+        "/api/v1/candidates",
+        json={
+            "first_name": "Boris",
+            "last_name": "Stone",
+            "email": "boris@example.com",
+            "location": "Minsk",
+            "current_title": "Backend Recruiter",
+            "extra_data": {},
+        },
+    )
+    gamma_response = await api_client.post(
+        "/api/v1/candidates",
+        json={
+            "first_name": "Carla",
+            "last_name": "West",
+            "email": "carla@example.com",
+            "location": "Warsaw",
+            "current_title": "Designer",
+            "extra_data": {},
+        },
+    )
+    alpha_id = alpha_response.json()["candidate_id"]
+    beta_id = beta_response.json()["candidate_id"]
+    gamma_id = gamma_response.json()["candidate_id"]
+
+    _seed_candidate_document(
+        database_url,
+        candidate_id=alpha_id,
+        parsed_profile_json={
+            "summary": "Leads Acme Logistics recruiting and warehouse staffing operations.",
+            "skills": ["python", "talent_sourcing"],
+            "experience": {"years_total": 6},
+            "workplaces": {
+                "entries": [
+                    {
+                        "employer": "Acme Logistics",
+                        "position": {
+                            "raw": "Warehouse Supervisor",
+                            "normalized": "warehouse supervisor",
+                        },
+                    }
+                ]
+            },
+            "titles": {
+                "current": {
+                    "raw": "Backend Recruiter",
+                    "normalized": "backend recruiter",
+                },
+                "past": [],
+            },
+        },
+        detected_language="en",
+        parsed_at=datetime(2026, 3, 12, 8, 30, tzinfo=UTC),
+    )
+    _seed_candidate_document(
+        database_url,
+        candidate_id=beta_id,
+        parsed_profile_json={
+            "summary": "Supports office hiring operations.",
+            "skills": ["python"],
+            "experience": {"years_total": 2},
+            "workplaces": {
+                "entries": [
+                    {
+                        "employer": "People Ops",
+                        "position": {
+                            "raw": "Recruiter",
+                            "normalized": "recruiter",
+                        },
+                    }
+                ]
+            },
+            "titles": {
+                "current": {"raw": "Backend Recruiter", "normalized": "backend recruiter"},
+                "past": [],
+            },
+        },
+        detected_language="en",
+        parsed_at=datetime(2026, 3, 12, 8, 0, tzinfo=UTC),
+    )
+    _seed_candidate_document(
+        database_url,
+        candidate_id=gamma_id,
+        parsed_profile_json=None,
+        detected_language="unknown",
+        parsed_at=None,
+    )
+
+    _set_candidate_updated_at(
+        database_url,
+        candidate_id=alpha_id,
+        updated_at=datetime(2026, 3, 12, 13, 0, tzinfo=UTC),
+    )
+    _set_candidate_updated_at(
+        database_url,
+        candidate_id=beta_id,
+        updated_at=datetime(2026, 3, 12, 12, 0, tzinfo=UTC),
+    )
+    _set_candidate_updated_at(
+        database_url,
+        candidate_id=gamma_id,
+        updated_at=datetime(2026, 3, 12, 11, 0, tzinfo=UTC),
+    )
+
+    filtered_response = await api_client.get(
+        "/api/v1/candidates",
+        params={
+            "search": "acme logistics",
+            "location": "minsk",
+            "current_title": "backend recruit",
+            "skill": "python",
+            "analysis_ready": "true",
+            "min_years_experience": "5",
+            "limit": "20",
+            "offset": "0",
+        },
+    )
+    assert filtered_response.status_code == 200
+    filtered_payload = filtered_response.json()
+    assert filtered_payload["total"] == 1
+    assert filtered_payload["limit"] == 20
+    assert filtered_payload["offset"] == 0
+    assert [item["candidate_id"] for item in filtered_payload["items"]] == [alpha_id]
+    assert filtered_payload["items"][0]["analysis_ready"] is True
+    assert filtered_payload["items"][0]["detected_language"] == "en"
+    assert filtered_payload["items"][0]["years_experience"] == 6
+    assert filtered_payload["items"][0]["skills"] == ["python", "talent_sourcing"]
+    assert filtered_payload["items"][0]["vacancy_stage"] is None
+    assert filtered_payload["items"][0]["parsed_at"].startswith("2026-03-12T08:30:00")
+
+    pagination_response = await api_client.get(
+        "/api/v1/candidates",
+        params={"limit": "1", "offset": "1"},
+    )
+    assert pagination_response.status_code == 200
+    pagination_payload = pagination_response.json()
+    assert pagination_payload["total"] == 3
+    assert pagination_payload["limit"] == 1
+    assert pagination_payload["offset"] == 1
+    assert [item["candidate_id"] for item in pagination_payload["items"]] == [beta_id]
+
+
+async def test_candidate_list_supports_vacancy_context_stage_filters_and_pipeline_only(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify candidate list resolves latest vacancy stages and vacancy-scoped filters."""
+    _, _, _, database_url = configured_app
+
+    vacancy_response = await api_client.post(
+        "/api/v1/vacancies",
+        json={
+            "title": "Recruiter",
+            "description": "Own candidate screening and pipeline operations.",
+            "department": "HR",
+            "status": "open",
+        },
+    )
+    assert vacancy_response.status_code == 200
+    vacancy_id = vacancy_response.json()["vacancy_id"]
+
+    alpha_id = (
+        await api_client.post(
+            "/api/v1/candidates",
+            json={
+                "first_name": "Alice",
+                "last_name": "Stage",
+                "email": "alice.stage@example.com",
+                "extra_data": {},
+            },
+        )
+    ).json()["candidate_id"]
+    beta_id = (
+        await api_client.post(
+            "/api/v1/candidates",
+            json={
+                "first_name": "Boris",
+                "last_name": "Stage",
+                "email": "boris.stage@example.com",
+                "extra_data": {},
+            },
+        )
+    ).json()["candidate_id"]
+    gamma_id = (
+        await api_client.post(
+            "/api/v1/candidates",
+            json={
+                "first_name": "Carla",
+                "last_name": "Stage",
+                "email": "carla.stage@example.com",
+                "extra_data": {},
+            },
+        )
+    ).json()["candidate_id"]
+
+    _seed_pipeline_transition(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=alpha_id,
+        from_stage=None,
+        to_stage="applied",
+        transitioned_at=datetime(2026, 3, 12, 8, 0, tzinfo=UTC),
+    )
+    _seed_pipeline_transition(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=alpha_id,
+        from_stage="applied",
+        to_stage="shortlist",
+        transitioned_at=datetime(2026, 3, 12, 9, 0, tzinfo=UTC),
+    )
+    _seed_pipeline_transition(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=beta_id,
+        from_stage=None,
+        to_stage="screening",
+        transitioned_at=datetime(2026, 3, 12, 8, 30, tzinfo=UTC),
+    )
+
+    context_response = await api_client.get(
+        "/api/v1/candidates",
+        params={"vacancy_id": vacancy_id},
+    )
+    assert context_response.status_code == 200
+    context_payload = context_response.json()
+    context_items = {
+        item["candidate_id"]: item["vacancy_stage"]
+        for item in context_payload["items"]
+    }
+    assert context_items[alpha_id] == "shortlist"
+    assert context_items[beta_id] == "screening"
+    assert context_items[gamma_id] is None
+
+    pipeline_only_response = await api_client.get(
+        "/api/v1/candidates",
+        params={"vacancy_id": vacancy_id, "in_pipeline_only": "true"},
+    )
+    assert pipeline_only_response.status_code == 200
+    assert {
+        item["candidate_id"] for item in pipeline_only_response.json()["items"]
+    } == {alpha_id, beta_id}
+
+    shortlist_response = await api_client.get(
+        "/api/v1/candidates",
+        params={"vacancy_id": vacancy_id, "stage": "shortlist"},
+    )
+    assert shortlist_response.status_code == 200
+    shortlist_payload = shortlist_response.json()
+    assert shortlist_payload["total"] == 1
+    assert [item["candidate_id"] for item in shortlist_payload["items"]] == [alpha_id]
+    assert shortlist_payload["items"][0]["vacancy_stage"] == "shortlist"
+
+
+async def test_candidate_list_rejects_vacancy_stage_filters_without_vacancy_context(
+    api_client: AsyncClient,
+) -> None:
+    """Verify vacancy-scoped stage filters return `422` without `vacancy_id`."""
+    stage_response = await api_client.get(
+        "/api/v1/candidates",
+        params={"stage": "screening"},
+    )
+    assert stage_response.status_code == 422
+    assert stage_response.json()["detail"] == "stage_requires_vacancy_id"
+
+    in_pipeline_response = await api_client.get(
+        "/api/v1/candidates",
+        params={"in_pipeline_only": "true"},
+    )
+    assert in_pipeline_response.status_code == 422
+    assert in_pipeline_response.json()["detail"] == "in_pipeline_only_requires_vacancy_id"

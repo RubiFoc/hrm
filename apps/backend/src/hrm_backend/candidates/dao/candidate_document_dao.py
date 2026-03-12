@@ -90,6 +90,39 @@ class CandidateDocumentDAO:
             .first()
         )
 
+    def get_active_documents_by_candidate_ids(
+        self,
+        candidate_ids: list[str],
+    ) -> dict[str, CandidateDocument]:
+        """Batch-load active CV rows for multiple candidates.
+
+        Args:
+            candidate_ids: Candidate identifiers that should be resolved in one query.
+
+        Returns:
+            dict[str, CandidateDocument]: Mapping of `candidate_id -> latest active document`.
+        """
+        if not candidate_ids:
+            return {}
+
+        rows = (
+            self._session.query(CandidateDocument)
+            .filter(
+                CandidateDocument.candidate_id.in_(candidate_ids),
+                CandidateDocument.is_active.is_(True),
+            )
+            .order_by(
+                CandidateDocument.candidate_id.asc(),
+                CandidateDocument.created_at.desc(),
+                CandidateDocument.document_id.desc(),
+            )
+            .all()
+        )
+        documents: dict[str, CandidateDocument] = {}
+        for row in rows:
+            documents.setdefault(row.candidate_id, row)
+        return documents
+
     def get_by_id(self, document_id: str) -> CandidateDocument | None:
         """Fetch candidate document by identifier.
 

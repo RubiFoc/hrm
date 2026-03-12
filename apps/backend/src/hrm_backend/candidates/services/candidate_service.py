@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import cast
 from uuid import UUID, uuid4
 
 from fastapi import HTTPException, Request, UploadFile, status
@@ -29,8 +30,18 @@ from hrm_backend.candidates.schemas.profile import (
     CandidateResponse,
     CandidateUpdateRequest,
 )
+from hrm_backend.candidates.services.candidate_search import (
+    CandidateListFilters,
+    build_candidate_list_projection,
+    matches_candidate_filters,
+    sort_candidate_projections,
+    to_candidate_list_item_response,
+    validate_candidate_list_filters,
+)
 from hrm_backend.candidates.utils.cv import validate_cv_payload
 from hrm_backend.settings import AppSettings
+from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransitionDAO
+from hrm_backend.vacancies.schemas.pipeline import PipelineStage
 
 
 @dataclass(frozen=True)
@@ -51,6 +62,7 @@ class CandidateService:
         profile_dao: CandidateProfileDAO,
         document_dao: CandidateDocumentDAO,
         parsing_job_dao: CVParsingJobDAO,
+        transition_dao: PipelineTransitionDAO,
         storage: CandidateStorage,
         audit_service: AuditService,
     ) -> None:
@@ -61,6 +73,7 @@ class CandidateService:
             profile_dao: Candidate profile DAO.
             document_dao: Candidate document DAO.
             parsing_job_dao: CV parsing job DAO.
+            transition_dao: Pipeline transition DAO used for vacancy-context enrichment.
             storage: Object storage adapter.
             audit_service: Audit service for success/failure traces.
         """
@@ -68,6 +81,7 @@ class CandidateService:
         self._profile_dao = profile_dao
         self._document_dao = document_dao
         self._parsing_job_dao = parsing_job_dao
+        self._transition_dao = transition_dao
         self._storage = storage
         self._audit_service = audit_service
 
@@ -146,18 +160,96 @@ class CandidateService:
         *,
         auth_context: AuthContext,
         request: Request,
+        limit: int = 20,
+        offset: int = 0,
+        search: str | None = None,
+        location: str | None = None,
+        current_title: str | None = None,
+        skill: str | None = None,
+        analysis_ready: bool | None = None,
+        min_years_experience: float | None = None,
+        vacancy_id: UUID | None = None,
+        in_pipeline_only: bool = False,
+        stage: PipelineStage | None = None,
     ) -> CandidateListResponse:
-        """List candidate profiles for authorized actors.
+        """List candidate profiles for authorized actors with recruiter-facing filters.
 
         Args:
             auth_context: Authenticated actor context.
             request: HTTP request context.
+            limit: Maximum number of returned rows.
+            offset: Number of skipped rows after sorting.
+            search: Optional free-text search query.
+            location: Optional location filter.
+            current_title: Optional current-title filter.
+            skill: Optional parsed-skill filter.
+            analysis_ready: Optional parsed-analysis readiness filter.
+            min_years_experience: Optional minimum total years of experience.
+            vacancy_id: Optional vacancy context for latest pipeline stage enrichment.
+            in_pipeline_only: Optional vacancy-scoped pipeline-presence filter.
+            stage: Optional vacancy-scoped latest-stage filter.
 
         Returns:
             CandidateListResponse: Candidate list payload.
         """
-        items = [_to_candidate_response(item) for item in self._profile_dao.list_profiles()]
         actor_sub, actor_role = actor_from_auth_context(auth_context)
+        filters = CandidateListFilters(
+            limit=limit,
+            offset=offset,
+            search=search,
+            location=location,
+            current_title=current_title,
+            skill=skill,
+            analysis_ready=analysis_ready,
+            min_years_experience=min_years_experience,
+            vacancy_id=vacancy_id,
+            in_pipeline_only=in_pipeline_only,
+            stage=stage,
+        )
+
+        try:
+            validate_candidate_list_filters(filters)
+            profiles = self._profile_dao.list_profiles()
+            candidate_ids = [item.candidate_id for item in profiles]
+            active_documents = self._document_dao.get_active_documents_by_candidate_ids(
+                candidate_ids,
+            )
+            vacancy_stages: dict[str, PipelineStage] = {}
+            if vacancy_id is not None:
+                latest_transitions = self._transition_dao.get_latest_transitions_by_vacancy(
+                    vacancy_id=str(vacancy_id),
+                    candidate_ids=candidate_ids,
+                )
+                vacancy_stages = {
+                    candidate_id: cast(PipelineStage, transition.to_stage)
+                    for candidate_id, transition in latest_transitions.items()
+                }
+            matched_items = sort_candidate_projections(
+                [
+                    projection
+                    for projection in [
+                        build_candidate_list_projection(
+                            profile=profile,
+                            active_document=active_documents.get(profile.candidate_id),
+                            vacancy_stage=vacancy_stages.get(profile.candidate_id),
+                        )
+                        for profile in profiles
+                    ]
+                    if matches_candidate_filters(projection, filters)
+                ]
+            )
+        except HTTPException as exc:
+            self._audit_service.record_api_event(
+                action="candidate_profile:list",
+                resource_type="candidate_profile",
+                result="failure",
+                request=request,
+                actor_sub=actor_sub,
+                actor_role=actor_role,
+                reason=str(exc.detail),
+            )
+            raise
+
         self._audit_service.record_api_event(
             action="candidate_profile:list",
             resource_type="candidate_profile",
@@ -166,7 +258,13 @@ class CandidateService:
             actor_sub=actor_sub,
             actor_role=actor_role,
         )
-        return CandidateListResponse(items=items)
+        page = matched_items[filters.offset : filters.offset + filters.limit]
+        return CandidateListResponse(
+            items=[to_candidate_list_item_response(item) for item in page],
+            total=len(matched_items),
+            limit=filters.limit,
+            offset=filters.offset,
+        )
 
     def update_profile(
         self,

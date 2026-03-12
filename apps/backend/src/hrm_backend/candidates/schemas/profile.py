@@ -8,6 +8,9 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from hrm_backend.candidates.schemas.parsing import DetectedCVLanguage
+from hrm_backend.vacancies.schemas.pipeline import PipelineStage
+
 
 class CandidateCreateRequest(BaseModel):
     """Input payload for candidate profile creation.
@@ -85,7 +88,32 @@ class CandidateResponse(BaseModel):
     updated_at: datetime
 
 
-class CandidateListResponse(BaseModel):
-    """Candidate profile list payload."""
+class CandidateListItemResponse(BaseModel):
+    """Candidate list row enriched with parsed CV and vacancy-context metadata."""
 
-    items: list[CandidateResponse]
+    candidate_id: UUID
+    owner_subject_id: str
+    first_name: str
+    last_name: str
+    email: str
+    phone: str | None
+    location: str | None
+    current_title: str | None
+    extra_data: dict[str, Any]
+    created_at: datetime
+    updated_at: datetime
+    analysis_ready: bool
+    detected_language: DetectedCVLanguage
+    parsed_at: datetime | None
+    years_experience: float | None
+    skills: list[str] = Field(default_factory=list)
+    vacancy_stage: PipelineStage | None
+
+
+class CandidateListResponse(BaseModel):
+    """Paginated candidate profile list payload."""
+
+    items: list[CandidateListItemResponse]
+    total: int = Field(ge=0)
+    limit: int = Field(ge=1)
+    offset: int = Field(ge=0)

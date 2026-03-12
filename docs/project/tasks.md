@@ -24,6 +24,7 @@
 | TASK-12-02 | done/closed | GitHub issue #85 closed; merged in `main` via PR #105 (`a67bb8c`) with Linux-safe host-gateway wiring for external-host Ollama, optional compose profile `ai-local` (`ollama` + `ollama-init` + persistent volume), and operator-facing `./scripts/smoke-scoring-compose.sh` while keeping baseline compose/browser smoke and scoring/public contracts unchanged |
 | TASK-11-01/02/03/04 | done/closed | GitHub issues #25, #26, #27, and #28 were closed during backlog normalization; the current repo remains the source of truth for the implemented frontend foundation |
 | TASK-03-01/02/03/05/06/07/08 | implemented/local-universal-profile-enrichment-slice | GitHub issue #90 is now closed; backend candidate profile, public apply, async parsing, native PDF/DOCX text extraction, RU/EN normalization, profession-agnostic structured CV enrichment (workplaces with held positions, education, normalized titles/dates, generic skills), evidence traceability, and public tracking endpoints are present in repo with unit/integration coverage |
+| TASK-03-04 | implemented/local-candidate-search-slice | `GET /api/v1/candidates` now supports recruiter-facing search/filter/pagination, active-CV enrichment, and vacancy-context latest-stage filters, while `/` consumes the server-filtered list with apply/reset controls and pagination; GitHub issue `#91` remains open until the merge-driven closeout step |
 | TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
 | TASK-11-06 | implemented/local-baseline | `/candidate` now supports public deep-link apply, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling |
 | TASK-11-05 | implemented/local-baseline | `/` now exposes staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
@@ -61,6 +62,11 @@
   are enriched additively with profession-agnostic workplace history, held positions, education,
   normalized titles/dates, and generic skills while keeping parsing/analysis/scoring contracts
   stable.
+- `TASK-03-04` is now implemented in this delivery branch as one recruiter-facing slice: the
+  existing `GET /api/v1/candidates` route exposes server filtering, pagination, active-CV
+  enrichment, and vacancy-scoped latest-stage context, while the existing HR workspace on `/`
+  now applies those filters without adding a new route tree; post-merge issue `#91` closeout is
+  still pending and must be verified after merge before marking the task fully delivered.
 - The scoring/shortlist-review slice (`TASK-04-01/02/03 + TASK-11-07`) is now implemented in repo as one vertical delivery unit.
 - Scoring explainability (`TASK-04-05`) is now implemented in the same slice; remaining AI backlog is the low-confidence fallback and the quality harness.
 - The compliance follow-on slice (`TASK-13-01/02`) is now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
@@ -90,25 +96,24 @@
 - `TASK-07-02` is no longer active queue work; the implemented source of truth is the repo-backed onboarding task generation/backfill/update API on `/api/v1/onboarding/runs/{onboarding_id}/tasks`.
 - `TASK-07-03` is no longer active queue work; the implemented source of truth is the repo-backed employee self-service onboarding portal on `/employee` plus `/api/v1/employees/me/onboarding*`.
 - `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/` and rendered as the manager workspace on the existing `/` route.
-- The remaining candidate-domain follow-on work after `TASK-03-08` is limited to search/filtering
-  (`TASK-03-04`) and later AI quality/fallback work, not baseline parsed-profile structure.
+- The remaining candidate-domain follow-on work after `TASK-03-08` is limited to later AI
+  quality/fallback work, not baseline parsed-profile structure.
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `21` tasks.
+- Normalized open backlog count: `20` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `21`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `20`-task count.
 - Current open backlog by delivery wave:
-  - Wave 1 product gaps: `TASK-03-04`, `TASK-04-04`, `TASK-04-06`
+  - Wave 1 product gaps: `TASK-04-04`, `TASK-04-06`
   - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-01`, `TASK-10-02`, `TASK-10-03`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
   - Wave 3 phase-2 workspaces: `TASK-09-01`, `TASK-09-02`, `TASK-09-03`, `TASK-09-04`, `TASK-11-12`
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-03-04 | Needed to turn the enriched universal candidate profile into recruiter-facing search/filter productivity |
-| A-2 | TASK-04-04 | Needed to define low-confidence scoring fallback behavior now that runtime verification is self-contained and shortlist scoring is operational locally |
-| A-3 | TASK-09-01 | Full manager workspace is now the next dependent slice because manager users currently see only the onboarding-progress dashboard on `/`, while broader team hiring/onboarding visibility remains deferred |
+| A-1 | TASK-04-04 | Needed to define low-confidence scoring fallback behavior now that runtime verification is self-contained and shortlist scoring is operational locally |
+| A-2 | TASK-09-01 | Full manager workspace is now the next dependent slice because manager users currently see only the onboarding-progress dashboard on `/`, while broader team hiring/onboarding visibility remains deferred |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 

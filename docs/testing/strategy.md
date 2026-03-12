@@ -156,7 +156,7 @@ apps/backend/tests/
 | Swagger bearer security scheme | N/A | OpenAPI contract check in auth integration suite | Swagger UI contains `Authorize` flow |
 | Admin APIs and audit hooks | `tests/unit/rbac/test_rbac.py` | `tests/integration/security/test_audit_enforcement.py` | `admin.staff:create` and `admin.employee_key:create` success/failure events |
 
-## Recruitment Domain Verification (TASK-03-01, TASK-03-02, TASK-02-01, TASK-02-02, TASK-03-03)
+## Recruitment Domain Verification (TASK-03-01, TASK-03-02, TASK-02-01, TASK-02-02, TASK-03-03, TASK-03-04)
 
 | Capability | Unit Coverage | Integration Coverage | Required Evidence |
 | --- | --- | --- | --- |
@@ -168,6 +168,7 @@ apps/backend/tests/
 | Async CV parsing lifecycle and retry-safe behavior (Celery executor) | `tests/unit/candidates/test_cv_parsing_worker.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` | `queued/running/succeeded/failed` with bounded retries and public tracking-by-job-id contract |
 | Native PDF/DOCX text extraction before normalization (`TASK-03-07`) | `tests/unit/candidates/test_cv_text_extraction.py` + `tests/unit/candidates/test_cv_parsing_normalization.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` + `tests/integration/scoring/test_match_scoring_api.py` | Real PDF/DOCX fixtures are extracted before normalization, broken/empty documents fail closed, and scoring preconditions stay unchanged |
 | Profession-agnostic parsed-profile enrichment (`TASK-03-08`) | `tests/unit/candidates/test_cv_profile_enrichment.py` + `tests/unit/candidates/test_cv_parsing_normalization.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` + `tests/integration/scoring/test_match_scoring_api.py` | Parsed CV profile includes workplace history with held positions, education, normalized titles/dates, generic skills, indexed evidence, and scoring stays compatible with the richer payload |
+| Candidate search/filter list contract (`TASK-03-04`) | `tests/unit/candidates/test_candidate_search.py` | `tests/integration/candidates/test_candidate_api.py` | `GET /api/v1/candidates` supports recruiter-facing search, `analysis_ready`, skill/experience filters, pagination, vacancy-context latest stage enrichment, `in_pipeline_only`, and `422` for vacancy-scoped filters without `vacancy_id` |
 | RU/EN CV normalization and language detection (`TASK-03-05`) | `tests/unit/candidates/test_cv_parsing_normalization.py` | `tests/integration/candidates/test_cv_parsing_jobs.py` | `detected_language` and canonical profile fields are persisted after worker success |
 | Evidence traceability + analysis read contract (`TASK-03-06`) | `tests/unit/candidates/test_cv_parsing_normalization.py` (field-level evidence snippets/offsets) | `tests/integration/candidates/test_candidate_api.py` + `tests/integration/candidates/test_cv_parsing_jobs.py` | `GET /api/v1/candidates/{candidate_id}/cv/analysis` and `GET /api/v1/public/cv-parsing-jobs/{job_id}/analysis` return structured profile + evidence; pre-ready path returns `409` |
 | RBAC + audit coverage for recruitment endpoints | `tests/unit/rbac/test_rbac.py` | `tests/integration/security/test_audit_enforcement.py` + recruitment integration suites | `allowed/denied/success/failure` audit records in `audit_events` |
@@ -202,6 +203,7 @@ apps/backend/tests/
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
 | --- | --- | --- | --- |
 | Vacancy list/create/edit UI on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | `./scripts/smoke-compose.sh` creates vacancy through staff API for downstream browser use | staff user can create and update vacancy through typed API wrappers |
+| Server-filtered candidate selector, apply/reset filters, and pagination on `/` (`TASK-03-04`) | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration: `apps/backend/tests/integration/candidates/test_candidate_api.py` | HR candidate selector uses server query params (`search`, `analysis_ready`, vacancy-scoped filters, `limit/offset`) and preserves selected-candidate context across pagination |
 | Candidate selection and pipeline transition append | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration: `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | valid transition appends and invalid transition returns localized `422` |
 | Ordered transition history/timeline render | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration: `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | timeline reflects append-only transition history for selected vacancy + candidate |
 | Offer lifecycle block on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend offer/pipeline integration below | HR can save draft, mark sent, record accepted/declined, and see localized blockers in the existing workspace |

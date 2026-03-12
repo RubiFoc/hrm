@@ -243,6 +243,15 @@ const resources = {
           "Selected candidate: {{candidateName}} ({{candidateId}})",
         selectVacancyAction: "Select",
         selectCandidateAction: "Select candidate",
+        filters: {
+          candidateSearch: "Candidate search",
+          analysisReady: "Analysis ready only",
+          inPipelineOnly: "In pipeline only",
+          stage: "Latest stage",
+          anyStage: "Any stage",
+          apply: "Apply",
+          reset: "Reset",
+        },
         shortlist: {
           title: "Shortlist review",
           subtitle:
@@ -515,6 +524,10 @@ const resources = {
           matchScoreNotFound: "Match score was not found.",
           cvAnalysisNotReady:
             "CV analysis is not ready yet. Wait for parsing to finish and run score again.",
+          stageRequiresVacancy:
+            "Select a vacancy before filtering candidates by latest pipeline stage.",
+          inPipelineOnlyRequiresVacancy:
+            "Select a vacancy before limiting candidates to vacancy pipeline history.",
           invalidTransition:
             "The requested pipeline transition is not allowed from the current stage.",
           interviewFeedbackWindowNotOpen:
@@ -1031,6 +1044,15 @@ const resources = {
           "Выбран кандидат: {{candidateName}} ({{candidateId}})",
         selectVacancyAction: "Выбрать",
         selectCandidateAction: "Выбрать кандидата",
+        filters: {
+          candidateSearch: "Поиск кандидата",
+          analysisReady: "Только с готовым analysis",
+          inPipelineOnly: "Только из pipeline",
+          stage: "Последняя стадия",
+          anyStage: "Любая стадия",
+          apply: "Применить",
+          reset: "Сбросить",
+        },
         shortlist: {
           title: "Проверка шортлиста",
           subtitle:
@@ -1313,6 +1335,10 @@ const resources = {
           matchScoreNotFound: "Match score не найден.",
           cvAnalysisNotReady:
             "CV analysis ещё не готов. Дождитесь завершения parsing и повторите запуск score.",
+          stageRequiresVacancy:
+            "Выберите вакансию перед фильтрацией кандидатов по последней стадии pipeline.",
+          inPipelineOnlyRequiresVacancy:
+            "Выберите вакансию перед фильтрацией кандидатов только из vacancy pipeline history.",
           invalidTransition:
             "Запрошенный переход по pipeline недопустим из текущей стадии.",
           interviewFeedbackWindowNotOpen:

@@ -201,7 +201,7 @@ export interface paths {
         };
         /**
          * List Candidate Profiles
-         * @description List candidate profiles for authorized role.
+         * @description List candidate profiles with recruiter-facing search, filter, and pagination.
          */
         get: operations["list_candidate_profiles_api_v1_candidates_get"];
         put?: never;
@@ -1418,12 +1418,72 @@ export interface components {
             phone?: string | null;
         };
         /**
+         * CandidateListItemResponse
+         * @description Candidate list row enriched with parsed CV and vacancy-context metadata.
+         */
+        CandidateListItemResponse: {
+            /** Analysis Ready */
+            analysis_ready: boolean;
+            /**
+             * Candidate Id
+             * Format: uuid
+             */
+            candidate_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Current Title */
+            current_title: string | null;
+            /**
+             * Detected Language
+             * @enum {string}
+             */
+            detected_language: "ru" | "en" | "mixed" | "unknown";
+            /** Email */
+            email: string;
+            /** Extra Data */
+            extra_data: {
+                [key: string]: unknown;
+            };
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /** Location */
+            location: string | null;
+            /** Owner Subject Id */
+            owner_subject_id: string;
+            /** Parsed At */
+            parsed_at: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Skills */
+            skills?: string[];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Vacancy Stage */
+            vacancy_stage: ("applied" | "screening" | "shortlist" | "interview" | "offer" | "hired" | "rejected") | null;
+            /** Years Experience */
+            years_experience: number | null;
+        };
+        /**
          * CandidateListResponse
-         * @description Candidate profile list payload.
+         * @description Paginated candidate profile list payload.
          */
         CandidateListResponse: {
             /** Items */
-            items: components["schemas"]["CandidateResponse"][];
+            items: components["schemas"]["CandidateListItemResponse"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
         };
         /**
          * CandidateResponse
@@ -3277,7 +3337,19 @@ export interface operations {
     };
     list_candidate_profiles_api_v1_candidates_get: {
         parameters: {
-            query?: never;
+            query?: {
+                limit?: number;
+                offset?: number;
+                search?: string | null;
+                location?: string | null;
+                current_title?: string | null;
+                skill?: string | null;
+                analysis_ready?: boolean | null;
+                min_years_experience?: number | null;
+                vacancy_id?: string | null;
+                in_pipeline_only?: boolean;
+                stage?: ("applied" | "screening" | "shortlist" | "interview" | "offer" | "hired" | "rejected") | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -3291,6 +3363,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CandidateListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
