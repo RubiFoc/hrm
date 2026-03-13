@@ -266,7 +266,8 @@ Runtime auth/browser integration settings:
   - `validation_failed`
 - Triage sequence:
   1. Check API response status and reason code.
-  2. Query `audit_events` by `action=vacancy:apply_public` and recent `correlation_id`.
+  2. Query audit evidence via admin API:
+     - `GET /api/v1/audit/events?action=vacancy:apply_public&correlation_id=<X-Request-ID>`
   3. Verify Redis availability and limiter key activity.
   4. Compare blocked volume with alert threshold (`PUBLIC_APPLY_BLOCKED_ALERT_THRESHOLD_PER_MINUTE`).
 
@@ -315,7 +316,9 @@ Runtime auth/browser integration settings:
 - Triage sequence:
   1. Capture failing response with `X-Request-ID`.
   2. Check `detail` reason-code and request payload (`role`, `is_active` patch semantics).
-  3. Query `audit_events` by `action in ('admin.staff:list','admin.staff:update')` and `correlation_id`.
+  3. Query audit evidence via admin API by `correlation_id=<X-Request-ID>` and optionally narrow by `action`:
+     - `GET /api/v1/audit/events?correlation_id=<X-Request-ID>`
+     - `GET /api/v1/audit/events?action=admin.staff:update&correlation_id=<X-Request-ID>`
   4. For `last_admin_protection`, verify number of active admin rows in `staff_accounts`.
   5. For `self_modification_forbidden`, verify actor `subject_id` equals target `staff_id`.
 
@@ -337,7 +340,9 @@ Runtime auth/browser integration settings:
 - Triage sequence:
   1. Capture failing response with `X-Request-ID`.
   2. Check key lifecycle fields in DB (`used_at`, `expires_at`, `revoked_at`, `revoked_by_staff_id`).
-  3. Query `audit_events` by `action in ('admin.employee_key:list','admin.employee_key:revoke')` and `correlation_id`.
+  3. Query audit evidence via admin API by `correlation_id=<X-Request-ID>` and optionally narrow by `action`:
+     - `GET /api/v1/audit/events?correlation_id=<X-Request-ID>`
+     - `GET /api/v1/audit/events?action=admin.employee_key:revoke&correlation_id=<X-Request-ID>`
   4. For revoke conflicts, validate lifecycle precedence: `revoked` -> `used` -> `expired` -> `active`.
   5. For register failures with revoked keys, confirm `employee_registration_keys.revoked_at` is not null.
 

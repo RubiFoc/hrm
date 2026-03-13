@@ -132,6 +132,26 @@ export interface paths {
         patch: operations["patch_staff_api_v1_admin_staff__staff_id__patch"];
         trace?: never;
     };
+    "/api/v1/audit/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Audit Events
+         * @description List audit events with deterministic filters and pagination.
+         */
+        get: operations["list_audit_events_api_v1_audit_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -1465,6 +1485,67 @@ export interface components {
             is_active?: boolean | null;
             /** Role */
             role?: ("admin" | "hr" | "manager" | "employee" | "leader" | "accountant") | null;
+        };
+        /**
+         * AuditEventListItem
+         * @description Serialized audit event item returned from query API.
+         *
+         *     This schema mirrors the persisted `audit_events` payload to keep the audit-read path
+         *     a faithful, append-only evidence surface.
+         */
+        AuditEventListItem: {
+            /** Action */
+            action: string;
+            /** Actor Role */
+            actor_role?: string | null;
+            /** Actor Sub */
+            actor_sub?: string | null;
+            /** Correlation Id */
+            correlation_id?: string | null;
+            /**
+             * Event Id
+             * Format: uuid
+             */
+            event_id: string;
+            /** Ip */
+            ip?: string | null;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            /** Reason */
+            reason?: string | null;
+            /** Resource Id */
+            resource_id?: string | null;
+            /** Resource Type */
+            resource_type: string;
+            /**
+             * Result
+             * @enum {string}
+             */
+            result: "allowed" | "denied" | "success" | "failure";
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "api" | "job";
+            /** User Agent */
+            user_agent?: string | null;
+        };
+        /**
+         * AuditEventListResponse
+         * @description Paginated audit event list response with stable contract.
+         */
+        AuditEventListResponse: {
+            /** Items */
+            items: components["schemas"]["AuditEventListItem"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
         };
         /** Body_apply_to_vacancy_public_api_v1_vacancies__vacancy_id__applications_post */
         Body_apply_to_vacancy_public_api_v1_vacancies__vacancy_id__applications_post: {
@@ -3813,6 +3894,50 @@ export interface operations {
             };
             /** @description Strict safety guard conflict */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failure */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_audit_events_api_v1_audit_events_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                action?: string | null;
+                result?: ("allowed" | "denied" | "success" | "failure") | null;
+                source?: ("api" | "job") | null;
+                resource_type?: string | null;
+                correlation_id?: string | null;
+                occurred_from?: string | null;
+                occurred_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEventListResponse"];
+                };
+            };
+            /** @description RBAC denied */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

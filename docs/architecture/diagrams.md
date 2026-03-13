@@ -732,6 +732,8 @@ flowchart LR
     EVAL[evaluate_permission]
     APIAUD[Audit source=api]
     APIRES[Route Handler or 403]
+    AUDREAD[Audit read handler\nGET /api/v1/audit/events]
+    AUDWRITE[Audit business event\naudit.event:list]
   end
 
   subgraph JobPath[Background Job Path]
@@ -746,6 +748,9 @@ flowchart LR
 
   REQ --> AUTHCTX --> DEP --> EVAL --> APIRES
   DEP --> APIAUD --> STORE
+  APIRES --> AUDREAD
+  AUDREAD -->|SELECT| STORE
+  AUDREAD -.after response build.-> AUDWRITE -->|INSERT| STORE
   JOB --> JOBROLE --> ENF --> EVAL --> JOBRES
   ENF --> JOBAUD --> STORE
 ```
