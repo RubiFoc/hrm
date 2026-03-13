@@ -109,23 +109,24 @@
 - `TASK-09-01` is no longer active queue work; the implemented source of truth is the repo-backed manager workspace on `/` plus manager-scoped vacancy read endpoints on the existing `/api/v1/vacancies` namespace.
 - `TASK-09-03` is no longer active queue work; the implemented source of truth is the repo-backed accountant workspace on `/` plus assignment-scoped finance read/export endpoints on `/api/v1/accounting/workspace*`.
 - `TASK-09-04` is no longer active queue work; the implemented source of truth is the repo-backed recipient-scoped notification API on `/api/v1/notifications*` plus the embedded manager/accountant notifications block on the existing `/` route.
-- `TASK-10-01` is no longer active queue work; the implemented source of truth is the repo-backed monthly KPI snapshot foundation with admin-only rebuild/read APIs.
+- `TASK-10-01` is no longer active queue work; the implemented source of truth is the repo-backed monthly KPI snapshot foundation with admin-only rebuild and leader/admin read APIs.
+- `TASK-10-02` is no longer active queue work; the implemented scope is leader read exposure for stored monthly KPI snapshots (no live aggregation), while rebuild remains admin-only.
 - The remaining candidate-domain follow-on work after `TASK-03-08` and `TASK-04-06` is limited to
   later ops/reporting slices, not baseline parsed-profile structure or scoring-quality tooling.
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `14` tasks.
+- Normalized open backlog count: `13` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `15`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `14`-task count.
 - Current open backlog by delivery wave:
-  - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-02`, `TASK-10-03`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
+  - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-03`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
   - Wave 3 phase-2 workspaces: `TASK-09-02`, `TASK-11-12`
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-10-02 | Follow-on KPI snapshot reads/leader exposure now that the monthly snapshot foundation is implemented |
+| A-1 | TBD | Follow-on priority slot opened after TASK-10-02 completion |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 
@@ -201,7 +202,7 @@
 | TASK-09-03 | EPIC-09 | Implement accountant workspace with controlled export access | Phase 2 | P1 | TASK-06-03 |
 | TASK-09-04 | EPIC-09 | Implement role-specific notifications and summary digests | Phase 2 | P2 | TASK-09-01 |
 | TASK-10-01 | EPIC-10 | Implement KPI data model and aggregation pipeline | Phase 1-2 | P0 | TASK-08-04 |
-| TASK-10-02 | EPIC-10 | Implement monthly automation KPI snapshot and dashboard | Phase 1-2 | P0 | TASK-10-01 |
+| TASK-10-02 | EPIC-10 | Expose stored monthly KPI snapshots to leaders (read-only) | Phase 1-2 | P0 | TASK-10-01 |
 | TASK-10-03 | EPIC-10 | Implement audit query API and compliance evidence view | Phase 1-2 | P1 | TASK-01-04 |
 | TASK-10-04 | EPIC-10 | Implement export package for audits and management reporting | Phase 2 | P1 | TASK-10-02, TASK-10-03 |
 
@@ -243,7 +244,7 @@ Historical planning queue retained for lineage; implemented items from the execu
 | 29 | TASK-08-03 | Operational support and troubleshooting |
 | 30 | TASK-08-04 | Automation KPI telemetry |
 | 31 | TASK-10-01 | KPI data layer foundation |
-| 32 | TASK-10-02 | Automation KPI report for target tracking |
+| 32 | TASK-10-02 | Leader read exposure for stored KPI snapshots |
 | 33 | TASK-01-04 | Complete auditability of sensitive actions |
 | 34 | TASK-04-04 | Human fallback for low AI confidence |
 | 35 | TASK-02-04 | Manager visibility enrichment |
