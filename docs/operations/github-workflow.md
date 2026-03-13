@@ -1,8 +1,8 @@
 # GitHub Workflow and Branch Protection
 
 ## Last Updated
-- Date: 2026-03-12
-- Updated by: coordinator + architect
+- Date: 2026-03-13
+- Updated by: coordinator + backend-engineer
 
 ## Branching Model
 - `main`: protected release-ready branch.
@@ -17,6 +17,7 @@
 - Team-target policy (when multiple maintainers are active): minimum 2 reviewers (tech owner + domain owner).
 - Required CI checks: `docs-check`, `backend`, `frontend`, `browser-smoke`.
 - Squash merge by default to keep history clean.
+- CI uses dependency caches (uv + npm) keyed on lockfiles to reduce runtime without changing test scope.
 
 ## Protected Branch Setup (GitHub)
 - Protect `main` branch.
