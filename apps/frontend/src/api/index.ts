@@ -17,6 +17,11 @@ export {
   getOnboardingDashboardRun,
   listOnboardingDashboardRuns,
 } from "./onboardingDashboard";
+export {
+  getNotificationDigest,
+  listNotifications,
+  markNotificationRead,
+} from "./notifications";
 export { acceptOffer, declineOffer, getOffer, sendOffer, upsertOffer } from "./offers";
 export {
   getCandidateCvAnalysis,
@@ -90,6 +95,15 @@ export type {
   ManagerWorkspaceStageSummaryResponse,
   ManagerWorkspaceVacancyListItemResponse,
 } from "./managerWorkspace";
+export type {
+  NotificationDigestResponse,
+  NotificationDigestSummaryResponse,
+  NotificationListQuery,
+  NotificationListResponse,
+  NotificationListStatus,
+  NotificationPayloadResponse,
+  NotificationResponse,
+} from "./notifications";
 export type {
   OnboardingDashboardDetailResponse,
   OnboardingDashboardListQuery,

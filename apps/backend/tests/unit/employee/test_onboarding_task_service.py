@@ -38,11 +38,27 @@ class _UnusedTemplateDAO:
     """DAO double used when onboarding template persistence is not under test."""
 
 
+class _UnusedProfileDAO:
+    """DAO double used when employee profile reads are not under test."""
+
+    def get_by_id(self, *_args, **_kwargs):
+        """Return no employee profile for focused unit tests."""
+        return None
+
+
 class _AuditServiceStub:
     """Audit double that captures no-op API event writes."""
 
     def record_api_event(self, **kwargs) -> None:
         """Ignore audit writes during focused unit tests."""
+        del kwargs
+
+
+class _NotificationServiceStub:
+    """Notification double that ignores assignment side effects."""
+
+    def emit_onboarding_task_assignment_notifications(self, **kwargs) -> None:
+        """Ignore notification writes during focused unit tests."""
         del kwargs
 
 
@@ -122,6 +138,8 @@ def test_build_create_payloads_orders_tasks_from_active_template_bundle() -> Non
         run_dao=_UnusedRunDAO(),  # type: ignore[arg-type]
         task_dao=_UnusedTaskDAO(),  # type: ignore[arg-type]
         template_dao=_UnusedTemplateDAO(),  # type: ignore[arg-type]
+        profile_dao=_UnusedProfileDAO(),  # type: ignore[arg-type]
+        notification_service=_NotificationServiceStub(),  # type: ignore[arg-type]
         audit_service=_AuditServiceStub(),  # type: ignore[arg-type]
     )
     run = OnboardingRun(
@@ -184,6 +202,8 @@ def test_onboarding_task_persistence_enforces_one_generation_per_run() -> None:
                 run_dao=OnboardingRunDAO(session=session),
                 task_dao=OnboardingTaskDAO(session=session),
                 template_dao=OnboardingTemplateDAO(session=session),
+                profile_dao=_UnusedProfileDAO(),  # type: ignore[arg-type]
+                notification_service=_NotificationServiceStub(),  # type: ignore[arg-type]
                 audit_service=_AuditServiceStub(),  # type: ignore[arg-type]
             )
 
@@ -210,6 +230,8 @@ def test_update_task_patch_semantics_manage_completion_and_nullable_fields() -> 
                 run_dao=OnboardingRunDAO(session=session),
                 task_dao=OnboardingTaskDAO(session=session),
                 template_dao=OnboardingTemplateDAO(session=session),
+                profile_dao=_UnusedProfileDAO(),  # type: ignore[arg-type]
+                notification_service=_NotificationServiceStub(),  # type: ignore[arg-type]
                 audit_service=_AuditServiceStub(),  # type: ignore[arg-type]
             )
 

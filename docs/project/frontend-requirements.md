@@ -1,8 +1,8 @@
 # Frontend Requirements (React.js)
 
 ## Last Updated
-- Date: 2026-03-11
-- Updated by: architect + frontend-engineer
+- Date: 2026-03-13
+- Updated by: architect + backend-engineer + frontend-engineer
 
 ## Fixed Technical Requirement
 - Frontend must be implemented using `React.js` + `TypeScript`.
@@ -242,6 +242,29 @@
 - Emit canonical Sentry tags for `/` based on resolved role:
   - `workspace=accountant` for accountant workspace.
 - Keep auth, CORS, employee self-service routes, HR/manager route topology, and generic reporting/export infrastructure unchanged in this slice.
+
+## TASK-09-04 Baseline
+- Keep the existing route topology intact; do not add a notifications-only path.
+- Reuse the existing `/` role split:
+  - `manager` keeps `ManagerWorkspacePage` on `/`;
+  - `accountant` keeps `AccountantWorkspacePage` on `/`.
+- Read in-app notifications through dedicated recipient-scoped APIs:
+  - `GET /api/v1/notifications?status=unread|all&limit&offset`
+  - `GET /api/v1/notifications/digest`
+  - `POST /api/v1/notifications/{notification_id}/read`
+- Workspace UX requirements:
+  - render a localized notifications block inside both manager and accountant workspaces;
+  - show digest summary chips plus the latest unread notification list;
+  - support `Mark as read` without page navigation;
+  - render localized loading, empty, and `401/403/404/422/generic` error states.
+- Scope restrictions for this slice:
+  - in-app notifications only;
+  - mandatory recipient roles limited to `manager` and `accountant`;
+  - digest is server-computed on demand only;
+  - do not add email, SMS, webhooks, outbox, scheduler, or template-editor UI.
+- Keep invite delivery manual:
+  `candidate_invite_url` sharing remains outside this slice and stays staff-driven.
+- Keep auth, CORS, HR/accountant/manager route semantics, public candidate transport, and existing workspace pages unchanged outside the embedded notifications block.
 
 ## Library Baseline (Popular Ready-Made Stack)
 - UI components: Material UI (MUI).

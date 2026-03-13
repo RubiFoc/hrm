@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from hrm_backend.employee.models.onboarding import OnboardingTask
@@ -117,3 +118,33 @@ class OnboardingTaskDAO:
 
         self._session.flush()
         return entity
+
+    def list_visible_to_actor(
+        self,
+        *,
+        actor_role: str,
+        actor_staff_id: str,
+    ) -> list[OnboardingTask]:
+        """Load onboarding tasks visible to one manager/accountant actor.
+
+        Args:
+            actor_role: Current actor role used for role-assigned task visibility.
+            actor_staff_id: Current actor staff subject used for explicit assignment visibility.
+
+        Returns:
+            list[OnboardingTask]: Visible onboarding tasks ordered by latest update.
+        """
+        return list(
+            self._session.query(OnboardingTask)
+            .filter(
+                or_(
+                    OnboardingTask.assigned_role == actor_role,
+                    OnboardingTask.assigned_staff_id == actor_staff_id,
+                )
+            )
+            .order_by(
+                OnboardingTask.updated_at.desc(),
+                OnboardingTask.task_id.asc(),
+            )
+            .all()
+        )

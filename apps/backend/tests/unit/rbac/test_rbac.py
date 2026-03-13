@@ -125,6 +125,24 @@ def test_manager_can_read_manager_workspace_permission() -> None:
     assert decision.allowed is True
 
 
+def test_manager_can_read_and_update_notifications_permissions() -> None:
+    """Verify manager role can access in-app notification read/update endpoints."""
+    read_decision = evaluate_permission(role="manager", permission="notification:read")
+    update_decision = evaluate_permission(role="manager", permission="notification:update")
+
+    assert read_decision.allowed is True
+    assert update_decision.allowed is True
+
+
+def test_accountant_can_read_and_update_notifications_permissions() -> None:
+    """Verify accountant role can access in-app notification read/update endpoints."""
+    read_decision = evaluate_permission(role="accountant", permission="notification:read")
+    update_decision = evaluate_permission(role="accountant", permission="notification:update")
+
+    assert read_decision.allowed is True
+    assert update_decision.allowed is True
+
+
 def test_employee_can_access_and_update_self_service_portal_permissions() -> None:
     """Verify employee role can read and update self-service onboarding portal endpoints."""
     read_decision = evaluate_permission(role="employee", permission="employee_portal:read")
@@ -195,6 +213,15 @@ def test_manager_is_denied_for_onboarding_task_list_permission() -> None:
     assert decision.allowed is False
     assert decision.reason is not None
     assert "onboarding_task:list" in decision.reason
+
+
+def test_hr_is_denied_for_notification_read_permission() -> None:
+    """Verify HR role cannot access manager/accountant notification endpoints in v1."""
+    decision = evaluate_permission(role="hr", permission="notification:read")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "notification:read" in decision.reason
 
 
 def test_employee_is_denied_for_onboarding_dashboard_permission() -> None:

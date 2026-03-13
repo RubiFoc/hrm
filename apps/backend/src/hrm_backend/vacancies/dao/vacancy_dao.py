@@ -24,6 +24,7 @@ class VacancyDAO:
         payload: VacancyCreateRequest,
         *,
         hiring_manager_staff_id: str | None = None,
+        commit: bool = True,
     ) -> Vacancy:
         """Insert vacancy row.
 
@@ -42,8 +43,12 @@ class VacancyDAO:
             hiring_manager_staff_id=hiring_manager_staff_id,
         )
         self._session.add(entity)
-        self._session.commit()
-        self._session.refresh(entity)
+        if commit:
+            self._session.commit()
+            self._session.refresh(entity)
+            return entity
+
+        self._session.flush()
         return entity
 
     def get_by_id(self, vacancy_id: str) -> Vacancy | None:
@@ -81,7 +86,13 @@ class VacancyDAO:
             .all()
         )
 
-    def update_vacancy(self, entity: Vacancy, payload: VacancyUpdateRequest) -> Vacancy:
+    def update_vacancy(
+        self,
+        entity: Vacancy,
+        payload: VacancyUpdateRequest,
+        *,
+        commit: bool = True,
+    ) -> Vacancy:
         """Apply partial vacancy update and persist changes.
 
         Args:
@@ -97,6 +108,10 @@ class VacancyDAO:
         ).items():
             setattr(entity, field_name, value)
         self._session.add(entity)
-        self._session.commit()
-        self._session.refresh(entity)
+        if commit:
+            self._session.commit()
+            self._session.refresh(entity)
+            return entity
+
+        self._session.flush()
         return entity

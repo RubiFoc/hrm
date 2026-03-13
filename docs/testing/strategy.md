@@ -536,6 +536,35 @@ Acceptance rules for the implementation slice:
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
   - `./scripts/check-docs-structure.sh`
 
+## Role-Specific Notifications Verification (`TASK-09-04`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Notification emitters fan out to manager/accountant recipients and dedupe repeated writes | `apps/backend/tests/unit/notifications/test_notification_service.py` | `apps/backend/tests/integration/notifications/test_notification_api.py` | vacancy ownership and onboarding assignment changes create one recipient-scoped in-app row per newly visible recipient, while repeated writes do not duplicate rows |
+| Notification reads and mark-read writes stay fail-closed on `recipient_staff_id=<current subject>` | `apps/backend/tests/unit/notifications/test_notification_service.py`, `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/notifications/test_notification_api.py` | out-of-scope roles get `403`, wrong recipients get `404 notification_not_found`, and only recipient-owned rows change to `read` |
+| Digest counters stay role-specific and server-computed on demand | `apps/backend/tests/unit/notifications/test_notification_service.py` | `apps/backend/tests/integration/notifications/test_notification_api.py` | manager digests include owned-open-vacancy counts, accountant digests do not, and task counters reflect current assignment scope |
+| Embedded manager/accountant notifications UI renders loading, empty, success, and mark-read paths | `apps/frontend/src/components/NotificationsPanel.test.tsx`, `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx`, `apps/frontend/src/pages/AccountantWorkspacePage.test.tsx` | N/A | both `/` workspaces render the shared notifications block, localized summary chips, unread items, and `Mark as read` without route changes |
+| OpenAPI freeze and generated frontend types stay synced with the notification contract | `npm --prefix apps/frontend run api:types:check` | `./scripts/check-openapi-freeze.sh` | notification endpoints and schemas exist in `docs/api/openapi.frozen.json` and `apps/frontend/src/api/generated/openapi-types.ts` |
+
+Acceptance rules for the implementation slice:
+- Keep route topology unchanged; notifications stay embedded inside the existing `/` manager/accountant workspaces.
+- Keep delivery in-app only; do not add email, SMS, webhooks, outbox, scheduler, event-bus, or template-editor behavior.
+- Keep reads and updates fail-closed on `recipient_staff_id=<current subject>`.
+- Emit notifications only on assignment or ownership change and keep dedupe mandatory.
+- Keep candidate invite delivery manual-only and do not alter interview invite transport.
+- Minimum verification set:
+  - `./scripts/generate-openapi-frozen.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:generate`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+  - `./scripts/check-docs-structure.sh`
+
 ## Offer Workflow Verification (`TASK-06-01`)
 
 Current implementation coverage includes at minimum:

@@ -15,6 +15,7 @@ from hrm_backend.employee.routers.v1 import router as employee_router
 from hrm_backend.finance.routers.v1 import router as finance_router
 from hrm_backend.interviews.routers.v1 import public_router as interview_public_router
 from hrm_backend.interviews.routers.v1 import router as interview_router
+from hrm_backend.notifications.routers.v1 import router as notification_router
 from hrm_backend.rbac import ROLE_PERMISSION_MATRIX
 from hrm_backend.scoring.routers.v1 import router as scoring_router
 from hrm_backend.settings import get_settings
@@ -35,6 +36,7 @@ app.include_router(candidate_router)
 app.include_router(candidate_public_router)
 app.include_router(employee_router)
 app.include_router(finance_router)
+app.include_router(notification_router)
 app.include_router(vacancy_router)
 app.include_router(scoring_router)
 app.include_router(interview_router)

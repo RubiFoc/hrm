@@ -434,6 +434,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Notifications
+         * @description List notifications that belong to the current authenticated recipient.
+         */
+        get: operations["list_notifications_api_v1_notifications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/digest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Notification Digest
+         * @description Return the on-demand notification digest for the current authenticated recipient.
+         */
+        get: operations["get_notification_digest_api_v1_notifications_digest_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/{notification_id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark Notification Read
+         * @description Mark one recipient-owned notification as read.
+         */
+        post: operations["mark_notification_read_api_v1_notifications__notification_id__read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/onboarding/runs": {
         parameters: {
             query?: never;
@@ -2484,6 +2544,116 @@ export interface components {
             subject_id: string;
         };
         /**
+         * NotificationDigestResponse
+         * @description On-demand digest payload for the current authenticated recipient.
+         */
+        NotificationDigestResponse: {
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Latest Unread Items */
+            latest_unread_items: components["schemas"]["NotificationResponse"][];
+            summary: components["schemas"]["NotificationDigestSummaryResponse"];
+        };
+        /**
+         * NotificationDigestSummaryResponse
+         * @description Server-computed summary counters for the current notification workspace.
+         */
+        NotificationDigestSummaryResponse: {
+            /** Active Task Count */
+            active_task_count: number;
+            /** Overdue Task Count */
+            overdue_task_count: number;
+            /** Owned Open Vacancy Count */
+            owned_open_vacancy_count: number;
+            /** Unread Notification Count */
+            unread_notification_count: number;
+        };
+        /**
+         * NotificationListResponse
+         * @description Paginated notification list scoped to the current authenticated recipient.
+         */
+        NotificationListResponse: {
+            /** Items */
+            items: components["schemas"]["NotificationResponse"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+            /** Unread Count */
+            unread_count: number;
+        };
+        /**
+         * NotificationPayload
+         * @description Structured additive notification payload exposed to frontend workspaces.
+         */
+        NotificationPayload: {
+            /** Due At */
+            due_at?: string | null;
+            /** Employee Full Name */
+            employee_full_name?: string | null;
+            /** Employee Id */
+            employee_id?: string | null;
+            /** Onboarding Id */
+            onboarding_id?: string | null;
+            /** Task Id */
+            task_id?: string | null;
+            /** Task Title */
+            task_title?: string | null;
+            /** Vacancy Id */
+            vacancy_id?: string | null;
+            /** Vacancy Title */
+            vacancy_title?: string | null;
+        };
+        /**
+         * NotificationResponse
+         * @description API representation of one in-app notification.
+         */
+        NotificationResponse: {
+            /** Body */
+            body: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Kind */
+            kind: string;
+            /**
+             * Notification Id
+             * Format: uuid
+             */
+            notification_id: string;
+            payload: components["schemas"]["NotificationPayload"];
+            /** Read At */
+            read_at: string | null;
+            /**
+             * Recipient Role
+             * @enum {string}
+             */
+            recipient_role: "admin" | "hr" | "manager" | "employee" | "leader" | "accountant";
+            /**
+             * Recipient Staff Id
+             * Format: uuid
+             */
+            recipient_staff_id: string;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /** Source Type */
+            source_type: string;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
+        };
+        /**
          * OfferDecisionRequest
          * @description Optional note payload for recording accepted or declined offer status.
          */
@@ -4089,6 +4259,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EmployeeProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_notifications_api_v1_notifications_get: {
+        parameters: {
+            query?: {
+                status?: "unread" | "all";
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_notification_digest_api_v1_notifications_digest_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationDigestResponse"];
+                };
+            };
+        };
+    };
+    mark_notification_read_api_v1_notifications__notification_id__read_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notification_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationResponse"];
                 };
             };
             /** @description Validation Error */

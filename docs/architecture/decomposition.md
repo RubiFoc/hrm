@@ -1,7 +1,7 @@
 # Architecture Decomposition
 
 ## Last Updated
-- Date: 2026-03-11
+- Date: 2026-03-13
 - Updated by: architect + backend-engineer
 
 This document breaks the system architecture from high-level domains into smaller technical units.
@@ -40,7 +40,7 @@ industries rather than only IT roles.
 | Employee Profile Service | Employee | Employee identity and profile lifecycle | REST |
 | Onboarding Service | Employee | Onboarding templates, tasks and status tracking | REST + async |
 | Workflow Automation Service | HR Operations | Rule engine and triggered HR tasks | Event-driven |
-| Notification Service | Platform | Email/in-app notifications and templates | Async jobs |
+| Notification Service | Platform | Recipient-scoped in-app notifications and on-demand digests in v1; outbound templates/channels later | REST |
 | Audit Service | Platform | Immutable security and business audit logs | Event ingestion |
 | Reporting Service | Analytics | KPI aggregation and dashboards | Read APIs |
 | Accounting Export Service | Finance Adapter | Controlled export for accounting workflows | File/API adapter |
@@ -97,6 +97,16 @@ industries rather than only IT roles.
 - Access Policy Module:
   map validated role claims to RBAC permission checks.
 
+### 6. Notification Service
+- Recipient Resolver Module:
+  map vacancy ownership and onboarding assignment changes to manager/accountant staff recipients.
+- In-App Store Module:
+  persist deduped recipient-scoped notification rows.
+- Digest Read Model Module:
+  compute unread counts plus manager/accountant task or vacancy summary counters on demand.
+- Delivery Policy Module:
+  keep v1 fail-closed and in-app only; defer outbound channels/templates.
+
 ## Data Decomposition
 
 | Data Group | Primary Owner Service | Storage Type | Notes |
@@ -108,6 +118,7 @@ industries rather than only IT roles.
 | Interview events and feedback | Interview Service | PostgreSQL | Audit-linked |
 | Employee profiles | Employee Profile Service | PostgreSQL | Created post-hire |
 | Onboarding tasks | Onboarding Service | PostgreSQL | Linked to employee profile |
+| In-app notifications | Notification Service | PostgreSQL | Recipient-scoped, deduped, and read-tracked |
 | Automation executions | Workflow Automation Service | PostgreSQL | Used for KPI and incident analysis |
 | Audit events | Audit Service | Append-only storage | Compliance evidence |
 | Auth denylist markers (`jti`/`sid`) | Auth and Access Service | Redis | Valid tokens are not persisted server-side |
@@ -141,7 +152,7 @@ industries rather than only IT roles.
 - Workflow Automation Service (expanded rules)
 - Reporting Service
 - Accounting Export Service
-- Notification Service (full template coverage)
+- Notification Service (in-app + digest baseline, outbound/template coverage later)
 
 ## Ownership Decomposition (Suggested)
 
