@@ -1,7 +1,7 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-12
+- Date: 2026-03-13
 - Updated by: coordinator + architect + backend-engineer + frontend-engineer
 
 ## Priority Model
@@ -49,7 +49,7 @@
 | TASK-07-03 | implemented/local-employee-portal-slice | Employee-only `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*` now expose self-service onboarding tasks with durable employee-profile identity linking and localized frontend coverage |
 | TASK-07-04 | implemented/local-onboarding-dashboard-slice | `GET /api/v1/onboarding/runs*` now exposes HR/admin read-all plus manager-scoped onboarding progress visibility, with the dashboard embedded on `/` for HR and reused as the onboarding block inside the existing manager workspace on the same `/` route |
 | TASK-09-01 | implemented/local-manager-workspace-slice | Manager users now land on `/` in a read-only hiring + onboarding workspace backed by manager-scoped vacancy APIs, explicit `vacancies.hiring_manager_staff_id` ownership, and the reused onboarding dashboard block, while HR/admin keep the existing recruitment workspace on `/` |
-| TASK-09-03 | implemented/local-accountant-workspace-slice | Accountant users now land on `/` in a read-only accountant workspace backed by `/api/v1/accounting/workspace*`, assignment-scoped onboarding visibility, and controlled CSV/XLSX exports over the same filtered finance row set |
+| TASK-09-03 | done/closed | GitHub issue #96 closed; merged in `main` via PR #114 (`c237296`) with accountant workspace routing on `/`, assignment-scoped `/api/v1/accounting/workspace*`, controlled CSV/XLSX exports, and solo-mode architecture self-review workflow alignment |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-12 Delivery Control Notes
@@ -87,6 +87,7 @@
 - `TASK-07-04` is now implemented as the HR/manager visibility follow-on slice: `/api/v1/onboarding/runs*` exposes read-only onboarding progress data, HR/admin see all runs inside the existing `/` workspace, and managers reuse the same dashboard block inside their role-specific workspace without widening task-mutation permissions.
 - `TASK-09-01` is now implemented as the additive manager workspace follow-on slice: managers use the existing `/` route for one read-only hiring + onboarding workspace, vacancy hiring visibility is scoped by explicit `vacancies.hiring_manager_staff_id`, and onboarding visibility stays task-assignment-scoped through the existing onboarding APIs.
 - `TASK-09-03` is now implemented as the additive accountant workspace follow-on slice: accountants use the existing `/` route for one read-only finance workspace, visibility stays limited to accountant-assigned onboarding tasks, and controlled CSV/XLSX exports reuse the same filtered row model without adding generic reporting infrastructure.
+- `TASK-09-03` post-merge closeout is complete: GitHub issue `#96` is closed, PR #114 (`c237296`) is merged in `main`, and this backlog snapshot is synchronized to the merged state.
 - The remaining follow-on work after the onboarding-dashboard and manager-workspace slices is limited to the other phase-2 role workspaces, notifications, reporting, and admin/ops backlog, not baseline scheduling, registration, feedback transport, or candidate-facing offer decisions.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
