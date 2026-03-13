@@ -117,12 +117,12 @@
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `13` tasks.
+- Normalized open backlog count: `12` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `14`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `12`-task count.
 - Current open backlog by delivery wave:
-  - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-03`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
+  - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
   - Wave 3 phase-2 workspaces: `TASK-09-02`, `TASK-11-12`
 
 | Order | Task ID | Why Now |
