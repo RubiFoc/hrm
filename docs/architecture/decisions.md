@@ -50,6 +50,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0043 | 2026-03-13 | accepted | Add recipient-scoped in-app notifications and on-demand digests for manager/accountant workspaces | architect + backend-engineer + frontend-engineer | notification package boundary, recipient visibility policy, frontend embedded workspaces, OpenAPI contract |
 | ADR-0044 | 2026-03-13 | accepted | Introduce monthly KPI snapshot foundation with on-demand rebuild | architect + backend-engineer | reporting package, KPI data model, analytics access policy |
 | ADR-0045 | 2026-03-13 | accepted | Expose KPI snapshot reads to leaders while keeping rebuild admin-only | architect + backend-engineer | reporting access policy, RBAC, API read surface |
+| ADR-0046 | 2026-03-13 | accepted | Add admin-only audit evidence query API over append-only `audit_events` | architect + backend-engineer | audit package read surface, RBAC, operations/runbook, OpenAPI contract |
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
@@ -943,3 +944,24 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Read operations remain fast and predictable because they are served only from stored snapshots.
   - Missing months stay empty until an admin rebuilds the snapshot.
   - Automation KPI coverage remains deferred and requires a later ADR when automation tracking lands.
+
+## ADR-0046
+- Context: `TASK-10-03` needs a read-only application query surface for existing audit evidence; audit events are already persisted reliably, but operators and future admin UI currently have no HTTP API for deterministic reads.
+- Decision:
+  - Add admin-only audit query API:
+    - `GET /api/v1/audit/events`
+    - guarded by RBAC permission `audit:read` (no access for non-admin roles in v1).
+  - Keep the data source as the append-only `audit_events` table; do not introduce a new reporting/aggregation table in this slice.
+  - Keep query contract deterministic:
+    - exact filters (`action`, `result`, `source`, `resource_type`, `correlation_id`);
+    - optional time window (`occurred_from`, `occurred_to`) with `422 detail=invalid_time_range` when `occurred_from > occurred_to`;
+    - fixed ordering (`occurred_at DESC`, `event_id DESC`) and pagination (`limit`, `offset`).
+  - Record audit events for the read path:
+    - RBAC decision audit event for `audit:read` (existing centralized enforcement behavior);
+    - business audit event `audit.event:list` with `resource_type=audit_event`, written after response assembly to avoid self-inclusion in returned rows.
+  - Solo-maintainer architectural self-review:
+    this ADR records that the slice stays additive (no schema changes), keeps audit evidence storage append-only, and preserves least-privilege by keeping raw audit reads admin-only.
+- Consequences:
+  - Audit evidence becomes queryable via HTTP for operator diagnostics and future admin UI slices without direct DB access.
+  - Performance characteristics depend on existing `audit_events` indices; further indexing or retention automation can be addressed in later slices if needed.
+  - Expanding audit-read access beyond admin becomes an explicit policy decision and should be tracked by a separate ADR.

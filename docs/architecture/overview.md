@@ -52,7 +52,7 @@ flowchart LR
 | Notification Domain | Recipient-scoped in-app notifications and server-computed digests for manager/accountant workspaces | Vacancy ownership changes, onboarding assignment changes, protected notification reads | Dedupe-safe notification rows, unread/read state, digest counters, and embedded workspace notification blocks | platform |
 | AI Adapter | External model integration for CV analysis and match scoring | CV files, vacancy profiles, scoring prompts | Structured candidate insights and score responses | ai-platform |
 | Integration Layer | External connector abstraction | Internal events/commands | Google Calendar actions | platform |
-| Reporting and Audit | Monthly KPI snapshots with leader/admin reads and compliance evidence | Durable domain tables, audit events | KPI snapshots, audit logs | data-platform |
+| Reporting and Audit | Monthly KPI snapshots with leader/admin reads plus admin-only audit evidence query API | Durable domain tables, audit events | KPI snapshots, audit logs, audit evidence API | data-platform |
 
 ## Key Flows
 1. Candidate Screening Flow:

@@ -1,2 +1,1 @@
-"""Audit router package (reserved for future query API endpoints)."""
-
+"""Audit router package for query APIs."""

@@ -7,6 +7,7 @@
 This matrix is the access baseline for `TASK-01-01`, `TASK-01-02`, `TASK-01-03`,
 `TASK-03-01`, `TASK-03-02`, `TASK-03-03`, `TASK-02-01`, `TASK-02-02`, `TASK-06-03`,
 `TASK-07-01`, `TASK-07-02`, `TASK-07-03`, `TASK-07-04`, and `TASK-10-01`.
+It also covers the admin-only audit evidence read surface introduced in `TASK-10-03`.
 Enforcement source of truth:
 - `apps/backend/src/hrm_backend/rbac.py`
 - `apps/backend/src/hrm_backend/auth/`
@@ -59,6 +60,7 @@ Enforcement source of truth:
 | `candidate_profile:read_all` | yes | yes | no | no | no | no |
 | `interview:manage` | yes | yes | yes | no | no | no |
 | `analytics:read` | yes | yes | yes | yes | yes | yes |
+| `audit:read` | yes | no | no | no | no | no |
 | `accounting:read` | yes | no | no | no | no | yes |
 | `kpi_snapshot:read` | yes | no | no | no | yes | no |
 | `kpi_snapshot:rebuild` | yes | no | no | no | no | no |
@@ -90,6 +92,8 @@ Public endpoint outside RBAC matrix:
 - Onboarding checklist template management routes are staff-only and currently limited to `admin/hr`.
   Manager-facing template management remains out of scope.
 - KPI snapshot read/rebuild routes are admin-only in v1.
+- Audit event query API is admin-only in v1:
+  - `GET /api/v1/audit/events`
 - Employee self-service onboarding routes are limited to the `employee` role:
   - `GET /api/v1/employees/me/onboarding`
   - `PATCH /api/v1/employees/me/onboarding/tasks/{task_id}`

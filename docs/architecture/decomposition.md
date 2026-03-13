@@ -41,7 +41,7 @@ industries rather than only IT roles.
 | Onboarding Service | Employee | Onboarding templates, tasks and status tracking | REST + async |
 | Workflow Automation Service | HR Operations | Rule engine and triggered HR tasks | Event-driven |
 | Notification Service | Platform | Recipient-scoped in-app notifications and on-demand digests in v1; outbound templates/channels later | REST |
-| Audit Service | Platform | Immutable security and business audit logs | Event ingestion |
+| Audit Service | Platform | Immutable security and business audit logs + admin-only evidence query API | Event ingestion + admin read APIs |
 | Reporting Service | Analytics | Monthly KPI snapshots (admin rebuild, leader/admin read) and dashboards | Read/maintenance APIs |
 | Accounting Export Service | Finance Adapter | Controlled export for accounting workflows | File/API adapter |
 

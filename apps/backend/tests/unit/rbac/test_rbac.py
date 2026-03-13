@@ -68,6 +68,22 @@ def test_admin_can_upload_cv_permission() -> None:
     assert decision.allowed is True
 
 
+def test_admin_can_read_audit_permission() -> None:
+    """Verify admin role can read immutable audit events."""
+    decision = evaluate_permission(role="admin", permission="audit:read")
+
+    assert decision.allowed is True
+
+
+def test_hr_is_denied_for_audit_read_permission() -> None:
+    """Verify non-admin roles cannot access audit evidence query surface."""
+    decision = evaluate_permission(role="hr", permission="audit:read")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "audit:read" in decision.reason
+
+
 def test_hr_can_list_and_revoke_employee_keys_permissions() -> None:
     """Verify HR role can list and revoke employee registration keys."""
     list_decision = evaluate_permission(role="hr", permission="admin:employee_key:list")
