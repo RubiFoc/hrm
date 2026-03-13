@@ -20,7 +20,7 @@ industries rather than only IT roles.
 | Platform | Identity, access, audit, notifications, integrations | All roles | Phase 1 |
 | Core Foundation | Shared technical primitives reused by all backend domains | Backend teams | Phase 1-2 |
 | Intelligence | CV analysis and recommendation support | HR, managers | Phase 1 |
-| Analytics | KPI and operational reporting | HR, leaders, managers | Phase 2 |
+| Analytics | KPI and operational reporting (monthly snapshots in v1) | HR, leaders, managers | Phase 1-2 |
 
 ## Level 2: Service Decomposition
 
@@ -42,7 +42,7 @@ industries rather than only IT roles.
 | Workflow Automation Service | HR Operations | Rule engine and triggered HR tasks | Event-driven |
 | Notification Service | Platform | Recipient-scoped in-app notifications and on-demand digests in v1; outbound templates/channels later | REST |
 | Audit Service | Platform | Immutable security and business audit logs | Event ingestion |
-| Reporting Service | Analytics | KPI aggregation and dashboards | Read APIs |
+| Reporting Service | Analytics | Monthly KPI snapshots (on-demand rebuild) and dashboards | Read/maintenance APIs |
 | Accounting Export Service | Finance Adapter | Controlled export for accounting workflows | File/API adapter |
 
 ## Level 3: Internal Module Decomposition (Priority Services)
@@ -119,6 +119,7 @@ industries rather than only IT roles.
 | Employee profiles | Employee Profile Service | PostgreSQL | Created post-hire |
 | Onboarding tasks | Onboarding Service | PostgreSQL | Linked to employee profile |
 | In-app notifications | Notification Service | PostgreSQL | Recipient-scoped, deduped, and read-tracked |
+| KPI snapshots | Reporting Service | PostgreSQL | Monthly snapshots keyed by `period_month + metric_key`, rebuilt on demand |
 | Automation executions | Workflow Automation Service | PostgreSQL | Used for KPI and incident analysis |
 | Audit events | Audit Service | Append-only storage | Compliance evidence |
 | Auth denylist markers (`jti`/`sid`) | Auth and Access Service | Redis | Valid tokens are not persisted server-side |
@@ -144,13 +145,14 @@ industries rather than only IT roles.
 - Interview Service
 - Calendar Sync Service (Google Calendar)
 - Audit Service
+- Reporting Service (monthly KPI snapshot foundation, admin-only API)
 
 ### Phase 2: Manager/Employee/Accountant/Leader Expansion
 - Frontend App (React.js + TypeScript) expansion: manager/employee/accountant/leader workspaces
 - Employee Profile Service
 - Onboarding Service
 - Workflow Automation Service (expanded rules)
-- Reporting Service
+- Reporting Service (leader/manager dashboards and expanded KPI scope)
 - Accounting Export Service
 - Notification Service (in-app + digest baseline, outbound/template coverage later)
 

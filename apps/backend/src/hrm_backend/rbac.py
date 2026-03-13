@@ -61,6 +61,8 @@ Permission = Literal[
     "candidate_cv:parse",
     "analytics:read",
     "accounting:read",
+    "kpi_snapshot:read",
+    "kpi_snapshot:rebuild",
 ]
 
 ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
@@ -101,6 +103,8 @@ ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
         "interview:manage",
         "analytics:read",
         "accounting:read",
+        "kpi_snapshot:read",
+        "kpi_snapshot:rebuild",
     },
     "hr": {
         "admin:employee_key:create",

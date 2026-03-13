@@ -932,3 +932,34 @@ flowchart LR
 
   CONFIG[VITE_SENTRY_* env config] --> SENTRY
 ```
+
+## Diagram 23: KPI Snapshot Aggregation Flow (TASK-10-01)
+
+```mermaid
+flowchart LR
+  subgraph Domains[Transactional Domains]
+    VAC[Vacancies]
+    PIPE[Pipeline Transitions]
+    INT[Interviews]
+    OFFER[Offers]
+    HIRE[Hire Conversions]
+    ONB[Onboarding Runs/Tasks]
+  end
+
+  subgraph Reporting[Reporting]
+    REBUILD[Admin Rebuild Request]
+    AGG[KPI Aggregation Service]
+    SNAP[(kpi_snapshots)]
+    READ[Snapshot Read API]
+  end
+
+  REBUILD --> AGG
+  VAC --> AGG
+  PIPE --> AGG
+  INT --> AGG
+  OFFER --> AGG
+  HIRE --> AGG
+  ONB --> AGG
+  AGG --> SNAP
+  READ --> SNAP
+```

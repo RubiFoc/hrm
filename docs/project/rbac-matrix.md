@@ -1,12 +1,12 @@
 # RBAC Role Matrix (Phase 1 Baseline)
 
 ## Last Updated
-- Date: 2026-03-11
-- Updated by: backend-engineer + frontend-engineer
+- Date: 2026-03-13
+- Updated by: backend-engineer
 
 This matrix is the access baseline for `TASK-01-01`, `TASK-01-02`, `TASK-01-03`,
 `TASK-03-01`, `TASK-03-02`, `TASK-03-03`, `TASK-02-01`, `TASK-02-02`, `TASK-06-03`,
-`TASK-07-01`, `TASK-07-02`, `TASK-07-03`, and `TASK-07-04`.
+`TASK-07-01`, `TASK-07-02`, `TASK-07-03`, `TASK-07-04`, and `TASK-10-01`.
 Enforcement source of truth:
 - `apps/backend/src/hrm_backend/rbac.py`
 - `apps/backend/src/hrm_backend/auth/`
@@ -60,6 +60,8 @@ Enforcement source of truth:
 | `interview:manage` | yes | yes | yes | no | no | no |
 | `analytics:read` | yes | yes | yes | yes | yes | yes |
 | `accounting:read` | yes | no | no | no | no | yes |
+| `kpi_snapshot:read` | yes | no | no | no | no | no |
+| `kpi_snapshot:rebuild` | yes | no | no | no | no | no |
 
 Public endpoint outside RBAC matrix:
 - `POST /api/v1/vacancies/{vacancy_id}/applications` is anonymous (`actor_sub=null` in audit context).
@@ -87,6 +89,7 @@ Public endpoint outside RBAC matrix:
   Manager users can observe onboarding progress only through the dedicated read routes above.
 - Onboarding checklist template management routes are staff-only and currently limited to `admin/hr`.
   Manager-facing template management remains out of scope.
+- KPI snapshot read/rebuild routes are admin-only in v1.
 - Employee self-service onboarding routes are limited to the `employee` role:
   - `GET /api/v1/employees/me/onboarding`
   - `PATCH /api/v1/employees/me/onboarding/tasks/{task_id}`

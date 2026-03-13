@@ -2581,6 +2581,89 @@
         "title": "InterviewRescheduleRequest",
         "type": "object"
       },
+      "KpiSnapshotMetric": {
+        "additionalProperties": false,
+        "description": "Metric payload for one KPI snapshot row.",
+        "properties": {
+          "generated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "metric_key": {
+            "enum": [
+              "vacancies_created_count",
+              "candidates_applied_count",
+              "interviews_scheduled_count",
+              "offers_sent_count",
+              "offers_accepted_count",
+              "hires_count",
+              "onboarding_started_count",
+              "onboarding_tasks_completed_count"
+            ],
+            "title": "Metric Key",
+            "type": "string"
+          },
+          "metric_value": {
+            "minimum": 0.0,
+            "title": "Metric Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "metric_key",
+          "metric_value"
+        ],
+        "title": "KpiSnapshotMetric",
+        "type": "object"
+      },
+      "KpiSnapshotReadResponse": {
+        "additionalProperties": false,
+        "description": "Monthly KPI snapshot response payload.",
+        "properties": {
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/KpiSnapshotMetric"
+            },
+            "title": "Metrics",
+            "type": "array"
+          },
+          "period_month": {
+            "format": "date",
+            "title": "Period Month",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period_month",
+          "metrics"
+        ],
+        "title": "KpiSnapshotReadResponse",
+        "type": "object"
+      },
+      "KpiSnapshotRebuildRequest": {
+        "additionalProperties": false,
+        "description": "Payload for requesting a KPI snapshot rebuild for one month.",
+        "properties": {
+          "period_month": {
+            "format": "date",
+            "title": "Period Month",
+            "type": "string"
+          }
+        },
+        "required": [
+          "period_month"
+        ],
+        "title": "KpiSnapshotRebuildRequest",
+        "type": "object"
+      },
       "LoginRequest": {
         "additionalProperties": false,
         "description": "Input payload for staff login.\n\nSupports identifier/password staff password flow.",
@@ -8158,6 +8241,102 @@
         "summary": "Request Public Reschedule",
         "tags": [
           "interviews"
+        ]
+      }
+    },
+    "/api/v1/reporting/kpi-snapshots": {
+      "get": {
+        "description": "Read KPI snapshot rows for a single month.",
+        "operationId": "read_kpi_snapshot_api_v1_reporting_kpi_snapshots_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period_month",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "title": "Period Month",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KpiSnapshotReadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Kpi Snapshot",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
+    "/api/v1/reporting/kpi-snapshots/rebuild": {
+      "post": {
+        "description": "Rebuild KPI snapshot rows for a single month.",
+        "operationId": "rebuild_kpi_snapshot_api_v1_reporting_kpi_snapshots_rebuild_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KpiSnapshotRebuildRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KpiSnapshotReadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Rebuild Kpi Snapshot",
+        "tags": [
+          "reporting"
         ]
       }
     },
