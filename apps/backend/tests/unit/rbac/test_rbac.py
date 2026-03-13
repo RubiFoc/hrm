@@ -152,6 +152,22 @@ def test_employee_can_access_and_update_self_service_portal_permissions() -> Non
     assert update_decision.allowed is True
 
 
+def test_leader_can_read_kpi_snapshot_permission() -> None:
+    """Verify leader role can read monthly KPI snapshot reports."""
+    decision = evaluate_permission(role="leader", permission="kpi_snapshot:read")
+
+    assert decision.allowed is True
+
+
+def test_leader_is_denied_for_kpi_snapshot_rebuild_permission() -> None:
+    """Verify leader role cannot rebuild KPI snapshots."""
+    decision = evaluate_permission(role="leader", permission="kpi_snapshot:rebuild")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "kpi_snapshot:rebuild" in decision.reason
+
+
 def test_manager_is_denied_for_employee_key_list_permission() -> None:
     """Verify manager role is denied for employee-key list permission."""
     decision = evaluate_permission(role="manager", permission="admin:employee_key:list")

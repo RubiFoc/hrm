@@ -156,6 +156,7 @@ ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
         "vacancy:read",
         "pipeline:read",
         "analytics:read",
+        "kpi_snapshot:read",
     },
     "accountant": {
         "accounting:read",

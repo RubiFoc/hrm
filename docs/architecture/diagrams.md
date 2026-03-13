@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-13
-- Updated by: architect + backend-engineer + frontend-engineer
+- Updated by: architect + backend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -950,7 +950,7 @@ flowchart LR
     REBUILD[Admin Rebuild Request]
     AGG[KPI Aggregation Service]
     SNAP[(kpi_snapshots)]
-    READ[Snapshot Read API]
+  READ[Snapshot Read API (leader/admin)]
   end
 
   REBUILD --> AGG

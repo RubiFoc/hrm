@@ -308,11 +308,35 @@ async def test_kpi_snapshot_read_returns_empty_payload_when_missing(
     assert payload["metrics"] == []
 
 
-async def test_kpi_snapshot_rbac_is_fail_closed(
+async def test_kpi_snapshot_read_does_not_fallback_to_live_aggregation(
     configured_app,
     api_client: AsyncClient,
 ) -> None:
-    """Verify non-admin roles are denied for KPI snapshot endpoints."""
+    """Verify read API returns empty payload even when source data exists."""
+    _, context_holder, engine = configured_app
+    _seed_kpi_sources(engine)
+    context_holder["context"] = AuthContext(
+        subject_id=uuid4(),
+        role="leader",
+        session_id=uuid4(),
+        token_id=uuid4(),
+        expires_at=9999999999,
+    )
+
+    read_response = await api_client.get(
+        "/api/v1/reporting/kpi-snapshots",
+        params={"period_month": "2026-03-01"},
+    )
+    assert read_response.status_code == 200
+    payload = read_response.json()
+    assert payload["metrics"] == []
+
+
+async def test_kpi_snapshot_rbac_allows_leader_reads_and_denies_rebuild(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify leader can read KPI snapshots but cannot rebuild them."""
     _, context_holder, _ = configured_app
     context_holder["context"] = AuthContext(
         subject_id=uuid4(),
@@ -326,13 +350,36 @@ async def test_kpi_snapshot_rbac_is_fail_closed(
         "/api/v1/reporting/kpi-snapshots",
         params={"period_month": "2026-03-01"},
     )
-    assert read_response.status_code == 403
+    assert read_response.status_code == 200
 
     rebuild_response = await api_client.post(
         "/api/v1/reporting/kpi-snapshots/rebuild",
         json={"period_month": "2026-03-01"},
     )
     assert rebuild_response.status_code == 403
+
+
+@pytest.mark.parametrize("role", ["hr", "manager", "employee", "accountant"])
+async def test_kpi_snapshot_read_denies_non_privileged_roles(
+    configured_app,
+    api_client: AsyncClient,
+    role: str,
+) -> None:
+    """Verify non-privileged roles are denied KPI snapshot reads."""
+    _, context_holder, _ = configured_app
+    context_holder["context"] = AuthContext(
+        subject_id=uuid4(),
+        role=role,  # type: ignore[arg-type]
+        session_id=uuid4(),
+        token_id=uuid4(),
+        expires_at=9999999999,
+    )
+
+    read_response = await api_client.get(
+        "/api/v1/reporting/kpi-snapshots",
+        params={"period_month": "2026-03-01"},
+    )
+    assert read_response.status_code == 403
 
 
 async def test_kpi_snapshot_invalid_month_returns_422(
