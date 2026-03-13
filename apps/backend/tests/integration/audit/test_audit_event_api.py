@@ -234,7 +234,10 @@ async def test_invalid_time_range_returns_422_and_is_audited(
 
     events = _load_events(database_url)
     list_events = [event for event in events if event.action == "audit.event:list"]
-    assert any(event.result == "failure" and event.reason == "invalid_time_range" for event in list_events)
+    assert any(
+        event.result == "failure" and event.reason == "invalid_time_range"
+        for event in list_events
+    )
 
 
 async def test_response_excludes_self_generated_audit_event_list(
@@ -272,4 +275,3 @@ async def test_response_excludes_self_generated_audit_event_list(
         and event.correlation_id == request_id
         for event in events
     )
-
