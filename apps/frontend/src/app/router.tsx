@@ -5,6 +5,7 @@ import { EmployeeGuard } from "./guards/EmployeeGuard";
 import { readAuthSession } from "./auth/session";
 import { RootLayout } from "../components/RootLayout";
 import { AccessDeniedPage } from "../pages/AccessDeniedPage";
+import { AccountantWorkspacePage } from "../pages/AccountantWorkspacePage";
 import { AdminEmployeeKeysManagementPage } from "../pages/AdminEmployeeKeysManagementPage";
 import { AdminStaffManagementPage } from "../pages/AdminStaffManagementPage";
 import { AdminShellPage } from "../pages/AdminShellPage";
@@ -21,6 +22,9 @@ function WorkspaceHomePage() {
   }
   if (session.accessToken && session.role === "manager") {
     return <ManagerWorkspacePage />;
+  }
+  if (session.accessToken && session.role === "accountant") {
+    return <AccountantWorkspacePage />;
   }
   return <HrDashboardPage />;
 }

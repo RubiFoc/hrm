@@ -135,8 +135,9 @@
   - `role`
   - `route`
 - Required route/workspace mapping:
-  - `/` -> `workspace=hr`, `route=/` for `admin`, `hr`, `leader`, and `accountant`
+  - `/` -> `workspace=hr`, `route=/` for `admin`, `hr`, and `leader`
   - `/` -> `workspace=manager`, `route=/` for `manager`
+  - `/` -> `workspace=accountant`, `route=/` for `accountant`
   - `/employee` -> `workspace=employee`, `route=/employee`
   - `/candidate` -> `workspace=candidate`, `route=/candidate`
   - `/login` -> `workspace=auth`, `route=/login`
@@ -214,6 +215,33 @@
   - `workspace=hr` for HR/admin-style workspace
   - `workspace=manager` for manager dashboard
 - Keep auth, CORS, public candidate transport, employee portal contracts, and onboarding task mutation routes unchanged in this slice.
+
+## TASK-09-03 Baseline
+- Keep the existing route topology intact; do not add a new accountant-only path.
+- Use the existing `/` route for accountant users:
+  - `accountant` resolves to a dedicated accountant workspace page;
+  - `hr`/`admin`/`leader` keep the HR workspace on `/`;
+  - `manager` keeps the manager workspace on `/`.
+- Read accountant workspace data through dedicated read-only finance adapter endpoints:
+  - `GET /api/v1/accounting/workspace`
+  - `GET /api/v1/accounting/workspace/export?format=csv|xlsx`
+- Workspace UX requirements:
+  - localized title/subtitle;
+  - employee search field;
+  - paginated read-only table;
+  - separate `Export CSV` and `Export Excel` actions;
+  - localized loading, empty, and `401/403/422/generic` error states.
+- Visibility rules stay fail-closed:
+  - accountant rows are visible only when at least one onboarding task has
+    `assigned_role=accountant` or `assigned_staff_id=<current accountant subject>`;
+  - rows outside this assignment scope must stay invisible in both UI and exports.
+- Export rules:
+  - support both RFC4180-style UTF-8 CSV and native `.xlsx`;
+  - both formats must contain the same filtered full result set and the same ordered columns;
+  - binary downloads must use a dedicated frontend helper instead of the JSON-only API wrapper.
+- Emit canonical Sentry tags for `/` based on resolved role:
+  - `workspace=accountant` for accountant workspace.
+- Keep auth, CORS, employee self-service routes, HR/manager route topology, and generic reporting/export infrastructure unchanged in this slice.
 
 ## Library Baseline (Popular Ready-Made Stack)
 - UI components: Material UI (MUI).

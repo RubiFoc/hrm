@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from uuid import UUID, uuid4
@@ -298,18 +298,21 @@ async def _create_interview(
     vacancy_id: str,
     candidate_id: str,
     interviewer_staff_ids: list[str] | None = None,
-    scheduled_start_local: str = "2026-03-12T10:00:00",
-    scheduled_end_local: str = "2026-03-12T11:00:00",
+    scheduled_start_local: str | None = None,
+    scheduled_end_local: str | None = None,
     location_kind: str = "google_meet",
     location_details: str | None = None,
 ) -> dict[str, object]:
     """Create one interview through the HR API and return response JSON."""
+    future_local_date = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+    start_local = scheduled_start_local or f"{future_local_date}T10:00:00"
+    end_local = scheduled_end_local or f"{future_local_date}T11:00:00"
     response = await api_client.post(
         f"/api/v1/vacancies/{vacancy_id}/interviews",
         json={
             "candidate_id": candidate_id,
-            "scheduled_start_local": scheduled_start_local,
-            "scheduled_end_local": scheduled_end_local,
+            "scheduled_start_local": start_local,
+            "scheduled_end_local": end_local,
             "timezone": "Europe/Minsk",
             "location_kind": location_kind,
             "location_details": location_details,

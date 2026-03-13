@@ -45,7 +45,8 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0038 | 2026-03-11 | accepted | Perform native PDF/DOCX text extraction before CV normalization while keeping parsing and scoring contracts stable | architect + backend-engineer | candidate parsing pipeline, evidence traceability, worker/runtime dependencies, scoring preconditions |
 | ADR-0039 | 2026-03-11 | accepted | Enrich parsed CV profiles with profession-agnostic workplaces, held positions, education, normalized titles/dates, and generic skills | architect + backend-engineer | candidate parsing pipeline, parsed-profile semantics, evidence mapping, product framing |
 | ADR-0040 | 2026-03-12 | accepted | Keep default Ollama runtime external-host compatible while adding an opt-in compose-local `ai-local` profile and separate scoring smoke | architect + backend-engineer | compose topology, scoring runtime, operator verification |
-
+| ADR-0041 | 2026-03-12 | accepted | Introduce explicit vacancy ownership and dedicated manager workspace reads on `/` | architect + backend-engineer + frontend-engineer | manager workspace visibility policy, vacancy ownership signal, frontend route semantics |
+| ADR-0042 | 2026-03-13 | accepted | Add accountant workspace + dual-format controlled export as a thin finance adapter over onboarding data | architect + backend-engineer + frontend-engineer | finance adapter boundary, controlled exports, frontend route semantics, observability |
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
@@ -463,7 +464,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
     - `/admin/staff`
     - `/admin/employee-keys`
   - Emit canonical Sentry tags (`workspace`, `role`, `route`) on each critical-route entry:
-    - `/` -> `workspace=hr`
+    - `/` -> role-resolved `workspace` tag for the current staff workspace (`hr`, `manager`, or later additive staff workspaces such as `accountant`)
     - `/candidate` -> `workspace=candidate`
     - `/login` -> `workspace=auth`
     - `/admin*` -> `workspace=admin`
@@ -834,3 +835,42 @@ Use this log for decisions that change interfaces, data models, deployment topol
     ownership` vs `task assignment`), which keeps the policy auditable and understandable.
   - Future leader/team-wide visibility or richer ownership models can build on this additive signal
     instead of widening the current manager scope implicitly.
+
+## ADR-0042
+- Context: `TASK-09-03` required one accountant-facing workspace with controlled export access, but
+  the product already had stable onboarding persistence and no approved generic reporting/export
+  infrastructure. Reusing the HR workspace, widening onboarding dashboard visibility, or
+  introducing async export jobs would overshoot the intended slice and weaken fail-closed
+  visibility.
+- Decision:
+  - Keep the existing `/` route topology and resolve `accountant` users to a dedicated accountant
+    workspace page on `/`.
+  - Introduce a thin backend finance adapter package `hrm_backend/finance` instead of extending HR
+    vacancy routes or adding finance-owned persistence tables.
+  - Expose read-only accountant APIs:
+    - `GET /api/v1/accounting/workspace`
+    - `GET /api/v1/accounting/workspace/export?format=csv|xlsx`
+  - Reuse the existing `accounting:read` permission for both list and export reads.
+  - Keep visibility fail-closed:
+    - a run is visible only when at least one onboarding task has `assigned_role=accountant`
+    - or `assigned_staff_id=<current accountant subject>`
+    - rows outside this scope remain invisible in UI and both export formats
+  - Build the accountant row model directly from durable `employee_profiles`, `onboarding_runs`,
+    and `onboarding_tasks` without a separate reporting table, migration, or async export job.
+  - Support two synchronous attachment formats with one shared column contract:
+    - RFC4180-style UTF-8 CSV
+    - native `.xlsx`
+  - Keep frontend observability canonical on `/` by emitting `workspace=accountant`,
+    `role=accountant`, and `route=/`.
+  - Keep auth, CORS, employee self-service routes, manager workspace rules, and generic reporting
+    infrastructure unchanged in this slice.
+- Consequences:
+  - Accountants now have one dedicated read-only workspace and export surface without inheriting HR
+    recruitment controls.
+  - Export scope is auditable and deterministic because UI and CSV/XLSX attachments reuse the same
+    filtered row model and ordering.
+  - Finance reporting remains intentionally narrow: no batch exports, object storage artifacts, or
+    reusable reporting engine are introduced before a later export/reporting ADR explicitly widens
+    scope.
+  - The employee domain stays the source of truth for onboarding state, while the finance adapter
+    remains a thin read boundary layered on top of it.

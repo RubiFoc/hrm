@@ -505,6 +505,34 @@ Acceptance rules for the implementation slice:
   - `npm --prefix apps/frontend run lint`
   - `npm --prefix apps/frontend run test -- --run`
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+- `./scripts/check-docs-structure.sh`
+
+## Accountant Workspace Verification (`TASK-09-03`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Accountant visibility predicate, deterministic ordering, and row counters stay stable | `apps/backend/tests/unit/finance/test_accounting_workspace_service.py` | N/A | only accountant-assigned runs are visible, counters remain deterministic, and non-accountant/unassigned runs stay excluded |
+| CSV and XLSX exports reuse one shared column contract and row values | `apps/backend/tests/unit/finance/test_accounting_workspace_service.py` | `apps/backend/tests/integration/finance/test_accounting_workspace_api.py` | header order matches across formats, XLSX sheet name stays `accounting_workspace`, and exported values match the same filtered row set |
+| Accountant workspace APIs stay fail-closed outside accountant/admin RBAC scope | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/finance/test_accounting_workspace_api.py` | `accountant` and `admin` can read/export, `hr/manager/leader/employee` receive `403`, and denied reads are audited |
+| Accountant `/` route renders loading, empty, error, and success states with dual export actions | `apps/frontend/src/pages/AccountantWorkspacePage.test.tsx` | N/A | page renders search, paginated read-only table, localized errors, and both `Export CSV` / `Export Excel` actions |
+| Route dispatch and observability stay canonical on `/` for accountant role | `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx`, `apps/frontend/src/api/httpClient.test.ts` | N/A | accountant login redirects to `/`, `/` emits `workspace=accountant`, and binary download failures are captured with accountant route tags |
+
+Acceptance rules for the implementation slice:
+- Keep the existing `/` route split by role; do not add a separate accountant-only path.
+- Keep accountant APIs read-only and assignment-scoped; do not widen accountant access to HR vacancy, pipeline, onboarding-task mutation, payroll, or generic reporting controls.
+- Freeze OpenAPI and update generated frontend types in the same change because a new finance API surface is introduced.
+- Keep auth, CORS, employee self-service routes, manager workspace rules, and public candidate transport unchanged.
+- Minimum verification set:
+  - `./scripts/generate-openapi-frozen.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:generate`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
   - `./scripts/check-docs-structure.sh`
 

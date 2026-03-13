@@ -38,7 +38,11 @@ export function RootLayout() {
           </Typography>
           {session.role !== "employee" ? (
             <Button color="inherit" component={Link} to="/">
-              {session.role === "manager" ? t("managerWorkspace") : t("hrWorkspace")}
+              {session.role === "manager"
+                ? t("managerWorkspace")
+                : session.role === "accountant"
+                  ? t("accountantWorkspace")
+                  : t("hrWorkspace")}
             </Button>
           ) : null}
           {session.role === "employee" ? (

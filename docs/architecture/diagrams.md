@@ -444,6 +444,37 @@ sequenceDiagram
   end
 ```
 
+## Diagram 9B: Accountant Workspace Sequence
+
+```mermaid
+sequenceDiagram
+  participant ACC as Accountant
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant FIN as Finance Adapter
+  participant EMP as Employee Domain Tables
+  participant AUD as Audit Service
+
+  ACC->>UI: Open `/`
+  UI->>API: GET /api/v1/accounting/workspace?search&limit&offset
+  API->>FIN: Validate `accounting:read`
+  FIN->>EMP: Load `employee_profiles + onboarding_runs + onboarding_tasks`
+  FIN->>FIN: Keep only rows with `assigned_role=accountant` or `assigned_staff_id=<actor>`
+  FIN->>FIN: Build deterministic ordered row model
+  FIN->>AUD: accounting_workspace:read success
+  FIN-->>API: paginated accountant workspace payload
+  API-->>UI: Render read-only table and export actions
+
+  ACC->>UI: Export current filtered scope
+  UI->>API: GET /api/v1/accounting/workspace/export?format=csv|xlsx&search
+  API->>FIN: Re-validate `accounting:read`
+  FIN->>EMP: Reuse the same filtered row model
+  FIN->>FIN: Render CSV or XLSX with identical columns
+  FIN->>AUD: accounting_export:download success
+  FIN-->>API: Attachment bytes + filename
+  API-->>UI: Browser download starts
+```
+
 ## Diagram 10: Deployment and Trust Boundaries
 
 ```mermaid
@@ -520,7 +551,7 @@ sequenceDiagram
 ```mermaid
 flowchart LR
   DEV[Developer Branch\nfeature/TASK-*] --> PR[Pull Request to main]
-  PR --> REV[2 Reviewers Required]
+  PR --> REV[Solo: self-review\nTeam: peer approvals]
   REV --> CI[GitHub Actions CI]
 
   subgraph Checks
@@ -840,7 +871,7 @@ sequenceDiagram
 ```mermaid
 flowchart LR
   USER[User opens critical route] --> ROUTE[Observed route: /, /employee, /candidate, /login, /admin*]
-  ROUTE --> TAGS[Sentry tags: workspace=hr|manager|employee|candidate|auth|admin, role, route]
+  ROUTE --> TAGS[Sentry tags: workspace=hr|manager|accountant|employee|candidate|auth|admin, role, route]
   TAGS --> SENTRY[Sentry]
 
   ROUTE --> UI[React page and query or mutation logic]

@@ -1,6 +1,174 @@
 {
   "components": {
     "schemas": {
+      "AccountingWorkspaceListResponse": {
+        "description": "Paginated accountant workspace payload for the current actor.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AccountingWorkspaceRowResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "AccountingWorkspaceListResponse",
+        "type": "object"
+      },
+      "AccountingWorkspaceRowResponse": {
+        "description": "One flattened accountant-visible onboarding row shared by UI and export generation.",
+        "properties": {
+          "accountant_task_completed": {
+            "minimum": 0.0,
+            "title": "Accountant Task Completed",
+            "type": "integer"
+          },
+          "accountant_task_in_progress": {
+            "minimum": 0.0,
+            "title": "Accountant Task In Progress",
+            "type": "integer"
+          },
+          "accountant_task_overdue": {
+            "minimum": 0.0,
+            "title": "Accountant Task Overdue",
+            "type": "integer"
+          },
+          "accountant_task_pending": {
+            "minimum": 0.0,
+            "title": "Accountant Task Pending",
+            "type": "integer"
+          },
+          "accountant_task_total": {
+            "minimum": 0.0,
+            "title": "Accountant Task Total",
+            "type": "integer"
+          },
+          "current_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Title"
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "first_name": {
+            "title": "First Name",
+            "type": "string"
+          },
+          "last_name": {
+            "title": "Last Name",
+            "type": "string"
+          },
+          "latest_accountant_due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Accountant Due At"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "offer_terms_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Terms Summary"
+          },
+          "onboarding_id": {
+            "format": "uuid",
+            "title": "Onboarding Id",
+            "type": "string"
+          },
+          "onboarding_status": {
+            "const": "started",
+            "title": "Onboarding Status",
+            "type": "string"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          }
+        },
+        "required": [
+          "onboarding_id",
+          "employee_id",
+          "first_name",
+          "last_name",
+          "email",
+          "location",
+          "current_title",
+          "start_date",
+          "offer_terms_summary",
+          "onboarding_status",
+          "accountant_task_total",
+          "accountant_task_pending",
+          "accountant_task_in_progress",
+          "accountant_task_completed",
+          "accountant_task_overdue"
+        ],
+        "title": "AccountingWorkspaceRowResponse",
+        "type": "object"
+      },
       "AdminCreateEmployeeKeyRequest": {
         "additionalProperties": false,
         "description": "Input payload for employee registration key issuance.",
@@ -5064,6 +5232,156 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/accounting/workspace": {
+      "get": {
+        "description": "List accountant-visible onboarding rows for the current actor.",
+        "operationId": "get_accounting_workspace_api_v1_accounting_workspace_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountingWorkspaceListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Accounting Workspace",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
+    "/api/v1/accounting/workspace/export": {
+      "get": {
+        "description": "Download accountant-visible workspace rows as CSV or XLSX attachment.",
+        "operationId": "export_accounting_workspace_api_v1_accounting_workspace_export_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "format",
+            "required": true,
+            "schema": {
+              "enum": [
+                "csv",
+                "xlsx"
+              ],
+              "title": "Format",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 256,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
+              "text/csv": {}
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Export Accounting Workspace",
+        "tags": [
+          "accounting"
+        ]
+      }
+    },
     "/api/v1/admin/employee-keys": {
       "get": {
         "description": "List employee registration keys with pagination and optional filters.",

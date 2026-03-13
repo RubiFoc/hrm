@@ -9,6 +9,8 @@
 - Architect defines solution boundaries, key technical decisions, and constraints.
 - Architect records non-functional concerns (reliability, security, performance).
 - Architect creates or updates architecture diagrams in `docs/architecture/diagrams.md`.
+- Solo-maintainer mode: if no other maintainers are active, architect review is recorded as a
+  documented architectural self-review in the PR instead of waiting for an external approver.
 
 ## 3. Planning
 - Coordinator splits work into parallelizable subtasks.
@@ -24,6 +26,8 @@
 - Each role returns `handoff-output.yaml`.
 - Documentation updates are prepared using `docs/llm/docs-update-checklist.md`.
 - Architect confirms diagram consistency and best-practice alignment.
+- Solo-maintainer mode: coordinator does not wait for external PR approvals; required closeout is
+  self-review evidence plus passing verification checks.
 - Coordinator merges outputs into one final delivery.
 - After merge, coordinator checks linked GitHub issues, closes the issues actually resolved by the merged task, and syncs any backlog status change in `docs/project/tasks.md`.
 - After the PR is closed, coordinator deletes branches that are no longer needed locally and on GitHub.
@@ -32,6 +36,7 @@
 - Acceptance criteria are explicitly satisfied.
 - Business goals and user impact are explicitly addressed.
 - Architecture decisions and tradeoffs are documented.
+- Architecture review evidence is attached; in solo-maintainer mode this is a documented self-review.
 - Risks and follow-ups are documented.
 - Test evidence is attached.
 - Impacted documentation is updated in the same task.

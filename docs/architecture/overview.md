@@ -93,19 +93,25 @@ flowchart LR
    latest pipeline transitions, candidate counts, and active interviews build a deterministic hiring summary and vacancy list ->
    `GET /api/v1/vacancies/{vacancy_id}/manager-workspace/candidates` re-validates the selected vacancy scope and returns a read-only candidate/pipeline snapshot ->
    the same page reuses the onboarding dashboard block from `/api/v1/onboarding/runs*`.
-6. HR Automation Flow:
+6. Accountant Workspace Flow:
+   accountant opens `/` -> frontend resolves `AccountantWorkspacePage` ->
+   `GET /api/v1/accounting/workspace` validates `accounting:read` ->
+   finance adapter loads `employee_profiles + onboarding_runs + onboarding_tasks` from the employee domain ->
+   finance adapter keeps only runs with `assigned_role=accountant` or `assigned_staff_id=<actor>` ->
+   the same filtered row model is reused for paginated UI reads and `GET /api/v1/accounting/workspace/export?format=csv|xlsx` attachments.
+7. HR Automation Flow:
    rule trigger -> workflow engine -> task creation/assignment -> status update and reporting.
-7. Public Candidate Apply Flow:
+8. Public Candidate Apply Flow:
    anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> native PDF/DOCX extraction + persisted analysis artifacts -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
-8. Authentication Flow:
+9. Authentication Flow:
    staff key issuance -> staff register/login (login/email + password) -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
-9. Admin Staff Governance Flow:
+10. Admin Staff Governance Flow:
    admin opens `/admin/staff` -> paginated/filterable staff list -> patch `role`/`is_active` ->
    strict guard (self-protection + last-active-admin protection) -> audit success/failure reason codes.
-10. Admin Employee Key Lifecycle Flow:
+11. Admin Employee Key Lifecycle Flow:
    admin/hr issues key -> list/filter key registry -> revoke active key when needed ->
    registration rejects revoked/expired/used keys -> audit success/failure reason codes.
-11. Frontend Observability Flow:
+12. Frontend Observability Flow:
    user opens a critical frontend route -> Sentry tags `workspace`/`role`/`route` are emitted ->
    shared HTTP client captures request failures with route metadata -> top-level render boundary
    captures React render failures -> Sentry stores tagged events with environment/release/tracing context.
@@ -158,6 +164,11 @@ flowchart LR
   the employee-facing completion state read from `/api/v1/employees/me/onboarding`; HR/admin and
   managers consume the same durable task rows through `/api/v1/onboarding/runs*` without a
   separate reporting table in this slice.
+- Accountant workspace export artifacts:
+  the finance adapter derives accountant-visible rows directly from `employee_profiles`,
+  `onboarding_runs`, and `onboarding_tasks`; visibility stays fail-closed on accountant
+  assignment metadata, while CSV and XLSX exports reuse the exact same filtered column set as the
+  `/api/v1/accounting/workspace` UI payload without a separate reporting table or async export job.
 - Auth revocation artifacts:
   denylisted token ids (`jti`) and session ids (`sid`) in Redis.
 - External integrations: Ollama, Google Calendar
@@ -188,6 +199,10 @@ flowchart LR
   `/api/v1/vacancies/{vacancy_id}/manager-workspace/candidates`) gated by
   `manager_workspace:read` and explicit vacancy ownership through
   `vacancies.hiring_manager_staff_id`.
+- Implemented finance adapter boundary:
+  `hrm_backend/finance` owns read-only accountant workspace APIs on `/api/v1/accounting/workspace`
+  and `/api/v1/accounting/workspace/export`, gated by `accounting:read` and fail-closed
+  accountant task assignment visibility while reusing employee-domain persistence models directly.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
 - Compose baseline services: `frontend`, `backend`, `backend-worker`, `postgres`, `postgres-init`, `backend-migrate`, `redis`, `minio`, `minio-init`.
 - Compose bootstrap baseline: `postgres-init`, `backend-migrate`, and `minio-init` are one-shot prerequisites before steady-state services are considered ready.

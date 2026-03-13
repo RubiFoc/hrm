@@ -19,6 +19,11 @@ export class ApiError extends Error {
   }
 }
 
+export type DownloadResult = {
+  contentType: string;
+  filename: string;
+};
+
 export async function apiRequest<TResponse>(
   input: RequestInfo | URL,
   init?: RequestInit,
@@ -58,6 +63,56 @@ export async function apiRequest<TResponse>(
   return rawBody as TResponse;
 }
 
+/**
+ * Download one binary attachment and trigger browser save flow.
+ */
+export async function downloadFile(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<DownloadResult> {
+  let response: Response;
+  try {
+    response = await fetch(input, init);
+  } catch (error) {
+    captureFrontendHttpFailure(error, {
+      input,
+      method: init?.method,
+    });
+    throw error;
+  }
+
+  if (!response.ok) {
+    const rawBody = await response.text();
+    const payload = parseJsonBody(rawBody);
+    const detail = resolveErrorDetail(payload, response.status);
+    const apiError = new ApiError(response.status, detail);
+    captureFrontendHttpFailure(apiError, {
+      input,
+      method: init?.method,
+      status: response.status,
+      detail,
+    });
+    throw apiError;
+  }
+
+  const blob = await response.blob();
+  const filename = resolveDownloadFilename(response.headers.get("Content-Disposition"));
+  const objectUrl = window.URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.style.display = "none";
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  window.URL.revokeObjectURL(objectUrl);
+
+  return {
+    contentType: response.headers.get("Content-Type") ?? "application/octet-stream",
+    filename,
+  };
+}
+
 function parseJsonBody(rawBody: string): unknown | undefined {
   if (!rawBody.trim()) {
     return undefined;
@@ -77,4 +132,27 @@ function resolveErrorDetail(payload: unknown, status: number): string {
     }
   }
   return `http_${status}`;
+}
+
+function resolveDownloadFilename(contentDisposition: string | null): string {
+  if (!contentDisposition) {
+    return "download";
+  }
+
+  const utf8FilenameMatch = contentDisposition.match(/filename\*\s*=\s*UTF-8''([^;]+)/i);
+  if (utf8FilenameMatch?.[1]) {
+    return decodeURIComponent(utf8FilenameMatch[1].trim());
+  }
+
+  const quotedFilenameMatch = contentDisposition.match(/filename\s*=\s*"([^"]+)"/i);
+  if (quotedFilenameMatch?.[1]) {
+    return quotedFilenameMatch[1].trim();
+  }
+
+  const plainFilenameMatch = contentDisposition.match(/filename\s*=\s*([^;]+)/i);
+  if (plainFilenameMatch?.[1]) {
+    return plainFilenameMatch[1].trim();
+  }
+
+  return "download";
 }

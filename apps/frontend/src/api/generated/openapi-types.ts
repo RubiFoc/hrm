@@ -4,6 +4,46 @@
  */
 
 export interface paths {
+    "/api/v1/accounting/workspace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Accounting Workspace
+         * @description List accountant-visible onboarding rows for the current actor.
+         */
+        get: operations["get_accounting_workspace_api_v1_accounting_workspace_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/workspace/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Accounting Workspace
+         * @description Download accountant-visible workspace rows as CSV or XLSX attachment.
+         */
+        get: operations["export_accounting_workspace_api_v1_accounting_workspace_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/employee-keys": {
         parameters: {
             query?: never;
@@ -1116,6 +1156,67 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AccountingWorkspaceListResponse
+         * @description Paginated accountant workspace payload for the current actor.
+         */
+        AccountingWorkspaceListResponse: {
+            /** Items */
+            items: components["schemas"]["AccountingWorkspaceRowResponse"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * AccountingWorkspaceRowResponse
+         * @description One flattened accountant-visible onboarding row shared by UI and export generation.
+         */
+        AccountingWorkspaceRowResponse: {
+            /** Accountant Task Completed */
+            accountant_task_completed: number;
+            /** Accountant Task In Progress */
+            accountant_task_in_progress: number;
+            /** Accountant Task Overdue */
+            accountant_task_overdue: number;
+            /** Accountant Task Pending */
+            accountant_task_pending: number;
+            /** Accountant Task Total */
+            accountant_task_total: number;
+            /** Current Title */
+            current_title: string | null;
+            /** Email */
+            email: string;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /** Latest Accountant Due At */
+            latest_accountant_due_at?: string | null;
+            /** Location */
+            location: string | null;
+            /** Offer Terms Summary */
+            offer_terms_summary: string | null;
+            /**
+             * Onboarding Id
+             * Format: uuid
+             */
+            onboarding_id: string;
+            /**
+             * Onboarding Status
+             * @constant
+             */
+            onboarding_status: "started";
+            /** Start Date */
+            start_date: string | null;
+        };
         /**
          * AdminCreateEmployeeKeyRequest
          * @description Input payload for employee registration key issuance.
@@ -3183,6 +3284,73 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_accounting_workspace_api_v1_accounting_workspace_get: {
+        parameters: {
+            query?: {
+                search?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountingWorkspaceListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_accounting_workspace_api_v1_accounting_workspace_export_get: {
+        parameters: {
+            query: {
+                format: "csv" | "xlsx";
+                search?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": unknown;
+                    "text/csv": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_employee_keys_api_v1_admin_employee_keys_get: {
         parameters: {
             query?: {

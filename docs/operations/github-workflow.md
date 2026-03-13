@@ -23,7 +23,7 @@
 - Require pull request before merging.
 - Current repo setting: `required_approving_review_count = 0` (solo mode).
 - Team-target setting: require approvals at least 2.
-- Dismiss stale approvals when new commits are pushed.
+- Dismiss stale approvals when new commits are pushed when approvals are enabled.
 - Require status checks to pass before merge.
 - Include administrators in branch restrictions.
 - Restrict force pushes and deletions.
@@ -33,6 +33,8 @@
 
 ## Review Responsibilities
 - Solo mode default: self-review + required CI checks.
+- Solo mode merge rule: do not wait for external PR approvals when no other maintainers are active;
+  document architectural self-review directly in the PR for architecture-affecting slices.
 - If collaborators are available:
   - Backend changes: backend + architect.
   - Frontend changes: frontend + architect.

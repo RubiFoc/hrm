@@ -18,7 +18,9 @@ Implement and maintain the project with predictable quality and low knowledge lo
 - Update impacted docs in the same task.
 - Record architecture-impacting decisions in `docs/architecture/decisions.md`.
 - Update `docs/architecture/diagrams.md` when architecture/data-flow/critical workflow changes.
-- Architect review is mandatory for architecture-level changes.
+- Architecture-level changes require an explicit architecture review record.
+  In solo-maintainer mode this may be satisfied by a documented architectural self-review in the PR;
+  do not block merge waiting for an external approver when no other maintainers are active.
 - Add or update verification steps in `docs/testing/strategy.md` when behavior changes.
 - Apply best practices from `docs/engineering/best-practices.md` in every task.
 - Keep frontend implementation on React.js + TypeScript, with Sentry monitoring and RU/EN support; do not switch stack without ADR approval.

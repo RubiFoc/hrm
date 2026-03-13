@@ -62,6 +62,16 @@ describe("frontend observability route tags", () => {
           }),
         );
       }
+      if (url.includes("/api/v1/accounting/workspace?")) {
+        return Promise.resolve(
+          jsonResponse({
+            items: [],
+            total: 0,
+            limit: 20,
+            offset: 0,
+          }),
+        );
+      }
       if (url.includes("/api/v1/vacancies")) {
         return Promise.resolve(
           jsonResponse({
@@ -147,6 +157,20 @@ describe("frontend observability route tags", () => {
     expect(await screen.findByRole("heading", { name: /кабинет менеджера/i })).toBeDefined();
     expect(setTagMock).toHaveBeenCalledWith("workspace", "manager");
     expect(setTagMock).toHaveBeenCalledWith("role", "manager");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/");
+  });
+
+  it("tags the accountant workspace route on /", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "accountant");
+
+    renderWithPath("/");
+
+    expect(
+      await screen.findByRole("heading", { name: /accountant workspace|кабинет бухгалтера/i }),
+    ).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "accountant");
+    expect(setTagMock).toHaveBeenCalledWith("role", "accountant");
     expect(setTagMock).toHaveBeenCalledWith("route", "/");
   });
 

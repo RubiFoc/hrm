@@ -7,9 +7,12 @@ const resources = {
       appTitle: "HRM Recruitment Workspace",
       hrWorkspace: "HR Workspace",
       managerWorkspace: "Manager Workspace",
+      accountantWorkspace: "Accountant Workspace",
       employeeWorkspace: "Employee Workspace",
       candidateWorkspace: "Candidate Workspace",
       adminWorkspace: "Admin Workspace",
+      accountantWorkspaceSubtitle:
+        "Review accountant-assigned onboarding rows and export the current filtered finance scope.",
       candidateRoute: {
         invalidLinkSubtitle:
           "This route supports either vacancy application/tracking or interview registration mode.",
@@ -210,6 +213,42 @@ const resources = {
           http_401: "Invalid login or password.",
           http_422: "Validation error in submitted fields.",
           generic: "Failed to sign in. Please try again later.",
+        },
+      },
+      accountantDashboard: {
+        authRequired: "Accountant workspace requires an authenticated session.",
+        loading: "Loading accountant workspace...",
+        searchLabel: "Search employees",
+        searchPlaceholder:
+          "Search by employee, email, location, title, or offer summary",
+        searchAction: "Apply search",
+        resetAction: "Reset",
+        exportCsv: "Export CSV",
+        exportCsvPending: "Exporting CSV...",
+        exportXlsx: "Export Excel",
+        exportXlsxPending: "Exporting Excel...",
+        empty: "No accountant-visible rows match the current filters.",
+        notAvailable: "n/a",
+        taskSummary:
+          "Total {{total}} · Pending {{pending}} · In progress {{inProgress}} · Completed {{completed}} · Overdue {{overdue}}",
+        status: {
+          started: "Started",
+        },
+        table: {
+          employee: "Employee",
+          location: "Location",
+          title: "Title",
+          startDate: "Start date",
+          offerTerms: "Offer summary",
+          status: "Onboarding status",
+          taskSummary: "Accountant task summary",
+          latestDueAt: "Latest accountant due at",
+        },
+        errors: {
+          http_401: "Your session is missing or expired. Sign in again.",
+          http_403: "Your account does not have accountant workspace access.",
+          http_422: "The accountant workspace request is invalid.",
+          generic: "Failed to load accountant workspace data.",
         },
       },
       hrDashboard: {
@@ -890,9 +929,12 @@ const resources = {
       appTitle: "HRM Платформа найма",
       hrWorkspace: "Рабочее место HR",
       managerWorkspace: "Кабинет менеджера",
+      accountantWorkspace: "Кабинет бухгалтера",
       employeeWorkspace: "Кабинет сотрудника",
       candidateWorkspace: "Кабинет кандидата",
       adminWorkspace: "Админ пространство",
+      accountantWorkspaceSubtitle:
+        "Просматривайте назначенные бухгалтеру onboarding-строки и выгружайте текущий отфильтрованный finance scope.",
       candidateRoute: {
         invalidLinkSubtitle:
           "Эта страница поддерживает либо режим отклика/трекинга вакансии, либо режим регистрации на интервью.",
@@ -1094,6 +1136,42 @@ const resources = {
           http_401: "Неверный логин или пароль.",
           http_422: "Ошибка валидации полей.",
           generic: "Не удалось выполнить вход. Повторите попытку позже.",
+        },
+      },
+      accountantDashboard: {
+        authRequired: "Для accountant workspace нужна активная авторизованная сессия.",
+        loading: "Загрузка accountant workspace...",
+        searchLabel: "Поиск сотрудников",
+        searchPlaceholder:
+          "Ищите по сотруднику, email, локации, должности или summary оффера",
+        searchAction: "Применить поиск",
+        resetAction: "Сбросить",
+        exportCsv: "Выгрузить CSV",
+        exportCsvPending: "Выгружаем CSV...",
+        exportXlsx: "Выгрузить Excel",
+        exportXlsxPending: "Выгружаем Excel...",
+        empty: "Для текущих фильтров accountant-visible строк не найдено.",
+        notAvailable: "н/д",
+        taskSummary:
+          "Всего {{total}} · Pending {{pending}} · In progress {{inProgress}} · Completed {{completed}} · Overdue {{overdue}}",
+        status: {
+          started: "Started",
+        },
+        table: {
+          employee: "Сотрудник",
+          location: "Локация",
+          title: "Должность",
+          startDate: "Дата старта",
+          offerTerms: "Summary оффера",
+          status: "Статус онбординга",
+          taskSummary: "Сводка задач бухгалтера",
+          latestDueAt: "Последний дедлайн бухгалтера",
+        },
+        errors: {
+          http_401: "Сессия отсутствует или истекла. Войдите заново.",
+          http_403: "У вашей учётной записи нет доступа к accountant workspace.",
+          http_422: "Запрос accountant workspace заполнен некорректно.",
+          generic: "Не удалось загрузить accountant workspace.",
         },
       },
       hrDashboard: {
