@@ -173,6 +173,15 @@ apps/backend/tests/
 | Evidence traceability + analysis read contract (`TASK-03-06`) | `tests/unit/candidates/test_cv_parsing_normalization.py` (field-level evidence snippets/offsets) | `tests/integration/candidates/test_candidate_api.py` + `tests/integration/candidates/test_cv_parsing_jobs.py` | `GET /api/v1/candidates/{candidate_id}/cv/analysis` and `GET /api/v1/public/cv-parsing-jobs/{job_id}/analysis` return structured profile + evidence; pre-ready path returns `409` |
 | RBAC + audit coverage for recruitment endpoints | `tests/unit/rbac/test_rbac.py` | `tests/integration/security/test_audit_enforcement.py` + recruitment integration suites | `allowed/denied/success/failure` audit records in `audit_events` |
 
+## Reporting KPI Snapshot Verification (TASK-10-01)
+
+| Capability | Unit Coverage | Integration Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| KPI aggregation per source table | `tests/unit/reporting/test_kpi_snapshot_service.py` | `tests/integration/reporting/test_kpi_snapshot_api.py` | `uv run --project apps/backend pytest -q` |
+| Zero-fill semantics + idempotent rebuild | `tests/unit/reporting/test_kpi_snapshot_service.py` | `tests/integration/reporting/test_kpi_snapshot_api.py` | snapshot rows remain deterministic across rebuilds |
+| Read API returns empty payload when snapshot is missing | N/A | `tests/integration/reporting/test_kpi_snapshot_api.py` | `metrics=[]` for missing months |
+| RBAC fail-closed access for KPI endpoints | N/A | `tests/integration/reporting/test_kpi_snapshot_api.py` | `403` for non-admin roles |
+
 ## Frontend Login UX Verification (TASK-11-13)
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |

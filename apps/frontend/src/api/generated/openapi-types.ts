@@ -786,6 +786,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/kpi-snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Kpi Snapshot
+         * @description Read KPI snapshot rows for a single month.
+         */
+        get: operations["read_kpi_snapshot_api_v1_reporting_kpi_snapshots_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/kpi-snapshots/rebuild": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rebuild Kpi Snapshot
+         * @description Rebuild KPI snapshot rows for a single month.
+         */
+        post: operations["rebuild_kpi_snapshot_api_v1_reporting_kpi_snapshots_rebuild_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vacancies": {
         parameters: {
             query?: never;
@@ -2276,6 +2316,45 @@ export interface components {
             scheduled_start_local: string;
             /** Timezone */
             timezone: string;
+        };
+        /**
+         * KpiSnapshotMetric
+         * @description Metric payload for one KPI snapshot row.
+         */
+        KpiSnapshotMetric: {
+            /** Generated At */
+            generated_at?: string | null;
+            /**
+             * Metric Key
+             * @enum {string}
+             */
+            metric_key: "vacancies_created_count" | "candidates_applied_count" | "interviews_scheduled_count" | "offers_sent_count" | "offers_accepted_count" | "hires_count" | "onboarding_started_count" | "onboarding_tasks_completed_count";
+            /** Metric Value */
+            metric_value: number;
+        };
+        /**
+         * KpiSnapshotReadResponse
+         * @description Monthly KPI snapshot response payload.
+         */
+        KpiSnapshotReadResponse: {
+            /** Metrics */
+            metrics: components["schemas"]["KpiSnapshotMetric"][];
+            /**
+             * Period Month
+             * Format: date
+             */
+            period_month: string;
+        };
+        /**
+         * KpiSnapshotRebuildRequest
+         * @description Payload for requesting a KPI snapshot rebuild for one month.
+         */
+        KpiSnapshotRebuildRequest: {
+            /**
+             * Period Month
+             * Format: date
+             */
+            period_month: string;
         };
         /**
          * LoginRequest
@@ -4898,6 +4977,70 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicInterviewRegistrationResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_kpi_snapshot_api_v1_reporting_kpi_snapshots_get: {
+        parameters: {
+            query: {
+                period_month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KpiSnapshotReadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rebuild_kpi_snapshot_api_v1_reporting_kpi_snapshots_rebuild_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KpiSnapshotRebuildRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KpiSnapshotReadResponse"];
                 };
             };
             /** @description Validation Error */

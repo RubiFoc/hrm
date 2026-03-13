@@ -52,7 +52,7 @@ flowchart LR
 | Notification Domain | Recipient-scoped in-app notifications and server-computed digests for manager/accountant workspaces | Vacancy ownership changes, onboarding assignment changes, protected notification reads | Dedupe-safe notification rows, unread/read state, digest counters, and embedded workspace notification blocks | platform |
 | AI Adapter | External model integration for CV analysis and match scoring | CV files, vacancy profiles, scoring prompts | Structured candidate insights and score responses | ai-platform |
 | Integration Layer | External connector abstraction | Internal events/commands | Google Calendar actions | platform |
-| Reporting and Audit | KPI tracking and compliance evidence | Domain events | Dashboards, audit logs | data-platform |
+| Reporting and Audit | Monthly KPI snapshots and compliance evidence | Durable domain tables, audit events | KPI snapshots, audit logs | data-platform |
 
 ## Key Flows
 1. Candidate Screening Flow:
@@ -125,6 +125,11 @@ flowchart LR
    recipient opens `/` -> `GET /api/v1/notifications/digest` computes summary counters on demand ->
    `GET /api/v1/notifications?status=unread` returns recipient-owned unread items ->
    `POST /api/v1/notifications/{notification_id}/read` marks only that recipient row as read.
+14. KPI Snapshot Rebuild Flow:
+   admin triggers explicit rebuild -> reporting service reads durable vacancy/pipeline/interview/offer/employee
+   tables for the requested calendar month -> KPI counts are computed server-side ->
+   `kpi_snapshots` rows for the month are replaced atomically -> admin reads stored snapshot via
+   `/api/v1/reporting/kpi-snapshots` (no live aggregation and no scheduler).
 
 ## Data Boundaries
 - Source of truth entities:
@@ -179,6 +184,10 @@ flowchart LR
   source identifiers, dedupe keys, human-readable title/body copy, structured payload JSON,
   created timestamp, and optional `read_at`; manager/accountant digests reuse these rows plus live
   vacancy/task reads without a scheduler or outbound delivery table in this slice.
+- KPI snapshot artifacts:
+  `kpi_snapshots` rows keyed by `period_month + metric_key`, including aggregated `metric_value`
+  and `generated_at` timestamps; rows are rebuilt explicitly from durable domain tables and are
+  never computed on read paths in v1.
 - Accountant workspace export artifacts:
   the finance adapter derives accountant-visible rows directly from `employee_profiles`,
   `onboarding_runs`, and `onboarding_tasks`; visibility stays fail-closed on accountant

@@ -48,6 +48,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0041 | 2026-03-12 | accepted | Introduce explicit vacancy ownership and dedicated manager workspace reads on `/` | architect + backend-engineer + frontend-engineer | manager workspace visibility policy, vacancy ownership signal, frontend route semantics |
 | ADR-0042 | 2026-03-13 | accepted | Add accountant workspace + dual-format controlled export as a thin finance adapter over onboarding data | architect + backend-engineer + frontend-engineer | finance adapter boundary, controlled exports, frontend route semantics, observability |
 | ADR-0043 | 2026-03-13 | accepted | Add recipient-scoped in-app notifications and on-demand digests for manager/accountant workspaces | architect + backend-engineer + frontend-engineer | notification package boundary, recipient visibility policy, frontend embedded workspaces, OpenAPI contract |
+| ADR-0044 | 2026-03-13 | accepted | Introduce monthly KPI snapshot foundation with on-demand rebuild | architect + backend-engineer | reporting package, KPI data model, analytics access policy |
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
@@ -913,3 +914,16 @@ Use this log for decisions that change interfaces, data models, deployment topol
     table and digests are computed on demand from current vacancy/task state.
   - Future outbound delivery channels, template systems, broader role coverage, or async delivery
     infrastructure can be layered later without reopening the current read/update contract.
+
+## ADR-0044
+- Context: `TASK-10-01` requires KPI reporting without relying on the deferred automation engine and without adding schedulers or event-bus dependencies.
+- Decision:
+  - Introduce a reporting package with monthly KPI snapshots stored in `kpi_snapshots`.
+  - Rebuild snapshots explicitly via server-side service call (and admin-only API surface in v1).
+  - Aggregate only from existing durable domain tables (vacancies, pipeline transitions, interviews, offers, hire conversions, onboarding runs/tasks).
+  - Keep one global monthly scope in v1 (no team/department dimensions) and materialize zero rows for months with no data.
+  - If no snapshot exists for a requested month, return an empty deterministic payload instead of live aggregation.
+- Consequences:
+  - KPI reporting is deterministic, idempotent, and does not require async schedulers or event streams.
+  - Leader-facing reads are deferred to a follow-up slice; current API is admin-only to keep exposure tight.
+  - Automation-specific KPI coverage remains explicitly out of scope until the automation engine is implemented.
