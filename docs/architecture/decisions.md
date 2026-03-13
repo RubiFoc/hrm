@@ -49,6 +49,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0042 | 2026-03-13 | accepted | Add accountant workspace + dual-format controlled export as a thin finance adapter over onboarding data | architect + backend-engineer + frontend-engineer | finance adapter boundary, controlled exports, frontend route semantics, observability |
 | ADR-0043 | 2026-03-13 | accepted | Add recipient-scoped in-app notifications and on-demand digests for manager/accountant workspaces | architect + backend-engineer + frontend-engineer | notification package boundary, recipient visibility policy, frontend embedded workspaces, OpenAPI contract |
 | ADR-0044 | 2026-03-13 | accepted | Introduce monthly KPI snapshot foundation with on-demand rebuild | architect + backend-engineer | reporting package, KPI data model, analytics access policy |
+| ADR-0045 | 2026-03-13 | accepted | Expose KPI snapshot reads to leaders while keeping rebuild admin-only | architect + backend-engineer | reporting access policy, RBAC, API read surface |
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
@@ -916,6 +917,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
     infrastructure can be layered later without reopening the current read/update contract.
 
 ## ADR-0044
+- Status note: leader/admin snapshot read access is updated in ADR-0045.
 - Context: `TASK-10-01` requires KPI reporting without relying on the deferred automation engine and without adding schedulers or event-bus dependencies.
 - Decision:
   - Introduce a reporting package with monthly KPI snapshots stored in `kpi_snapshots`.
@@ -927,3 +929,17 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - KPI reporting is deterministic, idempotent, and does not require async schedulers or event streams.
   - Leader-facing reads are deferred to a follow-up slice; current API is admin-only to keep exposure tight.
   - Automation-specific KPI coverage remains explicitly out of scope until the automation engine is implemented.
+
+## ADR-0045
+- Context: `TASK-10-02` needs leader/admin visibility over existing monthly KPI snapshots without introducing
+  automation metrics, schedulers, or live aggregation fallback.
+- Decision:
+  - Keep `kpi_snapshot:rebuild` admin-only.
+  - Allow leaders to read `/api/v1/reporting/kpi-snapshots` for stored monthly snapshots.
+  - Keep read paths deterministic: missing months return an empty payload; no live aggregation fallback.
+  - Defer automation-specific KPI tracking until `TASK-08-*` delivers the automation engine.
+- Consequences:
+  - Leaders can access monthly KPI snapshots without widening rebuild authority.
+  - Read operations remain fast and predictable because they are served only from stored snapshots.
+  - Missing months stay empty until an admin rebuilds the snapshot.
+  - Automation KPI coverage remains deferred and requires a later ADR when automation tracking lands.

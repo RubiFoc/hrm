@@ -20,7 +20,7 @@ industries rather than only IT roles.
 | Platform | Identity, access, audit, notifications, integrations | All roles | Phase 1 |
 | Core Foundation | Shared technical primitives reused by all backend domains | Backend teams | Phase 1-2 |
 | Intelligence | CV analysis and recommendation support | HR, managers | Phase 1 |
-| Analytics | KPI and operational reporting (monthly snapshots in v1) | HR, leaders, managers | Phase 1-2 |
+| Analytics | KPI and operational reporting (monthly snapshots in v1) | Admin, leaders | Phase 1-2 |
 
 ## Level 2: Service Decomposition
 
@@ -42,7 +42,7 @@ industries rather than only IT roles.
 | Workflow Automation Service | HR Operations | Rule engine and triggered HR tasks | Event-driven |
 | Notification Service | Platform | Recipient-scoped in-app notifications and on-demand digests in v1; outbound templates/channels later | REST |
 | Audit Service | Platform | Immutable security and business audit logs | Event ingestion |
-| Reporting Service | Analytics | Monthly KPI snapshots (on-demand rebuild) and dashboards | Read/maintenance APIs |
+| Reporting Service | Analytics | Monthly KPI snapshots (admin rebuild, leader/admin read) and dashboards | Read/maintenance APIs |
 | Accounting Export Service | Finance Adapter | Controlled export for accounting workflows | File/API adapter |
 
 ## Level 3: Internal Module Decomposition (Priority Services)
@@ -145,7 +145,7 @@ industries rather than only IT roles.
 - Interview Service
 - Calendar Sync Service (Google Calendar)
 - Audit Service
-- Reporting Service (monthly KPI snapshot foundation, admin-only API)
+- Reporting Service (monthly KPI snapshot foundation, admin rebuild + leader/admin read API)
 
 ### Phase 2: Manager/Employee/Accountant/Leader Expansion
 - Frontend App (React.js + TypeScript) expansion: manager/employee/accountant/leader workspaces

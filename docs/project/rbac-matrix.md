@@ -60,7 +60,7 @@ Enforcement source of truth:
 | `interview:manage` | yes | yes | yes | no | no | no |
 | `analytics:read` | yes | yes | yes | yes | yes | yes |
 | `accounting:read` | yes | no | no | no | no | yes |
-| `kpi_snapshot:read` | yes | no | no | no | no | no |
+| `kpi_snapshot:read` | yes | no | no | no | yes | no |
 | `kpi_snapshot:rebuild` | yes | no | no | no | no | no |
 
 Public endpoint outside RBAC matrix:

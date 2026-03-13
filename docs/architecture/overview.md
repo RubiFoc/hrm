@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-13
-- Updated by: architect + backend-engineer + frontend-engineer
+- Updated by: architect + backend-engineer
 
 ## System Context
 HRM platform for Belarus and Russia that supports candidate selection across professions and
@@ -52,7 +52,7 @@ flowchart LR
 | Notification Domain | Recipient-scoped in-app notifications and server-computed digests for manager/accountant workspaces | Vacancy ownership changes, onboarding assignment changes, protected notification reads | Dedupe-safe notification rows, unread/read state, digest counters, and embedded workspace notification blocks | platform |
 | AI Adapter | External model integration for CV analysis and match scoring | CV files, vacancy profiles, scoring prompts | Structured candidate insights and score responses | ai-platform |
 | Integration Layer | External connector abstraction | Internal events/commands | Google Calendar actions | platform |
-| Reporting and Audit | Monthly KPI snapshots and compliance evidence | Durable domain tables, audit events | KPI snapshots, audit logs | data-platform |
+| Reporting and Audit | Monthly KPI snapshots with leader/admin reads and compliance evidence | Durable domain tables, audit events | KPI snapshots, audit logs | data-platform |
 
 ## Key Flows
 1. Candidate Screening Flow:
@@ -128,7 +128,7 @@ flowchart LR
 14. KPI Snapshot Rebuild Flow:
    admin triggers explicit rebuild -> reporting service reads durable vacancy/pipeline/interview/offer/employee
    tables for the requested calendar month -> KPI counts are computed server-side ->
-   `kpi_snapshots` rows for the month are replaced atomically -> admin reads stored snapshot via
+   `kpi_snapshots` rows for the month are replaced atomically -> leader/admin read stored snapshot via
    `/api/v1/reporting/kpi-snapshots` (no live aggregation and no scheduler).
 
 ## Data Boundaries

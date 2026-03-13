@@ -180,7 +180,8 @@ apps/backend/tests/
 | KPI aggregation per source table | `tests/unit/reporting/test_kpi_snapshot_service.py` | `tests/integration/reporting/test_kpi_snapshot_api.py` | `uv run --project apps/backend pytest -q` |
 | Zero-fill semantics + idempotent rebuild | `tests/unit/reporting/test_kpi_snapshot_service.py` | `tests/integration/reporting/test_kpi_snapshot_api.py` | snapshot rows remain deterministic across rebuilds |
 | Read API returns empty payload when snapshot is missing | N/A | `tests/integration/reporting/test_kpi_snapshot_api.py` | `metrics=[]` for missing months |
-| RBAC fail-closed access for KPI endpoints | N/A | `tests/integration/reporting/test_kpi_snapshot_api.py` | `403` for non-admin roles |
+| Read API does not fallback to live aggregation | N/A | `tests/integration/reporting/test_kpi_snapshot_api.py` | `metrics=[]` even when source data exists and snapshots are missing |
+| RBAC for KPI endpoints (leader/admin read, admin rebuild) | N/A | `tests/integration/reporting/test_kpi_snapshot_api.py` | leader `200` read, leader `403` rebuild, non-privileged roles `403` read |
 
 ## Frontend Login UX Verification (TASK-11-13)
 
