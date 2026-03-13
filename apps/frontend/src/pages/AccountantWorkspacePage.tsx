@@ -26,6 +26,7 @@ import {
 } from "../api";
 import { readAuthSession } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
+import { NotificationsPanel } from "../components/NotificationsPanel";
 
 const ROWS_PER_PAGE = 20;
 
@@ -95,6 +96,8 @@ export function AccountantWorkspacePage() {
           {t("accountantWorkspaceSubtitle")}
         </Typography>
       </Stack>
+
+      <NotificationsPanel accessToken={accessToken} workspace="accountant" />
 
       <Stack
         component="form"

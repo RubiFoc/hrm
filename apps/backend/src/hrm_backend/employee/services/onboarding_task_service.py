@@ -10,10 +10,12 @@ from sqlalchemy.orm import Session
 
 from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
+from hrm_backend.employee.dao.employee_profile_dao import EmployeeProfileDAO
 from hrm_backend.employee.dao.onboarding_run_dao import OnboardingRunDAO
 from hrm_backend.employee.dao.onboarding_task_dao import OnboardingTaskDAO
 from hrm_backend.employee.dao.onboarding_template_dao import OnboardingTemplateDAO
 from hrm_backend.employee.models.onboarding import OnboardingRun, OnboardingTask
+from hrm_backend.employee.models.profile import EmployeeProfile
 from hrm_backend.employee.models.template import OnboardingTemplate, OnboardingTemplateItem
 from hrm_backend.employee.schemas.onboarding import (
     OnboardingTaskCreate,
@@ -22,6 +24,7 @@ from hrm_backend.employee.schemas.onboarding import (
     OnboardingTaskUpdateRequest,
 )
 from hrm_backend.employee.utils.onboarding import ONBOARDING_TASK_STATUS_COMPLETED
+from hrm_backend.notifications.services.notification_service import NotificationService
 
 ONBOARDING_RUN_NOT_FOUND = "onboarding_run_not_found"
 ONBOARDING_TASK_NOT_FOUND = "onboarding_task_not_found"
@@ -43,6 +46,8 @@ class OnboardingTaskService:
         run_dao: OnboardingRunDAO,
         task_dao: OnboardingTaskDAO,
         template_dao: OnboardingTemplateDAO,
+        profile_dao: EmployeeProfileDAO,
+        notification_service: NotificationService,
         audit_service: AuditService,
     ) -> None:
         """Initialize onboarding task service dependencies.
@@ -52,12 +57,16 @@ class OnboardingTaskService:
             run_dao: DAO for onboarding run lookups.
             task_dao: DAO for onboarding task rows.
             template_dao: DAO for active onboarding template resolution.
+            profile_dao: DAO for employee profile lookups used in notification copy.
+            notification_service: In-app notification service for assignment changes.
             audit_service: Audit service for success and failure traces.
         """
         self._session = session
         self._run_dao = run_dao
         self._task_dao = task_dao
         self._template_dao = template_dao
+        self._profile_dao = profile_dao
+        self._notification_service = notification_service
         self._audit_service = audit_service
 
     def build_create_payloads(
@@ -176,6 +185,8 @@ class OnboardingTaskService:
                 detail=ONBOARDING_TASK_NOT_FOUND,
             )
 
+        previous_assigned_role = entity.assigned_role
+        previous_assigned_staff_id = entity.assigned_staff_id
         if "status" in payload.model_fields_set:
             entity.status = payload.status or entity.status
             if payload.status == ONBOARDING_TASK_STATUS_COMPLETED:
@@ -191,7 +202,17 @@ class OnboardingTaskService:
         if "due_at" in payload.model_fields_set:
             entity.due_at = payload.due_at
 
-        updated = self._task_dao.update_task(entity=entity)
+        updated = self._task_dao.update_task(entity=entity, commit=False)
+        profile = self._profile_dao.get_by_id(run.employee_id)
+        self._notification_service.emit_onboarding_task_assignment_notifications(
+            task=updated,
+            employee_id=run.employee_id,
+            employee_full_name=_resolve_employee_full_name(profile),
+            previous_assigned_role=previous_assigned_role,
+            previous_assigned_staff_id=previous_assigned_staff_id,
+        )
+        self._session.commit()
+        self._session.refresh(updated)
         self._audit_success(
             action="onboarding_task:update",
             auth_context=auth_context,
@@ -322,3 +343,11 @@ def _to_task_response(entity: OnboardingTask) -> OnboardingTaskResponse:
         created_at=entity.created_at,
         updated_at=entity.updated_at,
     )
+
+
+def _resolve_employee_full_name(profile: EmployeeProfile | None) -> str:
+    """Resolve a human-readable employee label for notification copy."""
+    if profile is None:
+        return "employee"
+    full_name = f"{profile.first_name} {profile.last_name}".strip()
+    return full_name or "employee"

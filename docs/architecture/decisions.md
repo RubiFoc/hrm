@@ -47,6 +47,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0040 | 2026-03-12 | accepted | Keep default Ollama runtime external-host compatible while adding an opt-in compose-local `ai-local` profile and separate scoring smoke | architect + backend-engineer | compose topology, scoring runtime, operator verification |
 | ADR-0041 | 2026-03-12 | accepted | Introduce explicit vacancy ownership and dedicated manager workspace reads on `/` | architect + backend-engineer + frontend-engineer | manager workspace visibility policy, vacancy ownership signal, frontend route semantics |
 | ADR-0042 | 2026-03-13 | accepted | Add accountant workspace + dual-format controlled export as a thin finance adapter over onboarding data | architect + backend-engineer + frontend-engineer | finance adapter boundary, controlled exports, frontend route semantics, observability |
+| ADR-0043 | 2026-03-13 | accepted | Add recipient-scoped in-app notifications and on-demand digests for manager/accountant workspaces | architect + backend-engineer + frontend-engineer | notification package boundary, recipient visibility policy, frontend embedded workspaces, OpenAPI contract |
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
@@ -874,3 +875,41 @@ Use this log for decisions that change interfaces, data models, deployment topol
     scope.
   - The employee domain stays the source of truth for onboarding state, while the finance adapter
     remains a thin read boundary layered on top of it.
+
+## ADR-0043
+- Context: `TASK-09-04` required role-specific notifications after manager/accountant workspaces
+  were already implemented, but the system still had no approved outbound notification
+  infrastructure, scheduler, event bus, or template-editor scope. The existing reliable seams were
+  narrow and explicit: vacancy ownership in `vacancy_service.py` and onboarding assignment changes
+  in `onboarding_task_service.py`.
+- Decision:
+  - Introduce a thin backend package `hrm_backend/notifications` for recipient-scoped in-app
+    notification persistence plus on-demand digest reads.
+  - Keep v1 delivery intentionally narrow:
+    - in-app only;
+    - mandatory recipient roles limited to `manager` and `accountant`;
+    - digest computed synchronously on `GET /api/v1/notifications/digest`;
+    - no email, SMS, webhooks, outbox, scheduler, or template-editor scope.
+  - Expose protected APIs:
+    - `GET /api/v1/notifications?status=unread|all&limit&offset`
+    - `POST /api/v1/notifications/{notification_id}/read`
+    - `GET /api/v1/notifications/digest`
+  - Keep reads and updates fail-closed:
+    - list/read-state changes are limited to `recipient_staff_id=<current subject>`;
+    - `POST /read` returns `404 notification_not_found` outside recipient scope.
+  - Emit notifications only from explicit assignment seams:
+    - vacancy ownership changes to `vacancies.hiring_manager_staff_id`;
+    - onboarding task assignment changes on `assigned_role` / `assigned_staff_id`.
+  - Fan out role-based onboarding notifications only to active manager/accountant accounts and
+    dedupe by recipient plus event fingerprint to avoid duplicate in-app rows on repeated writes.
+  - Keep candidate invite delivery manual-only and leave interview invitation transport unchanged.
+  - Solo-maintainer architectural self-review:
+    this ADR records that the slice stays additive, keeps current `/` route semantics, avoids new
+    async infrastructure, and preserves explicit fail-closed visibility boundaries.
+- Consequences:
+  - Managers and accountants now get one embedded in-app notification block on `/` without adding a
+    separate notifications route tree.
+  - Notification storage remains operationally simple because reads come from one `notifications`
+    table and digests are computed on demand from current vacancy/task state.
+  - Future outbound delivery channels, template systems, broader role coverage, or async delivery
+    infrastructure can be layered later without reopening the current read/update contract.

@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-12
+- Date: 2026-03-13
 - Updated by: architect + backend-engineer + frontend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
@@ -49,6 +49,7 @@ flowchart TB
     REC[Recruitment Services]
     SCOREDOM[Match Scoring Service]
     EMPDOM[Employee Services]
+    NOTIFY[Notification Service]
     HROPS[HR Automation Services]
     WORKERS[Background Workers]
     ANALYTICS[Reporting and KPI Services]
@@ -75,6 +76,7 @@ flowchart TB
   API --> REC
   API --> SCOREDOM
   API --> EMPDOM
+  API --> NOTIFY
   API --> HROPS
   API --> ANALYTICS
   WORKERS --> POLICY
@@ -86,12 +88,14 @@ flowchart TB
   REC -.imports.-> COREPKG
   SCOREDOM -.imports.-> COREPKG
   EMPDOM -.imports.-> COREPKG
+  NOTIFY -.imports.-> COREPKG
   HROPS -.imports.-> COREPKG
   ANALYTICS -.imports.-> COREPKG
 
   REC --> DB
   SCOREDOM --> DB
   EMPDOM --> DB
+  NOTIFY --> DB
   HROPS --> DB
   ANALYTICS --> DB
   AUDIT --> DB
@@ -473,6 +477,49 @@ sequenceDiagram
   FIN->>AUD: accounting_export:download success
   FIN-->>API: Attachment bytes + filename
   API-->>UI: Browser download starts
+```
+
+## Diagram 9C: Role-Specific Notification Sequence
+
+```mermaid
+sequenceDiagram
+  participant STAFF as HR/Admin
+  participant API as API Gateway
+  participant VAC as Vacancy Service
+  participant EMP as Onboarding Task Service
+  participant NOTIFY as Notification Service
+  participant DB as PostgreSQL
+  participant USER as Manager or Accountant
+  participant UI as React.js + TypeScript UI
+
+  alt Vacancy ownership change
+    STAFF->>API: PATCH /api/v1/vacancies/{vacancy_id}
+    API->>VAC: Apply `hiring_manager_staff_id` update
+    VAC->>NOTIFY: Emit manager notification when owner changed
+  else Onboarding assignment change
+    STAFF->>API: PATCH /api/v1/onboarding/runs/{onboarding_id}/tasks/{task_id}
+    API->>EMP: Apply assignment/status/SLA patch
+    EMP->>NOTIFY: Emit manager/accountant notification when recipients changed
+  end
+  NOTIFY->>DB: Persist deduped `notifications` rows in the same transaction
+
+  USER->>UI: Open `/`
+  UI->>API: GET /api/v1/notifications/digest
+  API->>NOTIFY: Validate recipient scope + compute digest on demand
+  NOTIFY->>DB: Load unread rows + current vacancy/task counters
+  NOTIFY-->>API: digest payload
+  API-->>UI: Render summary chips
+
+  UI->>API: GET /api/v1/notifications?status=unread&limit&offset
+  API->>NOTIFY: Validate recipient scope + list unread items
+  NOTIFY-->>API: recipient-owned notifications only
+  API-->>UI: Render unread notifications
+
+  USER->>UI: Mark one notification as read
+  UI->>API: POST /api/v1/notifications/{notification_id}/read
+  API->>NOTIFY: Re-validate `recipient_staff_id=<actor>`
+  NOTIFY->>DB: Set `read_at` for that recipient row
+  API-->>UI: Updated read state
 ```
 
 ## Diagram 10: Deployment and Trust Boundaries

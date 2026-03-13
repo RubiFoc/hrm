@@ -19,6 +19,7 @@ from hrm_backend.interviews.utils.feedback import (
     GATE_REASON_MISSING,
     build_feedback_panel_summary,
 )
+from hrm_backend.notifications.services.notification_service import NotificationService
 from hrm_backend.vacancies.dao.offer_dao import OfferDAO
 from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransitionDAO
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
@@ -56,6 +57,7 @@ class VacancyService:
         interview_feedback_dao: InterviewFeedbackDAO,
         hire_conversion_service: HireConversionService,
         staff_account_dao: StaffAccountDAO,
+        notification_service: NotificationService,
         audit_service: AuditService,
     ) -> None:
         """Initialize vacancy service dependencies.
@@ -70,6 +72,7 @@ class VacancyService:
             interview_feedback_dao: Interview feedback DAO.
             hire_conversion_service: Durable employee-domain handoff service.
             staff_account_dao: Staff-account DAO used to resolve assigned-manager labels.
+            notification_service: In-app notification service for manager ownership changes.
             audit_service: Audit service.
         """
         self._session = session
@@ -81,6 +84,7 @@ class VacancyService:
         self._interview_feedback_dao = interview_feedback_dao
         self._hire_conversion_service = hire_conversion_service
         self._staff_account_dao = staff_account_dao
+        self._notification_service = notification_service
         self._audit_service = audit_service
 
     def create_vacancy(
@@ -91,12 +95,20 @@ class VacancyService:
         request: Request,
     ) -> VacancyResponse:
         """Create vacancy row and emit audit event."""
+        hiring_manager_staff_id = self._resolve_hiring_manager_staff_id(
+            payload.hiring_manager_login
+        )
         entity = self._vacancy_dao.create_vacancy(
             payload,
-            hiring_manager_staff_id=self._resolve_hiring_manager_staff_id(
-                payload.hiring_manager_login
-            ),
+            hiring_manager_staff_id=hiring_manager_staff_id,
+            commit=False,
         )
+        self._notification_service.emit_vacancy_assignment_notifications(
+            vacancy=entity,
+            previous_hiring_manager_staff_id=None,
+        )
+        self._session.commit()
+        self._session.refresh(entity)
         actor_sub, actor_role = actor_from_auth_context(auth_context)
         self._audit_service.record_api_event(
             action="vacancy:create",
@@ -164,11 +176,18 @@ class VacancyService:
         entity = self._vacancy_dao.get_by_id(str(vacancy_id))
         if entity is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vacancy not found")
+        previous_hiring_manager_staff_id = entity.hiring_manager_staff_id
         if "hiring_manager_login" in payload.model_fields_set:
             entity.hiring_manager_staff_id = self._resolve_hiring_manager_staff_id(
                 payload.hiring_manager_login
             )
-        updated = self._vacancy_dao.update_vacancy(entity=entity, payload=payload)
+        updated = self._vacancy_dao.update_vacancy(entity=entity, payload=payload, commit=False)
+        self._notification_service.emit_vacancy_assignment_notifications(
+            vacancy=updated,
+            previous_hiring_manager_staff_id=previous_hiring_manager_staff_id,
+        )
+        self._session.commit()
+        self._session.refresh(updated)
         actor_sub, actor_role = actor_from_auth_context(auth_context)
         self._audit_service.record_api_event(
             action="vacancy:update",

@@ -24,6 +24,8 @@ from hrm_backend.core.db.session import get_db_session
 from hrm_backend.employee.dependencies.employee import get_hire_conversion_service
 from hrm_backend.interviews.dao.feedback_dao import InterviewFeedbackDAO
 from hrm_backend.interviews.dao.interview_dao import InterviewDAO
+from hrm_backend.notifications.dependencies.notifications import get_notification_service
+from hrm_backend.notifications.services.notification_service import NotificationService
 from hrm_backend.settings import AppSettings, get_settings
 from hrm_backend.vacancies.dao.public_apply_guard_dao import PublicApplyGuardDAO
 from hrm_backend.vacancies.infra.postgres import OfferDAO, PipelineTransitionDAO, VacancyDAO
@@ -40,12 +42,17 @@ SettingsDependency = Annotated[AppSettings, Depends(get_settings)]
 CandidateStorageDependency = Annotated[CandidateStorage, Depends(get_candidate_storage)]
 RedisClientDependency = Annotated[Redis, Depends(get_redis_client)]
 StaffAccountDAODependency = Annotated[StaffAccountDAO, Depends(get_staff_account_dao)]
+NotificationServiceDependency = Annotated[
+    NotificationService,
+    Depends(get_notification_service),
+]
 
 
 def get_vacancy_service(
     session: SessionDependency,
     audit_service: AuditDependency,
     staff_account_dao: StaffAccountDAODependency,
+    notification_service: NotificationServiceDependency,
 ) -> VacancyService:
     """Build vacancy service dependency.
 
@@ -67,6 +74,7 @@ def get_vacancy_service(
         interview_feedback_dao=InterviewFeedbackDAO(session=session),
         hire_conversion_service=hire_conversion_service,
         staff_account_dao=staff_account_dao,
+        notification_service=notification_service,
         audit_service=audit_service,
     )
 

@@ -30,10 +30,16 @@ from hrm_backend.employee.services.onboarding_task_service import OnboardingTask
 from hrm_backend.employee.services.onboarding_template_service import (
     OnboardingTemplateService,
 )
+from hrm_backend.notifications.dependencies.notifications import get_notification_service
+from hrm_backend.notifications.services.notification_service import NotificationService
 
 SessionDependency = Annotated[Session, Depends(get_db_session)]
 AuditDependency = Annotated[AuditService, Depends(get_audit_service)]
 StaffAccountDAODependency = Annotated[StaffAccountDAO, Depends(get_staff_account_dao)]
+NotificationServiceDependency = Annotated[
+    NotificationService,
+    Depends(get_notification_service),
+]
 
 
 def get_hire_conversion_service(session: SessionDependency) -> HireConversionService:
@@ -51,6 +57,7 @@ def get_hire_conversion_service(session: SessionDependency) -> HireConversionSer
 def get_employee_profile_service(
     session: SessionDependency,
     audit_service: AuditDependency,
+    notification_service: NotificationServiceDependency,
 ) -> EmployeeProfileService:
     """Build employee profile service for the current request session.
 
@@ -71,6 +78,8 @@ def get_employee_profile_service(
             run_dao=OnboardingRunDAO(session=session),
             task_dao=OnboardingTaskDAO(session=session),
             template_dao=OnboardingTemplateDAO(session=session),
+            profile_dao=EmployeeProfileDAO(session=session),
+            notification_service=notification_service,
             audit_service=audit_service,
         ),
         audit_service=audit_service,
@@ -100,6 +109,7 @@ def get_onboarding_template_service(
 def get_onboarding_task_service(
     session: SessionDependency,
     audit_service: AuditDependency,
+    notification_service: NotificationServiceDependency,
 ) -> OnboardingTaskService:
     """Build onboarding task service for the current request session.
 
@@ -115,6 +125,8 @@ def get_onboarding_task_service(
         run_dao=OnboardingRunDAO(session=session),
         task_dao=OnboardingTaskDAO(session=session),
         template_dao=OnboardingTemplateDAO(session=session),
+        profile_dao=EmployeeProfileDAO(session=session),
+        notification_service=notification_service,
         audit_service=audit_service,
     )
 

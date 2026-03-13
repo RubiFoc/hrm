@@ -1,7 +1,7 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-12
+- Date: 2026-03-13
 - Updated by: architect + backend-engineer + frontend-engineer
 
 ## System Context
@@ -49,6 +49,7 @@ flowchart LR
 | Employee Domain | Durable hire-conversion handoff, explicit employee profile bootstrap, onboarding workflows, employee self-service onboarding portal, and HR/manager onboarding progress visibility | Hire conversion handoff, profile/bootstrap/template/portal/dashboard requests | Employee handoff rows, employee profiles, onboarding runs/templates/tasks, employee-facing onboarding views, and staff/manager onboarding progress read models | hr-tech |
 | HR Operations Domain | HR process automation and workflow execution | Rules and triggers | Automated tasks, status updates | hr-ops |
 | Finance Domain Adapter | Accounting-facing data exchange | Payroll/accounting requests | Exported records and statuses | finance-tech |
+| Notification Domain | Recipient-scoped in-app notifications and server-computed digests for manager/accountant workspaces | Vacancy ownership changes, onboarding assignment changes, protected notification reads | Dedupe-safe notification rows, unread/read state, digest counters, and embedded workspace notification blocks | platform |
 | AI Adapter | External model integration for CV analysis and match scoring | CV files, vacancy profiles, scoring prompts | Structured candidate insights and score responses | ai-platform |
 | Integration Layer | External connector abstraction | Internal events/commands | Google Calendar actions | platform |
 | Reporting and Audit | KPI tracking and compliance evidence | Domain events | Dashboards, audit logs | data-platform |
@@ -92,13 +93,15 @@ flowchart LR
    recruitment domain loads only vacancies where `vacancies.hiring_manager_staff_id=<actor>` ->
    latest pipeline transitions, candidate counts, and active interviews build a deterministic hiring summary and vacancy list ->
    `GET /api/v1/vacancies/{vacancy_id}/manager-workspace/candidates` re-validates the selected vacancy scope and returns a read-only candidate/pipeline snapshot ->
-   the same page reuses the onboarding dashboard block from `/api/v1/onboarding/runs*`.
+   the same page reuses the onboarding dashboard block from `/api/v1/onboarding/runs*` plus
+   `GET /api/v1/notifications*` for unread manager notifications and digest counters.
 6. Accountant Workspace Flow:
    accountant opens `/` -> frontend resolves `AccountantWorkspacePage` ->
    `GET /api/v1/accounting/workspace` validates `accounting:read` ->
    finance adapter loads `employee_profiles + onboarding_runs + onboarding_tasks` from the employee domain ->
    finance adapter keeps only runs with `assigned_role=accountant` or `assigned_staff_id=<actor>` ->
-   the same filtered row model is reused for paginated UI reads and `GET /api/v1/accounting/workspace/export?format=csv|xlsx` attachments.
+   the same filtered row model is reused for paginated UI reads and `GET /api/v1/accounting/workspace/export?format=csv|xlsx` attachments, while
+   `GET /api/v1/notifications*` adds unread accountant notifications plus digest counters.
 7. HR Automation Flow:
    rule trigger -> workflow engine -> task creation/assignment -> status update and reporting.
 8. Public Candidate Apply Flow:
@@ -115,6 +118,13 @@ flowchart LR
    user opens a critical frontend route -> Sentry tags `workspace`/`role`/`route` are emitted ->
    shared HTTP client captures request failures with route metadata -> top-level render boundary
    captures React render failures -> Sentry stores tagged events with environment/release/tracing context.
+13. Role-Specific Notification Flow:
+   HR/admin updates `vacancies.hiring_manager_staff_id` or onboarding task assignment metadata ->
+   notification domain resolves only active manager/accountant recipients ->
+   deduped `notifications` rows are persisted in the same request transaction ->
+   recipient opens `/` -> `GET /api/v1/notifications/digest` computes summary counters on demand ->
+   `GET /api/v1/notifications?status=unread` returns recipient-owned unread items ->
+   `POST /api/v1/notifications/{notification_id}/read` marks only that recipient row as read.
 
 ## Data Boundaries
 - Source of truth entities:
@@ -164,6 +174,11 @@ flowchart LR
   the employee-facing completion state read from `/api/v1/employees/me/onboarding`; HR/admin and
   managers consume the same durable task rows through `/api/v1/onboarding/runs*` without a
   separate reporting table in this slice.
+- Notification artifacts:
+  `notifications` rows keyed by `notification_id`, including recipient subject/role snapshots,
+  source identifiers, dedupe keys, human-readable title/body copy, structured payload JSON,
+  created timestamp, and optional `read_at`; manager/accountant digests reuse these rows plus live
+  vacancy/task reads without a scheduler or outbound delivery table in this slice.
 - Accountant workspace export artifacts:
   the finance adapter derives accountant-visible rows directly from `employee_profiles`,
   `onboarding_runs`, and `onboarding_tasks`; visibility stays fail-closed on accountant
@@ -203,6 +218,11 @@ flowchart LR
   `hrm_backend/finance` owns read-only accountant workspace APIs on `/api/v1/accounting/workspace`
   and `/api/v1/accounting/workspace/export`, gated by `accounting:read` and fail-closed
   accountant task assignment visibility while reusing employee-domain persistence models directly.
+- Implemented notifications boundary:
+  `hrm_backend/notifications` owns recipient-scoped in-app notification APIs on
+  `/api/v1/notifications*`, persists deduped `notifications` rows, computes digests on demand, and
+  is emitted only from existing vacancy ownership and onboarding task-assignment seams without
+  adding outbound channels, schedulers, or a separate event bus in this slice.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
 - Compose baseline services: `frontend`, `backend`, `backend-worker`, `postgres`, `postgres-init`, `backend-migrate`, `redis`, `minio`, `minio-init`.
 - Compose bootstrap baseline: `postgres-init`, `backend-migrate`, and `minio-init` are one-shot prerequisites before steady-state services are considered ready.
@@ -261,6 +281,8 @@ flowchart LR
 - First-time employee self-service access currently relies on exact e-mail reconciliation when
   `employee_profiles.staff_account_id` is still null; ambiguous duplicate e-mail data fails closed
   with an identity-conflict error until HR cleans the source records.
+- Notification coverage is intentionally narrow in v1: only in-app delivery plus manager/accountant
+  recipients are implemented, so other roles and outbound channels still require a later ADR.
 - Integration instability risk with calendar sync edge cases.
 - Optional compose-local Ollama verification now removes the external-host dependency for real scoring checks, but first-run bootstrap can be slower because the model pull is explicit and persistent-volume backed.
 - Compliance risk if country-specific legal acts are not mapped early.

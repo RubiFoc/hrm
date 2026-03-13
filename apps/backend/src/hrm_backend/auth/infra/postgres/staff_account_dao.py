@@ -76,3 +76,22 @@ class StaffAccountDAO:
             .all()
         )
         return {row.staff_id: row for row in rows}
+
+    def list_active_by_role(self, role: str) -> list[StaffAccount]:
+        """Load active staff accounts for one role in deterministic order.
+
+        Args:
+            role: Staff role claim used for recipient resolution.
+
+        Returns:
+            list[StaffAccount]: Active staff accounts for the requested role.
+        """
+        return list(
+            self._session.query(StaffAccount)
+            .filter(
+                StaffAccount.role == role,
+                StaffAccount.is_active.is_(True),
+            )
+            .order_by(StaffAccount.login.asc(), StaffAccount.staff_id.asc())
+            .all()
+        )

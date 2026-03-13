@@ -45,6 +45,14 @@ class _FakeAuditService:
         self.events.append(payload)
 
 
+class _NotificationServiceStub:
+    """Notification double that ignores vacancy ownership side effects."""
+
+    def emit_vacancy_assignment_notifications(self, **kwargs) -> None:
+        """Ignore notification writes during focused unit tests."""
+        del kwargs
+
+
 def _build_request() -> Request:
     """Create a minimal request object for service-level tests."""
     request = Request(
@@ -131,6 +139,7 @@ def test_hired_transition_rolls_back_when_handoff_persistence_fails(tmp_path: Pa
             interview_feedback_dao=InterviewFeedbackDAO(session=session),
             staff_account_dao=StaffAccountDAO(session=session),
             hire_conversion_service=_FailingHireConversionService(),  # type: ignore[arg-type]
+            notification_service=_NotificationServiceStub(),  # type: ignore[arg-type]
             audit_service=_FakeAuditService(),  # type: ignore[arg-type]
         )
 

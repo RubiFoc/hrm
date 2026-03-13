@@ -26,6 +26,7 @@ import {
 } from "../api";
 import { readAuthSession } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
+import { NotificationsPanel } from "../components/NotificationsPanel";
 import { OnboardingDashboardPanel } from "../components/OnboardingDashboardPanel";
 
 const EMPTY_OVERVIEW: ManagerWorkspaceOverviewResponse = {
@@ -90,6 +91,8 @@ export function ManagerWorkspacePage() {
           {t("managerDashboard.subtitle")}
         </Typography>
       </Stack>
+
+      <NotificationsPanel accessToken={accessToken} workspace="manager" />
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={1} flexWrap="wrap" useFlexGap>
         <Chip

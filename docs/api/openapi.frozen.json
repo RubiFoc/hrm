@@ -3270,6 +3270,299 @@
         "title": "MeResponse",
         "type": "object"
       },
+      "NotificationDigestResponse": {
+        "description": "On-demand digest payload for the current authenticated recipient.",
+        "properties": {
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "latest_unread_items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            },
+            "title": "Latest Unread Items",
+            "type": "array"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/NotificationDigestSummaryResponse"
+          }
+        },
+        "required": [
+          "generated_at",
+          "summary",
+          "latest_unread_items"
+        ],
+        "title": "NotificationDigestResponse",
+        "type": "object"
+      },
+      "NotificationDigestSummaryResponse": {
+        "description": "Server-computed summary counters for the current notification workspace.",
+        "properties": {
+          "active_task_count": {
+            "minimum": 0.0,
+            "title": "Active Task Count",
+            "type": "integer"
+          },
+          "overdue_task_count": {
+            "minimum": 0.0,
+            "title": "Overdue Task Count",
+            "type": "integer"
+          },
+          "owned_open_vacancy_count": {
+            "minimum": 0.0,
+            "title": "Owned Open Vacancy Count",
+            "type": "integer"
+          },
+          "unread_notification_count": {
+            "minimum": 0.0,
+            "title": "Unread Notification Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "unread_notification_count",
+          "active_task_count",
+          "overdue_task_count",
+          "owned_open_vacancy_count"
+        ],
+        "title": "NotificationDigestSummaryResponse",
+        "type": "object"
+      },
+      "NotificationListResponse": {
+        "description": "Paginated notification list scoped to the current authenticated recipient.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          },
+          "unread_count": {
+            "minimum": 0.0,
+            "title": "Unread Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset",
+          "unread_count"
+        ],
+        "title": "NotificationListResponse",
+        "type": "object"
+      },
+      "NotificationPayload": {
+        "additionalProperties": false,
+        "description": "Structured additive notification payload exposed to frontend workspaces.",
+        "properties": {
+          "due_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "employee_full_name": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employee Full Name"
+          },
+          "employee_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employee Id"
+          },
+          "onboarding_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Onboarding Id"
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          },
+          "task_title": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Title"
+          },
+          "vacancy_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vacancy Id"
+          },
+          "vacancy_title": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vacancy Title"
+          }
+        },
+        "title": "NotificationPayload",
+        "type": "object"
+      },
+      "NotificationResponse": {
+        "description": "API representation of one in-app notification.",
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "notification_id": {
+            "format": "uuid",
+            "title": "Notification Id",
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/NotificationPayload"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          },
+          "recipient_role": {
+            "enum": [
+              "admin",
+              "hr",
+              "manager",
+              "employee",
+              "leader",
+              "accountant"
+            ],
+            "title": "Recipient Role",
+            "type": "string"
+          },
+          "recipient_staff_id": {
+            "format": "uuid",
+            "title": "Recipient Staff Id",
+            "type": "string"
+          },
+          "source_id": {
+            "format": "uuid",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_type": {
+            "title": "Source Type",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "notification_id",
+          "recipient_staff_id",
+          "recipient_role",
+          "kind",
+          "source_type",
+          "source_id",
+          "status",
+          "title",
+          "body",
+          "payload",
+          "created_at",
+          "read_at"
+        ],
+        "title": "NotificationResponse",
+        "type": "object"
+      },
       "OfferDecisionRequest": {
         "additionalProperties": false,
         "description": "Optional note payload for recording accepted or declined offer status.",
@@ -6761,6 +7054,158 @@
         "summary": "Get Employee Profile",
         "tags": [
           "employees"
+        ]
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "description": "List notifications that belong to the current authenticated recipient.",
+        "operationId": "list_notifications_api_v1_notifications_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "unread",
+              "enum": [
+                "unread",
+                "all"
+              ],
+              "title": "Status",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Notifications",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/digest": {
+      "get": {
+        "description": "Return the on-demand notification digest for the current authenticated recipient.",
+        "operationId": "get_notification_digest_api_v1_notifications_digest_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationDigestResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Notification Digest",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/{notification_id}/read": {
+      "post": {
+        "description": "Mark one recipient-owned notification as read.",
+        "operationId": "mark_notification_read_api_v1_notifications__notification_id__read_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "notification_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Notification Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Mark Notification Read",
+        "tags": [
+          "notifications"
         ]
       }
     },

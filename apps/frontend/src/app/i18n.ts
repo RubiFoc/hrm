@@ -251,6 +251,34 @@ const resources = {
           generic: "Failed to load accountant workspace data.",
         },
       },
+      notificationsPanel: {
+        title: "Notifications",
+        subtitle: {
+          manager:
+            "Review unread assignment updates and the latest manager-facing digest without leaving /.",
+          accountant:
+            "Review unread assignment updates and the latest accountant-facing digest without leaving /.",
+        },
+        loading: "Loading notifications...",
+        empty: "You are all caught up. No unread notifications remain.",
+        unread: "Unread",
+        markRead: "Mark as read",
+        markReadPending: "Saving...",
+        receivedAt: "Received: {{value}}",
+        summary: {
+          unread: "Unread: {{value}}",
+          activeTasks: "Active tasks: {{value}}",
+          overdueTasks: "Overdue tasks: {{value}}",
+          openVacancies: "Open vacancies: {{value}}",
+        },
+        errors: {
+          http_401: "Your session is missing or expired. Sign in again.",
+          http_403: "Your account does not have access to in-app notifications.",
+          http_404: "The requested notification is no longer available.",
+          http_422: "The notifications request is invalid.",
+          generic: "Failed to load or update notifications.",
+        },
+      },
       hrDashboard: {
         title: "Recruitment workspace",
         subtitle:
@@ -1172,6 +1200,34 @@ const resources = {
           http_403: "У вашей учётной записи нет доступа к accountant workspace.",
           http_422: "Запрос accountant workspace заполнен некорректно.",
           generic: "Не удалось загрузить accountant workspace.",
+        },
+      },
+      notificationsPanel: {
+        title: "Уведомления",
+        subtitle: {
+          manager:
+            "Смотрите непрочитанные назначения и актуальный digest менеджера, не покидая /.",
+          accountant:
+            "Смотрите непрочитанные назначения и актуальный digest бухгалтера, не покидая /.",
+        },
+        loading: "Загрузка уведомлений...",
+        empty: "Непрочитанных уведомлений нет.",
+        unread: "Непрочитано",
+        markRead: "Отметить как прочитанное",
+        markReadPending: "Сохраняем...",
+        receivedAt: "Получено: {{value}}",
+        summary: {
+          unread: "Непрочитано: {{value}}",
+          activeTasks: "Активные задачи: {{value}}",
+          overdueTasks: "Просрочено: {{value}}",
+          openVacancies: "Открытые вакансии: {{value}}",
+        },
+        errors: {
+          http_401: "Сессия отсутствует или истекла. Войдите заново.",
+          http_403: "У вашей учётной записи нет доступа к in-app уведомлениям.",
+          http_404: "Запрошенное уведомление больше недоступно.",
+          http_422: "Запрос уведомлений заполнен некорректно.",
+          generic: "Не удалось загрузить или обновить уведомления.",
         },
       },
       hrDashboard: {
