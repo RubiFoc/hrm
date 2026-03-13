@@ -120,7 +120,13 @@ function resolveObservabilityTags(pathname: string): ObservabilityTags {
 function resolveWorkspaceTag(pathname: string): string {
   const session = readAuthSession();
   if (pathname === "/") {
-    return session.role === "manager" ? "manager" : "hr";
+    if (session.role === "manager") {
+      return "manager";
+    }
+    if (session.role === "accountant") {
+      return "accountant";
+    }
+    return "hr";
   }
   if (pathname === "/employee" || pathname.startsWith("/employee/")) {
     return "employee";

@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, apiRequest } from "./httpClient";
+import { ApiError, apiRequest, downloadFile } from "./httpClient";
 
 const fetchMock = vi.fn();
 vi.stubGlobal("fetch", fetchMock);
@@ -24,6 +24,8 @@ vi.mock("@sentry/react", () => ({
 }));
 
 describe("apiRequest observability", () => {
+  let clickSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     fetchMock.mockReset();
     captureExceptionMock.mockReset();
@@ -38,6 +40,13 @@ describe("apiRequest observability", () => {
     });
     window.localStorage.clear();
     window.history.pushState({}, "", "/");
+    window.URL.createObjectURL = vi.fn(() => "blob:download");
+    window.URL.revokeObjectURL = vi.fn();
+    clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    clickSpy.mockRestore();
   });
 
   it("captures API error responses with route and HTTP metadata", async () => {
@@ -82,5 +91,32 @@ describe("apiRequest observability", () => {
     expect(scopeSetTagMock).toHaveBeenCalledWith("http_method", "GET");
     expect(scopeSetExtraMock).toHaveBeenCalledWith("http_request_path", "/api/v1/vacancies");
     expect(captureExceptionMock).toHaveBeenCalledWith(networkError);
+  });
+
+  it("captures binary download failures with route and HTTP metadata", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "accountant");
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ detail: "http_403" }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(downloadFile("/api/v1/accounting/workspace/export?format=csv")).rejects.toBeInstanceOf(
+      ApiError,
+    );
+
+    expect(withScopeMock).toHaveBeenCalledTimes(1);
+    expect(scopeSetTagMock).toHaveBeenCalledWith("workspace", "accountant");
+    expect(scopeSetTagMock).toHaveBeenCalledWith("role", "accountant");
+    expect(scopeSetTagMock).toHaveBeenCalledWith("route", "/");
+    expect(scopeSetTagMock).toHaveBeenCalledWith("http_method", "GET");
+    expect(scopeSetTagMock).toHaveBeenCalledWith("http_status", "403");
+    expect(scopeSetExtraMock).toHaveBeenCalledWith(
+      "http_request_path",
+      "/api/v1/accounting/workspace/export?format=csv",
+    );
+    expect(scopeSetExtraMock).toHaveBeenCalledWith("http_detail", "http_403");
   });
 });

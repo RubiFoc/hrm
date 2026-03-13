@@ -49,6 +49,7 @@
 | TASK-07-03 | implemented/local-employee-portal-slice | Employee-only `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*` now expose self-service onboarding tasks with durable employee-profile identity linking and localized frontend coverage |
 | TASK-07-04 | implemented/local-onboarding-dashboard-slice | `GET /api/v1/onboarding/runs*` now exposes HR/admin read-all plus manager-scoped onboarding progress visibility, with the dashboard embedded on `/` for HR and reused as the onboarding block inside the existing manager workspace on the same `/` route |
 | TASK-09-01 | implemented/local-manager-workspace-slice | Manager users now land on `/` in a read-only hiring + onboarding workspace backed by manager-scoped vacancy APIs, explicit `vacancies.hiring_manager_staff_id` ownership, and the reused onboarding dashboard block, while HR/admin keep the existing recruitment workspace on `/` |
+| TASK-09-03 | implemented/local-accountant-workspace-slice | Accountant users now land on `/` in a read-only accountant workspace backed by `/api/v1/accounting/workspace*`, assignment-scoped onboarding visibility, and controlled CSV/XLSX exports over the same filtered finance row set |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-12 Delivery Control Notes
@@ -85,6 +86,7 @@
 - `TASK-07-03` is now implemented as the employee self-service follow-on slice: authenticated employees use the new `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*`, while the backend resolves and durably links the employee profile from the existing auth session without reopening the auth or CORS model.
 - `TASK-07-04` is now implemented as the HR/manager visibility follow-on slice: `/api/v1/onboarding/runs*` exposes read-only onboarding progress data, HR/admin see all runs inside the existing `/` workspace, and managers reuse the same dashboard block inside their role-specific workspace without widening task-mutation permissions.
 - `TASK-09-01` is now implemented as the additive manager workspace follow-on slice: managers use the existing `/` route for one read-only hiring + onboarding workspace, vacancy hiring visibility is scoped by explicit `vacancies.hiring_manager_staff_id`, and onboarding visibility stays task-assignment-scoped through the existing onboarding APIs.
+- `TASK-09-03` is now implemented as the additive accountant workspace follow-on slice: accountants use the existing `/` route for one read-only finance workspace, visibility stays limited to accountant-assigned onboarding tasks, and controlled CSV/XLSX exports reuse the same filtered row model without adding generic reporting infrastructure.
 - The remaining follow-on work after the onboarding-dashboard and manager-workspace slices is limited to the other phase-2 role workspaces, notifications, reporting, and admin/ops backlog, not baseline scheduling, registration, feedback transport, or candidate-facing offer decisions.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
@@ -101,22 +103,23 @@
 - `TASK-07-03` is no longer active queue work; the implemented source of truth is the repo-backed employee self-service onboarding portal on `/employee` plus `/api/v1/employees/me/onboarding*`.
 - `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/` and reused inside the manager workspace on the existing `/` route.
 - `TASK-09-01` is no longer active queue work; the implemented source of truth is the repo-backed manager workspace on `/` plus manager-scoped vacancy read endpoints on the existing `/api/v1/vacancies` namespace.
+- `TASK-09-03` is no longer active queue work; the implemented source of truth is the repo-backed accountant workspace on `/` plus assignment-scoped finance read/export endpoints on `/api/v1/accounting/workspace*`.
 - The remaining candidate-domain follow-on work after `TASK-03-08` and `TASK-04-06` is limited to
   later ops/reporting slices, not baseline parsed-profile structure or scoring-quality tooling.
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `17` tasks.
+- Normalized open backlog count: `16` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `17`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `16`-task count.
 - Current open backlog by delivery wave:
   - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-01`, `TASK-10-02`, `TASK-10-03`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
-  - Wave 3 phase-2 workspaces: `TASK-09-02`, `TASK-09-03`, `TASK-09-04`, `TASK-11-12`
+  - Wave 3 phase-2 workspaces: `TASK-09-02`, `TASK-09-04`, `TASK-11-12`
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TASK-09-03 | Accountant workspace is now the next unblocked concrete role-workspace slice because manager visibility is implemented, while leader KPI visibility still depends on `TASK-10-02` and notifications remain follow-on work |
+| A-1 | TASK-09-04 | Role-specific notifications are now the next unblocked follow-on slice because the accountant workspace is implemented, while leader KPI visibility still depends on `TASK-10-02` |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 

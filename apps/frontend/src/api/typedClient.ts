@@ -58,6 +58,10 @@ function resolveApiBaseUrl(): string {
 
 export const typedApiClient = createTypedApiClient(resolveApiBaseUrl());
 
+export function buildApiUrl(path: string, query?: QueryParams): string {
+  return `${resolveApiBaseUrl()}${appendQuery(path, query)}`;
+}
+
 function withJsonRequestInit(
   method: "POST" | "PUT" | "PATCH",
   body: unknown,

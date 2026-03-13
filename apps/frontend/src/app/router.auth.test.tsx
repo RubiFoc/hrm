@@ -220,6 +220,14 @@ describe("login route", () => {
           ),
         );
       }
+      if (url.includes("/api/v1/accounting/workspace?")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ items: [], total: 0, limit: 20, offset: 0 }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
       if (url.includes("/api/v1/onboarding/runs?")) {
         return Promise.resolve(
           new Response(
@@ -256,6 +264,53 @@ describe("login route", () => {
       expect(
         fetchMock.mock.calls.some(
           (call) => String(call[0]).endsWith("/api/v1/vacancies/manager-workspace"),
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("redirects already-authenticated accountant from /login to accountant workspace on /", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_refresh_token", "refresh-token");
+    window.localStorage.setItem("hrm_user_role", "accountant");
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/api/v1/auth/me")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              subject_id: "11111111-1111-1111-1111-111111111111",
+              role: "accountant",
+              session_id: "22222222-2222-2222-2222-222222222222",
+              access_token_expires_at: 1893456000,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        );
+      }
+      if (url.includes("/api/v1/accounting/workspace?")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ items: [], total: 0, limit: 20, offset: 0 }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+    });
+
+    const router = renderWithPath("/login");
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/");
+    });
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some((call) =>
+          String(call[0]).includes("/api/v1/accounting/workspace?"),
         ),
       ).toBe(true);
     });

@@ -1,4 +1,8 @@
-export { ApiError, apiRequest } from "./httpClient";
+export { ApiError, apiRequest, downloadFile } from "./httpClient";
+export {
+  downloadAccountingWorkspaceExport,
+  listAccountingWorkspace,
+} from "./accountingWorkspace";
 export { getMe, login, logout } from "./auth";
 export { listAdminStaff, updateAdminStaff } from "./adminStaff";
 export {
@@ -50,6 +54,12 @@ export {
   updateVacancy,
 } from "./vacancies";
 export type { LoginRequest, MeResponse, TokenResponse } from "./auth";
+export type {
+  AccountingWorkspaceExportFormat,
+  AccountingWorkspaceListQuery,
+  AccountingWorkspaceListResponse,
+  AccountingWorkspaceRowResponse,
+} from "./accountingWorkspace";
 export type {
   AdminStaffListItem,
   AdminStaffListQuery,
