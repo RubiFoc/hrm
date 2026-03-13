@@ -551,7 +551,7 @@ sequenceDiagram
 ```mermaid
 flowchart LR
   DEV[Developer Branch\nfeature/TASK-*] --> PR[Pull Request to main]
-  PR --> REV[2 Reviewers Required]
+  PR --> REV[Solo: self-review\nTeam: peer approvals]
   REV --> CI[GitHub Actions CI]
 
   subgraph Checks
