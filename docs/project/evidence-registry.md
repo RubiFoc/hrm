@@ -1,7 +1,7 @@
 # Evidence Registry
 
 ## Last Updated
-- Date: 2026-03-13
+- Date: 2026-03-16
 - Updated by: backend-engineer
 
 ## Registry Model
@@ -16,7 +16,7 @@
 
 | Evidence ID | Control IDs | Owner | Artifact | Verification Source | Update Trigger |
 | --- | --- | --- | --- | --- | --- |
-| EVID-001 | CTRL-BY-03, CTRL-RU-02, CTRL-RU-05 | backend-engineer + architect | `apps/backend/src/hrm_backend/rbac.py`, `apps/backend/src/hrm_backend/audit/`, `apps/backend/alembic/versions/20260304_000002_audit_events.py`, `docs/project/rbac-matrix.md`, `docs/project/auth-session-lifecycle.md` | `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/audit apps/backend/tests/unit/rbac/test_rbac.py apps/backend/tests/integration/security/test_audit_enforcement.py apps/backend/tests/integration/audit/test_audit_event_api.py apps/backend/tests/integration/auth/test_auth_stack.py` | Any RBAC permission, audit payload, auth session, or audit migration change |
+| EVID-001 | CTRL-BY-03, CTRL-RU-02, CTRL-RU-05 | backend-engineer + architect | `apps/backend/src/hrm_backend/rbac.py`, `apps/backend/src/hrm_backend/audit/`, `apps/backend/alembic/versions/20260304_000002_audit_events.py`, `docs/project/rbac-matrix.md`, `docs/project/auth-session-lifecycle.md`, `docs/project/export-package-audit-kpi.md` | `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/audit apps/backend/tests/unit/rbac/test_rbac.py apps/backend/tests/integration/security/test_audit_enforcement.py apps/backend/tests/integration/audit/test_audit_event_api.py apps/backend/tests/integration/auth/test_auth_stack.py` | Any RBAC permission, audit payload, auth session, or audit migration change |
 | EVID-002 | CTRL-BY-01, CTRL-RU-01 | backend-engineer + frontend-engineer | `docs/api/openapi.frozen.json`, `apps/frontend/src/api/generated/openapi-types.ts` | `./scripts/check-openapi-freeze.sh`, `npm --prefix apps/frontend run api:types:check` | Any public API contract or generated type change |
 | EVID-003 | CTRL-BY-01, CTRL-RU-01 | frontend-engineer | `apps/frontend/src/pages/CandidatePage.tsx`, `apps/frontend/src/pages/LoginPage.tsx`, `apps/frontend/src/api/auth.ts` | `npm --prefix apps/frontend run test -- --run src/pages/CandidatePage.test.tsx src/pages/LoginPage.test.tsx src/api/auth.test.ts` | Any field added/removed on login or candidate-apply flows |
 | EVID-004 | CTRL-BY-03, CTRL-RU-05 | qa-engineer + devops-engineer | `./scripts/smoke-compose.sh`, `scripts/browser_auth_smoke.py`, `scripts/browser_candidate_apply_smoke.py` | `docker compose up -d --build`, `./scripts/smoke-compose.sh` | Any compose topology, critical browser flow, or CORS/runtime change |

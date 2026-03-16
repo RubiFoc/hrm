@@ -1,7 +1,7 @@
 # RBAC Role Matrix (Phase 1 Baseline)
 
 ## Last Updated
-- Date: 2026-03-13
+- Date: 2026-03-16
 - Updated by: backend-engineer
 
 This matrix is the access baseline for `TASK-01-01`, `TASK-01-02`, `TASK-01-03`,
@@ -91,9 +91,13 @@ Public endpoint outside RBAC matrix:
   Manager users can observe onboarding progress only through the dedicated read routes above.
 - Onboarding checklist template management routes are staff-only and currently limited to `admin/hr`.
   Manager-facing template management remains out of scope.
-- KPI snapshot read/rebuild routes are admin-only in v1.
+- KPI snapshot read routes are leader/admin in v1, while rebuild remains admin-only:
+  - `GET /api/v1/reporting/kpi-snapshots`
+  - `GET /api/v1/reporting/kpi-snapshots/export`
+  - `POST /api/v1/reporting/kpi-snapshots/rebuild` (admin-only)
 - Audit event query API is admin-only in v1:
   - `GET /api/v1/audit/events`
+  - `GET /api/v1/audit/events/export`
 - Employee self-service onboarding routes are limited to the `employee` role:
   - `GET /api/v1/employees/me/onboarding`
   - `PATCH /api/v1/employees/me/onboarding/tasks/{task_id}`

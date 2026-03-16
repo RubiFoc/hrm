@@ -2,15 +2,20 @@
 
 from __future__ import annotations
 
+import csv
 from datetime import UTC, datetime
+from io import BytesIO, StringIO
 from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from openpyxl import load_workbook
 from sqlalchemy import create_engine
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from hrm_backend.audit.models.event import AuditEvent
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.candidates.models.profile import CandidateProfile
@@ -80,6 +85,16 @@ async def api_client(configured_app) -> AsyncClient:
         base_url="http://testserver",
     ) as client:
         yield client
+
+
+def _load_audit_events(engine) -> list[AuditEvent]:
+    """Load ordered audit events for export audit assertions."""
+    with Session(engine) as session:
+        return list(
+            session.execute(select(AuditEvent).order_by(AuditEvent.occurred_at, AuditEvent.event_id))
+            .scalars()
+            .all()
+        )
 
 
 def _seed_kpi_sources(engine) -> None:
@@ -397,3 +412,138 @@ async def test_kpi_snapshot_invalid_month_returns_422(
         params={"period_month": "2026-03-15"},
     )
     assert read_response.status_code == 422
+
+
+async def test_admin_can_export_kpi_snapshot_as_csv_and_is_audited(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify admin can export stored KPI snapshot as CSV attachment and audit is recorded."""
+    _, _, engine = configured_app
+    _seed_kpi_sources(engine)
+
+    rebuild_response = await api_client.post(
+        "/api/v1/reporting/kpi-snapshots/rebuild",
+        json={"period_month": "2026-03-01"},
+    )
+    assert rebuild_response.status_code == 200
+
+    export_response = await api_client.get(
+        "/api/v1/reporting/kpi-snapshots/export",
+        params={"period_month": "2026-03-01", "format": "csv"},
+    )
+    assert export_response.status_code == 200
+    assert export_response.headers["content-type"].startswith("text/csv")
+    assert export_response.headers["content-disposition"].startswith(
+        'attachment; filename="kpi-snapshot-2026-03-01-'
+    )
+    assert export_response.headers["content-disposition"].endswith('.csv"')
+
+    rows = list(csv.reader(StringIO(export_response.text)))
+    header = rows[0]
+    metric_key_index = header.index("metric_key")
+    metric_value_index = header.index("metric_value")
+    vacancy_row = next(row for row in rows[1:] if row[metric_key_index] == "vacancies_created_count")
+    assert vacancy_row[metric_value_index] == "1"
+
+    events = _load_audit_events(engine)
+    assert any(
+        event.action == "kpi_snapshot:export"
+        and event.result == "success"
+        and event.resource_id == "2026-03-01"
+        for event in events
+    )
+
+
+async def test_admin_can_export_kpi_snapshot_as_xlsx(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify KPI snapshot export supports XLSX attachment rendering."""
+    _, _, engine = configured_app
+    _seed_kpi_sources(engine)
+
+    rebuild_response = await api_client.post(
+        "/api/v1/reporting/kpi-snapshots/rebuild",
+        json={"period_month": "2026-03-01"},
+    )
+    assert rebuild_response.status_code == 200
+
+    export_response = await api_client.get(
+        "/api/v1/reporting/kpi-snapshots/export",
+        params={"period_month": "2026-03-01", "format": "xlsx"},
+    )
+    assert export_response.status_code == 200
+    assert export_response.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    workbook = load_workbook(filename=BytesIO(export_response.content))
+    worksheet = workbook["kpi_snapshot"]
+    values = list(worksheet.iter_rows(values_only=True))
+    assert values[0][0] == "period_month"
+    assert values[1][0] == "2026-03-01"
+    assert values[1][1] == "vacancies_created_count"
+
+
+async def test_kpi_snapshot_export_allows_leader_reads(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify leader can export stored KPI snapshots but cannot rebuild them."""
+    _, context_holder, engine = configured_app
+    _seed_kpi_sources(engine)
+
+    rebuild_response = await api_client.post(
+        "/api/v1/reporting/kpi-snapshots/rebuild",
+        json={"period_month": "2026-03-01"},
+    )
+    assert rebuild_response.status_code == 200
+
+    context_holder["context"] = AuthContext(
+        subject_id=uuid4(),
+        role="leader",
+        session_id=uuid4(),
+        token_id=uuid4(),
+        expires_at=9999999999,
+    )
+
+    export_response = await api_client.get(
+        "/api/v1/reporting/kpi-snapshots/export",
+        params={"period_month": "2026-03-01", "format": "csv"},
+    )
+    assert export_response.status_code == 200
+    assert "vacancies_created_count" in export_response.text
+
+
+@pytest.mark.parametrize("role", ["hr", "manager", "employee", "accountant"])
+async def test_kpi_snapshot_export_denies_non_privileged_roles(
+    configured_app,
+    api_client: AsyncClient,
+    role: str,
+) -> None:
+    """Verify non-privileged roles are denied KPI snapshot exports."""
+    _, context_holder, _ = configured_app
+    context_holder["context"] = AuthContext(
+        subject_id=uuid4(),
+        role=role,  # type: ignore[arg-type]
+        session_id=uuid4(),
+        token_id=uuid4(),
+        expires_at=9999999999,
+    )
+
+    export_response = await api_client.get(
+        "/api/v1/reporting/kpi-snapshots/export",
+        params={"period_month": "2026-03-01", "format": "csv"},
+    )
+    assert export_response.status_code == 403
+
+
+async def test_kpi_snapshot_export_invalid_month_returns_422(
+    api_client: AsyncClient,
+) -> None:
+    """Verify invalid export period month values return 422 responses."""
+    export_response = await api_client.get(
+        "/api/v1/reporting/kpi-snapshots/export",
+        params={"period_month": "2026-03-15", "format": "csv"},
+    )
+    assert export_response.status_code == 422

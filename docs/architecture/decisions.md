@@ -51,6 +51,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0044 | 2026-03-13 | accepted | Introduce monthly KPI snapshot foundation with on-demand rebuild | architect + backend-engineer | reporting package, KPI data model, analytics access policy |
 | ADR-0045 | 2026-03-13 | accepted | Expose KPI snapshot reads to leaders while keeping rebuild admin-only | architect + backend-engineer | reporting access policy, RBAC, API read surface |
 | ADR-0046 | 2026-03-13 | accepted | Add admin-only audit evidence query API over append-only `audit_events` | architect + backend-engineer | audit package read surface, RBAC, operations/runbook, OpenAPI contract |
+| ADR-0047 | 2026-03-16 | accepted | Add controlled audit + KPI snapshot export attachments (bounded, no new jobs/tables) | architect + backend-engineer | audit/reporting exports, API contracts, compliance evidence |
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
@@ -965,3 +966,22 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Audit evidence becomes queryable via HTTP for operator diagnostics and future admin UI slices without direct DB access.
   - Performance characteristics depend on existing `audit_events` indices; further indexing or retention automation can be addressed in later slices if needed.
   - Expanding audit-read access beyond admin becomes an explicit policy decision and should be tracked by a separate ADR.
+
+## ADR-0047
+- Context: `TASK-10-04` requires an export package for audits and management reporting that is safe to run synchronously in the current modular-monolith runtime and remains within a minimal, reversible scope (no new tables/jobs).
+- Decision:
+  - Add admin-only audit export endpoint:
+    - `GET /api/v1/audit/events/export`
+    - formats: `csv`, `jsonl`
+    - reuse the existing audit query filter contract (`action`, `result`, `source`, `resource_type`, `correlation_id`, `occurred_from`, `occurred_to`) and deterministic ordering (`occurred_at DESC`, `event_id DESC`)
+    - require bounded exports (`limit` + `offset`), avoiding unbounded “export all” in one request thread
+    - record business audit event `audit.event:export` after export content assembly so the export does not include its own business audit row
+  - Add leader/admin KPI snapshot export endpoint:
+    - `GET /api/v1/reporting/kpi-snapshots/export`
+    - formats: `csv`, `xlsx`
+    - reuse the stored snapshot read semantics (no live aggregation fallback)
+    - record business audit event `kpi_snapshot:export` after export content assembly
+  - Reuse existing read permissions (`audit:read`, `kpi_snapshot:read`) for export access in this slice; do not introduce new `*:export` permissions before an explicit policy ADR requires them.
+- Consequences:
+  - Operators/leaders can download evidence and reporting artifacts without direct DB access.
+  - Export work stays synchronous and must remain bounded; async exports/ZIP bundling remain a follow-up slice with explicit operational review.
