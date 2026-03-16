@@ -7,7 +7,11 @@ from uuid import UUID
 from fastapi import HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
+from hrm_backend.audit.services.audit_service import (
+    AuditService,
+    actor_from_auth_context,
+    get_request_id,
+)
 from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.automation.schemas.events import (
@@ -362,6 +366,7 @@ class VacancyService:
             transition=transition,
             vacancy=vacancy,
             candidate=candidate,
+            correlation_id=get_request_id(request),
         )
 
         return PipelineTransitionResponse(
@@ -382,6 +387,7 @@ class VacancyService:
         transition: PipelineTransition,
         vacancy: Vacancy,
         candidate: CandidateProfile,
+        correlation_id: str | None,
     ) -> None:
         """Evaluate automation rules for one persisted pipeline transition (fail-closed)."""
         try:
@@ -408,7 +414,7 @@ class VacancyService:
                     changed_by_role=transition.changed_by_role,
                 ),
             )
-            self._automation_executor.handle_event(event=event)
+            self._automation_executor.handle_event(event=event, correlation_id=correlation_id)
         except Exception:
             return
 

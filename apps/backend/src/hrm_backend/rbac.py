@@ -68,6 +68,8 @@ Permission = Literal[
     "automation_rule:list",
     "automation_rule:update",
     "automation_rule:activate",
+    "automation_execution:list",
+    "automation_execution:read",
 ]
 
 ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
@@ -115,6 +117,8 @@ ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
         "automation_rule:list",
         "automation_rule:update",
         "automation_rule:activate",
+        "automation_execution:list",
+        "automation_execution:read",
     },
     "hr": {
         "admin:employee_key:create",
@@ -153,6 +157,8 @@ ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
         "automation_rule:list",
         "automation_rule:update",
         "automation_rule:activate",
+        "automation_execution:list",
+        "automation_execution:read",
     },
     "manager": {
         "manager_workspace:read",

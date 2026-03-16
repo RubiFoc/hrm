@@ -1013,3 +1013,24 @@ flowchart LR
   AGG --> SNAP
   READ --> SNAP
 ```
+
+## Diagram 24: Automation Execution Logging Flow (TASK-08-03)
+
+```mermaid
+sequenceDiagram
+  participant DOM as Domain Service
+  participant EXEC as AutomationActionExecutor
+  participant RUN as automation_execution_runs
+  participant ACT as automation_action_executions
+  participant NOTIF as notifications
+  participant OPS as Ops API (admin/hr)
+
+  DOM->>EXEC: handle_event(event, correlation_id)
+  EXEC->>RUN: INSERT run(status=running, trace_id)
+  EXEC->>EXEC: evaluate rules -> plan[]
+  EXEC->>NOTIF: INSERT notification rows (dedupe-safe)
+  EXEC->>ACT: INSERT action rows (succeeded/deduped/failed)
+  EXEC->>RUN: UPDATE run(status, counts, error)
+  OPS->>RUN: list/view runs (filters)
+  OPS->>ACT: list/view actions
+```

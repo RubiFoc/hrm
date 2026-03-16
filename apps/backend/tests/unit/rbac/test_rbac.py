@@ -206,6 +206,24 @@ def test_manager_is_denied_for_automation_rule_list_permission() -> None:
     assert "automation_rule:list" in decision.reason
 
 
+def test_hr_can_read_automation_execution_logs_permissions() -> None:
+    """Verify HR role can read automation execution logs."""
+    list_decision = evaluate_permission(role="hr", permission="automation_execution:list")
+    read_decision = evaluate_permission(role="hr", permission="automation_execution:read")
+
+    assert list_decision.allowed is True
+    assert read_decision.allowed is True
+
+
+def test_manager_is_denied_for_automation_execution_read_permission() -> None:
+    """Verify manager role cannot access automation execution logs."""
+    decision = evaluate_permission(role="manager", permission="automation_execution:read")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+    assert "automation_execution:read" in decision.reason
+
+
 def test_manager_is_denied_for_employee_key_list_permission() -> None:
     """Verify manager role is denied for employee-key list permission."""
     decision = evaluate_permission(role="manager", permission="admin:employee_key:list")

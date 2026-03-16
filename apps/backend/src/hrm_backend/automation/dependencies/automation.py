@@ -12,8 +12,10 @@ from hrm_backend.audit.services.audit_service import AuditService
 from hrm_backend.auth.dependencies.auth import get_staff_account_dao
 from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
 from hrm_backend.automation.dao.automation_rule_dao import AutomationRuleDAO
+from hrm_backend.automation.dao.execution_log_dao import AutomationExecutionLogDAO
 from hrm_backend.automation.services.automation_rule_service import AutomationRuleService
 from hrm_backend.automation.services.evaluator import AutomationEvaluator
+from hrm_backend.automation.services.execution_log_service import AutomationExecutionLogService
 from hrm_backend.automation.services.executor import AutomationActionExecutor
 from hrm_backend.core.db.session import get_db_session
 from hrm_backend.notifications.dao.notification_dao import NotificationDAO
@@ -57,4 +59,15 @@ def get_automation_executor(
     return AutomationActionExecutor(
         evaluator=evaluator,
         notification_dao=NotificationDAO(session=session),
+    )
+
+
+def get_automation_execution_log_service(
+    session: SessionDependency,
+    audit_service: AuditDependency,
+) -> AutomationExecutionLogService:
+    """Build automation execution log read service for the current request session."""
+    return AutomationExecutionLogService(
+        dao=AutomationExecutionLogDAO(session=session),
+        audit_service=audit_service,
     )

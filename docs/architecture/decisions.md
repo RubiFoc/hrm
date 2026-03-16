@@ -54,6 +54,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0047 | 2026-03-16 | accepted | Add controlled audit + KPI snapshot export attachments (bounded, no new jobs/tables) | architect + backend-engineer | audit/reporting exports, API contracts, compliance evidence |
 | ADR-0048 | 2026-03-16 | accepted | Introduce automation rule model and deterministic trigger evaluator (planning only) | architect + backend-engineer | automation package boundary, domain seams, RBAC, OpenAPI contract |
 | ADR-0049 | 2026-03-16 | accepted | Execute automation `notification.emit` actions via idempotent in-app notification executor | architect + backend-engineer | automation execution semantics, notification persistence, fail-closed guarantees |
+| ADR-0050 | 2026-03-16 | accepted | Add durable automation execution logs and ops read APIs (non-PII) | architect + backend-engineer | automation observability, DB schema, ops API, RBAC |
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
@@ -1039,3 +1040,36 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Automation rules can now produce user-visible in-app notifications in v1.
   - Execution adds additional DB work on the request path; async/outbox execution can be introduced
     later if latency becomes a concern.
+
+## ADR-0050
+- Context: `TASK-08-03` requires durable automation execution logs and error traceability for the
+  `TASK-08-02` executor while keeping core domain flows unaffected (fail-closed) and avoiding
+  additional PII exposure in logs.
+- Decision:
+  - Introduce durable execution log tables:
+    - `automation_execution_runs` (one run per handled trigger event),
+    - `automation_action_executions` (one row per planned action attempt).
+  - Store only a strict non-PII allowlist in execution logs:
+    - technical identifiers and snapshots (`event_type`, `trigger_event_id`, `rule_id`,
+      `recipient_staff_id`, `recipient_role`, `source_type`, `source_id`, `dedupe_key`);
+    - execution state (`status`, `attempt_count`) and timestamps;
+    - traceability fields (`correlation_id` from `X-Request-ID` when available, plus generated
+      `trace_id`);
+    - sanitized + truncated error metadata (`error_kind`, `error_text`).
+  - Explicitly do **not** persist in execution logs:
+    notification title/body, notification payload JSON, template context, trigger payloads, or
+    any human-readable identity fields (names/emails/phones).
+  - Keep executor semantics fail-closed:
+    - automation planning/execution failures never block domain writes,
+    - execution log failures never crash the request path (best-effort logging).
+  - Expose minimal operator read APIs for execution logs under `/api/v1/automation/executions*`
+    guarded by new RBAC permissions:
+    `automation_execution:list`, `automation_execution:read` (admin/hr).
+  - Retention policy baseline:
+    execution logs are retained for **30 days** by default; automated purge is deferred to a
+    follow-up slice once ops scheduling/worker ownership is finalized.
+- Consequences:
+  - Automation failures and dedupe behavior become observable and queryable without DB access.
+  - Operators can correlate execution issues with request traces using `correlation_id`/`trace_id`.
+  - Storage growth requires a retention/purge mechanism; list/read APIs must remain bounded and
+    indexed to avoid operational degradation.

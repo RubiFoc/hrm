@@ -22,6 +22,18 @@ class NotificationDAO:
         """
         self._session = session
 
+    @property
+    def session(self) -> Session:
+        """Return the underlying SQLAlchemy session.
+
+        This accessor exists for cross-domain orchestrators (for example, automation execution
+        logging) that need to share the same engine while keeping transactions isolated.
+
+        Returns:
+            Session: Active SQLAlchemy session instance.
+        """
+        return self._session
+
     def get_by_id_for_recipient(
         self,
         *,
