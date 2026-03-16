@@ -18,6 +18,9 @@ export type AdminGuardDecision =
 export type EmployeeGuardDecision =
   | { allow: true; role: "employee" }
   | { allow: false; reason: "unauthorized" | "forbidden" };
+export type LeaderGuardDecision =
+  | { allow: true; role: "leader" | "admin" }
+  | { allow: false; reason: "unauthorized" | "forbidden" };
 
 const AUTH_TOKEN_KEY = "hrm_access_token";
 const AUTH_REFRESH_TOKEN_KEY = "hrm_refresh_token";
@@ -87,6 +90,9 @@ export function resolveWorkspaceRoute(role: AuthRole | null): string {
   if (role === "employee") {
     return "/employee";
   }
+  if (role === "leader") {
+    return "/leader";
+  }
   return "/";
 }
 
@@ -111,6 +117,19 @@ export function resolveEmployeeGuardDecision(session: AuthSessionState): Employe
     return { allow: false, reason: "unauthorized" };
   }
   if (session.role !== "employee") {
+    return { allow: false, reason: "forbidden" };
+  }
+  return { allow: true, role: session.role };
+}
+
+/**
+ * Evaluate `/leader` route access using current session snapshot.
+ */
+export function resolveLeaderGuardDecision(session: AuthSessionState): LeaderGuardDecision {
+  if (!session.accessToken) {
+    return { allow: false, reason: "unauthorized" };
+  }
+  if (session.role !== "leader" && session.role !== "admin") {
     return { allow: false, reason: "forbidden" };
   }
   return { allow: true, role: session.role };

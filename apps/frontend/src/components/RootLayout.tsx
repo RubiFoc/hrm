@@ -12,6 +12,15 @@ export function RootLayout() {
   const currentLanguage = i18n.language || i18n.resolvedLanguage || "en";
   const session = readAuthSession();
   const [isLogoutPending, setIsLogoutPending] = useState(false);
+  const homePath = session.role === "leader" ? "/leader" : "/";
+  const homeLabel =
+    session.role === "manager"
+      ? t("managerWorkspace")
+      : session.role === "accountant"
+        ? t("accountantWorkspace")
+        : session.role === "leader"
+          ? t("leaderWorkspace")
+          : t("hrWorkspace");
 
   const handleLogout = async () => {
     const activeSession = readAuthSession();
@@ -37,12 +46,13 @@ export function RootLayout() {
             {t("appTitle")}
           </Typography>
           {session.role !== "employee" ? (
-            <Button color="inherit" component={Link} to="/">
-              {session.role === "manager"
-                ? t("managerWorkspace")
-                : session.role === "accountant"
-                  ? t("accountantWorkspace")
-                  : t("hrWorkspace")}
+            <Button color="inherit" component={Link} to={homePath}>
+              {homeLabel}
+            </Button>
+          ) : null}
+          {session.role === "admin" ? (
+            <Button color="inherit" component={Link} to="/leader">
+              {t("leaderWorkspace")}
             </Button>
           ) : null}
           {session.role === "employee" ? (

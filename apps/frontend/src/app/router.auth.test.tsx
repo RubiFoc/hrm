@@ -316,6 +316,49 @@ describe("login route", () => {
     });
   });
 
+  it("redirects already-authenticated leader from /login to /leader", async () => {
+    window.localStorage.setItem("hrm_access_token", "access-token");
+    window.localStorage.setItem("hrm_refresh_token", "refresh-token");
+    window.localStorage.setItem("hrm_user_role", "leader");
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/api/v1/auth/me")) {
+        return Promise.resolve(
+          new Response(
+            JSON.stringify({
+              subject_id: "11111111-1111-1111-1111-111111111111",
+              role: "leader",
+              session_id: "22222222-2222-2222-2222-222222222222",
+              access_token_expires_at: 1893456000,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            },
+          ),
+        );
+      }
+      if (url.includes("/api/v1/reporting/kpi-snapshots?")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ period_month: "2026-03-01", metrics: [] }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
+    });
+
+    const router = renderWithPath("/login");
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/leader");
+    });
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.some((call) => String(call[0]).endsWith("/api/v1/auth/me"))).toBe(true);
+    });
+  });
+
   it("clears broken session and keeps /login open when me bootstrap fails", async () => {
     window.localStorage.setItem("hrm_access_token", "broken-access-token");
     window.localStorage.setItem("hrm_refresh_token", "refresh-token");

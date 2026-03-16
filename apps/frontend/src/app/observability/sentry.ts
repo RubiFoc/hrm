@@ -128,6 +128,9 @@ function resolveWorkspaceTag(pathname: string): string {
     }
     return "hr";
   }
+  if (pathname === "/leader" || pathname.startsWith("/leader/")) {
+    return "leader";
+  }
   if (pathname === "/employee" || pathname.startsWith("/employee/")) {
     return "employee";
   }
@@ -155,6 +158,9 @@ function resolveRouteTag(pathname: string): string {
       return "/admin/employee-keys";
     }
     return "/admin";
+  }
+  if (pathname === "/leader" || pathname.startsWith("/leader/")) {
+    return "/leader";
   }
   if (pathname === "/employee" || pathname.startsWith("/employee/")) {
     return "/employee";

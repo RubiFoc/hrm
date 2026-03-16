@@ -128,6 +128,9 @@ describe("frontend observability route tags", () => {
           }),
         );
       }
+      if (url.includes("/api/v1/reporting/kpi-snapshots?")) {
+        return Promise.resolve(jsonResponse({ period_month: "2026-03-01", metrics: [] }));
+      }
       return Promise.resolve(jsonResponse({}));
     });
   });
@@ -202,5 +205,19 @@ describe("frontend observability route tags", () => {
     expect(setTagMock).toHaveBeenCalledWith("workspace", "employee");
     expect(setTagMock).toHaveBeenCalledWith("role", "employee");
     expect(setTagMock).toHaveBeenCalledWith("route", "/employee");
+  });
+
+  it("tags the leader workspace route on /leader", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "leader");
+
+    renderWithPath("/leader");
+
+    expect(
+      await screen.findByRole("heading", { name: /leader workspace|кабинет руководителя/i }),
+    ).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "leader");
+    expect(setTagMock).toHaveBeenCalledWith("role", "leader");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/leader");
   });
 });

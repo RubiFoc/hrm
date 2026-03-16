@@ -5,6 +5,7 @@ import {
   readAuthSession,
   resolveAdminGuardDecision,
   resolveEmployeeGuardDecision,
+  resolveLeaderGuardDecision,
   resolveWorkspaceRoute,
   writeAuthSession,
 } from "./session";
@@ -82,6 +83,10 @@ describe("resolveWorkspaceRoute", () => {
   it("routes employee role to /employee", () => {
     expect(resolveWorkspaceRoute("employee")).toBe("/employee");
   });
+
+  it("routes leader role to /leader", () => {
+    expect(resolveWorkspaceRoute("leader")).toBe("/leader");
+  });
 });
 
 describe("resolveEmployeeGuardDecision", () => {
@@ -110,5 +115,43 @@ describe("resolveEmployeeGuardDecision", () => {
       role: "employee",
     });
     expect(decision).toEqual({ allow: true, role: "employee" });
+  });
+});
+
+describe("resolveLeaderGuardDecision", () => {
+  it("returns unauthorized when access token is missing", () => {
+    const decision = resolveLeaderGuardDecision({
+      accessToken: null,
+      refreshToken: null,
+      role: null,
+    });
+    expect(decision).toEqual({ allow: false, reason: "unauthorized" });
+  });
+
+  it("returns forbidden when role is not leader/admin", () => {
+    const decision = resolveLeaderGuardDecision({
+      accessToken: "token",
+      refreshToken: null,
+      role: "hr",
+    });
+    expect(decision).toEqual({ allow: false, reason: "forbidden" });
+  });
+
+  it("returns allow for leader role with token", () => {
+    const decision = resolveLeaderGuardDecision({
+      accessToken: "token",
+      refreshToken: "refresh-token",
+      role: "leader",
+    });
+    expect(decision).toEqual({ allow: true, role: "leader" });
+  });
+
+  it("returns allow for admin role with token", () => {
+    const decision = resolveLeaderGuardDecision({
+      accessToken: "token",
+      refreshToken: "refresh-token",
+      role: "admin",
+    });
+    expect(decision).toEqual({ allow: true, role: "admin" });
   });
 });
