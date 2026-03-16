@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-16
-- Updated by: coordinator + frontend-engineer
+- Updated by: coordinator
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -26,6 +26,7 @@
 | TASK-03-01/02/03/05/06/07/08 | implemented/local-universal-profile-enrichment-slice | GitHub issue #90 is now closed; backend candidate profile, public apply, async parsing, native PDF/DOCX text extraction, RU/EN normalization, profession-agnostic structured CV enrichment (workplaces with held positions, education, normalized titles/dates, generic skills), evidence traceability, and public tracking endpoints are present in repo with unit/integration coverage |
 | TASK-03-04 | done/closed | GitHub issue #91 closed; merged in `main` via PR #107 (`0d9c787`) with recruiter-facing `GET /api/v1/candidates` search/filter/pagination, active-CV enrichment, vacancy-context latest-stage filters, and server-filtered HR dashboard controls |
 | TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
+| TASK-02-04 | done/closed | GitHub issue #88 closed; merged in `main` via PR #128 (`3ad1c9e`) with manager-scoped vacancy overview + PII-redacted candidate snapshot visibility and offer status enrichment |
 | TASK-11-06 | implemented/local-baseline | `/candidate` now supports public deep-link apply, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling |
 | TASK-11-05 | implemented/local-baseline | `/` now exposes staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
 | TASK-11-09 | implemented/local-baseline | RU/EN strings cover login, candidate apply/tracking/analysis, admin, and HR workspace critical flows |
