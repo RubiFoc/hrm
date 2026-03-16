@@ -50,6 +50,7 @@ flowchart TB
     SCOREDOM[Match Scoring Service]
     EMPDOM[Employee Services]
     NOTIFY[Notification Service]
+    AUTOENG[Automation Rule Engine]
     HROPS[HR Automation Services]
     WORKERS[Background Workers]
     ANALYTICS[Reporting and KPI Services]
@@ -77,6 +78,7 @@ flowchart TB
   API --> SCOREDOM
   API --> EMPDOM
   API --> NOTIFY
+  API --> AUTOENG
   API --> HROPS
   API --> ANALYTICS
   WORKERS --> POLICY
@@ -96,6 +98,7 @@ flowchart TB
   SCOREDOM --> DB
   EMPDOM --> DB
   NOTIFY --> DB
+  AUTOENG --> DB
   HROPS --> DB
   ANALYTICS --> DB
   AUDIT --> DB
@@ -105,6 +108,10 @@ flowchart TB
   SCOREDOM --> QUEUE
   HROPS --> QUEUE
   ANALYTICS --> QUEUE
+
+  REC --> AUTOENG
+  EMPDOM --> AUTOENG
+  AUTOENG -.notification.emit.-> NOTIFY
 
   REC --> OLLAMA
   SCOREDOM --> OLLAMA
@@ -130,6 +137,7 @@ flowchart LR
   EMP[Employee Profile]
   ONB[Onboarding]
   AUTO[HR Automation]
+  NOTIFY[Notification Service]
   KPI[KPI and Audit]
 
   VAC --> SCORE
@@ -142,7 +150,9 @@ flowchart LR
   EMP --> ONB
   VAC --> AUTO
   INT --> AUTO
+  OFFER --> AUTO
   ONB --> AUTO
+  AUTO -.notification.emit.-> NOTIFY
 
   VAC --> KPI
   CAND --> KPI

@@ -11,6 +11,9 @@ from hrm_backend.audit.dependencies.audit import get_audit_service
 from hrm_backend.audit.services.audit_service import AuditService
 from hrm_backend.auth.dependencies.auth import get_staff_account_dao
 from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
+from hrm_backend.automation.dao.automation_rule_dao import AutomationRuleDAO
+from hrm_backend.automation.services.evaluator import AutomationEvaluator
+from hrm_backend.automation.services.executor import AutomationActionExecutor
 from hrm_backend.core.db.session import get_db_session
 from hrm_backend.employee.dao.employee_profile_dao import EmployeeProfileDAO
 from hrm_backend.employee.dao.hire_conversion_dao import HireConversionDAO
@@ -30,6 +33,7 @@ from hrm_backend.employee.services.onboarding_task_service import OnboardingTask
 from hrm_backend.employee.services.onboarding_template_service import (
     OnboardingTemplateService,
 )
+from hrm_backend.notifications.dao.notification_dao import NotificationDAO
 from hrm_backend.notifications.dependencies.notifications import get_notification_service
 from hrm_backend.notifications.services.notification_service import NotificationService
 
@@ -58,6 +62,7 @@ def get_employee_profile_service(
     session: SessionDependency,
     audit_service: AuditDependency,
     notification_service: NotificationServiceDependency,
+    staff_account_dao: StaffAccountDAODependency,
 ) -> EmployeeProfileService:
     """Build employee profile service for the current request session.
 
@@ -68,6 +73,14 @@ def get_employee_profile_service(
     Returns:
         EmployeeProfileService: Employee profile bootstrap service.
     """
+    automation_evaluator = AutomationEvaluator(
+        rule_dao=AutomationRuleDAO(session=session),
+        staff_account_dao=staff_account_dao,
+    )
+    automation_executor = AutomationActionExecutor(
+        evaluator=automation_evaluator,
+        notification_dao=NotificationDAO(session=session),
+    )
     return EmployeeProfileService(
         session=session,
         hire_conversion_dao=HireConversionDAO(session=session),
@@ -80,6 +93,7 @@ def get_employee_profile_service(
             template_dao=OnboardingTemplateDAO(session=session),
             profile_dao=EmployeeProfileDAO(session=session),
             notification_service=notification_service,
+            automation_executor=automation_executor,
             audit_service=audit_service,
         ),
         audit_service=audit_service,
@@ -110,6 +124,7 @@ def get_onboarding_task_service(
     session: SessionDependency,
     audit_service: AuditDependency,
     notification_service: NotificationServiceDependency,
+    staff_account_dao: StaffAccountDAODependency,
 ) -> OnboardingTaskService:
     """Build onboarding task service for the current request session.
 
@@ -120,6 +135,14 @@ def get_onboarding_task_service(
     Returns:
         OnboardingTaskService: Staff-facing onboarding task generation and update service.
     """
+    automation_evaluator = AutomationEvaluator(
+        rule_dao=AutomationRuleDAO(session=session),
+        staff_account_dao=staff_account_dao,
+    )
+    automation_executor = AutomationActionExecutor(
+        evaluator=automation_evaluator,
+        notification_dao=NotificationDAO(session=session),
+    )
     return OnboardingTaskService(
         session=session,
         run_dao=OnboardingRunDAO(session=session),
@@ -127,6 +150,7 @@ def get_onboarding_task_service(
         template_dao=OnboardingTemplateDAO(session=session),
         profile_dao=EmployeeProfileDAO(session=session),
         notification_service=notification_service,
+        automation_executor=automation_executor,
         audit_service=audit_service,
     )
 

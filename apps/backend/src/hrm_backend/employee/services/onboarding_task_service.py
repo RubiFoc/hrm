@@ -10,6 +10,11 @@ from sqlalchemy.orm import Session
 
 from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
+from hrm_backend.automation.schemas.events import (
+    OnboardingTaskAssignedEvent,
+    OnboardingTaskAssignedPayload,
+)
+from hrm_backend.automation.services.executor import AutomationActionExecutor
 from hrm_backend.employee.dao.employee_profile_dao import EmployeeProfileDAO
 from hrm_backend.employee.dao.onboarding_run_dao import OnboardingRunDAO
 from hrm_backend.employee.dao.onboarding_task_dao import OnboardingTaskDAO
@@ -48,6 +53,7 @@ class OnboardingTaskService:
         template_dao: OnboardingTemplateDAO,
         profile_dao: EmployeeProfileDAO,
         notification_service: NotificationService,
+        automation_executor: AutomationActionExecutor,
         audit_service: AuditService,
     ) -> None:
         """Initialize onboarding task service dependencies.
@@ -59,6 +65,7 @@ class OnboardingTaskService:
             template_dao: DAO for active onboarding template resolution.
             profile_dao: DAO for employee profile lookups used in notification copy.
             notification_service: In-app notification service for assignment changes.
+            automation_executor: Automation executor (planning + notification execution).
             audit_service: Audit service for success and failure traces.
         """
         self._session = session
@@ -67,6 +74,7 @@ class OnboardingTaskService:
         self._template_dao = template_dao
         self._profile_dao = profile_dao
         self._notification_service = notification_service
+        self._automation_executor = automation_executor
         self._audit_service = audit_service
 
     def build_create_payloads(
@@ -213,6 +221,17 @@ class OnboardingTaskService:
         )
         self._session.commit()
         self._session.refresh(updated)
+        if (
+            previous_assigned_role != updated.assigned_role
+            or previous_assigned_staff_id != updated.assigned_staff_id
+        ):
+            self._evaluate_automation_on_assignment_change(
+                task=updated,
+                employee_id=UUID(run.employee_id),
+                employee_full_name=_resolve_employee_full_name(profile),
+                previous_assigned_role=previous_assigned_role,
+                previous_assigned_staff_id=previous_assigned_staff_id,
+            )
         self._audit_success(
             action="onboarding_task:update",
             auth_context=auth_context,
@@ -220,6 +239,46 @@ class OnboardingTaskService:
             resource_id=updated.task_id,
         )
         return _to_task_response(updated)
+
+    def _evaluate_automation_on_assignment_change(
+        self,
+        *,
+        task: OnboardingTask,
+        employee_id: UUID,
+        employee_full_name: str,
+        previous_assigned_role: str | None,
+        previous_assigned_staff_id: str | None,
+    ) -> None:
+        """Evaluate automation rules for the onboarding task assignment change (fail-closed)."""
+        try:
+            assigned_staff_id = (
+                None if task.assigned_staff_id is None else UUID(task.assigned_staff_id)
+            )
+            previous_staff_id = (
+                None
+                if previous_assigned_staff_id is None
+                else UUID(previous_assigned_staff_id)
+            )
+            event = OnboardingTaskAssignedEvent(
+                event_type="onboarding.task_assigned",
+                event_time=task.updated_at,
+                trigger_event_id=UUID(task.task_id),
+                payload=OnboardingTaskAssignedPayload(
+                    task_id=UUID(task.task_id),
+                    onboarding_id=UUID(task.onboarding_id),
+                    employee_id=employee_id,
+                    task_title=task.title,
+                    assigned_role=task.assigned_role,  # type: ignore[arg-type]
+                    assigned_staff_id=assigned_staff_id,
+                    previous_assigned_role=previous_assigned_role,  # type: ignore[arg-type]
+                    previous_assigned_staff_id=previous_staff_id,
+                    due_at=task.due_at,
+                    employee_full_name=employee_full_name,
+                ),
+            )
+            self._automation_executor.handle_event(event=event)
+        except Exception:
+            return
 
     def backfill_tasks(
         self,

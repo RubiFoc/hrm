@@ -69,6 +69,10 @@ Enforcement source of truth:
 | `accounting:read` | yes | no | no | no | no | yes |
 | `kpi_snapshot:read` | yes | no | no | no | yes | no |
 | `kpi_snapshot:rebuild` | yes | no | no | no | no | no |
+| `automation_rule:create` | yes | yes | no | no | no | no |
+| `automation_rule:list` | yes | yes | no | no | no | no |
+| `automation_rule:update` | yes | yes | no | no | no | no |
+| `automation_rule:activate` | yes | yes | no | no | no | no |
 
 Public endpoint outside RBAC matrix:
 - `POST /api/v1/vacancies/{vacancy_id}/applications` is anonymous (`actor_sub=null` in audit context).

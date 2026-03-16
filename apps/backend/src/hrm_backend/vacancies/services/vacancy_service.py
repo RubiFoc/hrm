@@ -10,6 +10,12 @@ from sqlalchemy.orm import Session
 from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
 from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
 from hrm_backend.auth.schemas.token_claims import AuthContext
+from hrm_backend.automation.schemas.events import (
+    PipelineTransitionAppendedEvent,
+    PipelineTransitionAppendedPayload,
+)
+from hrm_backend.automation.services.executor import AutomationActionExecutor
+from hrm_backend.automation.utils.identifiers import candidate_id_to_short
 from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
 from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.employee.services.hire_conversion_service import HireConversionService
@@ -58,6 +64,7 @@ class VacancyService:
         hire_conversion_service: HireConversionService,
         staff_account_dao: StaffAccountDAO,
         notification_service: NotificationService,
+        automation_executor: AutomationActionExecutor,
         audit_service: AuditService,
     ) -> None:
         """Initialize vacancy service dependencies.
@@ -73,6 +80,7 @@ class VacancyService:
             hire_conversion_service: Durable employee-domain handoff service.
             staff_account_dao: Staff-account DAO used to resolve assigned-manager labels.
             notification_service: In-app notification service for manager ownership changes.
+            automation_executor: Automation executor (planning + notification execution).
             audit_service: Audit service.
         """
         self._session = session
@@ -85,6 +93,7 @@ class VacancyService:
         self._hire_conversion_service = hire_conversion_service
         self._staff_account_dao = staff_account_dao
         self._notification_service = notification_service
+        self._automation_executor = automation_executor
         self._audit_service = audit_service
 
     def create_vacancy(
@@ -334,12 +343,12 @@ class VacancyService:
         transition = self._persist_transition_bundle(
             vacancy_id=vacancy_id,
             candidate=candidate,
-        from_stage=from_stage,
-        to_stage=payload.to_stage,
-        reason=payload.reason,
-        actor_sub=actor_sub,
-        actor_role=actor_role,
-    )
+            from_stage=from_stage,
+            to_stage=payload.to_stage,
+            reason=payload.reason,
+            actor_sub=actor_sub,
+            actor_role=actor_role,
+        )
         self._audit_service.record_api_event(
             action="pipeline:transition",
             resource_type="pipeline",
@@ -348,6 +357,11 @@ class VacancyService:
             actor_sub=actor_sub,
             actor_role=actor_role,
             resource_id=transition.transition_id,
+        )
+        self._evaluate_automation_pipeline_transition(
+            transition=transition,
+            vacancy=vacancy,
+            candidate=candidate,
         )
 
         return PipelineTransitionResponse(
@@ -361,6 +375,42 @@ class VacancyService:
             changed_by_role=transition.changed_by_role,
             transitioned_at=transition.transitioned_at,
         )
+
+    def _evaluate_automation_pipeline_transition(
+        self,
+        *,
+        transition: PipelineTransition,
+        vacancy: Vacancy,
+        candidate: CandidateProfile,
+    ) -> None:
+        """Evaluate automation rules for one persisted pipeline transition (fail-closed)."""
+        try:
+            candidate_uuid = UUID(candidate.candidate_id)
+            event = PipelineTransitionAppendedEvent(
+                event_type="pipeline.transition_appended",
+                event_time=transition.transitioned_at,
+                trigger_event_id=UUID(transition.transition_id),
+                payload=PipelineTransitionAppendedPayload(
+                    transition_id=UUID(transition.transition_id),
+                    vacancy_id=UUID(vacancy.vacancy_id),
+                    vacancy_title=vacancy.title,
+                    candidate_id=candidate_uuid,
+                    candidate_id_short=candidate_id_to_short(candidate_uuid),
+                    from_stage=transition.from_stage,
+                    to_stage=transition.to_stage,
+                    stage=transition.to_stage,
+                    hiring_manager_staff_id=(
+                        None
+                        if vacancy.hiring_manager_staff_id is None
+                        else UUID(vacancy.hiring_manager_staff_id)
+                    ),
+                    changed_by_staff_id=transition.changed_by_sub,
+                    changed_by_role=transition.changed_by_role,
+                ),
+            )
+            self._automation_executor.handle_event(event=event)
+        except Exception:
+            return
 
     def list_pipeline_transitions(
         self,

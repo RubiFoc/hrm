@@ -23,6 +23,7 @@ This folder is the single source of truth for project context required for deliv
 - `architecture/overview.md`: System architecture and boundaries
 - `architecture/diagrams.md`: Canonical architecture and flow diagrams
 - `architecture/decomposition.md`: Architecture breakdown by domains, services, and modules
+- `architecture/automation-events.md`: Automation trigger event contracts and template field sets
 - `architecture/decisions.md`: Decision log (ADR-lite)
 - `architecture/adr-template.md`: Template for major decisions
 - `api/openapi.frozen.json`: Frozen OpenAPI contract used for CI drift checks and frontend type generation

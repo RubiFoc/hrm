@@ -1,7 +1,7 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-13
+- Date: 2026-03-16
 - Updated by: architect + backend-engineer
 
 ## System Context
@@ -47,7 +47,8 @@ flowchart LR
 | Recruitment Domain | Vacancies, candidates, pipeline, interviews, schedule-versioned interviewer feedback, offer lifecycle state, hire-conversion command flow, and manager-scoped hiring read models | Candidate and vacancy data | Vacancy/pipeline state, interview fairness state, offer status, active-document readiness, candidate context, and manager workspace hiring summaries/snapshots | hr-tech |
 | Match Scoring Domain | Async scoring jobs and explainable score artifacts keyed by vacancy, candidate, and active document | Scoring requests, parsed CV analysis, vacancy snapshot | UI-ready score/status payloads for shortlist review | ai-platform |
 | Employee Domain | Durable hire-conversion handoff, explicit employee profile bootstrap, onboarding workflows, employee self-service onboarding portal, and HR/manager onboarding progress visibility | Hire conversion handoff, profile/bootstrap/template/portal/dashboard requests | Employee handoff rows, employee profiles, onboarding runs/templates/tasks, employee-facing onboarding views, and staff/manager onboarding progress read models | hr-tech |
-| HR Operations Domain | HR process automation and workflow execution | Rules and triggers | Automated tasks, status updates | hr-ops |
+| Automation Rule Engine | Deterministic evaluation of trigger events into planned actions (no side effects) | Trigger events + rule CRUD inputs | Planned actions (v1: `notification.emit`) | hr-ops |
+| HR Operations Domain | HR process automation and workflow execution (v1: best-effort `notification.emit`) | Rules, triggers, and planned actions | Automated notifications and future workflow actions | hr-ops |
 | Finance Domain Adapter | Accounting-facing data exchange | Payroll/accounting requests | Exported records and statuses | finance-tech |
 | Notification Domain | Recipient-scoped in-app notifications and server-computed digests for manager/accountant workspaces | Vacancy ownership changes, onboarding assignment changes, protected notification reads | Dedupe-safe notification rows, unread/read state, digest counters, and embedded workspace notification blocks | platform |
 | AI Adapter | External model integration for CV analysis and match scoring | CV files, vacancy profiles, scoring prompts | Structured candidate insights and score responses | ai-platform |
