@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-16
-- Updated by: coordinator + backend-engineer
+- Updated by: coordinator + frontend-engineer
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -49,6 +49,7 @@
 | TASK-07-03 | implemented/local-employee-portal-slice | Employee-only `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*` now expose self-service onboarding tasks with durable employee-profile identity linking and localized frontend coverage |
 | TASK-07-04 | implemented/local-onboarding-dashboard-slice | `GET /api/v1/onboarding/runs*` now exposes HR/admin read-all plus manager-scoped onboarding progress visibility, with the dashboard embedded on `/` for HR and reused as the onboarding block inside the existing manager workspace on the same `/` route |
 | TASK-09-01 | implemented/local-manager-workspace-slice | Manager users now land on `/` in a read-only hiring + onboarding workspace backed by manager-scoped vacancy APIs, explicit `vacancies.hiring_manager_staff_id` ownership, and the reused onboarding dashboard block, while HR/admin keep the existing recruitment workspace on `/` |
+| TASK-09-02 | done/closed | GitHub issue #95 closed; merged in `main` via PR #126 (`06b605e`) with a read-only leader/admin KPI workspace on `/leader`, bounded lookback fallback to the latest available snapshot month, and CSV/XLSX export reuse |
 | TASK-09-03 | done/closed | GitHub issue #96 closed; merged in `main` via PR #114 (`c237296`) with accountant workspace routing on `/`, assignment-scoped `/api/v1/accounting/workspace*`, controlled CSV/XLSX exports, and solo-mode architecture self-review workflow alignment |
 | TASK-09-04 | done/closed | GitHub issue #97 closed; merged in `main` via PR #116 (`966f3a8`) with recipient-scoped `/api/v1/notifications*`, embedded manager/accountant notifications UI on `/`, fail-closed read/update scope, on-demand digests, regenerated OpenAPI/frontend types, and synced architecture/test docs |
 | TASK-10-01 | implemented/local-kpi-snapshot-slice | Monthly KPI snapshots with admin-only rebuild/read API, reporting package, migration, unit/integration tests, and updated OpenAPI/frontend types are implemented in repo |
