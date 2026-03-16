@@ -6,7 +6,11 @@ from uuid import UUID
 
 from fastapi import HTTPException, Request, status
 
-from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
+from hrm_backend.audit.services.audit_service import (
+    AuditService,
+    actor_from_auth_context,
+    get_request_id,
+)
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.automation.schemas.events import (
     OfferStatusChangedEvent,
@@ -213,6 +217,7 @@ class OfferService:
             previous_status=previous_status,
             entity=entity,
             auth_context=auth_context,
+            correlation_id=get_request_id(request),
         )
         self._audit_success(
             action="offer:send",
@@ -312,6 +317,7 @@ class OfferService:
             previous_status=previous_status,
             entity=entity,
             auth_context=auth_context,
+            correlation_id=get_request_id(request),
         )
         self._audit_success(
             action=f"offer:{target_status}",
@@ -329,6 +335,7 @@ class OfferService:
         previous_status: str | None,
         entity: Offer,
         auth_context: AuthContext,
+        correlation_id: str | None,
     ) -> None:
         """Evaluate automation rules for one persisted offer status transition (fail-closed)."""
         try:
@@ -366,7 +373,7 @@ class OfferService:
                     changed_by_role=actor_role,
                 ),
             )
-            self._automation_executor.handle_event(event=event)
+            self._automation_executor.handle_event(event=event, correlation_id=correlation_id)
         except Exception:
             return
 

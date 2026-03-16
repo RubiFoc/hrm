@@ -8,7 +8,11 @@ from uuid import UUID
 from fastapi import HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
+from hrm_backend.audit.services.audit_service import (
+    AuditService,
+    actor_from_auth_context,
+    get_request_id,
+)
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.automation.schemas.events import (
     OnboardingTaskAssignedEvent,
@@ -231,6 +235,7 @@ class OnboardingTaskService:
                 employee_full_name=_resolve_employee_full_name(profile),
                 previous_assigned_role=previous_assigned_role,
                 previous_assigned_staff_id=previous_assigned_staff_id,
+                correlation_id=get_request_id(request),
             )
         self._audit_success(
             action="onboarding_task:update",
@@ -248,6 +253,7 @@ class OnboardingTaskService:
         employee_full_name: str,
         previous_assigned_role: str | None,
         previous_assigned_staff_id: str | None,
+        correlation_id: str | None,
     ) -> None:
         """Evaluate automation rules for the onboarding task assignment change (fail-closed)."""
         try:
@@ -276,7 +282,7 @@ class OnboardingTaskService:
                     employee_full_name=employee_full_name,
                 ),
             )
-            self._automation_executor.handle_event(event=event)
+            self._automation_executor.handle_event(event=event, correlation_id=correlation_id)
         except Exception:
             return
 

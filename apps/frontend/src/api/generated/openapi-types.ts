@@ -272,6 +272,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/automation/action-executions/{action_execution_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Action Execution
+         * @description Return one action execution by id (non-PII operator view).
+         */
+        get: operations["get_action_execution_api_v1_automation_action_executions__action_execution_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/automation/executions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Execution Runs
+         * @description List automation execution runs (non-PII operator view).
+         */
+        get: operations["list_execution_runs_api_v1_automation_executions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/automation/executions/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Execution Run
+         * @description Return one automation execution run by id (non-PII operator view).
+         */
+        get: operations["get_execution_run_api_v1_automation_executions__run_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/automation/executions/{run_id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Execution Actions
+         * @description List action executions for one run (non-PII operator view).
+         */
+        get: operations["list_execution_actions_api_v1_automation_executions__run_id__actions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/automation/rules": {
         parameters: {
             query?: never;
@@ -1663,6 +1743,263 @@ export interface components {
             offset: number;
             /** Total */
             total: number;
+        };
+        /**
+         * AutomationActionExecutionListItem
+         * @description Lightweight action execution payload for list views.
+         */
+        AutomationActionExecutionListItem: {
+            /** Action */
+            action: string;
+            /**
+             * Action Execution Id
+             * Format: uuid
+             */
+            action_execution_id: string;
+            /** Attempt Count */
+            attempt_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Dedupe Key */
+            dedupe_key: string;
+            /** Error Kind */
+            error_kind?: string | null;
+            /** Recipient Role */
+            recipient_role: string;
+            /**
+             * Recipient Staff Id
+             * Format: uuid
+             */
+            recipient_staff_id: string;
+            /** Result Notification Id */
+            result_notification_id: string | null;
+            /**
+             * Rule Id
+             * Format: uuid
+             */
+            rule_id: string;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /** Source Type */
+            source_type: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "succeeded" | "deduped" | "failed";
+            /** Trace Id */
+            trace_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * AutomationActionExecutionListResponse
+         * @description Paginated list response for action executions.
+         */
+        AutomationActionExecutionListResponse: {
+            /** Items */
+            items: components["schemas"]["AutomationActionExecutionListItem"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * AutomationActionExecutionResponse
+         * @description Full action execution response payload.
+         */
+        AutomationActionExecutionResponse: {
+            /** Action */
+            action: string;
+            /**
+             * Action Execution Id
+             * Format: uuid
+             */
+            action_execution_id: string;
+            /** Attempt Count */
+            attempt_count: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Dedupe Key */
+            dedupe_key: string;
+            /** Error Kind */
+            error_kind?: string | null;
+            /** Error Text */
+            error_text?: string | null;
+            /** Recipient Role */
+            recipient_role: string;
+            /**
+             * Recipient Staff Id
+             * Format: uuid
+             */
+            recipient_staff_id: string;
+            /** Result Notification Id */
+            result_notification_id: string | null;
+            /**
+             * Rule Id
+             * Format: uuid
+             */
+            rule_id: string;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /** Source Type */
+            source_type: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "succeeded" | "deduped" | "failed";
+            /** Trace Id */
+            trace_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * AutomationExecutionRunListItem
+         * @description Lightweight execution run payload for list views.
+         */
+        AutomationExecutionRunListItem: {
+            /** Correlation Id */
+            correlation_id?: string | null;
+            /** Deduped Action Count */
+            deduped_action_count: number;
+            /**
+             * Event Time
+             * Format: date-time
+             */
+            event_time: string;
+            /** Event Type */
+            event_type: string;
+            /** Failed Action Count */
+            failed_action_count: number;
+            /** Finished At */
+            finished_at: string | null;
+            /** Planned Action Count */
+            planned_action_count: number;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "succeeded" | "failed";
+            /** Succeeded Action Count */
+            succeeded_action_count: number;
+            /** Trace Id */
+            trace_id: string;
+            /**
+             * Trigger Event Id
+             * Format: uuid
+             */
+            trigger_event_id: string;
+        };
+        /**
+         * AutomationExecutionRunListResponse
+         * @description Paginated list response for execution runs.
+         */
+        AutomationExecutionRunListResponse: {
+            /** Items */
+            items: components["schemas"]["AutomationExecutionRunListItem"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * AutomationExecutionRunResponse
+         * @description Full execution run response payload.
+         */
+        AutomationExecutionRunResponse: {
+            /** Correlation Id */
+            correlation_id?: string | null;
+            /** Deduped Action Count */
+            deduped_action_count: number;
+            /** Error Kind */
+            error_kind?: string | null;
+            /** Error Text */
+            error_text?: string | null;
+            /**
+             * Event Time
+             * Format: date-time
+             */
+            event_time: string;
+            /** Event Type */
+            event_type: string;
+            /** Failed Action Count */
+            failed_action_count: number;
+            /** Finished At */
+            finished_at: string | null;
+            /** Planned Action Count */
+            planned_action_count: number;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "running" | "succeeded" | "failed";
+            /** Succeeded Action Count */
+            succeeded_action_count: number;
+            /** Trace Id */
+            trace_id: string;
+            /**
+             * Trigger Event Id
+             * Format: uuid
+             */
+            trigger_event_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /**
          * AutomationRuleActivationRequest
@@ -4449,6 +4786,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_action_execution_api_v1_automation_action_executions__action_execution_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                action_execution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationActionExecutionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_execution_runs_api_v1_automation_executions_get: {
+        parameters: {
+            query?: {
+                event_type?: string | null;
+                trigger_event_id?: string | null;
+                status?: ("running" | "succeeded" | "failed") | null;
+                correlation_id?: string | null;
+                trace_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationExecutionRunListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_execution_run_api_v1_automation_executions__run_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationExecutionRunResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_execution_actions_api_v1_automation_executions__run_id__actions_get: {
+        parameters: {
+            query?: {
+                status?: ("succeeded" | "deduped" | "failed") | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationActionExecutionListResponse"];
                 };
             };
             /** @description Validation Error */

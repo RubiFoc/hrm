@@ -729,6 +729,592 @@
         "title": "AuditEventListResponse",
         "type": "object"
       },
+      "AutomationActionExecutionListItem": {
+        "additionalProperties": false,
+        "description": "Lightweight action execution payload for list views.",
+        "properties": {
+          "action": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Action",
+            "type": "string"
+          },
+          "action_execution_id": {
+            "format": "uuid",
+            "title": "Action Execution Id",
+            "type": "string"
+          },
+          "attempt_count": {
+            "minimum": 1.0,
+            "title": "Attempt Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "dedupe_key": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Dedupe Key",
+            "type": "string"
+          },
+          "error_kind": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Kind"
+          },
+          "recipient_role": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Recipient Role",
+            "type": "string"
+          },
+          "recipient_staff_id": {
+            "format": "uuid",
+            "title": "Recipient Staff Id",
+            "type": "string"
+          },
+          "result_notification_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Notification Id"
+          },
+          "rule_id": {
+            "format": "uuid",
+            "title": "Rule Id",
+            "type": "string"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_id": {
+            "format": "uuid",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_type": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Source Type",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "deduped",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trace_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Trace Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_execution_id",
+          "run_id",
+          "action",
+          "rule_id",
+          "recipient_staff_id",
+          "recipient_role",
+          "source_type",
+          "source_id",
+          "dedupe_key",
+          "status",
+          "attempt_count",
+          "trace_id",
+          "result_notification_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AutomationActionExecutionListItem",
+        "type": "object"
+      },
+      "AutomationActionExecutionListResponse": {
+        "additionalProperties": false,
+        "description": "Paginated list response for action executions.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AutomationActionExecutionListItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "AutomationActionExecutionListResponse",
+        "type": "object"
+      },
+      "AutomationActionExecutionResponse": {
+        "additionalProperties": false,
+        "description": "Full action execution response payload.",
+        "properties": {
+          "action": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Action",
+            "type": "string"
+          },
+          "action_execution_id": {
+            "format": "uuid",
+            "title": "Action Execution Id",
+            "type": "string"
+          },
+          "attempt_count": {
+            "minimum": 1.0,
+            "title": "Attempt Count",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "dedupe_key": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Dedupe Key",
+            "type": "string"
+          },
+          "error_kind": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Kind"
+          },
+          "error_text": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Text"
+          },
+          "recipient_role": {
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Recipient Role",
+            "type": "string"
+          },
+          "recipient_staff_id": {
+            "format": "uuid",
+            "title": "Recipient Staff Id",
+            "type": "string"
+          },
+          "result_notification_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Notification Id"
+          },
+          "rule_id": {
+            "format": "uuid",
+            "title": "Rule Id",
+            "type": "string"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "source_id": {
+            "format": "uuid",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_type": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Source Type",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "succeeded",
+              "deduped",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "trace_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Trace Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action_execution_id",
+          "run_id",
+          "action",
+          "rule_id",
+          "recipient_staff_id",
+          "recipient_role",
+          "source_type",
+          "source_id",
+          "dedupe_key",
+          "status",
+          "attempt_count",
+          "trace_id",
+          "result_notification_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AutomationActionExecutionResponse",
+        "type": "object"
+      },
+      "AutomationExecutionRunListItem": {
+        "additionalProperties": false,
+        "description": "Lightweight execution run payload for list views.",
+        "properties": {
+          "correlation_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Id"
+          },
+          "deduped_action_count": {
+            "minimum": 0.0,
+            "title": "Deduped Action Count",
+            "type": "integer"
+          },
+          "event_time": {
+            "format": "date-time",
+            "title": "Event Time",
+            "type": "string"
+          },
+          "event_type": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Event Type",
+            "type": "string"
+          },
+          "failed_action_count": {
+            "minimum": 0.0,
+            "title": "Failed Action Count",
+            "type": "integer"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "planned_action_count": {
+            "minimum": 0.0,
+            "title": "Planned Action Count",
+            "type": "integer"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "succeeded_action_count": {
+            "minimum": 0.0,
+            "title": "Succeeded Action Count",
+            "type": "integer"
+          },
+          "trace_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Trace Id",
+            "type": "string"
+          },
+          "trigger_event_id": {
+            "format": "uuid",
+            "title": "Trigger Event Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "event_type",
+          "trigger_event_id",
+          "event_time",
+          "trace_id",
+          "status",
+          "planned_action_count",
+          "succeeded_action_count",
+          "deduped_action_count",
+          "failed_action_count",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "AutomationExecutionRunListItem",
+        "type": "object"
+      },
+      "AutomationExecutionRunListResponse": {
+        "additionalProperties": false,
+        "description": "Paginated list response for execution runs.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AutomationExecutionRunListItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "AutomationExecutionRunListResponse",
+        "type": "object"
+      },
+      "AutomationExecutionRunResponse": {
+        "additionalProperties": false,
+        "description": "Full execution run response payload.",
+        "properties": {
+          "correlation_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Id"
+          },
+          "deduped_action_count": {
+            "minimum": 0.0,
+            "title": "Deduped Action Count",
+            "type": "integer"
+          },
+          "error_kind": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Kind"
+          },
+          "error_text": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Text"
+          },
+          "event_time": {
+            "format": "date-time",
+            "title": "Event Time",
+            "type": "string"
+          },
+          "event_type": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Event Type",
+            "type": "string"
+          },
+          "failed_action_count": {
+            "minimum": 0.0,
+            "title": "Failed Action Count",
+            "type": "integer"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "planned_action_count": {
+            "minimum": 0.0,
+            "title": "Planned Action Count",
+            "type": "integer"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "succeeded_action_count": {
+            "minimum": 0.0,
+            "title": "Succeeded Action Count",
+            "type": "integer"
+          },
+          "trace_id": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Trace Id",
+            "type": "string"
+          },
+          "trigger_event_id": {
+            "format": "uuid",
+            "title": "Trigger Event Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "event_type",
+          "trigger_event_id",
+          "event_time",
+          "trace_id",
+          "status",
+          "planned_action_count",
+          "succeeded_action_count",
+          "deduped_action_count",
+          "failed_action_count",
+          "started_at",
+          "finished_at",
+          "updated_at"
+        ],
+        "title": "AutomationExecutionRunResponse",
+        "type": "object"
+      },
       "AutomationRuleActivationRequest": {
         "additionalProperties": false,
         "description": "Activation toggle payload for automation rules.",
@@ -7640,6 +8226,348 @@
         "summary": "Register",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/automation/action-executions/{action_execution_id}": {
+      "get": {
+        "description": "Return one action execution by id (non-PII operator view).",
+        "operationId": "get_action_execution_api_v1_automation_action_executions__action_execution_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "action_execution_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Action Execution Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationActionExecutionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Action Execution",
+        "tags": [
+          "automation"
+        ]
+      }
+    },
+    "/api/v1/automation/executions": {
+      "get": {
+        "description": "List automation execution runs (non-PII operator view).",
+        "operationId": "list_execution_runs_api_v1_automation_executions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "event_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "trigger_event_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Trigger Event Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "running",
+                    "succeeded",
+                    "failed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "correlation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Correlation Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "trace_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Trace Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationExecutionRunListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Execution Runs",
+        "tags": [
+          "automation"
+        ]
+      }
+    },
+    "/api/v1/automation/executions/{run_id}": {
+      "get": {
+        "description": "Return one automation execution run by id (non-PII operator view).",
+        "operationId": "get_execution_run_api_v1_automation_executions__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationExecutionRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Execution Run",
+        "tags": [
+          "automation"
+        ]
+      }
+    },
+    "/api/v1/automation/executions/{run_id}/actions": {
+      "get": {
+        "description": "List action executions for one run (non-PII operator view).",
+        "operationId": "list_execution_actions_api_v1_automation_executions__run_id__actions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "succeeded",
+                    "deduped",
+                    "failed"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationActionExecutionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Execution Actions",
+        "tags": [
+          "automation"
         ]
       }
     },

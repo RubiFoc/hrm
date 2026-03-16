@@ -10,6 +10,30 @@ The evaluator introduced in `TASK-08-01` remains **planning only**:
 `TASK-08-02` adds an executor that turns planned `notification.emit` actions into persisted
 in-app notifications (best-effort, fail-closed).
 
+`TASK-08-03` adds durable execution logs for executor runs and action attempts, plus an
+operator-facing read API to inspect execution state without direct DB access.
+
+## Execution Logs (TASK-08-03)
+Automation execution logs are stored in dedicated tables:
+- `automation_execution_runs`: one row per handled trigger event invocation.
+- `automation_action_executions`: one row per planned action attempt linked to a run.
+
+### Logged Fields (Non-PII Allowlist)
+Execution logs store only technical identifiers and state required for traceability:
+- event metadata: `event_type`, `trigger_event_id`, `event_time`;
+- action metadata: `action`, `rule_id`, `recipient_staff_id`, `recipient_role`,
+  `source_type`, `source_id`, `dedupe_key`;
+- state + retries: `status` (`succeeded`/`deduped`/`failed`), `attempt_count`;
+- traceability: `correlation_id` (from `X-Request-ID` when available), generated `trace_id`;
+- sanitized error metadata: `error_kind`, `error_text` (sanitized + truncated).
+
+### Not Logged (PII/Sensitive Content)
+Execution logs must not store:
+- notification title/body;
+- notification payload JSON;
+- full trigger payloads or template contexts;
+- any direct human identity fields (names, emails, phones).
+
 ## Common Envelope
 All automation events share the following envelope:
 - `event_type`: trigger key (string).

@@ -9,7 +9,18 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
-from hrm_backend.automation.dependencies.automation import get_automation_rule_service
+from hrm_backend.automation.dependencies.automation import (
+    get_automation_execution_log_service,
+    get_automation_rule_service,
+)
+from hrm_backend.automation.schemas.executions import (
+    AutomationActionExecutionListResponse,
+    AutomationActionExecutionResponse,
+    AutomationActionExecutionStatus,
+    AutomationExecutionRunListResponse,
+    AutomationExecutionRunResponse,
+    AutomationExecutionRunStatus,
+)
 from hrm_backend.automation.schemas.rules import (
     AutomationRuleActivationRequest,
     AutomationRuleCreateRequest,
@@ -18,12 +29,17 @@ from hrm_backend.automation.schemas.rules import (
     AutomationRuleUpdateRequest,
 )
 from hrm_backend.automation.services.automation_rule_service import AutomationRuleService
+from hrm_backend.automation.services.execution_log_service import AutomationExecutionLogService
 from hrm_backend.rbac import Role, require_permission
 
 router = APIRouter(tags=["automation"])
 
 AutomationRuleServiceDependency = Annotated[
     AutomationRuleService, Depends(get_automation_rule_service)
+]
+AutomationExecutionLogServiceDependency = Annotated[
+    AutomationExecutionLogService,
+    Depends(get_automation_execution_log_service),
 ]
 CurrentAuthContext = Annotated[AuthContext, Depends(get_current_auth_context)]
 
@@ -42,6 +58,14 @@ AutomationRuleUpdateRole = Annotated[
 AutomationRuleActivateRole = Annotated[
     Role,
     Depends(require_permission("automation_rule:activate")),
+]
+AutomationExecutionListRole = Annotated[
+    Role,
+    Depends(require_permission("automation_execution:list")),
+]
+AutomationExecutionReadRole = Annotated[
+    Role,
+    Depends(require_permission("automation_execution:read")),
 ]
 
 
@@ -109,6 +133,93 @@ def set_rule_activation(
     return service.set_activation(
         rule_id=rule_id,
         payload=payload,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@router.get("/api/v1/automation/executions", response_model=AutomationExecutionRunListResponse)
+def list_execution_runs(
+    request: Request,
+    _: AutomationExecutionListRole,
+    auth_context: CurrentAuthContext,
+    service: AutomationExecutionLogServiceDependency,
+    event_type: Annotated[str | None, Query(max_length=128)] = None,
+    trigger_event_id: Annotated[UUID | None, Query()] = None,
+    status: Annotated[AutomationExecutionRunStatus | None, Query()] = None,
+    correlation_id: Annotated[str | None, Query(max_length=64)] = None,
+    trace_id: Annotated[str | None, Query(max_length=64)] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> AutomationExecutionRunListResponse:
+    """List automation execution runs (non-PII operator view)."""
+    return service.list_runs(
+        event_type=event_type,
+        trigger_event_id=trigger_event_id,
+        status_filter=status,
+        correlation_id=correlation_id,
+        trace_id=trace_id,
+        limit=limit,
+        offset=offset,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@router.get(
+    "/api/v1/automation/executions/{run_id}",
+    response_model=AutomationExecutionRunResponse,
+)
+def get_execution_run(
+    run_id: UUID,
+    request: Request,
+    _: AutomationExecutionReadRole,
+    auth_context: CurrentAuthContext,
+    service: AutomationExecutionLogServiceDependency,
+) -> AutomationExecutionRunResponse:
+    """Return one automation execution run by id (non-PII operator view)."""
+    return service.get_run(run_id=run_id, auth_context=auth_context, request=request)
+
+
+@router.get(
+    "/api/v1/automation/executions/{run_id}/actions",
+    response_model=AutomationActionExecutionListResponse,
+)
+def list_execution_actions(
+    run_id: UUID,
+    request: Request,
+    _: AutomationExecutionReadRole,
+    auth_context: CurrentAuthContext,
+    service: AutomationExecutionLogServiceDependency,
+    status: Annotated[AutomationActionExecutionStatus | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> AutomationActionExecutionListResponse:
+    """List action executions for one run (non-PII operator view)."""
+    return service.list_actions(
+        run_id=run_id,
+        status_filter=status,
+        limit=limit,
+        offset=offset,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@router.get(
+    "/api/v1/automation/action-executions/{action_execution_id}",
+    response_model=AutomationActionExecutionResponse,
+)
+def get_action_execution(
+    action_execution_id: UUID,
+    request: Request,
+    _: AutomationExecutionReadRole,
+    auth_context: CurrentAuthContext,
+    service: AutomationExecutionLogServiceDependency,
+) -> AutomationActionExecutionResponse:
+    """Return one action execution by id (non-PII operator view)."""
+    return service.get_action(
+        action_execution_id=action_execution_id,
         auth_context=auth_context,
         request=request,
     )

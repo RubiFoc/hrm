@@ -214,6 +214,7 @@ class VacancyApplicationService:
                 to_stage="applied",
                 changed_by_staff_id=transition.changed_by_sub,
                 changed_by_role=transition.changed_by_role,
+                correlation_id=correlation_id,
             )
 
             self._audit_service.record_api_event(
@@ -287,6 +288,7 @@ class VacancyApplicationService:
         to_stage: str,
         changed_by_staff_id: str,
         changed_by_role: str,
+        correlation_id: str | None,
     ) -> None:
         """Evaluate automation rules for one persisted pipeline transition (fail-closed)."""
         try:
@@ -312,7 +314,7 @@ class VacancyApplicationService:
                     changed_by_role=changed_by_role,
                 ),
             )
-            self._automation_executor.handle_event(event=event)
+            self._automation_executor.handle_event(event=event, correlation_id=correlation_id)
         except Exception:
             return
 

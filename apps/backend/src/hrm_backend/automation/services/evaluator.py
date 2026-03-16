@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime
 from uuid import UUID
 
@@ -27,8 +26,6 @@ from hrm_backend.automation.utils.templates import (
 )
 from hrm_backend.notifications.schemas.notification import NotificationPayload
 from hrm_backend.notifications.utils.notifications import is_notifiable_recipient_role
-
-logger = logging.getLogger(__name__)
 
 _RECRUITMENT_TEMPLATE_FIELDS = frozenset(
     {
@@ -69,11 +66,7 @@ class AutomationEvaluator:
 
         The evaluator has no side effects. Failures are treated as fail-closed: no planned actions.
         """
-        try:
-            rules = self._rule_dao.list_active_by_trigger(event.event_type)
-        except Exception:
-            logger.exception("Failed to load automation rules for trigger '%s'", event.event_type)
-            return []
+        rules = self._rule_dao.list_active_by_trigger(event.event_type)
 
         plan: list[PlannedNotificationEmitAction] = []
         payload_for_conditions = event.payload.model_dump(mode="json")
