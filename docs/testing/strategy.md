@@ -514,15 +514,16 @@ Current implementation coverage includes at minimum:
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
 | --- | --- | --- | --- |
-| Vacancy-scoped hiring summary and candidate snapshot ordering are deterministic | `apps/backend/tests/unit/vacancies/test_manager_workspace_service.py` | N/A | overview vacancies sort by latest activity, candidate snapshot rows sort by latest stage activity, and aggregate counts remain stable for the same visible vacancy set |
+| Vacancy-scoped hiring summary and PII-redacted candidate snapshot ordering are deterministic | `apps/backend/tests/unit/vacancies/test_manager_workspace_service.py` | N/A | overview vacancies sort by latest activity, candidate snapshot rows sort by latest stage activity, offer status mapping stays stable, and candidate PII fields remain absent from the manager snapshot schema |
 | Manager workspace APIs stay fail-closed outside explicit vacancy ownership scope | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/vacancies/test_manager_workspace_api.py` | `manager_workspace:read` is allowed, legacy HR vacancy list access stays `403`, and out-of-scope vacancy snapshot reads return `404 manager_workspace_vacancy_not_found` |
 | Vacancy assignment to a hiring manager is explicit and validated on create/update | N/A | `apps/backend/tests/integration/vacancies/test_manager_workspace_api.py` | HR/admin can set or clear `hiring_manager_login`, while missing, inactive, or wrong-role managers fail closed with stable reason codes |
-| Manager `/` route renders loading, empty, error, and success states for the full workspace | `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx` | N/A | the page renders hiring summary, vacancy list, localized error mapping, selected-vacancy snapshot, and embedded onboarding visibility without exposing mutation controls |
+| Manager `/` route renders loading, empty, error, and success states for the full workspace | `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx` | N/A | the page renders hiring summary, vacancy list, localized error mapping, selected-vacancy snapshot, and embedded onboarding visibility without exposing mutation controls or candidate PII fields |
 | HR/admin `/` workspace stays unchanged while manager route observability remains canonical | `apps/frontend/src/pages/HrDashboardPage.test.tsx`, `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx` | N/A | HR/admin continue to land on the existing recruitment workspace, manager login still redirects to `/`, and Sentry tags remain `workspace=manager`, `route=/` |
 
 Acceptance rules for the implementation slice:
 - Keep the existing `/` route split by role; do not add a separate manager-only path.
 - Keep manager APIs read-only and scoped by explicit vacancy ownership; do not widen manager access to vacancy, pipeline, candidate, onboarding-task, scoring, or offer mutations.
+- Keep manager candidate visibility PII-redacted; do not expose candidate contact fields or CV-analysis artifacts in manager snapshot payloads.
 - Keep auth, CORS, and public candidate transport unchanged.
 - Freeze OpenAPI and update generated frontend types in the same change because the vacancy contract and read surface expanded.
 - Minimum verification set:
