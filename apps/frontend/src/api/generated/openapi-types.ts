@@ -152,6 +152,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/audit/events/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Audit Events
+         * @description Download audit events as CSV or JSONL attachment.
+         */
+        get: operations["export_audit_events_api_v1_audit_events_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -818,6 +838,26 @@ export interface paths {
          * @description Read KPI snapshot rows for a single month.
          */
         get: operations["read_kpi_snapshot_api_v1_reporting_kpi_snapshots_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/kpi-snapshots/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Kpi Snapshot
+         * @description Download KPI snapshot rows for a single month as CSV or XLSX attachment.
+         */
+        get: operations["export_kpi_snapshot_api_v1_reporting_kpi_snapshots_export_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3952,6 +3992,53 @@ export interface operations {
             };
         };
     };
+    export_audit_events_api_v1_audit_events_export_get: {
+        parameters: {
+            query: {
+                format: "csv" | "jsonl";
+                limit?: number;
+                offset?: number;
+                action?: string | null;
+                result?: ("allowed" | "denied" | "success" | "failure") | null;
+                source?: ("api" | "job") | null;
+                resource_type?: string | null;
+                correlation_id?: string | null;
+                occurred_from?: string | null;
+                occurred_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "application/x-ndjson": unknown;
+                    "text/csv": unknown;
+                };
+            };
+            /** @description RBAC denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failure */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     login_api_v1_auth_login_post: {
         parameters: {
             query?: never;
@@ -5143,6 +5230,45 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    export_kpi_snapshot_api_v1_reporting_kpi_snapshots_export_get: {
+        parameters: {
+            query: {
+                format: "csv" | "xlsx";
+                period_month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": unknown;
+                    "text/csv": unknown;
+                };
+            };
+            /** @description RBAC denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failure */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

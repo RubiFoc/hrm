@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import csv
+import json
 from datetime import UTC, datetime, timedelta
+from io import StringIO
 from pathlib import Path
 from uuid import uuid4
 
@@ -271,6 +274,184 @@ async def test_response_excludes_self_generated_audit_event_list(
     events = _load_events(database_url)
     assert any(
         event.action == "audit.event:list"
+        and event.result == "success"
+        and event.correlation_id == request_id
+        for event in events
+    )
+
+
+async def test_admin_can_export_audit_events_as_csv_with_combined_filters(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify admin audit export supports filters and returns CSV attachment headers."""
+    _, context_holder, database_url = configured_app
+    context_holder["context"] = AuthContext(
+        subject_id=uuid4(),
+        role="admin",
+        session_id=uuid4(),
+        token_id=uuid4(),
+        expires_at=9999999999,
+    )
+
+    now = datetime.now(UTC)
+    _insert_event(
+        database_url,
+        event_id="00000000-0000-0000-0000-000000000201",
+        occurred_at=now - timedelta(seconds=3),
+        action="auth.login",
+        result="success",
+        correlation_id="corr-1",
+    )
+    _insert_event(
+        database_url,
+        event_id="00000000-0000-0000-0000-000000000202",
+        occurred_at=now - timedelta(seconds=2),
+        action="auth.login",
+        result="success",
+        correlation_id="corr-1",
+    )
+    _insert_event(
+        database_url,
+        event_id="00000000-0000-0000-0000-000000000203",
+        occurred_at=now - timedelta(seconds=1),
+        action="auth.login",
+        result="failure",
+        correlation_id="corr-1",
+    )
+
+    response = await api_client.get(
+        "/api/v1/audit/events/export",
+        params={
+            "format": "csv",
+            "limit": 100,
+            "offset": 0,
+            "action": "auth.login",
+            "correlation_id": "corr-1",
+            "result": "success",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert response.headers["content-disposition"].startswith('attachment; filename="audit-events-')
+    assert response.headers["content-disposition"].endswith('.csv"')
+
+    rows = list(csv.reader(StringIO(response.text)))
+    header = rows[0]
+    event_id_index = header.index("event_id")
+    assert [row[event_id_index] for row in rows[1:]] == [
+        "00000000-0000-0000-0000-000000000202",
+        "00000000-0000-0000-0000-000000000201",
+    ]
+
+    events = _load_events(database_url)
+    assert any(
+        event.action == "audit.event:export"
+        and event.result == "success"
+        and event.reason == "csv"
+        for event in events
+    )
+
+
+async def test_admin_can_export_audit_events_as_jsonl(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify export supports JSONL output and returns parseable NDJSON payload."""
+    _, context_holder, database_url = configured_app
+    context_holder["context"] = AuthContext(
+        subject_id=uuid4(),
+        role="admin",
+        session_id=uuid4(),
+        token_id=uuid4(),
+        expires_at=9999999999,
+    )
+
+    now = datetime.now(UTC)
+    _insert_event(
+        database_url,
+        event_id="00000000-0000-0000-0000-000000000301",
+        occurred_at=now - timedelta(seconds=1),
+        action="auth.me",
+        result="success",
+        correlation_id="corr-jsonl-1",
+    )
+
+    response = await api_client.get(
+        "/api/v1/audit/events/export",
+        params={
+            "format": "jsonl",
+            "limit": 10,
+            "offset": 0,
+            "action": "auth.me",
+            "correlation_id": "corr-jsonl-1",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("application/x-ndjson")
+    assert response.headers["content-disposition"].endswith('.jsonl"')
+
+    lines = response.text.strip().splitlines()
+    assert len(lines) == 1
+    assert json.loads(lines[0])["event_id"] == "00000000-0000-0000-0000-000000000301"
+
+
+async def test_non_admin_gets_403_for_audit_events_export(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify non-admin roles are denied for audit export API."""
+    _, context_holder, _ = configured_app
+    context_holder["context"] = AuthContext(
+        subject_id=uuid4(),
+        role="hr",
+        session_id=uuid4(),
+        token_id=uuid4(),
+        expires_at=9999999999,
+    )
+
+    response = await api_client.get(
+        "/api/v1/audit/events/export",
+        params={"format": "csv"},
+    )
+
+    assert response.status_code == 403
+
+
+async def test_export_response_excludes_self_generated_audit_event_export(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify export endpoint writes audit.event:export after building attachment content."""
+    _, context_holder, database_url = configured_app
+    context_holder["context"] = AuthContext(
+        subject_id=uuid4(),
+        role="admin",
+        session_id=uuid4(),
+        token_id=uuid4(),
+        expires_at=9999999999,
+    )
+    request_id = "req-audit-export-self-1"
+
+    response = await api_client.get(
+        "/api/v1/audit/events/export",
+        params={"format": "csv", "correlation_id": request_id, "limit": 100, "offset": 0},
+        headers={"X-Request-ID": request_id},
+    )
+
+    assert response.status_code == 200
+    rows = list(csv.reader(StringIO(response.text)))
+    header = rows[0]
+    action_index = header.index("action")
+    assert len(rows) == 2
+    assert rows[1][action_index] == "audit:read"
+    assert not any(row[action_index] == "audit.event:export" for row in rows[1:])
+
+    events = _load_events(database_url)
+    assert any(
+        event.action == "audit.event:export"
         and event.result == "success"
         and event.correlation_id == request_id
         for event in events

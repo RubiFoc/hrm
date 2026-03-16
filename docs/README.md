@@ -8,6 +8,7 @@ This folder is the single source of truth for project context required for deliv
 - `project/glossary.md`: Shared terms and definitions
 - `project/requirements-questionnaire.md`: Stakeholder interview template for requirement discovery
 - `project/epics.md`: Product epics, dependencies, and delivery order
+- `project/export-package-audit-kpi.md`: Export requirements for audit evidence and KPI snapshot attachments
 - `project/tasks.md`: Task-level backlog derived from epics with priorities
 - `project/sprint-m1-plan.md`: Approved M1 sprint ownership by role
 - `project/frontend-requirements.md`: React.js frontend requirements and confirmed decisions

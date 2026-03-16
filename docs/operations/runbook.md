@@ -1,7 +1,7 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-12
+- Date: 2026-03-16
 - Updated by: devops-engineer + backend-engineer + architect
 
 ## Local Environment (Docker Compose)
@@ -53,6 +53,16 @@ Shortcut wrappers:
   - `http://localhost:8000/api/v1/auth/login`
 - MinIO API: `http://localhost:9000`
 - MinIO Console: `http://localhost:9001`
+
+### Audit and Reporting Exports
+- Audit evidence export (admin-only, `audit:read`):
+  - `GET /api/v1/audit/events/export?format=csv|jsonl&limit=...&offset=...`
+  - Example:
+    `curl -H "Authorization: Bearer <token>" "http://localhost:8000/api/v1/audit/events/export?format=csv&limit=5000" -o audit-events.csv`
+- KPI snapshot export (leader/admin, `kpi_snapshot:read`):
+  - `GET /api/v1/reporting/kpi-snapshots/export?period_month=YYYY-MM-01&format=csv|xlsx`
+  - Example:
+    `curl -H "Authorization: Bearer <token>" "http://localhost:8000/api/v1/reporting/kpi-snapshots/export?period_month=2026-03-01&format=xlsx" -o kpi-snapshot-2026-03.xlsx`
 
 Runtime auth/browser integration settings:
 - Frontend browser API base URL: `VITE_API_BASE_URL` (compose default: `http://localhost:8000`).

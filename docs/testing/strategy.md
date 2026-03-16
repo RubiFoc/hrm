@@ -192,6 +192,15 @@ apps/backend/tests/
 | RBAC enforcement (admin-only `audit:read`) | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/audit/test_audit_event_api.py` | non-admin roles receive `403` and RBAC decisions are audited |
 | Business audit hook for list path (`audit.event:list`) | N/A | `apps/backend/tests/integration/audit/test_audit_event_api.py` | success/failure events are persisted and response excludes the self-generated list event |
 
+## Reporting Export Package Verification (TASK-10-04)
+
+| Capability | Unit Coverage | Integration Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Audit export attachments (CSV/JSONL) are deterministic and preserve audit-read filters/order | `apps/backend/tests/unit/audit/test_audit_export_rendering.py` | `apps/backend/tests/integration/audit/test_audit_event_api.py` | `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/audit apps/backend/tests/integration/audit` |
+| KPI snapshot export attachments (CSV/XLSX) keep stable columns and ordering | `apps/backend/tests/unit/reporting/test_kpi_snapshot_export_rendering.py` | `apps/backend/tests/integration/reporting/test_kpi_snapshot_api.py` | `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/reporting apps/backend/tests/integration/reporting` |
+| Export endpoints return attachment content type + filename disposition | N/A | `apps/backend/tests/integration/audit/test_audit_event_api.py` + `apps/backend/tests/integration/reporting/test_kpi_snapshot_api.py` | `Content-Type` and `Content-Disposition` are asserted in integration tests |
+| RBAC for export endpoints stays fail-closed | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/audit/test_audit_event_api.py` + `apps/backend/tests/integration/reporting/test_kpi_snapshot_api.py` | non-privileged roles receive `403` and deny decisions are audited |
+
 ## Frontend Login UX Verification (TASK-11-13)
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |

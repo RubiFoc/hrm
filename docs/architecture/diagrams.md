@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-13
+- Date: 2026-03-16
 - Updated by: architect + backend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
@@ -753,6 +753,41 @@ flowchart LR
   AUDREAD -.after response build.-> AUDWRITE -->|INSERT| STORE
   JOB --> JOBROLE --> ENF --> EVAL --> JOBRES
   ENF --> JOBAUD --> STORE
+```
+
+## Diagram 15B: Audit + KPI Export Attachment Flow
+
+```mermaid
+sequenceDiagram
+  participant ACT as Staff Actor
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant AUDREAD as Audit Read Service
+  participant RPT as KPI Snapshot Service
+  participant DB as PostgreSQL
+  participant AUD as Audit Service
+
+  alt Audit evidence export (admin-only)
+    ACT->>UI: Export audit events
+    UI->>API: GET /api/v1/audit/events/export?format=csv|jsonl&filters
+    API->>AUD: Validate `audit:read` (writes decision audit)
+    API->>AUDREAD: Query audit events (bounded, deterministic)
+    AUDREAD->>DB: SELECT audit_events
+    AUDREAD-->>API: rows
+    API->>API: Render CSV/JSONL bytes
+    API->>AUD: Write audit.event:export (after render)
+    API-->>UI: Attachment download starts
+  else KPI snapshot export (leader/admin)
+    ACT->>UI: Export KPI snapshot
+    UI->>API: GET /api/v1/reporting/kpi-snapshots/export?period_month&format=csv|xlsx
+    API->>AUD: Validate `kpi_snapshot:read` (writes decision audit)
+    API->>RPT: Load stored snapshot (no live aggregation fallback)
+    RPT->>DB: SELECT kpi_snapshots
+    RPT-->>API: metrics
+    API->>API: Render CSV/XLSX bytes
+    API->>AUD: Write kpi_snapshot:export (after render)
+    API-->>UI: Attachment download starts
+  end
 ```
 
 ## Diagram 16: Candidate Profile and CV Upload Sequence
