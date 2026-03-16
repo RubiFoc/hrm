@@ -3,6 +3,10 @@
 The service exposes a minimal manager-safe hiring surface on top of the existing recruitment
 domain. Visibility is fail-closed and depends only on one persisted ownership signal:
 `vacancies.hiring_manager_staff_id == current manager subject`.
+
+Candidate rows returned by the manager workspace intentionally redact candidate PII and CV-analysis
+details. The manager workspace surface is limited to vacancy metadata, pipeline stage, interview
+schedule status, and offer lifecycle status.
 """
 
 from __future__ import annotations
@@ -16,11 +20,9 @@ from fastapi import HTTPException, Request, status
 from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
 from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
 from hrm_backend.auth.schemas.token_claims import AuthContext
-from hrm_backend.candidates.dao.candidate_document_dao import CandidateDocumentDAO
-from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
-from hrm_backend.candidates.services.candidate_search import build_candidate_list_projection
 from hrm_backend.interviews.dao.interview_dao import InterviewDAO
 from hrm_backend.interviews.models.interview import Interview
+from hrm_backend.vacancies.dao.offer_dao import OfferDAO
 from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransitionDAO
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
 from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition
@@ -45,8 +47,7 @@ class ManagerWorkspaceService:
     Inputs:
     - authenticated manager context from the current request;
     - vacancy ownership resolved through `vacancies.hiring_manager_staff_id`;
-    - recruitment read models from vacancies, pipeline transitions, candidate profiles/documents,
-      and interviews.
+    - recruitment read models from vacancies, pipeline transitions, interviews, and offers.
 
     Outputs:
     - overview payload with aggregate hiring counters and manager-visible vacancies;
@@ -63,9 +64,8 @@ class ManagerWorkspaceService:
         *,
         vacancy_dao: VacancyDAO,
         transition_dao: PipelineTransitionDAO,
-        profile_dao: CandidateProfileDAO,
-        document_dao: CandidateDocumentDAO,
         interview_dao: InterviewDAO,
+        offer_dao: OfferDAO,
         staff_account_dao: StaffAccountDAO,
         audit_service: AuditService,
     ) -> None:
@@ -74,19 +74,17 @@ class ManagerWorkspaceService:
         Args:
             vacancy_dao: Vacancy DAO used to resolve assigned vacancies.
             transition_dao: Pipeline-transition DAO used to build candidate stage snapshots.
-            profile_dao: Candidate-profile DAO used to load visible candidate details.
-            document_dao: Candidate-document DAO used to expose analysis readiness and parsed CV
-                summary data.
             interview_dao: Interview DAO used to expose current interview status for visible
                 vacancy-candidate pairs.
+            offer_dao: Offer DAO used to expose offer lifecycle status for visible vacancy-candidate
+                pairs.
             staff_account_dao: Staff-account DAO used to resolve manager login labels.
             audit_service: Audit service used for success/failure evidence.
         """
         self._vacancy_dao = vacancy_dao
         self._transition_dao = transition_dao
-        self._profile_dao = profile_dao
-        self._document_dao = document_dao
         self._interview_dao = interview_dao
+        self._offer_dao = offer_dao
         self._staff_account_dao = staff_account_dao
         self._audit_service = audit_service
 
@@ -206,41 +204,27 @@ class ManagerWorkspaceService:
             vacancy_id=str(vacancy_id)
         )
         candidate_ids = list(transitions)
-        profiles = self._profile_dao.get_by_ids(candidate_ids)
-        documents = self._document_dao.get_active_documents_by_candidate_ids(candidate_ids)
         interviews = self._interview_dao.list_active_for_vacancy(vacancy_id=str(vacancy_id))
         interviews_by_candidate = {interview.candidate_id: interview for interview in interviews}
+        offers_by_candidate = self._offer_dao.list_by_vacancy_and_candidate_ids(
+            vacancy_id=str(vacancy_id),
+            candidate_ids=candidate_ids,
+        )
         manager_logins = self._resolve_manager_logins([vacancy])
 
         items = []
         stage_counter: Counter[PipelineStage] = Counter()
         now = datetime.now(UTC)
         for candidate_id, transition in transitions.items():
-            profile = profiles.get(candidate_id)
-            if profile is None:
-                continue
-            projection = build_candidate_list_projection(
-                profile=profile,
-                active_document=documents.get(candidate_id),
-                vacancy_stage=transition.to_stage,  # type: ignore[arg-type]
-            )
             interview = interviews_by_candidate.get(candidate_id)
             stage = transition.to_stage  # type: ignore[assignment]
             stage_counter[stage] += 1
+            offer = offers_by_candidate.get(candidate_id)
             items.append(
                 ManagerWorkspaceCandidateSnapshotItemResponse(
-                    candidate_id=UUID(profile.candidate_id),
-                    first_name=profile.first_name,
-                    last_name=profile.last_name,
-                    email=profile.email,
-                    location=profile.location,
-                    current_title=profile.current_title,
-                    analysis_ready=projection.analysis_ready,
-                    years_experience=projection.years_experience,
-                    skills=list(projection.skills),
+                    candidate_id=UUID(candidate_id),
                     stage=stage,
                     stage_updated_at=_normalize_datetime(transition.transitioned_at),
-                    candidate_updated_at=_normalize_datetime(profile.updated_at),
                     interview_status=None if interview is None else interview.status,  # type: ignore[arg-type]
                     interview_scheduled_start_at=(
                         None
@@ -253,6 +237,7 @@ class ManagerWorkspaceService:
                         else _normalize_datetime(interview.scheduled_end_at)
                     ),
                     interview_timezone=None if interview is None else interview.timezone,
+                    offer_status=None if offer is None else offer.status,  # type: ignore[arg-type]
                 )
             )
 

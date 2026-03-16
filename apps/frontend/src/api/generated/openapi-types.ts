@@ -2491,27 +2491,14 @@ export interface components {
         };
         /**
          * ManagerWorkspaceCandidateSnapshotItemResponse
-         * @description Read-only candidate row rendered inside the manager vacancy snapshot.
+         * @description PII-redacted candidate row rendered inside the manager vacancy snapshot.
          */
         ManagerWorkspaceCandidateSnapshotItemResponse: {
-            /** Analysis Ready */
-            analysis_ready: boolean;
             /**
              * Candidate Id
              * Format: uuid
              */
             candidate_id: string;
-            /**
-             * Candidate Updated At
-             * Format: date-time
-             */
-            candidate_updated_at: string;
-            /** Current Title */
-            current_title: string | null;
-            /** Email */
-            email: string;
-            /** First Name */
-            first_name: string;
             /** Interview Scheduled End At */
             interview_scheduled_end_at: string | null;
             /** Interview Scheduled Start At */
@@ -2520,12 +2507,8 @@ export interface components {
             interview_status: ("pending_sync" | "awaiting_candidate_confirmation" | "confirmed" | "reschedule_requested" | "cancelled") | null;
             /** Interview Timezone */
             interview_timezone: string | null;
-            /** Last Name */
-            last_name: string;
-            /** Location */
-            location: string | null;
-            /** Skills */
-            skills?: string[];
+            /** Offer Status */
+            offer_status?: ("draft" | "sent" | "accepted" | "declined") | null;
             /**
              * Stage
              * @enum {string}
@@ -2536,8 +2519,6 @@ export interface components {
              * Format: date-time
              */
             stage_updated_at: string;
-            /** Years Experience */
-            years_experience: number | null;
         };
         /**
          * ManagerWorkspaceCandidateSnapshotResponse

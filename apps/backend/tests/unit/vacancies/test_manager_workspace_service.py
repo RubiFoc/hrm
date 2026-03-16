@@ -15,15 +15,15 @@ from hrm_backend.audit.services.audit_service import AuditService
 from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
 from hrm_backend.auth.models.staff_account import StaffAccount
 from hrm_backend.auth.schemas.token_claims import AuthContext
-from hrm_backend.candidates.dao.candidate_document_dao import CandidateDocumentDAO
-from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
 from hrm_backend.candidates.models.document import CandidateDocument
 from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.core.models.base import Base
 from hrm_backend.interviews.dao.interview_dao import InterviewDAO
 from hrm_backend.interviews.models.interview import Interview
+from hrm_backend.vacancies.dao.offer_dao import OfferDAO
 from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransitionDAO
 from hrm_backend.vacancies.dao.vacancy_dao import VacancyDAO
+from hrm_backend.vacancies.models.offer import Offer
 from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition
 from hrm_backend.vacancies.models.vacancy import Vacancy
 from hrm_backend.vacancies.services.manager_workspace_service import (
@@ -258,6 +258,18 @@ def _seed_manager_workspace(session: Session) -> dict[str, str]:
             ),
         ]
     )
+    session.add(
+        Offer(
+            vacancy_id="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            candidate_id="dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+            status="sent",
+            terms_summary="Offer summary.",
+            sent_at=datetime(2026, 3, 12, 9, 0, tzinfo=UTC),
+            sent_by_staff_id="hr-1",
+            created_at=datetime(2026, 3, 12, 9, 0, tzinfo=UTC),
+            updated_at=datetime(2026, 3, 12, 9, 0, tzinfo=UTC),
+        )
+    )
     session.add_all(
         [
             Interview(
@@ -321,9 +333,8 @@ def test_manager_workspace_overview_is_scoped_and_sorted() -> None:
             service = ManagerWorkspaceService(
                 vacancy_dao=VacancyDAO(session=session),
                 transition_dao=PipelineTransitionDAO(session=session),
-                profile_dao=CandidateProfileDAO(session=session),
-                document_dao=CandidateDocumentDAO(session=session),
                 interview_dao=InterviewDAO(session=session),
+                offer_dao=OfferDAO(session=session),
                 staff_account_dao=StaffAccountDAO(session=session),
                 audit_service=_AuditServiceStub(),
             )
@@ -360,9 +371,8 @@ def test_manager_workspace_candidate_snapshot_filters_outside_scope_and_orders_r
             service = ManagerWorkspaceService(
                 vacancy_dao=VacancyDAO(session=session),
                 transition_dao=PipelineTransitionDAO(session=session),
-                profile_dao=CandidateProfileDAO(session=session),
-                document_dao=CandidateDocumentDAO(session=session),
                 interview_dao=InterviewDAO(session=session),
+                offer_dao=OfferDAO(session=session),
                 staff_account_dao=StaffAccountDAO(session=session),
                 audit_service=_AuditServiceStub(),
             )
@@ -383,10 +393,10 @@ def test_manager_workspace_candidate_snapshot_filters_outside_scope_and_orders_r
                 "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
                 "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
             ]
-            assert response.items[0].analysis_ready is False
-            assert response.items[1].analysis_ready is True
-            assert response.items[1].years_experience == 6
-            assert response.items[1].skills == ["python", "systems design"]
+            assert response.items[0].offer_status is None
+            assert response.items[1].offer_status == "sent"
+            assert "email" not in response.items[0].model_dump()
+            assert "skills" not in response.items[0].model_dump()
 
             with pytest.raises(HTTPException) as exc_info:
                 service.get_candidate_snapshot(

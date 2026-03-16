@@ -88,9 +88,8 @@ def get_manager_workspace_service(
     return ManagerWorkspaceService(
         vacancy_dao=VacancyDAO(session=session),
         transition_dao=PipelineTransitionDAO(session=session),
-        profile_dao=CandidateProfileDAO(session=session),
-        document_dao=CandidateDocumentDAO(session=session),
         interview_dao=InterviewDAO(session=session),
+        offer_dao=OfferDAO(session=session),
         staff_account_dao=staff_account_dao,
         audit_service=audit_service,
     )

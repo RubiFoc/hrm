@@ -27,6 +27,34 @@ class OfferDAO:
             .first()
         )
 
+    def list_by_vacancy_and_candidate_ids(
+        self,
+        *,
+        vacancy_id: str,
+        candidate_ids: list[str],
+    ) -> dict[str, Offer]:
+        """Load offer rows for one vacancy keyed by candidate identifiers.
+
+        Args:
+            vacancy_id: Vacancy identifier.
+            candidate_ids: Candidate identifiers to resolve offer status for.
+
+        Returns:
+            dict[str, Offer]: Mapping of `candidate_id -> offer` for the requested vacancy.
+        """
+        if not candidate_ids:
+            return {}
+
+        rows = (
+            self._session.query(Offer)
+            .filter(
+                Offer.vacancy_id == vacancy_id,
+                Offer.candidate_id.in_(candidate_ids),
+            )
+            .all()
+        )
+        return {row.candidate_id: row for row in rows}
+
     def create_offer(
         self,
         *,
