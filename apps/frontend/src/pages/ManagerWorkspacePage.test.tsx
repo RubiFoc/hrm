@@ -194,39 +194,23 @@ describe("ManagerWorkspacePage", () => {
           items: [
             {
               candidate_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
-              first_name: "Grace",
-              last_name: "Hopper",
-              email: "grace@example.com",
-              location: "Brest",
-              current_title: "Staff Engineer",
-              analysis_ready: false,
-              years_experience: null,
-              skills: [],
               stage: "shortlist",
               stage_updated_at: "2026-03-12T09:30:00Z",
-              candidate_updated_at: "2026-03-12T09:10:00Z",
               interview_status: "awaiting_candidate_confirmation",
               interview_scheduled_start_at: "2026-03-13T11:00:00Z",
               interview_scheduled_end_at: "2026-03-13T12:00:00Z",
               interview_timezone: "Europe/Minsk",
+              offer_status: null,
             },
             {
               candidate_id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
-              first_name: "Ada",
-              last_name: "Lovelace",
-              email: "ada@example.com",
-              location: "Minsk",
-              current_title: "Backend Engineer",
-              analysis_ready: true,
-              years_experience: 6,
-              skills: ["python", "systems design"],
               stage: "screening",
               stage_updated_at: "2026-03-12T08:50:00Z",
-              candidate_updated_at: "2026-03-12T08:45:00Z",
               interview_status: null,
               interview_scheduled_start_at: null,
               interview_scheduled_end_at: null,
               interview_timezone: null,
+              offer_status: "sent",
             },
           ],
         });
@@ -310,7 +294,8 @@ describe("ManagerWorkspacePage", () => {
 
     expect(await screen.findByRole("heading", { name: /кабинет менеджера/i })).toBeDefined();
     expect(await screen.findByText(/platform engineer/i)).toBeDefined();
-    expect(await screen.findByText(/grace hopper/i)).toBeDefined();
+    expect(await screen.findByText(/кандидат #bbbbbbbb/i)).toBeDefined();
+    expect(screen.queryByText(/grace@example.com/i)).toBeNull();
     expect(await screen.findByText(/manager intro/i)).toBeDefined();
   });
 });

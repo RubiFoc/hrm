@@ -779,6 +779,9 @@ const resources = {
           analysisPending: "CV analysis pending",
           noInterview: "No active interview",
           interviewValue: "{{status}} · {{value}}",
+          noOffer: "No offer",
+          offerValue: "{{value}}",
+          candidateId: "Candidate #{{value}}",
           candidateMeta: "{{title}} · {{location}} · {{years}}",
           skills: "Skills: {{value}}",
           yearsExperience: "{{value}} years",
@@ -799,8 +802,8 @@ const resources = {
           table: {
             candidate: "Candidate",
             stage: "Stage",
-            analysis: "Analysis",
             interview: "Interview",
+            offer: "Offer",
           },
         },
         errors: {
@@ -1794,6 +1797,9 @@ const resources = {
           analysisPending: "Анализ CV ещё не готов",
           noInterview: "Активного интервью нет",
           interviewValue: "{{status}} · {{value}}",
+          noOffer: "Оффера нет",
+          offerValue: "{{value}}",
+          candidateId: "Кандидат #{{value}}",
           candidateMeta: "{{title}} · {{location}} · {{years}}",
           skills: "Навыки: {{value}}",
           yearsExperience: "{{value}} лет",
@@ -1814,8 +1820,8 @@ const resources = {
           table: {
             candidate: "Кандидат",
             stage: "Этап",
-            analysis: "Анализ",
             interview: "Интервью",
+            offer: "Оффер",
           },
         },
         errors: {
