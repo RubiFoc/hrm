@@ -536,6 +536,26 @@ Acceptance rules for the implementation slice:
 - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
 - `./scripts/check-docs-structure.sh`
 
+## Leader Workspace Verification (`TASK-09-02`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| KPI snapshot read/export RBAC stays leader/admin-only | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/reporting/test_kpi_snapshot_api.py` | leader/admin can read and export, other roles receive `403`, and denied reads are audited |
+| Leader `/leader` route is guarded and emits canonical Sentry tags | `apps/frontend/src/app/router.leader.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx` | N/A | unauthorized/forbidden redirects, `/leader` emits `workspace=leader`, `route=/leader` |
+| Leader KPI page renders loading/empty/error/success states and triggers CSV/XLSX downloads | `apps/frontend/src/pages/LeaderWorkspacePage.test.tsx` | N/A | page renders snapshot overview/table, localized errors, and both export actions |
+| Login redirect routes leader to `/leader` | `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/auth/session.test.ts` | N/A | leader session resolves to `/leader` and bootstrap redirect follows the role |
+
+Acceptance rules for the implementation slice:
+- Do not add new backend tables, jobs, or reporting endpoints; reuse stored KPI snapshot read/export surfaces.
+- Keep leader workspace read-only; do not expose rebuild controls in the UI.
+- Minimum verification set:
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- --run`
+  - `./scripts/check-docs-structure.sh`
+
 ## Accountant Workspace Verification (`TASK-09-03`)
 
 Current implementation coverage includes at minimum:

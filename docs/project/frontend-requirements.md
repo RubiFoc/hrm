@@ -102,7 +102,8 @@
 - Post-login redirect rules:
   - `admin` -> `/admin`
   - `employee` -> `/employee`
-  - `hr`, `manager`, `leader`, `accountant` -> `/`
+  - `leader` -> `/leader`
+  - `hr`, `manager`, `accountant` -> `/`
   - unknown role -> `/access-denied?reason=forbidden`
 - `/login` behavior rules:
   - already-authenticated valid session -> redirect to role workspace;
@@ -122,8 +123,9 @@
 - Browser smoke must not be expanded to cover scoring; keep scoring verification on unit/integration level.
 
 ## TASK-11-10 Baseline
-- Do not add or restructure routes. Keep the current topology:
+- Keep the route topology stable and track changes in explicit task baselines. Current topology:
   - `/`
+  - `/leader`
   - `/employee`
   - `/candidate`
   - `/login`
@@ -135,9 +137,10 @@
   - `role`
   - `route`
 - Required route/workspace mapping:
-  - `/` -> `workspace=hr`, `route=/` for `admin`, `hr`, and `leader`
+  - `/` -> `workspace=hr`, `route=/` for `admin` and `hr`
   - `/` -> `workspace=manager`, `route=/` for `manager`
   - `/` -> `workspace=accountant`, `route=/` for `accountant`
+  - `/leader` -> `workspace=leader`, `route=/leader` for `leader` and `admin`
   - `/employee` -> `workspace=employee`, `route=/employee`
   - `/candidate` -> `workspace=candidate`, `route=/candidate`
   - `/login` -> `workspace=auth`, `route=/login`
@@ -216,11 +219,34 @@
   - `workspace=manager` for manager dashboard
 - Keep auth, CORS, public candidate transport, employee portal contracts, and onboarding task mutation routes unchanged in this slice.
 
+## TASK-09-02 Baseline
+- Add dedicated `/leader` route under a leader/admin guard.
+- Leader workspace goal: show stored monthly KPI snapshots and a minimal operational overview.
+- Read-only data sources:
+  - `GET /api/v1/reporting/kpi-snapshots?period_month=<YYYY-MM-01>`
+  - `GET /api/v1/reporting/kpi-snapshots/export?format=csv|xlsx&period_month=<YYYY-MM-01>`
+- Workspace UX requirements:
+  - localized title/subtitle;
+  - month selector (`period_month` filter);
+  - selected month resolves to the latest available stored snapshot by probing backwards from the requested month (bounded lookback, no new list endpoint) when the requested month has no snapshot rows;
+  - operational overview summary cards for the known KPI key set;
+  - read-only metrics table (metric name, value, generated at);
+  - `Export CSV` and `Export Excel` actions with binary download helper;
+  - localized loading, empty, and `401/403/422/generic` error states.
+- Navigation/role split:
+  - `leader` default workspace is `/leader` (and `/` redirects to `/leader`);
+  - `admin` keeps HR workspace on `/` and can open `/leader` for KPI review.
+- Emit canonical Sentry tags on `/leader` access:
+  - `workspace=leader`
+  - `route=/leader`
+- Scope restriction:
+  - do not expose rebuild controls (`POST /api/v1/reporting/kpi-snapshots/rebuild` remains admin-only).
+
 ## TASK-09-03 Baseline
 - Keep the existing route topology intact; do not add a new accountant-only path.
 - Use the existing `/` route for accountant users:
   - `accountant` resolves to a dedicated accountant workspace page;
-  - `hr`/`admin`/`leader` keep the HR workspace on `/`;
+  - `hr`/`admin` keep the HR workspace on `/`;
   - `manager` keeps the manager workspace on `/`.
 - Read accountant workspace data through dedicated read-only finance adapter endpoints:
   - `GET /api/v1/accounting/workspace`
