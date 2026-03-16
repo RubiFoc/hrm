@@ -11,8 +11,7 @@ from uuid import uuid4
 import pytest
 from httpx import ASGITransport, AsyncClient
 from openpyxl import load_workbook
-from sqlalchemy import create_engine
-from sqlalchemy import select
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from hrm_backend.audit.models.event import AuditEvent
@@ -90,11 +89,11 @@ async def api_client(configured_app) -> AsyncClient:
 def _load_audit_events(engine) -> list[AuditEvent]:
     """Load ordered audit events for export audit assertions."""
     with Session(engine) as session:
-        return list(
-            session.execute(select(AuditEvent).order_by(AuditEvent.occurred_at, AuditEvent.event_id))
-            .scalars()
-            .all()
+        statement = select(AuditEvent).order_by(
+            AuditEvent.occurred_at,
+            AuditEvent.event_id,
         )
+        return list(session.execute(statement).scalars().all())
 
 
 def _seed_kpi_sources(engine) -> None:
@@ -443,7 +442,11 @@ async def test_admin_can_export_kpi_snapshot_as_csv_and_is_audited(
     header = rows[0]
     metric_key_index = header.index("metric_key")
     metric_value_index = header.index("metric_value")
-    vacancy_row = next(row for row in rows[1:] if row[metric_key_index] == "vacancies_created_count")
+    vacancy_row = next(
+        row
+        for row in rows[1:]
+        if row[metric_key_index] == "vacancies_created_count"
+    )
     assert vacancy_row[metric_value_index] == "1"
 
     events = _load_audit_events(engine)

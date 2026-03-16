@@ -45,7 +45,12 @@ def render_kpi_snapshot_xlsx(snapshot: KpiSnapshotReadResponse) -> bytes:
     worksheet.append(list(KPI_SNAPSHOT_EXPORT_COLUMNS))
     period_month = snapshot.period_month.isoformat()
     for metric in snapshot.metrics:
-        worksheet.append(_row_values(period_month=period_month, metric=metric.model_dump(mode="json")))
+        worksheet.append(
+            _row_values(
+                period_month=period_month,
+                metric=metric.model_dump(mode="json"),
+            )
+        )
 
     payload = BytesIO()
     workbook.save(payload)
@@ -56,4 +61,3 @@ def render_kpi_snapshot_xlsx(snapshot: KpiSnapshotReadResponse) -> bytes:
 def _row_values(*, period_month: str, metric: dict[str, Any]) -> list[Any]:
     """Build ordered worksheet row values for one KPI metric entry."""
     return [period_month, metric["metric_key"], metric["metric_value"], metric["generated_at"]]
-
