@@ -1,8 +1,8 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-13
-- Updated by: coordinator + architect + backend-engineer + frontend-engineer
+- Date: 2026-03-16
+- Updated by: coordinator + backend-engineer
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -53,6 +53,7 @@
 | TASK-09-04 | done/closed | GitHub issue #97 closed; merged in `main` via PR #116 (`966f3a8`) with recipient-scoped `/api/v1/notifications*`, embedded manager/accountant notifications UI on `/`, fail-closed read/update scope, on-demand digests, regenerated OpenAPI/frontend types, and synced architecture/test docs |
 | TASK-10-01 | implemented/local-kpi-snapshot-slice | Monthly KPI snapshots with admin-only rebuild/read API, reporting package, migration, unit/integration tests, and updated OpenAPI/frontend types are implemented in repo |
 | TASK-10-03 | done/closed | Merged in `main` via PR #122 with admin-only `GET /api/v1/audit/events` query API, `audit:read` RBAC permission, unit/integration coverage, updated OpenAPI freeze, and refreshed frontend generated types |
+| TASK-10-04 | done/closed | GitHub issue #99 closed; merged in `main` via PR #124 (`7a5ca87`) with controlled audit evidence export (`/api/v1/audit/events/export`) and KPI snapshot export (`/api/v1/reporting/kpi-snapshots/export`) attachments plus updated docs/diagrams and regenerated OpenAPI/frontend types |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-12 Delivery Control Notes
@@ -92,6 +93,8 @@
 - `TASK-09-03` is now implemented as the additive accountant workspace follow-on slice: accountants use the existing `/` route for one read-only finance workspace, visibility stays limited to accountant-assigned onboarding tasks, and controlled CSV/XLSX exports reuse the same filtered row model without adding generic reporting infrastructure.
 - `TASK-09-03` post-merge closeout is complete: GitHub issue `#96` is closed, PR #114 (`c237296`) is merged in `main`, and this backlog snapshot is synchronized to the merged state.
 - `TASK-09-04` post-merge closeout is complete: GitHub issue `#97` is closed, PR #116 (`966f3a8`) is merged in `main`, and this backlog snapshot is synchronized to the merged state while keeping the notifications slice additive, fail-closed, and in-app only.
+- `TASK-10-04` is now implemented as a minimal export package: admin-only audit evidence export (`GET /api/v1/audit/events/export`) and leader/admin KPI snapshot export (`GET /api/v1/reporting/kpi-snapshots/export`) with business audit events written after content assembly to avoid self-inclusion.
+- `TASK-10-04` post-merge closeout is complete: GitHub issue `#99` is closed, PR #124 (`7a5ca87`) is merged in `main`, and this backlog snapshot is synchronized to the merged state.
 - The remaining follow-on work after the onboarding-dashboard and manager-workspace slices is limited to the other phase-2 role workspaces, notifications, reporting, and admin/ops backlog, not baseline scheduling, registration, feedback transport, or candidate-facing offer decisions.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
@@ -112,17 +115,19 @@
 - `TASK-09-04` is no longer active queue work; the implemented source of truth is the repo-backed recipient-scoped notification API on `/api/v1/notifications*` plus the embedded manager/accountant notifications block on the existing `/` route.
 - `TASK-10-01` is no longer active queue work; the implemented source of truth is the repo-backed monthly KPI snapshot foundation with admin-only rebuild and leader/admin read APIs.
 - `TASK-10-02` is no longer active queue work; the implemented scope is leader read exposure for stored monthly KPI snapshots (no live aggregation), while rebuild remains admin-only.
+- `TASK-10-04` is no longer active queue work; the implemented source of truth is the bounded export attachments on `GET /api/v1/audit/events/export` and `GET /api/v1/reporting/kpi-snapshots/export`.
 - The remaining candidate-domain follow-on work after `TASK-03-08` and `TASK-04-06` is limited to
   later ops/reporting slices, not baseline parsed-profile structure or scoring-quality tooling.
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `12` tasks.
+- Normalized open backlog count: `11` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `12`-task count.
+- Repo backlog state now excludes `TASK-10-04`, and GitHub issue `#99` is closed following PR #124 (`7a5ca87`).
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `11`-task count.
 - Current open backlog by delivery wave:
-  - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-10-04`, `TASK-13-03`, `TASK-13-04`
+  - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-13-03`, `TASK-13-04`
   - Wave 3 phase-2 workspaces: `TASK-09-02`, `TASK-11-12`
 
 | Order | Task ID | Why Now |
