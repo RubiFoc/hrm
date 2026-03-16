@@ -272,6 +272,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/automation/rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Rules
+         * @description List automation rules.
+         */
+        get: operations["list_rules_api_v1_automation_rules_get"];
+        put?: never;
+        /**
+         * Create Rule
+         * @description Create a new inactive automation rule.
+         */
+        post: operations["create_rule_api_v1_automation_rules_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/automation/rules/{rule_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Patch Rule
+         * @description Patch one automation rule (excluding activation).
+         */
+        patch: operations["patch_rule_api_v1_automation_rules__rule_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/automation/rules/{rule_id}/activation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set Rule Activation
+         * @description Activate or deactivate one automation rule.
+         */
+        post: operations["set_rule_activation_api_v1_automation_rules__rule_id__activation_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/candidates": {
         parameters: {
             query?: never;
@@ -1527,6 +1591,19 @@ export interface components {
             role?: ("admin" | "hr" | "manager" | "employee" | "leader" | "accountant") | null;
         };
         /**
+         * AndCondition
+         * @description Conjunction condition.
+         */
+        AndCondition: {
+            /** Conditions */
+            conditions: (components["schemas"]["EqCondition"] | components["schemas"]["NeqCondition"] | components["schemas"]["InCondition"] | components["schemas"]["ContainsCondition"] | components["schemas"]["ExistsCondition"] | components["schemas"]["AndCondition"] | components["schemas"]["OrCondition"] | components["schemas"]["NotCondition"])[];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            op: "and";
+        };
+        /**
          * AuditEventListItem
          * @description Serialized audit event item returned from query API.
          *
@@ -1586,6 +1663,108 @@ export interface components {
             offset: number;
             /** Total */
             total: number;
+        };
+        /**
+         * AutomationRuleActivationRequest
+         * @description Activation toggle payload for automation rules.
+         */
+        AutomationRuleActivationRequest: {
+            /** Is Active */
+            is_active: boolean;
+        };
+        /**
+         * AutomationRuleCreateRequest
+         * @description Create request payload for automation rules.
+         */
+        AutomationRuleCreateRequest: {
+            /** Actions */
+            actions: components["schemas"]["NotificationEmitAction"][];
+            /** Conditions */
+            conditions?: (components["schemas"]["EqCondition"] | components["schemas"]["NeqCondition"] | components["schemas"]["InCondition"] | components["schemas"]["ContainsCondition"] | components["schemas"]["ExistsCondition"] | components["schemas"]["AndCondition"] | components["schemas"]["OrCondition"] | components["schemas"]["NotCondition"]) | null;
+            /** Name */
+            name: string;
+            /**
+             * Priority
+             * @default 0
+             */
+            priority: number;
+            /**
+             * Trigger
+             * @enum {string}
+             */
+            trigger: "pipeline.transition_appended" | "offer.status_changed" | "onboarding.task_assigned";
+        };
+        /**
+         * AutomationRuleListResponse
+         * @description List response for automation rules.
+         */
+        AutomationRuleListResponse: {
+            /** Items */
+            items: components["schemas"]["AutomationRuleResponse"][];
+        };
+        /**
+         * AutomationRuleResponse
+         * @description Public API representation of an automation rule.
+         */
+        AutomationRuleResponse: {
+            /** Actions */
+            actions: {
+                [key: string]: unknown;
+            }[];
+            /** Conditions */
+            conditions: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Created By Staff Id
+             * Format: uuid
+             */
+            created_by_staff_id: string;
+            /** Is Active */
+            is_active: boolean;
+            /** Name */
+            name: string;
+            /** Priority */
+            priority: number;
+            /**
+             * Rule Id
+             * Format: uuid
+             */
+            rule_id: string;
+            /**
+             * Trigger
+             * @enum {string}
+             */
+            trigger: "pipeline.transition_appended" | "offer.status_changed" | "onboarding.task_assigned";
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Updated By Staff Id
+             * Format: uuid
+             */
+            updated_by_staff_id: string;
+        };
+        /**
+         * AutomationRuleUpdateRequest
+         * @description Patch request payload for automation rules (excluding activation).
+         */
+        AutomationRuleUpdateRequest: {
+            /** Actions */
+            actions?: components["schemas"]["NotificationEmitAction"][] | null;
+            /** Conditions */
+            conditions?: (components["schemas"]["EqCondition"] | components["schemas"]["NeqCondition"] | components["schemas"]["InCondition"] | components["schemas"]["ContainsCondition"] | components["schemas"]["ExistsCondition"] | components["schemas"]["AndCondition"] | components["schemas"]["OrCondition"] | components["schemas"]["NotCondition"]) | null;
+            /** Name */
+            name?: string | null;
+            /** Priority */
+            priority?: number | null;
         };
         /** Body_apply_to_vacancy_public_api_v1_vacancies__vacancy_id__applications_post */
         Body_apply_to_vacancy_public_api_v1_vacancies__vacancy_id__applications_post: {
@@ -1909,6 +2088,21 @@ export interface components {
             phone?: string | null;
         };
         /**
+         * ContainsCondition
+         * @description Substring condition for string fields.
+         */
+        ContainsCondition: {
+            /** Field */
+            field: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            op: "contains";
+            /** Value */
+            value: string;
+        };
+        /**
          * EmployeeOnboardingPortalResponse
          * @description Employee-facing onboarding portal payload scoped to the current user.
          */
@@ -2127,6 +2321,34 @@ export interface components {
             used_at: string | null;
         };
         /**
+         * EqCondition
+         * @description Field equality condition.
+         */
+        EqCondition: {
+            /** Field */
+            field: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            op: "eq";
+            /** Value */
+            value: string | number | boolean | null;
+        };
+        /**
+         * ExistsCondition
+         * @description Existence condition (field present and not null).
+         */
+        ExistsCondition: {
+            /** Field */
+            field: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            op: "exists";
+        };
+        /**
          * HRInterviewListResponse
          * @description List payload for HR-facing interview reads.
          */
@@ -2221,6 +2443,21 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * InCondition
+         * @description Membership condition for primitive lists.
+         */
+        InCondition: {
+            /** Field */
+            field: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            op: "in";
+            /** Value */
+            value: (string | number | boolean | null)[];
         };
         /**
          * InterviewCancelRequest
@@ -2725,6 +2962,34 @@ export interface components {
             subject_id: string;
         };
         /**
+         * NeqCondition
+         * @description Field inequality condition.
+         */
+        NeqCondition: {
+            /** Field */
+            field: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            op: "neq";
+            /** Value */
+            value: string | number | boolean | null;
+        };
+        /**
+         * NotCondition
+         * @description Negation condition.
+         */
+        NotCondition: {
+            /** Condition */
+            condition: components["schemas"]["EqCondition"] | components["schemas"]["NeqCondition"] | components["schemas"]["InCondition"] | components["schemas"]["ContainsCondition"] | components["schemas"]["ExistsCondition"] | components["schemas"]["AndCondition"] | components["schemas"]["OrCondition"] | components["schemas"]["NotCondition"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            op: "not";
+        };
+        /**
          * NotificationDigestResponse
          * @description On-demand digest payload for the current authenticated recipient.
          */
@@ -2753,6 +3018,27 @@ export interface components {
             unread_notification_count: number;
         };
         /**
+         * NotificationEmitAction
+         * @description Plan an in-app notification emission (no execution in TASK-08-01).
+         */
+        NotificationEmitAction: {
+            /**
+             * Action
+             * @constant
+             */
+            action: "notification.emit";
+            /** Body Template */
+            body_template: string;
+            /** Notification Kind */
+            notification_kind: string;
+            /** Payload Template */
+            payload_template?: {
+                [key: string]: unknown;
+            };
+            /** Title Template */
+            title_template: string;
+        };
+        /**
          * NotificationListResponse
          * @description Paginated notification list scoped to the current authenticated recipient.
          */
@@ -2773,14 +3059,20 @@ export interface components {
          * @description Structured additive notification payload exposed to frontend workspaces.
          */
         NotificationPayload: {
+            /** Candidate Id Short */
+            candidate_id_short?: string | null;
             /** Due At */
             due_at?: string | null;
             /** Employee Full Name */
             employee_full_name?: string | null;
             /** Employee Id */
             employee_id?: string | null;
+            /** Offer Status */
+            offer_status?: string | null;
             /** Onboarding Id */
             onboarding_id?: string | null;
+            /** Stage */
+            stage?: string | null;
             /** Task Id */
             task_id?: string | null;
             /** Task Title */
@@ -3282,6 +3574,19 @@ export interface components {
             due_at?: string | null;
             /** Status */
             status?: ("pending" | "in_progress" | "completed") | null;
+        };
+        /**
+         * OrCondition
+         * @description Disjunction condition.
+         */
+        OrCondition: {
+            /** Conditions */
+            conditions: (components["schemas"]["EqCondition"] | components["schemas"]["NeqCondition"] | components["schemas"]["InCondition"] | components["schemas"]["ContainsCondition"] | components["schemas"]["ExistsCondition"] | components["schemas"]["AndCondition"] | components["schemas"]["OrCondition"] | components["schemas"]["NotCondition"])[];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            op: "or";
         };
         /**
          * PipelineTransitionCreateRequest
@@ -4144,6 +4449,141 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_rules_api_v1_automation_rules_get: {
+        parameters: {
+            query?: {
+                trigger?: string | null;
+                is_active?: boolean | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRuleListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_rule_api_v1_automation_rules_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutomationRuleCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRuleResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_rule_api_v1_automation_rules__rule_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutomationRuleUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRuleResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_rule_activation_api_v1_automation_rules__rule_id__activation_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutomationRuleActivationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRuleResponse"];
                 };
             };
             /** @description Validation Error */

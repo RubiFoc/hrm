@@ -64,6 +64,10 @@ Permission = Literal[
     "accounting:read",
     "kpi_snapshot:read",
     "kpi_snapshot:rebuild",
+    "automation_rule:create",
+    "automation_rule:list",
+    "automation_rule:update",
+    "automation_rule:activate",
 ]
 
 ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
@@ -107,6 +111,10 @@ ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
         "accounting:read",
         "kpi_snapshot:read",
         "kpi_snapshot:rebuild",
+        "automation_rule:create",
+        "automation_rule:list",
+        "automation_rule:update",
+        "automation_rule:activate",
     },
     "hr": {
         "admin:employee_key:create",
@@ -141,6 +149,10 @@ ROLE_PERMISSION_MATRIX: Final[dict[Role, set[Permission]]] = {
         "candidate_profile:read_all",
         "interview:manage",
         "analytics:read",
+        "automation_rule:create",
+        "automation_rule:list",
+        "automation_rule:update",
+        "automation_rule:activate",
     },
     "manager": {
         "manager_workspace:read",

@@ -8,6 +8,12 @@ from fastapi import HTTPException, Request, status
 
 from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
+from hrm_backend.automation.schemas.events import (
+    OfferStatusChangedEvent,
+    OfferStatusChangedPayload,
+)
+from hrm_backend.automation.services.executor import AutomationActionExecutor
+from hrm_backend.automation.utils.identifiers import candidate_id_to_short
 from hrm_backend.candidates.dao.candidate_profile_dao import CandidateProfileDAO
 from hrm_backend.vacancies.dao.offer_dao import OfferDAO
 from hrm_backend.vacancies.dao.pipeline_transition_dao import PipelineTransitionDAO
@@ -37,6 +43,7 @@ class OfferService:
         candidate_profile_dao: CandidateProfileDAO,
         transition_dao: PipelineTransitionDAO,
         offer_dao: OfferDAO,
+        automation_executor: AutomationActionExecutor,
         audit_service: AuditService,
     ) -> None:
         """Initialize offer service dependencies."""
@@ -44,6 +51,7 @@ class OfferService:
         self._candidate_profile_dao = candidate_profile_dao
         self._transition_dao = transition_dao
         self._offer_dao = offer_dao
+        self._automation_executor = automation_executor
         self._audit_service = audit_service
 
     def get_offer(
@@ -174,6 +182,7 @@ class OfferService:
             request=request,
         )
         entity = self._require_offer_or_404(vacancy_id=vacancy_key, candidate_id=candidate_key)
+        previous_status = entity.status
         conflict_reason = resolve_offer_action_conflict(status=entity.status, action="send")
         if conflict_reason is not None:
             self._audit_failure(
@@ -198,6 +207,13 @@ class OfferService:
             )
         actor_sub, _ = actor_from_auth_context(auth_context)
         entity = self._offer_dao.mark_sent(entity=entity, sent_by_staff_id=actor_sub)
+        self._evaluate_automation_offer_status_changed(
+            vacancy_id=vacancy_key,
+            candidate_id=candidate_key,
+            previous_status=previous_status,
+            entity=entity,
+            auth_context=auth_context,
+        )
         self._audit_success(
             action="offer:send",
             auth_context=auth_context,
@@ -269,7 +285,10 @@ class OfferService:
             request=request,
         )
         entity = self._require_offer_or_404(vacancy_id=vacancy_key, candidate_id=candidate_key)
-        conflict_reason = resolve_offer_action_conflict(status=entity.status, action=action)  # type: ignore[arg-type]
+        conflict_reason = resolve_offer_action_conflict(
+            status=entity.status,
+            action=action,  # type: ignore[arg-type]
+        )
         if conflict_reason is not None:
             self._audit_failure(
                 auth_context=auth_context,
@@ -280,11 +299,19 @@ class OfferService:
             )
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=conflict_reason)
         actor_sub, _ = actor_from_auth_context(auth_context)
+        previous_status = entity.status
         entity = self._offer_dao.mark_decision(
             entity=entity,
             status=target_status,
             decision_note=payload.note,
             decision_recorded_by_staff_id=actor_sub,
+        )
+        self._evaluate_automation_offer_status_changed(
+            vacancy_id=vacancy_key,
+            candidate_id=candidate_key,
+            previous_status=previous_status,
+            entity=entity,
+            auth_context=auth_context,
         )
         self._audit_success(
             action=f"offer:{target_status}",
@@ -293,6 +320,55 @@ class OfferService:
             resource_id=entity.offer_id,
         )
         return _to_offer_response(entity)
+
+    def _evaluate_automation_offer_status_changed(
+        self,
+        *,
+        vacancy_id: str,
+        candidate_id: str,
+        previous_status: str | None,
+        entity: Offer,
+        auth_context: AuthContext,
+    ) -> None:
+        """Evaluate automation rules for one persisted offer status transition (fail-closed)."""
+        try:
+            vacancy = self._vacancy_dao.get_by_id(vacancy_id)
+            if vacancy is None:
+                return
+            actor_sub, actor_role = actor_from_auth_context(auth_context)
+            if entity.decision_at is not None:
+                event_time = entity.decision_at
+            elif entity.sent_at is not None:
+                event_time = entity.sent_at
+            else:
+                event_time = entity.updated_at
+
+            candidate_uuid = UUID(candidate_id)
+            event = OfferStatusChangedEvent(
+                event_type="offer.status_changed",
+                event_time=event_time,
+                trigger_event_id=UUID(entity.offer_id),
+                payload=OfferStatusChangedPayload(
+                    offer_id=UUID(entity.offer_id),
+                    vacancy_id=UUID(vacancy_id),
+                    vacancy_title=vacancy.title,
+                    candidate_id=candidate_uuid,
+                    candidate_id_short=candidate_id_to_short(candidate_uuid),
+                    previous_status=previous_status,
+                    status=entity.status,
+                    offer_status=entity.status,
+                    hiring_manager_staff_id=(
+                        None
+                        if vacancy.hiring_manager_staff_id is None
+                        else UUID(vacancy.hiring_manager_staff_id)
+                    ),
+                    changed_by_staff_id=actor_sub,
+                    changed_by_role=actor_role,
+                ),
+            )
+            self._automation_executor.handle_event(event=event)
+        except Exception:
+            return
 
     def _ensure_context(self, *, vacancy_id: UUID, candidate_id: UUID) -> tuple[str, str]:
         """Validate vacancy-candidate pair exists before reading or mutating offer data."""

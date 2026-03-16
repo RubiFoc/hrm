@@ -491,6 +491,69 @@
         "title": "AdminStaffUpdateRequest",
         "type": "object"
       },
+      "AndCondition": {
+        "additionalProperties": false,
+        "description": "Conjunction condition.",
+        "properties": {
+          "conditions": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "and": "#/components/schemas/AndCondition",
+                  "contains": "#/components/schemas/ContainsCondition",
+                  "eq": "#/components/schemas/EqCondition",
+                  "exists": "#/components/schemas/ExistsCondition",
+                  "in": "#/components/schemas/InCondition",
+                  "neq": "#/components/schemas/NeqCondition",
+                  "not": "#/components/schemas/NotCondition",
+                  "or": "#/components/schemas/OrCondition"
+                },
+                "propertyName": "op"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EqCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/NeqCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/InCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/ContainsCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/ExistsCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/AndCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/OrCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/NotCondition"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Conditions",
+            "type": "array"
+          },
+          "op": {
+            "const": "and",
+            "title": "Op",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "conditions"
+        ],
+        "title": "AndCondition",
+        "type": "object"
+      },
       "AuditEventListItem": {
         "description": "Serialized audit event item returned from query API.\n\nThis schema mirrors the persisted `audit_events` payload to keep the audit-read path\na faithful, append-only evidence surface.",
         "properties": {
@@ -664,6 +727,312 @@
           "offset"
         ],
         "title": "AuditEventListResponse",
+        "type": "object"
+      },
+      "AutomationRuleActivationRequest": {
+        "additionalProperties": false,
+        "description": "Activation toggle payload for automation rules.",
+        "properties": {
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_active"
+        ],
+        "title": "AutomationRuleActivationRequest",
+        "type": "object"
+      },
+      "AutomationRuleCreateRequest": {
+        "additionalProperties": false,
+        "description": "Create request payload for automation rules.",
+        "properties": {
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationEmitAction"
+            },
+            "minItems": 1,
+            "title": "Actions",
+            "type": "array"
+          },
+          "conditions": {
+            "anyOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "and": "#/components/schemas/AndCondition",
+                    "contains": "#/components/schemas/ContainsCondition",
+                    "eq": "#/components/schemas/EqCondition",
+                    "exists": "#/components/schemas/ExistsCondition",
+                    "in": "#/components/schemas/InCondition",
+                    "neq": "#/components/schemas/NeqCondition",
+                    "not": "#/components/schemas/NotCondition",
+                    "or": "#/components/schemas/OrCondition"
+                  },
+                  "propertyName": "op"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/EqCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/NeqCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/InCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ContainsCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ExistsCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AndCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/OrCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/NotCondition"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditions"
+          },
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "priority": {
+            "default": 0,
+            "title": "Priority",
+            "type": "integer"
+          },
+          "trigger": {
+            "enum": [
+              "pipeline.transition_appended",
+              "offer.status_changed",
+              "onboarding.task_assigned"
+            ],
+            "title": "Trigger",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "trigger",
+          "actions"
+        ],
+        "title": "AutomationRuleCreateRequest",
+        "type": "object"
+      },
+      "AutomationRuleListResponse": {
+        "additionalProperties": false,
+        "description": "List response for automation rules.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AutomationRuleResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "AutomationRuleListResponse",
+        "type": "object"
+      },
+      "AutomationRuleResponse": {
+        "additionalProperties": false,
+        "description": "Public API representation of an automation rule.",
+        "properties": {
+          "actions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Actions",
+            "type": "array"
+          },
+          "conditions": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditions"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_staff_id": {
+            "format": "uuid",
+            "title": "Created By Staff Id",
+            "type": "string"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "priority": {
+            "title": "Priority",
+            "type": "integer"
+          },
+          "rule_id": {
+            "format": "uuid",
+            "title": "Rule Id",
+            "type": "string"
+          },
+          "trigger": {
+            "enum": [
+              "pipeline.transition_appended",
+              "offer.status_changed",
+              "onboarding.task_assigned"
+            ],
+            "title": "Trigger",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by_staff_id": {
+            "format": "uuid",
+            "title": "Updated By Staff Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule_id",
+          "name",
+          "trigger",
+          "conditions",
+          "actions",
+          "priority",
+          "is_active",
+          "created_by_staff_id",
+          "updated_by_staff_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AutomationRuleResponse",
+        "type": "object"
+      },
+      "AutomationRuleUpdateRequest": {
+        "additionalProperties": false,
+        "description": "Patch request payload for automation rules (excluding activation).",
+        "properties": {
+          "actions": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/NotificationEmitAction"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actions"
+          },
+          "conditions": {
+            "anyOf": [
+              {
+                "discriminator": {
+                  "mapping": {
+                    "and": "#/components/schemas/AndCondition",
+                    "contains": "#/components/schemas/ContainsCondition",
+                    "eq": "#/components/schemas/EqCondition",
+                    "exists": "#/components/schemas/ExistsCondition",
+                    "in": "#/components/schemas/InCondition",
+                    "neq": "#/components/schemas/NeqCondition",
+                    "not": "#/components/schemas/NotCondition",
+                    "or": "#/components/schemas/OrCondition"
+                  },
+                  "propertyName": "op"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/EqCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/NeqCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/InCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ContainsCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/ExistsCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/AndCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/OrCondition"
+                  },
+                  {
+                    "$ref": "#/components/schemas/NotCondition"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conditions"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          }
+        },
+        "title": "AutomationRuleUpdateRequest",
         "type": "object"
       },
       "Body_apply_to_vacancy_public_api_v1_vacancies__vacancy_id__applications_post": {
@@ -1493,6 +1862,36 @@
         "title": "CandidateUpdateRequest",
         "type": "object"
       },
+      "ContainsCondition": {
+        "additionalProperties": false,
+        "description": "Substring condition for string fields.",
+        "properties": {
+          "field": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Field",
+            "type": "string"
+          },
+          "op": {
+            "const": "contains",
+            "title": "Op",
+            "type": "string"
+          },
+          "value": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "field",
+          "value"
+        ],
+        "title": "ContainsCondition",
+        "type": "object"
+      },
       "EmployeeOnboardingPortalResponse": {
         "description": "Employee-facing onboarding portal payload scoped to the current user.",
         "properties": {
@@ -2014,6 +2413,73 @@
         "title": "EmployeeRegistrationKeyResponse",
         "type": "object"
       },
+      "EqCondition": {
+        "additionalProperties": false,
+        "description": "Field equality condition.",
+        "properties": {
+          "field": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Field",
+            "type": "string"
+          },
+          "op": {
+            "const": "eq",
+            "title": "Op",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "op",
+          "field",
+          "value"
+        ],
+        "title": "EqCondition",
+        "type": "object"
+      },
+      "ExistsCondition": {
+        "additionalProperties": false,
+        "description": "Existence condition (field present and not null).",
+        "properties": {
+          "field": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Field",
+            "type": "string"
+          },
+          "op": {
+            "const": "exists",
+            "title": "Op",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "field"
+        ],
+        "title": "ExistsCondition",
+        "type": "object"
+      },
       "HRInterviewListResponse": {
         "description": "List payload for HR-facing interview reads.",
         "properties": {
@@ -2259,6 +2725,54 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "InCondition": {
+        "additionalProperties": false,
+        "description": "Membership condition for primitive lists.",
+        "properties": {
+          "field": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Field",
+            "type": "string"
+          },
+          "op": {
+            "const": "in",
+            "title": "Op",
+            "type": "string"
+          },
+          "value": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Value",
+            "type": "array"
+          }
+        },
+        "required": [
+          "op",
+          "field",
+          "value"
+        ],
+        "title": "InCondition",
         "type": "object"
       },
       "InterviewCancelRequest": {
@@ -3476,6 +3990,109 @@
         "title": "MeResponse",
         "type": "object"
       },
+      "NeqCondition": {
+        "additionalProperties": false,
+        "description": "Field inequality condition.",
+        "properties": {
+          "field": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Field",
+            "type": "string"
+          },
+          "op": {
+            "const": "neq",
+            "title": "Op",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "op",
+          "field",
+          "value"
+        ],
+        "title": "NeqCondition",
+        "type": "object"
+      },
+      "NotCondition": {
+        "additionalProperties": false,
+        "description": "Negation condition.",
+        "properties": {
+          "condition": {
+            "discriminator": {
+              "mapping": {
+                "and": "#/components/schemas/AndCondition",
+                "contains": "#/components/schemas/ContainsCondition",
+                "eq": "#/components/schemas/EqCondition",
+                "exists": "#/components/schemas/ExistsCondition",
+                "in": "#/components/schemas/InCondition",
+                "neq": "#/components/schemas/NeqCondition",
+                "not": "#/components/schemas/NotCondition",
+                "or": "#/components/schemas/OrCondition"
+              },
+              "propertyName": "op"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EqCondition"
+              },
+              {
+                "$ref": "#/components/schemas/NeqCondition"
+              },
+              {
+                "$ref": "#/components/schemas/InCondition"
+              },
+              {
+                "$ref": "#/components/schemas/ContainsCondition"
+              },
+              {
+                "$ref": "#/components/schemas/ExistsCondition"
+              },
+              {
+                "$ref": "#/components/schemas/AndCondition"
+              },
+              {
+                "$ref": "#/components/schemas/OrCondition"
+              },
+              {
+                "$ref": "#/components/schemas/NotCondition"
+              }
+            ],
+            "title": "Condition"
+          },
+          "op": {
+            "const": "not",
+            "title": "Op",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "condition"
+        ],
+        "title": "NotCondition",
+        "type": "object"
+      },
       "NotificationDigestResponse": {
         "description": "On-demand digest payload for the current authenticated recipient.",
         "properties": {
@@ -3536,6 +4153,47 @@
         "title": "NotificationDigestSummaryResponse",
         "type": "object"
       },
+      "NotificationEmitAction": {
+        "additionalProperties": false,
+        "description": "Plan an in-app notification emission (no execution in TASK-08-01).",
+        "properties": {
+          "action": {
+            "const": "notification.emit",
+            "title": "Action",
+            "type": "string"
+          },
+          "body_template": {
+            "minLength": 1,
+            "title": "Body Template",
+            "type": "string"
+          },
+          "notification_kind": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Notification Kind",
+            "type": "string"
+          },
+          "payload_template": {
+            "additionalProperties": true,
+            "title": "Payload Template",
+            "type": "object"
+          },
+          "title_template": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Title Template",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "notification_kind",
+          "title_template",
+          "body_template"
+        ],
+        "title": "NotificationEmitAction",
+        "type": "object"
+      },
       "NotificationListResponse": {
         "description": "Paginated notification list scoped to the current authenticated recipient.",
         "properties": {
@@ -3581,6 +4239,18 @@
         "additionalProperties": false,
         "description": "Structured additive notification payload exposed to frontend workspaces.",
         "properties": {
+          "candidate_id_short": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id Short"
+          },
           "due_at": {
             "anyOf": [
               {
@@ -3617,6 +4287,18 @@
             ],
             "title": "Employee Id"
           },
+          "offer_status": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offer Status"
+          },
           "onboarding_id": {
             "anyOf": [
               {
@@ -3628,6 +4310,18 @@
               }
             ],
             "title": "Onboarding Id"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
           },
           "task_id": {
             "anyOf": [
@@ -4945,6 +5639,69 @@
           }
         },
         "title": "OnboardingTaskUpdateRequest",
+        "type": "object"
+      },
+      "OrCondition": {
+        "additionalProperties": false,
+        "description": "Disjunction condition.",
+        "properties": {
+          "conditions": {
+            "items": {
+              "discriminator": {
+                "mapping": {
+                  "and": "#/components/schemas/AndCondition",
+                  "contains": "#/components/schemas/ContainsCondition",
+                  "eq": "#/components/schemas/EqCondition",
+                  "exists": "#/components/schemas/ExistsCondition",
+                  "in": "#/components/schemas/InCondition",
+                  "neq": "#/components/schemas/NeqCondition",
+                  "not": "#/components/schemas/NotCondition",
+                  "or": "#/components/schemas/OrCondition"
+                },
+                "propertyName": "op"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EqCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/NeqCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/InCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/ContainsCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/ExistsCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/AndCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/OrCondition"
+                },
+                {
+                  "$ref": "#/components/schemas/NotCondition"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Conditions",
+            "type": "array"
+          },
+          "op": {
+            "const": "or",
+            "title": "Op",
+            "type": "string"
+          }
+        },
+        "required": [
+          "op",
+          "conditions"
+        ],
+        "title": "OrCondition",
         "type": "object"
       },
       "PipelineTransitionCreateRequest": {
@@ -6883,6 +7640,241 @@
         "summary": "Register",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/api/v1/automation/rules": {
+      "get": {
+        "description": "List automation rules.",
+        "operationId": "list_rules_api_v1_automation_rules_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "trigger",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 128,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Trigger"
+            }
+          },
+          {
+            "in": "query",
+            "name": "is_active",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Is Active"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationRuleListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Rules",
+        "tags": [
+          "automation"
+        ]
+      },
+      "post": {
+        "description": "Create a new inactive automation rule.",
+        "operationId": "create_rule_api_v1_automation_rules_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationRuleCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationRuleResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Rule",
+        "tags": [
+          "automation"
+        ]
+      }
+    },
+    "/api/v1/automation/rules/{rule_id}": {
+      "patch": {
+        "description": "Patch one automation rule (excluding activation).",
+        "operationId": "patch_rule_api_v1_automation_rules__rule_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Rule Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationRuleUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationRuleResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patch Rule",
+        "tags": [
+          "automation"
+        ]
+      }
+    },
+    "/api/v1/automation/rules/{rule_id}/activation": {
+      "post": {
+        "description": "Activate or deactivate one automation rule.",
+        "operationId": "set_rule_activation_api_v1_automation_rules__rule_id__activation_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "rule_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Rule Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationRuleActivationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationRuleResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Set Rule Activation",
+        "tags": [
+          "automation"
         ]
       }
     },

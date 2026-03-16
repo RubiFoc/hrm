@@ -63,6 +63,15 @@ apps/backend/tests/
 - Frontend typed contract generation must run from frozen spec:
   - `npm --prefix apps/frontend run api:types:generate`
 
+## Automation Rule Engine Verification (TASK-08-01/08-02)
+- Evaluator + executor unit coverage:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/automation`
+- Rule CRUD + RBAC integration coverage:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/automation/test_automation_rule_api.py`
+- When automation endpoints or notification payload fields change, keep OpenAPI freeze and generated frontend types in sync:
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:check`
+
 ## Change-Based Verification Matrix
 | Change Type | Required Checks |
 | --- | --- |

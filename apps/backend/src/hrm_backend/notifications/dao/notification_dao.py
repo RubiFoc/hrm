@@ -137,6 +137,14 @@ class NotificationDAO:
         self._session.flush()
         return entities
 
+    def rollback(self) -> None:
+        """Rollback the current session transaction.
+
+        This helper exists for best-effort emitters that must restore session state after
+        a failed commit/flush while keeping the surrounding API path resilient.
+        """
+        self._session.rollback()
+
     def mark_as_read(
         self,
         *,

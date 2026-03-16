@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from json import JSONDecodeError, loads
 from uuid import UUID, uuid4
 
@@ -13,6 +14,12 @@ from hrm_backend.audit.services.audit_service import (
     get_client_ip,
     get_request_id,
 )
+from hrm_backend.automation.schemas.events import (
+    PipelineTransitionAppendedEvent,
+    PipelineTransitionAppendedPayload,
+)
+from hrm_backend.automation.services.executor import AutomationActionExecutor
+from hrm_backend.automation.utils.identifiers import candidate_id_to_short
 from hrm_backend.candidates.infra.celery.dispatch import enqueue_cv_parsing
 from hrm_backend.candidates.infra.minio import CandidateStorage
 from hrm_backend.candidates.infra.postgres import (
@@ -57,6 +64,7 @@ class VacancyApplicationService:
         audit_service: AuditService,
         rate_limiter: PublicApplyRateLimiter,
         policy_service: PublicApplyPolicyService,
+        automation_executor: AutomationActionExecutor,
     ) -> None:
         """Initialize service dependencies."""
         self._settings = settings
@@ -69,6 +77,7 @@ class VacancyApplicationService:
         self._audit_service = audit_service
         self._rate_limiter = rate_limiter
         self._policy_service = policy_service
+        self._automation_executor = automation_executor
 
     async def apply_public(
         self,
@@ -194,6 +203,18 @@ class VacancyApplicationService:
                 changed_by_sub="public",
                 changed_by_role="public",
             )
+            self._evaluate_automation_pipeline_transition(
+                transition_id=UUID(transition.transition_id),
+                transitioned_at=transition.transitioned_at,
+                vacancy_id=vacancy_id,
+                vacancy_title=vacancy.title,
+                hiring_manager_staff_id=vacancy.hiring_manager_staff_id,
+                candidate_id=UUID(candidate.candidate_id),
+                from_stage=None,
+                to_stage="applied",
+                changed_by_staff_id=transition.changed_by_sub,
+                changed_by_role=transition.changed_by_role,
+            )
 
             self._audit_service.record_api_event(
                 action="vacancy:apply_public",
@@ -252,6 +273,48 @@ class VacancyApplicationService:
                 ),
             )
             raise
+
+    def _evaluate_automation_pipeline_transition(
+        self,
+        *,
+        transition_id: UUID,
+        transitioned_at: datetime,
+        vacancy_id: UUID,
+        vacancy_title: str,
+        hiring_manager_staff_id: str | None,
+        candidate_id: UUID,
+        from_stage: str | None,
+        to_stage: str,
+        changed_by_staff_id: str,
+        changed_by_role: str,
+    ) -> None:
+        """Evaluate automation rules for one persisted pipeline transition (fail-closed)."""
+        try:
+            event = PipelineTransitionAppendedEvent(
+                event_type="pipeline.transition_appended",
+                event_time=transitioned_at,
+                trigger_event_id=transition_id,
+                payload=PipelineTransitionAppendedPayload(
+                    transition_id=transition_id,
+                    vacancy_id=vacancy_id,
+                    vacancy_title=vacancy_title,
+                    candidate_id=candidate_id,
+                    candidate_id_short=candidate_id_to_short(candidate_id),
+                    from_stage=from_stage,
+                    to_stage=to_stage,
+                    stage=to_stage,
+                    hiring_manager_staff_id=(
+                        None
+                        if hiring_manager_staff_id is None
+                        else UUID(hiring_manager_staff_id)
+                    ),
+                    changed_by_staff_id=changed_by_staff_id,
+                    changed_by_role=changed_by_role,
+                ),
+            )
+            self._automation_executor.handle_event(event=event)
+        except Exception:
+            return
 
     def _upsert_candidate_profile(
         self,

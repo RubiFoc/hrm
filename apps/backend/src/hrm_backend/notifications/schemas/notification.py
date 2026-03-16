@@ -20,6 +20,9 @@ class NotificationPayload(BaseModel):
     task_id: UUID | None = None
     employee_id: UUID | None = None
     vacancy_title: str | None = Field(default=None, max_length=256)
+    stage: str | None = Field(default=None, max_length=32)
+    offer_status: str | None = Field(default=None, max_length=32)
+    candidate_id_short: str | None = Field(default=None, max_length=32)
     task_title: str | None = Field(default=None, max_length=256)
     employee_full_name: str | None = Field(default=None, max_length=256)
     due_at: datetime | None = None

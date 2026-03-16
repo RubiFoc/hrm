@@ -13,6 +13,9 @@ from hrm_backend.audit.services.audit_service import AuditService
 from hrm_backend.auth.dependencies.auth import get_staff_account_dao
 from hrm_backend.auth.infra.postgres.staff_account_dao import StaffAccountDAO
 from hrm_backend.auth.infra.redis import get_redis_client
+from hrm_backend.automation.dao.automation_rule_dao import AutomationRuleDAO
+from hrm_backend.automation.services.evaluator import AutomationEvaluator
+from hrm_backend.automation.services.executor import AutomationActionExecutor
 from hrm_backend.candidates.dependencies.candidates import get_candidate_storage
 from hrm_backend.candidates.infra.minio import CandidateStorage
 from hrm_backend.candidates.infra.postgres import (
@@ -24,6 +27,7 @@ from hrm_backend.core.db.session import get_db_session
 from hrm_backend.employee.dependencies.employee import get_hire_conversion_service
 from hrm_backend.interviews.dao.feedback_dao import InterviewFeedbackDAO
 from hrm_backend.interviews.dao.interview_dao import InterviewDAO
+from hrm_backend.notifications.dao.notification_dao import NotificationDAO
 from hrm_backend.notifications.dependencies.notifications import get_notification_service
 from hrm_backend.notifications.services.notification_service import NotificationService
 from hrm_backend.settings import AppSettings, get_settings
@@ -64,6 +68,14 @@ def get_vacancy_service(
         VacancyService: Vacancy domain service.
     """
     hire_conversion_service = get_hire_conversion_service(session=session)
+    automation_evaluator = AutomationEvaluator(
+        rule_dao=AutomationRuleDAO(session=session),
+        staff_account_dao=staff_account_dao,
+    )
+    automation_executor = AutomationActionExecutor(
+        evaluator=automation_evaluator,
+        notification_dao=NotificationDAO(session=session),
+    )
     return VacancyService(
         session=session,
         vacancy_dao=VacancyDAO(session=session),
@@ -75,6 +87,7 @@ def get_vacancy_service(
         hire_conversion_service=hire_conversion_service,
         staff_account_dao=staff_account_dao,
         notification_service=notification_service,
+        automation_executor=automation_executor,
         audit_service=audit_service,
     )
 
@@ -98,13 +111,23 @@ def get_manager_workspace_service(
 def get_offer_service(
     session: SessionDependency,
     audit_service: AuditDependency,
+    staff_account_dao: StaffAccountDAODependency,
 ) -> OfferService:
     """Build offer service dependency."""
+    automation_evaluator = AutomationEvaluator(
+        rule_dao=AutomationRuleDAO(session=session),
+        staff_account_dao=staff_account_dao,
+    )
+    automation_executor = AutomationActionExecutor(
+        evaluator=automation_evaluator,
+        notification_dao=NotificationDAO(session=session),
+    )
     return OfferService(
         vacancy_dao=VacancyDAO(session=session),
         candidate_profile_dao=CandidateProfileDAO(session=session),
         transition_dao=PipelineTransitionDAO(session=session),
         offer_dao=OfferDAO(session=session),
+        automation_executor=automation_executor,
         audit_service=audit_service,
     )
 
@@ -148,10 +171,19 @@ def get_vacancy_application_service(
     session: SessionDependency,
     storage: CandidateStorageDependency,
     audit_service: AuditDependency,
+    staff_account_dao: StaffAccountDAODependency,
     rate_limiter: Annotated[PublicApplyRateLimiter, Depends(get_public_apply_rate_limiter)],
     policy_service: Annotated[PublicApplyPolicyService, Depends(get_public_apply_policy_service)],
 ) -> VacancyApplicationService:
     """Build public vacancy application service dependency."""
+    automation_evaluator = AutomationEvaluator(
+        rule_dao=AutomationRuleDAO(session=session),
+        staff_account_dao=staff_account_dao,
+    )
+    automation_executor = AutomationActionExecutor(
+        evaluator=automation_evaluator,
+        notification_dao=NotificationDAO(session=session),
+    )
     return VacancyApplicationService(
         settings=settings,
         vacancy_dao=VacancyDAO(session=session),
@@ -163,4 +195,5 @@ def get_vacancy_application_service(
         audit_service=audit_service,
         rate_limiter=rate_limiter,
         policy_service=policy_service,
+        automation_executor=automation_executor,
     )

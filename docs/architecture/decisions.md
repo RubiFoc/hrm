@@ -52,6 +52,8 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0045 | 2026-03-13 | accepted | Expose KPI snapshot reads to leaders while keeping rebuild admin-only | architect + backend-engineer | reporting access policy, RBAC, API read surface |
 | ADR-0046 | 2026-03-13 | accepted | Add admin-only audit evidence query API over append-only `audit_events` | architect + backend-engineer | audit package read surface, RBAC, operations/runbook, OpenAPI contract |
 | ADR-0047 | 2026-03-16 | accepted | Add controlled audit + KPI snapshot export attachments (bounded, no new jobs/tables) | architect + backend-engineer | audit/reporting exports, API contracts, compliance evidence |
+| ADR-0048 | 2026-03-16 | accepted | Introduce automation rule model and deterministic trigger evaluator (planning only) | architect + backend-engineer | automation package boundary, domain seams, RBAC, OpenAPI contract |
+| ADR-0049 | 2026-03-16 | accepted | Execute automation `notification.emit` actions via idempotent in-app notification executor | architect + backend-engineer | automation execution semantics, notification persistence, fail-closed guarantees |
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
@@ -985,3 +987,55 @@ Use this log for decisions that change interfaces, data models, deployment topol
 - Consequences:
   - Operators/leaders can download evidence and reporting artifacts without direct DB access.
   - Export work stays synchronous and must remain bounded; async exports/ZIP bundling remain a follow-up slice with explicit operational review.
+
+## ADR-0048
+- Context: `TASK-08-01` requires a minimal, safe automation foundation that can evaluate trigger events into planned actions without mutating core domain state, while keeping recipients and PII handling fail-closed.
+- Decision:
+  - Introduce a dedicated backend package: `apps/backend/src/hrm_backend/automation`.
+  - Persist automation rules in a minimal table `automation_rules` with:
+    - `conditions_json` (JSON condition tree),
+    - `actions_json` (JSON list of actions),
+    - `priority`, `is_active`,
+    - audit fields (`created_by_staff_id`, `updated_by_staff_id`, `created_at`, `updated_at`).
+  - Define canonical trigger event contracts (envelope + payloads):
+    - `pipeline.transition_appended`
+    - `offer.status_changed`
+    - `onboarding.task_assigned`
+    Source of truth: `docs/architecture/automation-events.md`.
+  - Add a deterministic evaluator interface:
+    `evaluate(event) -> planned_actions[]`
+    - deterministic ordering (rule priority + stable tie-breakers),
+    - no side effects (planning only in `TASK-08-01`),
+    - fail-closed recipient resolution limited to the current notification slice roles:
+      `manager`, `accountant`.
+  - Integrate evaluator calls from domain seams (best-effort, fail-closed):
+    - pipeline transition append (including public apply),
+    - offer status transitions,
+    - onboarding task assignment changes.
+  - Limit supported actions in this slice to `notification.emit` (in-app), with an idempotency hook:
+    `dedupe_key = rule_id + trigger_event_id + event_time` (executor in `TASK-08-02`).
+  - Enforce recruitment-trigger PII minimization for notification text/payload:
+    only `vacancy_title`, `stage`/`offer_status`, `candidate_id_short`.
+  - Expose minimal admin/hr CRUD APIs for rules under `/api/v1/automation/rules` guarded by new RBAC permissions:
+    `automation_rule:create`, `automation_rule:list`, `automation_rule:update`, `automation_rule:activate`.
+- Consequences:
+  - Automation rules can be defined and validated early without introducing domain mutations.
+  - Core domain flows remain reliable; automation evaluation failures do not block writes.
+  - Durable execution logs and retries are deferred to `TASK-08-03+`.
+
+## ADR-0049
+- Context: `TASK-08-02` requires executing planned `notification.emit` actions in a retry-safe way
+  without impacting core domain writes, while keeping evaluator behavior deterministic and fail-closed.
+- Decision:
+  - Introduce `AutomationActionExecutor` to execute evaluator plans by persisting in-app notifications
+    via the existing `notifications` storage contract.
+  - Keep the evaluator interface unchanged (`event -> planned_actions[]`), and move all side effects
+    into the executor.
+  - Execute synchronously from existing domain seams (after the domain write is committed) with
+    fail-closed behavior (swallow exceptions and rollback the session on failure).
+  - Use planned `dedupe_key` and `ux_notifications_recipient_dedupe` uniqueness to make execution
+    idempotent for at-least-once semantics and future retries.
+- Consequences:
+  - Automation rules can now produce user-visible in-app notifications in v1.
+  - Execution adds additional DB work on the request path; async/outbox execution can be introduced
+    later if latency becomes a concern.

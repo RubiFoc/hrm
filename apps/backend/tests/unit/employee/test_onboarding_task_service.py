@@ -62,6 +62,14 @@ class _NotificationServiceStub:
         del kwargs
 
 
+class _AutomationExecutorStub:
+    """Automation executor double that performs no side effects."""
+
+    def handle_event(self, **_kwargs):
+        """Ignore automation execution during focused unit tests."""
+        return 0
+
+
 def _build_request(method: str, path: str) -> Request:
     """Create minimal Starlette request object for service calls."""
     return Request(
@@ -140,6 +148,7 @@ def test_build_create_payloads_orders_tasks_from_active_template_bundle() -> Non
         template_dao=_UnusedTemplateDAO(),  # type: ignore[arg-type]
         profile_dao=_UnusedProfileDAO(),  # type: ignore[arg-type]
         notification_service=_NotificationServiceStub(),  # type: ignore[arg-type]
+        automation_executor=_AutomationExecutorStub(),  # type: ignore[arg-type]
         audit_service=_AuditServiceStub(),  # type: ignore[arg-type]
     )
     run = OnboardingRun(
@@ -204,6 +213,7 @@ def test_onboarding_task_persistence_enforces_one_generation_per_run() -> None:
                 template_dao=OnboardingTemplateDAO(session=session),
                 profile_dao=_UnusedProfileDAO(),  # type: ignore[arg-type]
                 notification_service=_NotificationServiceStub(),  # type: ignore[arg-type]
+                automation_executor=_AutomationExecutorStub(),  # type: ignore[arg-type]
                 audit_service=_AuditServiceStub(),  # type: ignore[arg-type]
             )
 
@@ -232,6 +242,7 @@ def test_update_task_patch_semantics_manage_completion_and_nullable_fields() -> 
                 template_dao=OnboardingTemplateDAO(session=session),
                 profile_dao=_UnusedProfileDAO(),  # type: ignore[arg-type]
                 notification_service=_NotificationServiceStub(),  # type: ignore[arg-type]
+                automation_executor=_AutomationExecutorStub(),  # type: ignore[arg-type]
                 audit_service=_AuditServiceStub(),  # type: ignore[arg-type]
             )
 

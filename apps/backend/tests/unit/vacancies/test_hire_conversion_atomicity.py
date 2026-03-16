@@ -53,6 +53,14 @@ class _NotificationServiceStub:
         del kwargs
 
 
+class _AutomationExecutorStub:
+    """Automation executor double that performs no side effects."""
+
+    def handle_event(self, **_kwargs):
+        """Ignore automation execution during focused unit tests."""
+        return 0
+
+
 def _build_request() -> Request:
     """Create a minimal request object for service-level tests."""
     request = Request(
@@ -140,6 +148,7 @@ def test_hired_transition_rolls_back_when_handoff_persistence_fails(tmp_path: Pa
             staff_account_dao=StaffAccountDAO(session=session),
             hire_conversion_service=_FailingHireConversionService(),  # type: ignore[arg-type]
             notification_service=_NotificationServiceStub(),  # type: ignore[arg-type]
+            automation_executor=_AutomationExecutorStub(),  # type: ignore[arg-type]
             audit_service=_FakeAuditService(),  # type: ignore[arg-type]
         )
 
