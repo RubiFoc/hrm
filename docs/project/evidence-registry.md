@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-16
-- Updated by: backend-engineer
+- Updated by: backend-engineer + frontend-engineer
 
 ## Registry Model
 - `Evidence ID`: stable identifier for cross-references from `legal-controls-matrix.md`.

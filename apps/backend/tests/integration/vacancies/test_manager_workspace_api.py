@@ -20,6 +20,7 @@ from hrm_backend.core.models.base import Base
 from hrm_backend.interviews.models.interview import Interview
 from hrm_backend.main import app
 from hrm_backend.settings import AppSettings, get_settings
+from hrm_backend.vacancies.models.offer import Offer
 from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition
 
 pytestmark = pytest.mark.anyio
@@ -351,6 +352,18 @@ async def test_manager_workspace_endpoints_are_scoped_and_read_only(
             interviewer_staff_id=staff["manager_alpha_id"],
             scheduled_start_at=datetime.now(UTC) + timedelta(days=2),
         )
+        session.add(
+            Offer(
+                vacancy_id=alpha_vacancy_id,
+                candidate_id="aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa",
+                status="sent",
+                terms_summary="Offer summary.",
+                sent_at=datetime(2026, 3, 12, 10, 0, tzinfo=UTC),
+                sent_by_staff_id="hr-seed",
+                created_at=datetime(2026, 3, 12, 10, 0, tzinfo=UTC),
+                updated_at=datetime(2026, 3, 12, 10, 0, tzinfo=UTC),
+            )
+        )
         session.commit()
 
     context_holder["context"] = AuthContext(
@@ -388,9 +401,10 @@ async def test_manager_workspace_endpoints_are_scoped_and_read_only(
         "bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb",
         "aaaaaaaa-1111-4111-8111-aaaaaaaaaaaa",
     ]
-    assert snapshot_payload["items"][0]["analysis_ready"] is False
-    assert snapshot_payload["items"][1]["analysis_ready"] is True
-    assert snapshot_payload["items"][1]["years_experience"] == 5
+    assert snapshot_payload["items"][0]["offer_status"] is None
+    assert snapshot_payload["items"][1]["offer_status"] == "sent"
+    assert "email" not in snapshot_payload["items"][0]
+    assert "skills" not in snapshot_payload["items"][0]
 
     forbidden_snapshot = await api_client.get(
         f"/api/v1/vacancies/{other_vacancy_id}/manager-workspace/candidates"

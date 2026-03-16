@@ -31,12 +31,14 @@ Enforcement source of truth:
 | `admin:employee_key:create` | yes | yes | no | no | no | no |
 | `admin:employee_key:list` | yes | yes | no | no | no | no |
 | `admin:employee_key:revoke` | yes | yes | no | no | no | no |
-| `vacancy:read` | yes | yes | yes | no | yes | no |
+| `vacancy:read` | yes | yes | no | no | yes | no |
 | `vacancy:create` | yes | yes | no | no | no | no |
 | `vacancy:update` | yes | yes | no | no | no | no |
-| `pipeline:read` | yes | yes | yes | no | yes | no |
+| `pipeline:read` | yes | yes | no | no | yes | no |
 | `pipeline:update` | yes | yes | no | no | no | no |
 | `pipeline:transition` | yes | yes | no | no | no | no |
+| `match_score:create` | yes | yes | no | no | no | no |
+| `match_score:read` | yes | yes | no | no | no | no |
 | `candidate_profile:create` | yes | yes | no | no | no | no |
 | `candidate_profile:read` | yes | yes | no | no | no | no |
 | `candidate_profile:update` | yes | yes | no | no | no | no |
@@ -58,7 +60,10 @@ Enforcement source of truth:
 | `candidate_cv:parsing_status` | yes | yes | no | no | no | no |
 | `candidate_cv:parse` | yes | yes | no | no | no | no |
 | `candidate_profile:read_all` | yes | yes | no | no | no | no |
-| `interview:manage` | yes | yes | yes | no | no | no |
+| `interview:manage` | yes | yes | no | no | no | no |
+| `manager_workspace:read` | no | no | yes | no | no | no |
+| `notification:read` | no | no | yes | no | no | yes |
+| `notification:update` | no | no | yes | no | no | yes |
 | `analytics:read` | yes | yes | yes | yes | yes | yes |
 | `audit:read` | yes | no | no | no | no | no |
 | `accounting:read` | yes | no | no | no | no | yes |
@@ -80,6 +85,12 @@ Public endpoint outside RBAC matrix:
 - Ownership checks for candidate profile/CV resources are enforced at domain-service level.
   For current policy, `admin/hr` are allowed and non-privileged staff roles receive explicit
   `denied` audit events when attempting staff-only candidate endpoints.
+- Manager workspace hiring read routes are limited to the `manager` role through the dedicated
+  permission `manager_workspace:read`:
+  - `GET /api/v1/vacancies/manager-workspace`
+  - `GET /api/v1/vacancies/{vacancy_id}/manager-workspace/candidates`
+  Visibility is fail-closed on `vacancies.hiring_manager_staff_id=<current manager subject>`, and
+  the candidate snapshot payload is PII-redacted (stage + interview schedule + offer status only).
 - Employee profile bootstrap/read routes are staff-only and currently limited to `admin/hr`.
   Employee self-access is intentionally deferred until later employee/onboarding slices.
 - Onboarding dashboard read routes are limited to `admin`, `hr`, and `manager`:

@@ -2864,39 +2864,11 @@
         "type": "object"
       },
       "ManagerWorkspaceCandidateSnapshotItemResponse": {
-        "description": "Read-only candidate row rendered inside the manager vacancy snapshot.",
+        "description": "PII-redacted candidate row rendered inside the manager vacancy snapshot.",
         "properties": {
-          "analysis_ready": {
-            "title": "Analysis Ready",
-            "type": "boolean"
-          },
           "candidate_id": {
             "format": "uuid",
             "title": "Candidate Id",
-            "type": "string"
-          },
-          "candidate_updated_at": {
-            "format": "date-time",
-            "title": "Candidate Updated At",
-            "type": "string"
-          },
-          "current_title": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Current Title"
-          },
-          "email": {
-            "title": "Email",
-            "type": "string"
-          },
-          "first_name": {
-            "title": "First Name",
             "type": "string"
           },
           "interview_scheduled_end_at": {
@@ -2952,27 +2924,22 @@
             ],
             "title": "Interview Timezone"
           },
-          "last_name": {
-            "title": "Last Name",
-            "type": "string"
-          },
-          "location": {
+          "offer_status": {
             "anyOf": [
               {
+                "enum": [
+                  "draft",
+                  "sent",
+                  "accepted",
+                  "declined"
+                ],
                 "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Location"
-          },
-          "skills": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Skills",
-            "type": "array"
+            "title": "Offer Status"
           },
           "stage": {
             "enum": [
@@ -2991,31 +2958,12 @@
             "format": "date-time",
             "title": "Stage Updated At",
             "type": "string"
-          },
-          "years_experience": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Years Experience"
           }
         },
         "required": [
           "candidate_id",
-          "first_name",
-          "last_name",
-          "email",
-          "location",
-          "current_title",
-          "analysis_ready",
-          "years_experience",
           "stage",
           "stage_updated_at",
-          "candidate_updated_at",
           "interview_status",
           "interview_scheduled_start_at",
           "interview_scheduled_end_at",

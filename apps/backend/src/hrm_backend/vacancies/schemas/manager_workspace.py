@@ -8,6 +8,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from hrm_backend.interviews.schemas.interview import InterviewStatus
+from hrm_backend.vacancies.schemas.offer import OfferStatus
 from hrm_backend.vacancies.schemas.pipeline import PipelineStage
 
 
@@ -66,24 +67,16 @@ class ManagerWorkspaceCandidateSnapshotSummaryResponse(BaseModel):
 
 
 class ManagerWorkspaceCandidateSnapshotItemResponse(BaseModel):
-    """Read-only candidate row rendered inside the manager vacancy snapshot."""
+    """PII-redacted candidate row rendered inside the manager vacancy snapshot."""
 
     candidate_id: UUID
-    first_name: str
-    last_name: str
-    email: str
-    location: str | None
-    current_title: str | None
-    analysis_ready: bool
-    years_experience: float | None
-    skills: list[str] = Field(default_factory=list)
     stage: PipelineStage
     stage_updated_at: datetime
-    candidate_updated_at: datetime
     interview_status: InterviewStatus | None
     interview_scheduled_start_at: datetime | None
     interview_scheduled_end_at: datetime | None
     interview_timezone: str | None
+    offer_status: OfferStatus | None = None
 
 
 class ManagerWorkspaceCandidateSnapshotResponse(BaseModel):

@@ -219,6 +219,28 @@
   - `workspace=manager` for manager dashboard
 - Keep auth, CORS, public candidate transport, employee portal contracts, and onboarding task mutation routes unchanged in this slice.
 
+## TASK-02-04 Baseline
+- Keep the existing route topology intact; do not add a manager-only path.
+- Use the existing `/` route for the manager workspace (`manager` resolves to `ManagerWorkspacePage` on `/`).
+- Read manager hiring visibility through the dedicated manager-scoped vacancy APIs:
+  - `GET /api/v1/vacancies/manager-workspace`
+  - `GET /api/v1/vacancies/{vacancy_id}/manager-workspace/candidates`
+- Vacancy scope is fail-closed:
+  only vacancies where `vacancies.hiring_manager_staff_id=<current manager subject>` are visible.
+- Candidate visibility rules for manager workspace (read-only, fail-closed):
+  - do not render candidate PII (name, email, phone) in the manager workspace;
+  - do not render CV analysis artifacts (skills, experience summary, parsed profile);
+  - minimum candidate snapshot fields: `stage`, `stage_updated_at`, active interview status + schedule times, `offer_status`.
+- Workspace UX requirements:
+  - summary chips for visible vacancy/candidate/interview counts;
+  - vacancy list ordered by latest activity (deterministic);
+  - candidate snapshot table ordered by latest stage activity (deterministic);
+  - localized `loading`, `empty`, `401/403/404`, and generic error states.
+- Keep the embedded onboarding visibility block and notifications panel inside the manager workspace unchanged in this slice.
+- Emit canonical Sentry tags for `/` based on resolved role:
+  - `workspace=manager` for manager workspace.
+- Keep auth, CORS, public candidate transport, and HR route semantics unchanged in this slice.
+
 ## TASK-09-02 Baseline
 - Add dedicated `/leader` route under a leader/admin guard.
 - Leader workspace goal: show stored monthly KPI snapshots and a minimal operational overview.

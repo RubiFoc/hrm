@@ -331,8 +331,8 @@ function CandidateSnapshot({ snapshot }: CandidateSnapshotProps) {
             <TableRow>
               <TableCell>{t("managerDashboard.snapshot.table.candidate")}</TableCell>
               <TableCell>{t("managerDashboard.snapshot.table.stage")}</TableCell>
-              <TableCell>{t("managerDashboard.snapshot.table.analysis")}</TableCell>
               <TableCell>{t("managerDashboard.snapshot.table.interview")}</TableCell>
+              <TableCell>{t("managerDashboard.snapshot.table.offer")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -341,24 +341,12 @@ function CandidateSnapshot({ snapshot }: CandidateSnapshotProps) {
                 <TableCell>
                   <Stack spacing={0.5}>
                     <Typography variant="body2" fontWeight={600}>
-                      {item.first_name} {item.last_name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {item.email}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {t("managerDashboard.snapshot.candidateMeta", {
-                        title: item.current_title || t("managerDashboard.noValue"),
-                        location: item.location || t("managerDashboard.noValue"),
-                        years: formatYearsExperience(item.years_experience, t),
+                      {t("managerDashboard.snapshot.candidateId", {
+                        value: formatShortUuid(item.candidate_id),
                       })}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
-                      {t("managerDashboard.snapshot.skills", {
-                        value: item.skills.length > 0
-                          ? item.skills.join(", ")
-                          : t("managerDashboard.noValue"),
-                      })}
+                      {item.candidate_id}
                     </Typography>
                   </Stack>
                 </TableCell>
@@ -376,14 +364,12 @@ function CandidateSnapshot({ snapshot }: CandidateSnapshotProps) {
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2">
-                    {item.analysis_ready
-                      ? t("managerDashboard.snapshot.analysisReady")
-                      : t("managerDashboard.snapshot.analysisPending")}
+                    {formatInterviewSummary(item, t)}
                   </Typography>
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2">
-                    {formatInterviewSummary(item, t)}
+                    {formatOfferSummary(item, t)}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -435,6 +421,18 @@ function formatInterviewSummary(
   });
 }
 
+function formatOfferSummary(
+  item: ManagerWorkspaceCandidateSnapshotResponse["items"][number],
+  t: ReturnType<typeof useTranslation>["t"],
+) {
+  if (!item.offer_status) {
+    return t("managerDashboard.snapshot.noOffer");
+  }
+  return t("managerDashboard.snapshot.offerValue", {
+    value: t(`hrDashboard.offers.status.${item.offer_status}`),
+  });
+}
+
 function formatDateTimeValue(value: string | null) {
   if (!value) {
     return "n/a";
@@ -442,12 +440,6 @@ function formatDateTimeValue(value: string | null) {
   return new Date(value).toLocaleString();
 }
 
-function formatYearsExperience(
-  value: number | null,
-  t: ReturnType<typeof useTranslation>["t"],
-) {
-  if (value === null) {
-    return t("managerDashboard.noValue");
-  }
-  return t("managerDashboard.snapshot.yearsExperience", { value });
+function formatShortUuid(value: string) {
+  return value.slice(0, 8);
 }
