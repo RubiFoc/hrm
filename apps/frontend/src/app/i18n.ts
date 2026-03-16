@@ -7,10 +7,13 @@ const resources = {
       appTitle: "HRM Recruitment Workspace",
       hrWorkspace: "HR Workspace",
       managerWorkspace: "Manager Workspace",
+      leaderWorkspace: "Leader Workspace",
       accountantWorkspace: "Accountant Workspace",
       employeeWorkspace: "Employee Workspace",
       candidateWorkspace: "Candidate Workspace",
       adminWorkspace: "Admin Workspace",
+      leaderWorkspaceSubtitle:
+        "Review stored monthly KPI snapshots and export management reporting attachments.",
       accountantWorkspaceSubtitle:
         "Review accountant-assigned onboarding rows and export the current filtered finance scope.",
       candidateRoute: {
@@ -249,6 +252,53 @@ const resources = {
           http_403: "Your account does not have accountant workspace access.",
           http_422: "The accountant workspace request is invalid.",
           generic: "Failed to load accountant workspace data.",
+        },
+      },
+      leaderDashboard: {
+        authRequired: "Leader workspace requires an authenticated session.",
+        periodLabel: "Period month",
+        periodHelp:
+          "Select calendar month to view the stored KPI snapshot. If the snapshot is missing, the page falls back to the latest available snapshot.",
+        loadAction: "Load",
+        resetAction: "Reset",
+        exportCsv: "Export CSV",
+        exportCsvPending: "Exporting CSV...",
+        exportXlsx: "Export Excel",
+        exportXlsxPending: "Exporting Excel...",
+        loading: "Loading KPI snapshot...",
+        empty: "No KPI snapshot rows are available for the selected month.",
+        emptyHint:
+          "If you expect data, ask an admin to rebuild the snapshot for this month.",
+        notAvailable: "n/a",
+        periodMeta: "Period: {{value}}",
+        generatedAtMeta: "Generated at: {{value}}",
+        autoResolved:
+          "No snapshot for {{from}}. Showing the latest available snapshot for {{to}}.",
+        metrics: {
+          title: "Operational overview",
+          subtitle:
+            "Stored monthly KPI snapshot metrics derived from recruitment and onboarding domains.",
+        },
+        metricKey: {
+          vacancies_created_count: "Vacancies created",
+          candidates_applied_count: "Candidates applied",
+          interviews_scheduled_count: "Interviews scheduled",
+          offers_sent_count: "Offers sent",
+          offers_accepted_count: "Offers accepted",
+          hires_count: "Hires",
+          onboarding_started_count: "Onboarding started",
+          onboarding_tasks_completed_count: "Onboarding tasks completed",
+        },
+        table: {
+          metric: "Metric",
+          value: "Value",
+          generatedAt: "Generated at",
+        },
+        errors: {
+          http_401: "Your session is missing or expired. Sign in again.",
+          http_403: "Your account does not have access to KPI snapshots.",
+          http_422: "The KPI snapshot request is invalid.",
+          generic: "Failed to load KPI snapshot data.",
         },
       },
       notificationsPanel: {
@@ -957,10 +1007,13 @@ const resources = {
       appTitle: "HRM Платформа найма",
       hrWorkspace: "Рабочее место HR",
       managerWorkspace: "Кабинет менеджера",
+      leaderWorkspace: "Кабинет руководителя",
       accountantWorkspace: "Кабинет бухгалтера",
       employeeWorkspace: "Кабинет сотрудника",
       candidateWorkspace: "Кабинет кандидата",
       adminWorkspace: "Админ пространство",
+      leaderWorkspaceSubtitle:
+        "Просматривайте месячные KPI snapshot'ы и выгружайте вложения для управленческой отчётности.",
       accountantWorkspaceSubtitle:
         "Просматривайте назначенные бухгалтеру onboarding-строки и выгружайте текущий отфильтрованный finance scope.",
       candidateRoute: {
@@ -1200,6 +1253,53 @@ const resources = {
           http_403: "У вашей учётной записи нет доступа к accountant workspace.",
           http_422: "Запрос accountant workspace заполнен некорректно.",
           generic: "Не удалось загрузить accountant workspace.",
+        },
+      },
+      leaderDashboard: {
+        authRequired: "Для leader workspace нужна активная авторизованная сессия.",
+        periodLabel: "Месяц",
+        periodHelp:
+          "Выберите календарный месяц, чтобы посмотреть сохранённый KPI snapshot. Если snapshot отсутствует, страница подберёт последний доступный snapshot.",
+        loadAction: "Загрузить",
+        resetAction: "Сбросить",
+        exportCsv: "Выгрузить CSV",
+        exportCsvPending: "Выгружаем CSV...",
+        exportXlsx: "Выгрузить Excel",
+        exportXlsxPending: "Выгружаем Excel...",
+        loading: "Загрузка KPI snapshot...",
+        empty: "Для выбранного месяца KPI snapshot отсутствует.",
+        emptyHint:
+          "Если вы ожидаете данные, попросите admin выполнить rebuild snapshot'а за этот месяц.",
+        notAvailable: "н/д",
+        periodMeta: "Период: {{value}}",
+        generatedAtMeta: "Сгенерировано: {{value}}",
+        autoResolved:
+          "Нет KPI snapshot'а за {{from}}. Показан последний доступный snapshot за {{to}}.",
+        metrics: {
+          title: "Операционный обзор",
+          subtitle:
+            "Сохранённые месячные KPI метрики, построенные на базе доменов найма и онбординга.",
+        },
+        metricKey: {
+          vacancies_created_count: "Создано вакансий",
+          candidates_applied_count: "Откликов кандидатов",
+          interviews_scheduled_count: "Запланировано интервью",
+          offers_sent_count: "Отправлено офферов",
+          offers_accepted_count: "Принято офферов",
+          hires_count: "Наймов",
+          onboarding_started_count: "Запущено онбордингов",
+          onboarding_tasks_completed_count: "Завершено задач онбординга",
+        },
+        table: {
+          metric: "Метрика",
+          value: "Значение",
+          generatedAt: "Сгенерировано",
+        },
+        errors: {
+          http_401: "Сессия отсутствует или истекла. Войдите заново.",
+          http_403: "У вашей учётной записи нет доступа к KPI snapshot'ам.",
+          http_422: "Запрос KPI snapshot заполнен некорректно.",
+          generic: "Не удалось загрузить KPI snapshot.",
         },
       },
       notificationsPanel: {

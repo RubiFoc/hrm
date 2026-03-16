@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { AdminGuard } from "./guards/AdminGuard";
 import { EmployeeGuard } from "./guards/EmployeeGuard";
+import { LeaderGuard } from "./guards/LeaderGuard";
 import { readAuthSession } from "./auth/session";
 import { RootLayout } from "../components/RootLayout";
 import { AccessDeniedPage } from "../pages/AccessDeniedPage";
@@ -12,6 +13,7 @@ import { AdminShellPage } from "../pages/AdminShellPage";
 import { CandidatePage } from "../pages/CandidatePage";
 import { EmployeeOnboardingPage } from "../pages/EmployeeOnboardingPage";
 import { HrDashboardPage } from "../pages/HrDashboardPage";
+import { LeaderWorkspacePage } from "../pages/LeaderWorkspacePage";
 import { LoginPage } from "../pages/LoginPage";
 import { ManagerWorkspacePage } from "../pages/ManagerWorkspacePage";
 
@@ -19,6 +21,9 @@ function WorkspaceHomePage() {
   const session = readAuthSession();
   if (session.accessToken && session.role === "employee") {
     return <Navigate to="/employee" replace />;
+  }
+  if (session.accessToken && session.role === "leader") {
+    return <Navigate to="/leader" replace />;
   }
   if (session.accessToken && session.role === "manager") {
     return <ManagerWorkspacePage />;
@@ -41,6 +46,16 @@ export const appRoutes = [
       {
         path: "candidate",
         element: <CandidatePage />,
+      },
+      {
+        path: "leader",
+        element: <LeaderGuard />,
+        children: [
+          {
+            index: true,
+            element: <LeaderWorkspacePage />,
+          },
+        ],
       },
       {
         path: "login",
