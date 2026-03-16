@@ -14,6 +14,7 @@ import base64
 import json
 import subprocess
 import time
+import urllib.request
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
@@ -138,19 +139,50 @@ def build_submit_expression(email: str) -> str:
 """.strip()
 
 
-def read_response_json(session: DevToolsSession, request_id: str) -> dict[str, Any]:
-    """Read and decode one JSON response body from DevTools network storage."""
-    result = session.send(
-        "Network.getResponseBody",
-        {"requestId": request_id},
-        timeout_seconds=10.0,
-    )
-    body = result.get("body")
-    if not isinstance(body, str) or not body:
-        raise RuntimeError(f"DevTools returned empty body for request {request_id}")
-    if result.get("base64Encoded"):
-        body = base64.b64decode(body).decode("utf-8")
-    return json.loads(body)
+def read_response_json(
+    session: DevToolsSession,
+    request_id: str,
+    *,
+    fallback_url: str | None = None,
+) -> dict[str, Any]:
+    """Read and decode one JSON response body from DevTools network storage.
+
+    Some Chrome/DevTools versions may evict response bodies before retrieval, especially for fast
+    GET polling requests. When `fallback_url` is provided, the helper falls back to a direct HTTP
+    GET read (safe only for idempotent endpoints).
+    """
+    last_error: RuntimeError | None = None
+    deadline = time.monotonic() + 10.0
+    while time.monotonic() < deadline:
+        try:
+            result = session.send(
+                "Network.getResponseBody",
+                {"requestId": request_id},
+                timeout_seconds=10.0,
+            )
+            body = result.get("body")
+            if not isinstance(body, str) or not body:
+                raise RuntimeError(f"DevTools returned empty body for request {request_id}")
+            if result.get("base64Encoded"):
+                body = base64.b64decode(body).decode("utf-8")
+            return json.loads(body)
+        except RuntimeError as exc:
+            last_error = exc
+            if "No data found for resource with given identifier" not in str(exc):
+                raise
+            if fallback_url is not None:
+                try:
+                    with urllib.request.urlopen(fallback_url, timeout=10.0) as response:  # noqa: S310
+                        payload = response.read().decode("utf-8")
+                    return json.loads(payload)
+                except Exception as fallback_exc:
+                    raise RuntimeError(
+                        f"failed to load fallback response body for request {request_id}"
+                    ) from fallback_exc
+            time.sleep(0.25)
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError(f"failed to read response body for request {request_id}")
 
 
 def write_failure_artifacts(session: DevToolsSession | None, artifacts_dir: Path) -> Path | None:
@@ -277,7 +309,11 @@ def run_browser_candidate_smoke(args: argparse.Namespace) -> None:
             ),
             "public parsing status response",
         )
-        status_payload = read_response_json(session, status_record.request_id)
+        status_payload = read_response_json(
+            session,
+            status_record.request_id,
+            fallback_url=status_record.url,
+        )
         current_status = str(status_payload["status"])
         if current_status not in TRACKING_ACTIVE_STATUSES:
             raise RuntimeError(f"unexpected public parsing status: {current_status}")
@@ -294,7 +330,11 @@ def run_browser_candidate_smoke(args: argparse.Namespace) -> None:
                 ),
                 "public analysis response",
             )
-            analysis_payload = read_response_json(session, analysis_record.request_id)
+            analysis_payload = read_response_json(
+                session,
+                analysis_record.request_id,
+                fallback_url=analysis_record.url,
+            )
             if str(analysis_payload["candidate_id"]) != candidate_id:
                 raise RuntimeError("public analysis response candidate_id does not match application")
             print("[browser-smoke] public candidate apply flow completed successfully with analysis ready.")
