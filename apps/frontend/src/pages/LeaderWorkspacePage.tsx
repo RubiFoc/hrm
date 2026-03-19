@@ -47,6 +47,9 @@ const METRIC_ORDER: MetricKey[] = [
   "hires_count",
   "onboarding_started_count",
   "onboarding_tasks_completed_count",
+  "total_hr_operations_count",
+  "automated_hr_operations_count",
+  "automated_hr_operations_share_percent",
 ];
 
 /**

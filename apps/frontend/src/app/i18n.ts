@@ -277,7 +277,7 @@ const resources = {
         metrics: {
           title: "Operational overview",
           subtitle:
-            "Stored monthly KPI snapshot metrics derived from recruitment and onboarding domains.",
+            "Stored monthly KPI snapshot metrics derived from recruitment, onboarding, and automation event streams.",
         },
         metricKey: {
           vacancies_created_count: "Vacancies created",
@@ -288,6 +288,9 @@ const resources = {
           hires_count: "Hires",
           onboarding_started_count: "Onboarding started",
           onboarding_tasks_completed_count: "Onboarding tasks completed",
+          total_hr_operations_count: "Total HR operations",
+          automated_hr_operations_count: "Automated HR operations",
+          automated_hr_operations_share_percent: "Automated HR share (%)",
         },
         table: {
           metric: "Metric",
@@ -1281,7 +1284,7 @@ const resources = {
         metrics: {
           title: "Операционный обзор",
           subtitle:
-            "Сохранённые месячные KPI метрики, построенные на базе доменов найма и онбординга.",
+            "Сохранённые месячные KPI метрики, построенные на базе доменов найма, онбординга и automation event stream.",
         },
         metricKey: {
           vacancies_created_count: "Создано вакансий",
@@ -1292,6 +1295,9 @@ const resources = {
           hires_count: "Наймов",
           onboarding_started_count: "Запущено онбордингов",
           onboarding_tasks_completed_count: "Завершено задач онбординга",
+          total_hr_operations_count: "Всего HR операций",
+          automated_hr_operations_count: "Автоматизировано HR операций",
+          automated_hr_operations_share_percent: "Доля автоматизации (%)",
         },
         table: {
           metric: "Метрика",

@@ -7,6 +7,7 @@ from datetime import datetime
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from hrm_backend.automation.models.metric_event import AutomationMetricEvent
 from hrm_backend.employee.models.hire_conversion import HireConversion
 from hrm_backend.employee.models.onboarding import OnboardingRun, OnboardingTask
 from hrm_backend.interviews.models.interview import Interview
@@ -110,6 +111,32 @@ class KpiAggregationDAO:
                 OnboardingTask.completed_at.is_not(None),
                 OnboardingTask.completed_at >= start_at,
                 OnboardingTask.completed_at < end_at,
+            )
+            .scalar()
+        )
+
+    def count_total_hr_operations(self, *, start_at: datetime, end_at: datetime) -> int:
+        """Count total HR operations from durable automation metric events."""
+        return _count(
+            self._session.query(
+                func.coalesce(func.sum(AutomationMetricEvent.total_hr_operations_count), 0)
+            )
+            .filter(
+                AutomationMetricEvent.event_time >= start_at,
+                AutomationMetricEvent.event_time < end_at,
+            )
+            .scalar()
+        )
+
+    def count_automated_hr_operations(self, *, start_at: datetime, end_at: datetime) -> int:
+        """Count automated HR operations from durable automation metric events."""
+        return _count(
+            self._session.query(
+                func.coalesce(func.sum(AutomationMetricEvent.automated_hr_operations_count), 0)
+            )
+            .filter(
+                AutomationMetricEvent.event_time >= start_at,
+                AutomationMetricEvent.event_time < end_at,
             )
             .scalar()
         )

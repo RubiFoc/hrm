@@ -1,7 +1,7 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-16
+- Date: 2026-03-19
 - Updated by: architect + backend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
@@ -994,6 +994,7 @@ flowchart LR
     OFFER[Offers]
     HIRE[Hire Conversions]
     ONB[Onboarding Runs/Tasks]
+    AUTO_METRIC[(automation_metric_events)]
   end
 
   subgraph Reporting[Reporting]
@@ -1010,11 +1011,12 @@ flowchart LR
   OFFER --> AGG
   HIRE --> AGG
   ONB --> AGG
+  AUTO_METRIC --> AGG
   AGG --> SNAP
   READ --> SNAP
 ```
 
-## Diagram 24: Automation Execution Logging Flow (TASK-08-03)
+## Diagram 24: Automation Execution Logging and KPI Event Flow (TASK-08-04)
 
 ```mermaid
 sequenceDiagram
@@ -1022,7 +1024,9 @@ sequenceDiagram
   participant EXEC as AutomationActionExecutor
   participant RUN as automation_execution_runs
   participant ACT as automation_action_executions
+  participant MET as automation_metric_events
   participant NOTIF as notifications
+  participant RPT as KPI Snapshot Service
   participant OPS as Ops API (admin/hr)
 
   DOM->>EXEC: handle_event(event, correlation_id)
@@ -1030,7 +1034,13 @@ sequenceDiagram
   EXEC->>EXEC: evaluate rules -> plan[]
   EXEC->>NOTIF: INSERT notification rows (dedupe-safe)
   EXEC->>ACT: INSERT action rows (succeeded/deduped/failed)
+  EXEC->>MET: INSERT metric row(outcome, counts)
   EXEC->>RUN: UPDATE run(status, counts, error)
   OPS->>RUN: list/view runs (filters)
   OPS->>ACT: list/view actions
+  RPT->>MET: aggregate counts for monthly KPI rebuild
 ```
+
+Automation execution logs remain the operator-facing troubleshooting source of truth, while
+`automation_metric_events` is the durable KPI event stream used by reporting to compute
+`total_hr_operations_count`, `automated_hr_operations_count`, and the derived share metric.

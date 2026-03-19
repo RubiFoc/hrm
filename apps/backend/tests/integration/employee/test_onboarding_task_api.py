@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from hrm_backend.audit.models.event import AuditEvent
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
+from hrm_backend.automation.models.metric_event import AutomationMetricEvent
 from hrm_backend.core.models.base import Base
 from hrm_backend.employee.models.onboarding import OnboardingRun, OnboardingTask
 from hrm_backend.employee.models.template import OnboardingTemplate, OnboardingTemplateItem
@@ -171,6 +172,23 @@ def _load_tasks(database_url: str, *, onboarding_id: str) -> list[OnboardingTask
         engine.dispose()
 
 
+def _load_metric_events(database_url: str) -> list[AutomationMetricEvent]:
+    """Load ordered automation KPI metric rows from database URL."""
+    engine = create_engine(database_url, future=True)
+    try:
+        with Session(engine) as session:
+            return list(
+                session.execute(
+                    select(AutomationMetricEvent).order_by(
+                        AutomationMetricEvent.event_time.asc(),
+                        AutomationMetricEvent.metric_event_id.asc(),
+                    )
+                ).scalars()
+            )
+    finally:
+        engine.dispose()
+
+
 def _deactivate_all_templates(database_url: str) -> None:
     """Clear active flag from every onboarding template in the test database."""
     engine = create_engine(database_url, future=True)
@@ -255,6 +273,13 @@ async def test_onboarding_task_api_backfills_lists_and_updates_tasks(
     persisted_tasks = _load_tasks(database_url, onboarding_id=onboarding_id)
     assert len(persisted_tasks) == 2
     assert persisted_tasks[0].status == "in_progress"
+
+    metric_events = _load_metric_events(database_url)
+    assert len(metric_events) == 1
+    assert metric_events[0].event_type == "onboarding.task_assigned"
+    assert metric_events[0].total_hr_operations_count == 1
+    assert metric_events[0].automated_hr_operations_count == 0
+    assert metric_events[0].outcome == "no_rules"
 
     events = _load_events(database_url)
     success_actions = [

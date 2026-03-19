@@ -13,6 +13,7 @@ from hrm_backend.auth.models.staff_account import StaffAccount
 from hrm_backend.automation.dao.automation_rule_dao import AutomationRuleDAO
 from hrm_backend.automation.models.action_execution import AutomationActionExecution
 from hrm_backend.automation.models.execution_run import AutomationExecutionRun
+from hrm_backend.automation.models.metric_event import AutomationMetricEvent
 from hrm_backend.automation.schemas.events import (
     PipelineTransitionAppendedEvent,
     PipelineTransitionAppendedPayload,
@@ -150,6 +151,21 @@ def test_executor_creates_notification_and_is_idempotent() -> None:
             assert action_rows[1].status == "deduped"
             assert action_rows[1].attempt_count == 1
             assert action_rows[1].result_notification_id is None
+
+            metric_rows = (
+                session.query(AutomationMetricEvent)
+                .order_by(AutomationMetricEvent.created_at.asc())
+                .all()
+            )
+            assert len(metric_rows) == 1
+            assert metric_rows[0].event_type == "pipeline.transition_appended"
+            assert metric_rows[0].outcome == "success"
+            assert metric_rows[0].total_hr_operations_count == 1
+            assert metric_rows[0].automated_hr_operations_count == 1
+            assert metric_rows[0].planned_action_count == 1
+            assert metric_rows[0].succeeded_action_count == 1
+            assert metric_rows[0].deduped_action_count == 0
+            assert metric_rows[0].failed_action_count == 0
     finally:
         engine.dispose()
 
@@ -264,5 +280,15 @@ def test_executor_records_failed_action_and_sanitizes_error_text() -> None:
             assert action.error_text is not None
             assert "<redacted_email>" in action.error_text
             assert "<redacted_phone>" in action.error_text
+
+            metric_rows = session.query(AutomationMetricEvent).all()
+            assert len(metric_rows) == 1
+            assert metric_rows[0].outcome == "failed"
+            assert metric_rows[0].total_hr_operations_count == 1
+            assert metric_rows[0].automated_hr_operations_count == 0
+            assert metric_rows[0].planned_action_count == 1
+            assert metric_rows[0].succeeded_action_count == 0
+            assert metric_rows[0].deduped_action_count == 0
+            assert metric_rows[0].failed_action_count == 1
     finally:
         engine.dispose()

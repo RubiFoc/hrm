@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from hrm_backend.audit.models.event import AuditEvent
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
+from hrm_backend.automation.models.metric_event import AutomationMetricEvent
 from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.core.models.base import Base
 from hrm_backend.employee.models.hire_conversion import HireConversion
@@ -24,6 +25,7 @@ from hrm_backend.employee.models.onboarding import OnboardingRun, OnboardingTask
 from hrm_backend.employee.models.profile import EmployeeProfile
 from hrm_backend.interviews.models.interview import Interview
 from hrm_backend.main import app
+from hrm_backend.reporting.utils.metrics import KPI_METRIC_KEYS
 from hrm_backend.settings import AppSettings, get_settings
 from hrm_backend.vacancies.models.offer import Offer
 from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition
@@ -279,6 +281,52 @@ def _seed_kpi_sources(engine) -> None:
         session.commit()
 
 
+def _seed_automation_metric_events(engine) -> None:
+    """Insert one row per automation KPI event inside March 2026."""
+    with Session(engine) as session:
+        session.add_all(
+            [
+                AutomationMetricEvent(
+                    event_type="pipeline.transition_appended",
+                    trigger_event_id="aaaa1111-aaaa-4111-8111-aaaaaaaa1111",
+                    event_time=datetime(2026, 3, 6, 10, 5, tzinfo=UTC),
+                    outcome="success",
+                    total_hr_operations_count=1,
+                    automated_hr_operations_count=1,
+                    planned_action_count=1,
+                    succeeded_action_count=1,
+                    deduped_action_count=0,
+                    failed_action_count=0,
+                ),
+                AutomationMetricEvent(
+                    event_type="offer.status_changed",
+                    trigger_event_id="bbbb2222-bbbb-4222-8222-bbbbbbbb2222",
+                    event_time=datetime(2026, 3, 12, 9, 5, tzinfo=UTC),
+                    outcome="deduped",
+                    total_hr_operations_count=1,
+                    automated_hr_operations_count=1,
+                    planned_action_count=2,
+                    succeeded_action_count=0,
+                    deduped_action_count=2,
+                    failed_action_count=0,
+                ),
+                AutomationMetricEvent(
+                    event_type="onboarding.task_assigned",
+                    trigger_event_id="cccc3333-cccc-4333-8333-cccccccc3333",
+                    event_time=datetime(2026, 3, 18, 9, 5, tzinfo=UTC),
+                    outcome="failed",
+                    total_hr_operations_count=1,
+                    automated_hr_operations_count=0,
+                    planned_action_count=1,
+                    succeeded_action_count=0,
+                    deduped_action_count=0,
+                    failed_action_count=1,
+                ),
+            ]
+        )
+        session.commit()
+
+
 async def test_admin_can_rebuild_and_read_kpi_snapshots(
     configured_app,
     api_client: AsyncClient,
@@ -286,6 +334,7 @@ async def test_admin_can_rebuild_and_read_kpi_snapshots(
     """Verify admin can rebuild and read KPI snapshot rows."""
     _, _, engine = configured_app
     _seed_kpi_sources(engine)
+    _seed_automation_metric_events(engine)
 
     rebuild_response = await api_client.post(
         "/api/v1/reporting/kpi-snapshots/rebuild",
@@ -294,7 +343,12 @@ async def test_admin_can_rebuild_and_read_kpi_snapshots(
     assert rebuild_response.status_code == 200
     payload = rebuild_response.json()
     assert payload["period_month"] == "2026-03-01"
-    assert len(payload["metrics"]) == 8
+    assert len(payload["metrics"]) == len(KPI_METRIC_KEYS)
+    assert [item["metric_key"] for item in payload["metrics"]] == list(KPI_METRIC_KEYS)
+    metrics = {item["metric_key"]: item["metric_value"] for item in payload["metrics"]}
+    assert metrics["total_hr_operations_count"] == 3
+    assert metrics["automated_hr_operations_count"] == 2
+    assert metrics["automated_hr_operations_share_percent"] == 66
 
     read_response = await api_client.get(
         "/api/v1/reporting/kpi-snapshots",
@@ -302,7 +356,7 @@ async def test_admin_can_rebuild_and_read_kpi_snapshots(
     )
     assert read_response.status_code == 200
     read_payload = read_response.json()
-    assert len(read_payload["metrics"]) == 8
+    assert len(read_payload["metrics"]) == len(KPI_METRIC_KEYS)
     vacancy_metric = next(
         item for item in read_payload["metrics"] if item["metric_key"] == "vacancies_created_count"
     )
@@ -329,6 +383,7 @@ async def test_kpi_snapshot_read_does_not_fallback_to_live_aggregation(
     """Verify read API returns empty payload even when source data exists."""
     _, context_holder, engine = configured_app
     _seed_kpi_sources(engine)
+    _seed_automation_metric_events(engine)
     context_holder["context"] = AuthContext(
         subject_id=uuid4(),
         role="leader",
@@ -420,6 +475,7 @@ async def test_admin_can_export_kpi_snapshot_as_csv_and_is_audited(
     """Verify admin can export stored KPI snapshot as CSV attachment and audit is recorded."""
     _, _, engine = configured_app
     _seed_kpi_sources(engine)
+    _seed_automation_metric_events(engine)
 
     rebuild_response = await api_client.post(
         "/api/v1/reporting/kpi-snapshots/rebuild",
@@ -448,6 +504,10 @@ async def test_admin_can_export_kpi_snapshot_as_csv_and_is_audited(
         if row[metric_key_index] == "vacancies_created_count"
     )
     assert vacancy_row[metric_value_index] == "1"
+    automation_row = next(
+        row for row in rows[1:] if row[metric_key_index] == "automated_hr_operations_share_percent"
+    )
+    assert automation_row[metric_value_index] == "66"
 
     events = _load_audit_events(engine)
     assert any(
@@ -465,6 +525,7 @@ async def test_admin_can_export_kpi_snapshot_as_xlsx(
     """Verify KPI snapshot export supports XLSX attachment rendering."""
     _, _, engine = configured_app
     _seed_kpi_sources(engine)
+    _seed_automation_metric_events(engine)
 
     rebuild_response = await api_client.post(
         "/api/v1/reporting/kpi-snapshots/rebuild",
@@ -486,6 +547,8 @@ async def test_admin_can_export_kpi_snapshot_as_xlsx(
     assert values[0][0] == "period_month"
     assert values[1][0] == "2026-03-01"
     assert values[1][1] == "vacancies_created_count"
+    assert values[-1][1] == "automated_hr_operations_share_percent"
+    assert values[-1][2] == 66
 
 
 async def test_kpi_snapshot_export_allows_leader_reads(
@@ -495,6 +558,7 @@ async def test_kpi_snapshot_export_allows_leader_reads(
     """Verify leader can export stored KPI snapshots but cannot rebuild them."""
     _, context_holder, engine = configured_app
     _seed_kpi_sources(engine)
+    _seed_automation_metric_events(engine)
 
     rebuild_response = await api_client.post(
         "/api/v1/reporting/kpi-snapshots/rebuild",
@@ -516,6 +580,7 @@ async def test_kpi_snapshot_export_allows_leader_reads(
     )
     assert export_response.status_code == 200
     assert "vacancies_created_count" in export_response.text
+    assert "automated_hr_operations_share_percent" in export_response.text
 
 
 @pytest.mark.parametrize("role", ["hr", "manager", "employee", "accountant"])

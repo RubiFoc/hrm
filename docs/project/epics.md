@@ -1,8 +1,8 @@
 # Product Epics
 
 ## Last Updated
-- Date: 2026-03-11
-- Updated by: architect + business-analyst
+- Date: 2026-03-19
+- Updated by: architect + backend-engineer + business-analyst
 
 ## Planning Baseline
 - Jurisdictions: Belarus and Russia.
@@ -19,7 +19,7 @@
 - Production rollout is out of scope for the current stage and gated by `EPIC-13` completion.
 - KPI target for v1: share of automated HR operations = 70%.
 
-## Implementation Reality (2026-03-09)
+## Implementation Reality (2026-03-19)
 - `EPIC-03` backend scope is materially implemented for Phase 1 local baseline: public apply, CV upload, async parsing, RU/EN normalization, evidence traceability, and anonymous tracking by `parsing_job_id`.
 - `EPIC-03` backend scope now includes native PDF/DOCX extraction plus profession-agnostic
   structured CV enrichment for workplaces with held positions, education, normalized titles,
@@ -28,6 +28,9 @@
 - `EPIC-11` local baseline now includes candidate self-service, HR vacancy/pipeline workspace, RU/EN strings for critical flows, and browser smoke for login + public candidate apply.
 - The immediate next epic gap is the handoff from parsed candidate data into `EPIC-04` recruiter-facing scoring review.
 - `EPIC-05` interview scheduling baseline is now implemented in repo from `docs/project/interview-planning-pass.md`; remaining interview backlog starts after scheduling/registration and must not reopen auth, routing, or public token transport.
+- `EPIC-08` automation scope is materially implemented for the current slice: durable execution logs already exist, and `automation_metric_events` now provides the KPI event stream used to calculate automation share in the existing snapshot flow.
+- `EPIC-09` leader workspace is materially implemented in repo on `/leader`; the stored KPI snapshot flow now includes automation totals and share metrics without adding live aggregation.
+- `EPIC-10` KPI reporting scope now includes `total_hr_operations_count`, `automated_hr_operations_count`, and `automated_hr_operations_share_percent` from the durable automation metric stream.
 
 ## Epic Portfolio
 

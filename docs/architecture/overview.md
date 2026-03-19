@@ -1,7 +1,7 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-16
+- Date: 2026-03-19
 - Updated by: architect + backend-engineer
 
 ## System Context
@@ -48,12 +48,12 @@ flowchart LR
 | Match Scoring Domain | Async scoring jobs and explainable score artifacts keyed by vacancy, candidate, and active document | Scoring requests, parsed CV analysis, vacancy snapshot | UI-ready score/status payloads for shortlist review | ai-platform |
 | Employee Domain | Durable hire-conversion handoff, explicit employee profile bootstrap, onboarding workflows, employee self-service onboarding portal, and HR/manager onboarding progress visibility | Hire conversion handoff, profile/bootstrap/template/portal/dashboard requests | Employee handoff rows, employee profiles, onboarding runs/templates/tasks, employee-facing onboarding views, and staff/manager onboarding progress read models | hr-tech |
 | Automation Rule Engine | Deterministic evaluation of trigger events into planned actions (no side effects) | Trigger events + rule CRUD inputs | Planned actions (v1: `notification.emit`) | hr-ops |
-| HR Operations Domain | HR process automation and workflow execution (v1: best-effort `notification.emit`) | Rules, triggers, and planned actions | Automated notifications and future workflow actions | hr-ops |
+| HR Operations Domain | HR process automation, workflow execution, and durable KPI event capture (v1: best-effort `notification.emit`) | Rules, triggers, planned actions, and handled events | Automated notifications, execution logs, KPI metric events, and future workflow actions | hr-ops |
 | Finance Domain Adapter | Accounting-facing data exchange | Payroll/accounting requests | Exported records and statuses | finance-tech |
 | Notification Domain | Recipient-scoped in-app notifications and server-computed digests for manager/accountant workspaces | Vacancy ownership changes, onboarding assignment changes, protected notification reads | Dedupe-safe notification rows, unread/read state, digest counters, and embedded workspace notification blocks | platform |
 | AI Adapter | External model integration for CV analysis and match scoring | CV files, vacancy profiles, scoring prompts | Structured candidate insights and score responses | ai-platform |
 | Integration Layer | External connector abstraction | Internal events/commands | Google Calendar actions | platform |
-| Reporting and Audit | Monthly KPI snapshots with leader/admin reads plus admin-only audit evidence query API | Durable domain tables, audit events | KPI snapshots, audit logs, audit evidence API | data-platform |
+| Reporting and Audit | Monthly KPI snapshots with leader/admin reads plus admin-only audit evidence query API | Durable domain tables, automation metric events, audit events | KPI snapshots, automation share metrics, audit logs, audit evidence API | data-platform |
 
 ## Key Flows
 1. Candidate Screening Flow:
@@ -104,7 +104,8 @@ flowchart LR
    the same filtered row model is reused for paginated UI reads and `GET /api/v1/accounting/workspace/export?format=csv|xlsx` attachments, while
    `GET /api/v1/notifications*` adds unread accountant notifications plus digest counters.
 7. HR Automation Flow:
-   rule trigger -> workflow engine -> task creation/assignment -> status update and reporting.
+   rule trigger -> deterministic evaluator -> executor -> notification side effects ->
+   durable execution logs + automation metric events -> KPI snapshot rebuild.
 8. Public Candidate Apply Flow:
    anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> native PDF/DOCX extraction + persisted analysis artifacts -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
 9. Authentication Flow:
@@ -128,7 +129,8 @@ flowchart LR
    `POST /api/v1/notifications/{notification_id}/read` marks only that recipient row as read.
 14. KPI Snapshot Rebuild Flow:
    admin triggers explicit rebuild -> reporting service reads durable vacancy/pipeline/interview/offer/employee
-   tables for the requested calendar month -> KPI counts are computed server-side ->
+   tables plus automation metric events for the requested calendar month -> KPI counts and automation share
+   are computed server-side ->
    `kpi_snapshots` rows for the month are replaced atomically -> leader/admin read stored snapshot via
    `/api/v1/reporting/kpi-snapshots` (no live aggregation and no scheduler).
 
@@ -187,8 +189,12 @@ flowchart LR
   vacancy/task reads without a scheduler or outbound delivery table in this slice.
 - KPI snapshot artifacts:
   `kpi_snapshots` rows keyed by `period_month + metric_key`, including aggregated `metric_value`
-  and `generated_at` timestamps; rows are rebuilt explicitly from durable domain tables and are
-  never computed on read paths in v1.
+  and `generated_at` timestamps; rows are rebuilt explicitly from durable domain tables and
+  automation metric events and are never computed on read paths in v1.
+- Automation metric artifacts:
+  `automation_metric_events` rows keyed by `event_type + trigger_event_id`, including `event_time`,
+  `outcome`, total and automated HR operation counts, and planned/succeeded/deduped/failed action
+  counters used for monthly KPI rebuilds.
 - Accountant workspace export artifacts:
   the finance adapter derives accountant-visible rows directly from `employee_profiles`,
   `onboarding_runs`, and `onboarding_tasks`; visibility stays fail-closed on accountant
@@ -233,6 +239,10 @@ flowchart LR
   `/api/v1/notifications*`, persists deduped `notifications` rows, computes digests on demand, and
   is emitted only from existing vacancy ownership and onboarding task-assignment seams without
   adding outbound channels, schedulers, or a separate event bus in this slice.
+- Implemented automation boundary:
+  `hrm_backend/automation` now owns deterministic rule evaluation, best-effort notification
+  execution, durable execution logs, and durable KPI metric events on the same existing domain
+  seams, without new routes or a separate transport.
 - Environment baseline: Docker + Docker Compose for deterministic local/dev and CI-aligned stack startup.
 - Compose baseline services: `frontend`, `backend`, `backend-worker`, `postgres`, `postgres-init`, `backend-migrate`, `redis`, `minio`, `minio-init`.
 - Compose bootstrap baseline: `postgres-init`, `backend-migrate`, and `minio-init` are one-shot prerequisites before steady-state services are considered ready.

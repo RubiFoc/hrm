@@ -11,6 +11,9 @@ KPI_METRIC_KEYS: tuple[str, ...] = (
     "hires_count",
     "onboarding_started_count",
     "onboarding_tasks_completed_count",
+    "total_hr_operations_count",
+    "automated_hr_operations_count",
+    "automated_hr_operations_share_percent",
 )
 KPI_METRIC_KEY_SET = frozenset(KPI_METRIC_KEYS)
 

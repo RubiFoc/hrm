@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from hrm_backend.auth.schemas.token_claims import AuthContext
+from hrm_backend.automation.models.metric_event import AutomationMetricEvent
 from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.core.models.base import Base
 from hrm_backend.employee.models.hire_conversion import HireConversion
@@ -247,6 +248,51 @@ def _seed_kpi_sources(session: Session) -> None:
     session.commit()
 
 
+def _seed_automation_metric_events(session: Session) -> None:
+    """Insert one row per automation KPI event inside March 2026."""
+    session.add_all(
+        [
+            AutomationMetricEvent(
+                event_type="pipeline.transition_appended",
+                trigger_event_id="aaaa1111-aaaa-4111-8111-aaaaaaaa1111",
+                event_time=datetime(2026, 3, 6, 10, 5, tzinfo=UTC),
+                outcome="success",
+                total_hr_operations_count=1,
+                automated_hr_operations_count=1,
+                planned_action_count=1,
+                succeeded_action_count=1,
+                deduped_action_count=0,
+                failed_action_count=0,
+            ),
+            AutomationMetricEvent(
+                event_type="offer.status_changed",
+                trigger_event_id="bbbb2222-bbbb-4222-8222-bbbbbbbb2222",
+                event_time=datetime(2026, 3, 12, 9, 5, tzinfo=UTC),
+                outcome="deduped",
+                total_hr_operations_count=1,
+                automated_hr_operations_count=1,
+                planned_action_count=2,
+                succeeded_action_count=0,
+                deduped_action_count=2,
+                failed_action_count=0,
+            ),
+            AutomationMetricEvent(
+                event_type="onboarding.task_assigned",
+                trigger_event_id="cccc3333-cccc-4333-8333-cccccccc3333",
+                event_time=datetime(2026, 3, 18, 9, 5, tzinfo=UTC),
+                outcome="failed",
+                total_hr_operations_count=1,
+                automated_hr_operations_count=0,
+                planned_action_count=1,
+                succeeded_action_count=0,
+                deduped_action_count=0,
+                failed_action_count=1,
+            ),
+        ]
+    )
+    session.commit()
+
+
 def test_kpi_snapshot_rebuild_aggregates_all_metrics() -> None:
     """Verify KPI snapshot rebuild aggregates counts from all source domains."""
     engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
@@ -255,6 +301,7 @@ def test_kpi_snapshot_rebuild_aggregates_all_metrics() -> None:
 
     with Session(engine) as session:
         _seed_kpi_sources(session)
+        _seed_automation_metric_events(session)
         service = _build_service(session, audit_service)
         response = service.rebuild_monthly_snapshot(
             period_month=date(2026, 3, 1),
@@ -271,6 +318,9 @@ def test_kpi_snapshot_rebuild_aggregates_all_metrics() -> None:
             "hires_count": 1,
             "onboarding_started_count": 1,
             "onboarding_tasks_completed_count": 1,
+            "total_hr_operations_count": 3,
+            "automated_hr_operations_count": 2,
+            "automated_hr_operations_share_percent": 66,
         }
 
 
@@ -300,6 +350,7 @@ def test_kpi_snapshot_rebuild_is_idempotent_and_replaces_month() -> None:
 
     with Session(engine) as session:
         _seed_kpi_sources(session)
+        _seed_automation_metric_events(session)
         service = _build_service(session, audit_service)
         first = service.rebuild_monthly_snapshot(
             period_month=date(2026, 3, 1),
@@ -339,6 +390,12 @@ def test_kpi_snapshot_rebuild_is_idempotent_and_replaces_month() -> None:
             item for item in third.metrics if item.metric_key == "vacancies_created_count"
         )
         assert vacancy_metric.metric_value == 2
+        automation_share_metric = next(
+            item
+            for item in third.metrics
+            if item.metric_key == "automated_hr_operations_share_percent"
+        )
+        assert automation_share_metric.metric_value == 66
 
         snapshot_rows = (
             session.query(KpiSnapshot)

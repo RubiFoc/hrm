@@ -1,7 +1,7 @@
 # Frontend Requirements (React.js)
 
 ## Last Updated
-- Date: 2026-03-13
+- Date: 2026-03-19
 - Updated by: architect + backend-engineer + frontend-engineer
 
 ## Fixed Technical Requirement
@@ -251,7 +251,7 @@
   - localized title/subtitle;
   - month selector (`period_month` filter);
   - selected month resolves to the latest available stored snapshot by probing backwards from the requested month (bounded lookback, no new list endpoint) when the requested month has no snapshot rows;
-  - operational overview summary cards for the known KPI key set;
+  - operational overview summary cards for the known KPI key set, including automation totals and share metrics;
   - read-only metrics table (metric name, value, generated at);
   - `Export CSV` and `Export Excel` actions with binary download helper;
   - localized loading, empty, and `401/403/422/generic` error states.
