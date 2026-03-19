@@ -1,7 +1,7 @@
 # GitHub Workflow and Branch Protection
 
 ## Last Updated
-- Date: 2026-03-13
+- Date: 2026-03-19
 - Updated by: coordinator + backend-engineer
 
 ## Branching Model
@@ -16,8 +16,11 @@
 - Current repository mode: solo delivery (`0` required approving reviews).
 - Team-target policy (when multiple maintainers are active): minimum 2 reviewers (tech owner + domain owner).
 - Required CI checks: `docs-check`, `backend`, `frontend`, `browser-smoke`.
+  The job names stay stable for branch protection, but the backend/frontend/browser jobs are
+  path-aware and may skip unrelated scopes or narrow test targets based on changed files.
 - Squash merge by default to keep history clean.
-- CI uses dependency caches (uv + npm) keyed on lockfiles to reduce runtime without changing test scope.
+- CI uses dependency caches (uv + npm) keyed on lockfiles and change-aware selectors in
+  `scripts/ci/select_ci_modes.py` to reduce runtime without changing the required check names.
 
 ## Protected Branch Setup (GitHub)
 - Protect `main` branch.
