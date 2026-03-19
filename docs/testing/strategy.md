@@ -109,11 +109,14 @@ apps/backend/tests/
 - Use this check set when the release-gate documentation or compliance mappings change:
   - `./scripts/check-docs-structure.sh`
   - `git diff --check`
-  - `rg -n "CTRL-BY-03|CTRL-RU-02|CTRL-RU-04|CTRL-RU-05|CTRL-RU-06" docs/project/legal-controls-matrix.md docs/project/evidence-registry.md docs/operations/release-checklist.md docs/operations/runbook.md docs/project/tasks.md`
+  - `rg -n "CTRL-BY-03|CTRL-RU-02|CTRL-RU-04|CTRL-RU-05|CTRL-RU-06" docs/project/legal-controls-matrix.md docs/project/evidence-registry.md docs/project/production-legal-evidence-package.md docs/operations/release-checklist.md docs/operations/runbook.md docs/project/tasks.md`
+  - `rg -n "7 calendar days|release candidate|legal sign-off|security sign-off" docs/project/production-legal-evidence-package.md docs/operations/release-checklist.md docs/operations/runbook.md`
 - Acceptance criteria for the check set:
   - the release checklist names the pre-prod and production gate thresholds;
+  - the package manifest separates repo-backed evidence, non-repo attachments, current blockers, and `verified` exit criteria;
   - the checklist names owners, evidence IDs, verification sources, sign-off prerequisites, and release blockers for all critical controls;
   - `CTRL-RU-04` and `CTRL-RU-06` remain explicit blockers until real evidence artifacts exist;
+  - evidence freshness and sign-off workflow stay aligned between the package manifest, release checklist, and runbook;
   - no control is upgraded from `planned`/`in-progress` to `implemented` or `verified` without a matching evidence-row update.
 
 ## Phase 1 Baseline Merge Gate

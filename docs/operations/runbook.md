@@ -1,8 +1,8 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-16
-- Updated by: devops-engineer + backend-engineer + architect
+- Date: 2026-03-19
+- Updated by: coordinator + devops-engineer + architect
 
 ## Local Environment (Docker Compose)
 ### Prerequisites
@@ -360,6 +360,8 @@ Runtime auth/browser integration settings:
 This section defines provisional operational controls until final legal/security sign-off.
 
 EPIC-13 release gating and sign-off requirements live in `docs/operations/release-checklist.md`.
+The canonical production evidence manifest lives in `docs/project/production-legal-evidence-package.md`.
+Assumption: release-specific evidence outputs and legal/security approvals are attached to the release ticket or PR, while the repo keeps the manifest and blocker logic.
 
 ### Data Retention Policy (Provisional)
 
@@ -397,9 +399,16 @@ EPIC-13 release gating and sign-off requirements live in `docs/operations/releas
 ### Release Gate Policy
 - Dev and test deployments are allowed with provisional controls, but they do not waive EPIC-13 release gating.
 - `docs/operations/release-checklist.md` is the canonical pre-prod and production gate.
+- `docs/project/production-legal-evidence-package.md` is the canonical package manifest for repo-backed evidence, external attachments, freshness rules, and sign-off sequencing.
 - Pre-prod promotion is blocked if any critical control in `docs/project/legal-controls-matrix.md` remains `planned` or `in-progress`.
 - Production release is blocked unless every critical control is `verified` and legal/security sign-off records the refreshed evidence IDs.
 - The current hard blockers are the gap rows for `CTRL-RU-04` and `CTRL-RU-06`; release cannot proceed until those artifacts exist as real evidence, not placeholders.
+
+### Production Sign-Off Handling
+1. Freeze the release candidate commit/tag before collecting approval evidence.
+2. Refresh the repo-backed evidence rows required by the critical controls in scope and attach the outputs outside the repo.
+3. Attach the non-repo approvals and gap-closure artifacts required by `docs/project/production-legal-evidence-package.md`.
+4. Treat any stale attachment, changed release candidate, or unresolved gap row as a release blocker.
 
 ## Incident Triage
 1. Confirm impact and affected user segment.

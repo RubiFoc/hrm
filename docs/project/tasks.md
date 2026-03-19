@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-19
-- Updated by: coordinator + business-analyst + backend-engineer
+- Updated by: coordinator + business-analyst + architect
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -61,6 +61,7 @@
 | TASK-10-04 | done/closed | GitHub issue #99 closed; merged in `main` via PR #124 (`7a5ca87`) with controlled audit evidence export (`/api/v1/audit/events/export`) in CSV/JSONL/XLSX and KPI snapshot export (`/api/v1/reporting/kpi-snapshots/export`) attachments plus updated docs/diagrams and regenerated OpenAPI/frontend types |
 | ADMIN-05 | done/closed | GitHub issue #87 closed; merged in `main` via PR #135 (`3eca7a1`) with a frontend-first admin observability dashboard on `/admin/observability` that reuses `/health`, audit preview, CV parsing status, and match-score status contracts. |
 | TASK-13-03 | done/closed | Repo-backed release-gate compliance checklist now makes EPIC-13 pre-prod and production sign-off explicit, with current critical controls, evidence IDs, verification commands, legal/security preconditions, and blocker states captured in the docs set. |
+| TASK-13-04 | done/closed | Repo-backed production legal evidence package now defines sign-off workflow, required attachments, evidence freshness rules, blocker handling, and `verified` exit criteria for critical controls without adding runtime/API changes. |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-12 Delivery Control Notes
@@ -86,6 +87,7 @@
 - Scoring explainability (`TASK-04-05`) and the additive quality harness (`TASK-04-06`) are now implemented in repo without changing runtime routes, lifecycle states, or public scoring contracts.
 - The compliance follow-on slices (`TASK-13-01/02`) are now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
 - `TASK-13-03` is now implemented in repo as a docs/process-only release gate; no runtime/API/routing changes were introduced.
+- `TASK-13-04` is now implemented in repo as a docs/process-only production sign-off slice: the package manifest makes repo-backed evidence, non-repo attachments, blocker handling, and `verified` exit criteria explicit without adding runtime/API changes.
 - The dedicated planning pass for `TASK-11-08` is implemented in repo as one backend+frontend interview slice without reopening auth, CORS, or the public candidate transport model.
 - Interview planning and Google Calendar sync baseline (`TASK-05-01/02`) are now implemented in repo; remaining interview backlog starts after the already-landed scheduling/registration and fairness slices.
 - The structured interview feedback and fairness gate slice (`TASK-05-03/04`) is now implemented in repo on top of the scheduling baseline, without reopening auth, CORS, route topology, or candidate transport.
@@ -132,19 +134,18 @@
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `2` tasks.
+- Normalized open backlog count: `1` task.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
 - Repo backlog state now excludes `TASK-10-04`, and GitHub issue `#99` is closed following PR #124 (`7a5ca87`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `2`-task count.
+- Repo backlog state now excludes `TASK-13-04`; the repo source of truth is the production legal evidence package and aligned EPIC-13 docs set.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `1`-task count.
 - Current open backlog by delivery wave:
-  - Wave 2 platform/ops/reporting: `TASK-13-04`
   - Wave 3 phase-2 workspaces: `TASK-11-12`
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| 1 | TASK-13-04 | Evidence package and sign-off workflow complete the compliance gate. |
-| 2 | TASK-11-12 | Phase-2 role workspaces bundle the remaining user-facing surfaces. |
+| 1 | TASK-11-12 | Phase-2 role workspaces bundle the remaining user-facing surfaces. |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 

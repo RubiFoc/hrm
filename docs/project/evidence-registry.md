@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-19
-- Updated by: backend-engineer + frontend-engineer
+- Updated by: coordinator + business-analyst + architect
 
 ## Registry Model
 - `Evidence ID`: stable identifier for cross-references from `legal-controls-matrix.md`.
@@ -12,6 +12,7 @@
 - `Verification Source`: command or procedure that proves the artifact is current.
 - `Update Trigger`: concrete change that requires the row to be refreshed.
 - EPIC-13 release checks must treat any `planned` or `in-progress` critical control as a hard blocker; do not substitute a missing artifact with a placeholder evidence row.
+- `docs/project/production-legal-evidence-package.md` is the canonical package manifest that consumes these evidence rows for production sign-off.
 
 ## Evidence Entries
 
@@ -35,8 +36,17 @@
 | CTRL-RU-04 | Infra/data-residency ADR and deployment evidence for RU localization | architect + devops | Before storing production RU citizen data; blocks EPIC-13 pre-prod and production release until the gap is replaced by real evidence |
 | CTRL-RU-06 | ISPDn class checklist and attestation pack | security + business-analyst | Before first production release; blocks EPIC-13 pre-prod and production release until the pack exists as a real evidence artifact |
 
+## Production Package Scope (TASK-13-04)
+- Canonical package manifest: `docs/project/production-legal-evidence-package.md`.
+- Repo-backed critical-control evidence available today:
+  - `CTRL-BY-03`: `EVID-001`, `EVID-004`, `EVID-006`
+  - `CTRL-RU-02`: `EVID-001`, `EVID-005`, `EVID-007`
+  - `CTRL-RU-05`: `EVID-001`, `EVID-004`
+- Non-repo approvals and missing-gap attachments must stay outside this registry until they exist as real artifacts; do not create synthetic evidence rows for `CTRL-RU-04` or `CTRL-RU-06`.
+
 ## Usage Rules
 - Use this registry together with `docs/project/legal-controls-matrix.md`; do not treat it as a substitute for legal review.
 - When a verification command changes, update the matching `Evidence ID` row in the same change.
 - When an artifact path is removed or renamed, either replace the evidence with a new real artifact or move the control back to a gap state.
 - The EPIC-13 release checklist must reference the current gap rows for `CTRL-RU-04` and `CTRL-RU-06`; these rows are blockers, not waivers.
+- The production evidence package must reference this registry for repo-backed inputs and `docs/project/production-legal-evidence-package.md` for non-repo attachments, freshness rules, and blocker handling.
