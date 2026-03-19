@@ -39,7 +39,8 @@
 | TASK-04-06 | done/closed | GitHub issue #92 closed; merged in `main` via PR #111 (`eedcc0f`) with additive scoring quality harness tooling under `hrm_backend.scoring.evaluation`, deterministic fixture-mode `precision`/`recall` + `NDCG`/`MRR` + paraphrase robustness reporting, optional Ollama mode reuse, and backend unit/integration coverage |
 | TASK-04-04 | done/closed | Merged in `main` via PR #109 (`c60b48b`) with additive low-confidence manual-review metadata, configurable `SCORING_LOW_CONFIDENCE_THRESHOLD`, and localized shortlist warning UX that preserves score details |
 | TASK-11-07 | implemented/local-scoring-slice | `/` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
-| TASK-11-10 | implemented/local-observability-slice | Frontend Sentry now tags `/`, `/candidate`, `/login`, `/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, and `/admin/audit`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
+| TASK-11-10 | implemented/local-observability-slice | Frontend Sentry now tags `/`, `/employee`, `/leader`, `/candidate`, `/login`, `/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, `/admin/audit`, and `/admin/observability`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
+| TASK-11-12 | implemented/local-phase-2-role-workspaces-slice | Repo-backed manager/accountant workspaces on `/`, employee workspace on `/employee`, and leader workspace on `/leader` are implemented with route guards, typed OpenAPI clients, backend integration coverage, frontend router/page tests, and canonical Sentry route tags; the umbrella backlog item is now normalized closed. |
 | TASK-13-01/02 | implemented/local-compliance-slice | Legal-controls matrix now maps article-level obligations to current repo-backed controls and evidence registry entries with owners, verification sources, and update triggers |
 | TASK-05-01/02 | implemented/local-interview-slice | Interview slot planning, participant assignment, and Google Calendar sync/reconciliation baseline are implemented in repo on the existing route topology |
 | TASK-11-08 | implemented/local-interview-slice | Interview scheduling and candidate registration are implemented against `docs/project/interview-planning-pass.md`, with HR controls on `/`, public token registration on `/candidate`, and free-mode Google Calendar sync via service account + shared interviewer calendars |
@@ -70,7 +71,7 @@
 - Baseline compose acceptance remains unchanged after `TASK-12-02`: `./scripts/smoke-compose.sh` still verifies login + public apply only and does not require compose-local Ollama.
 - Mandatory post-merge closeout for `TASK-12-02` is complete: GitHub issue `#85` closed automatically from PR #105 (`a67bb8c`), and this backlog snapshot is synchronized to the merged `main` state.
 - Security foundation work (`TASK-01-01/02/03/04/05`) is materially implemented in repo and supporting docs; this backlog normalization removes it from the effective open count.
-- Frontend foundation work (`TASK-11-01/02/03/04`) is materially implemented in repo and supporting tests; remaining frontend backlog is follow-on admin/reporting and phase-2 role UX.
+- Frontend foundation work (`TASK-11-01/02/03/04`) is materially implemented in repo and supporting tests; remaining frontend backlog is follow-on admin/reporting.
 - GitHub issue sync is normalized to the current backlog state: stale implemented-task issues were closed, and missing normalized-open tasks were added as issues #85-#100.
 - Backend implementation is ahead of the original planning docs for `TASK-03-01/02/03/05/06` and `TASK-02-01/02/03`; these items are no longer backlog-only work.
 - `TASK-03-07` is now implemented in repo: backend parsing extracts text natively from PDF and DOCX before RU/EN normalization and evidence mapping, while current analysis/scoring contracts stay compatible.
@@ -105,7 +106,8 @@
 - `TASK-09-04` post-merge closeout is complete: GitHub issue `#97` is closed, PR #116 (`966f3a8`) is merged in `main`, and this backlog snapshot is synchronized to the merged state while keeping the notifications slice additive, fail-closed, and in-app only.
 - `TASK-10-04` is now implemented as a minimal export package: admin-only audit evidence export (`GET /api/v1/audit/events/export`) in CSV/JSONL/XLSX and leader/admin KPI snapshot export (`GET /api/v1/reporting/kpi-snapshots/export`) with business audit events written after content assembly to avoid self-inclusion.
 - `TASK-10-04` post-merge closeout is complete: GitHub issue `#99` is closed, PR #124 (`7a5ca87`) is merged in `main`, and this backlog snapshot is synchronized to the merged state.
-- The remaining follow-on work after the onboarding-dashboard and manager-workspace slices is limited to the other phase-2 role workspaces, notifications, reporting, and admin/ops backlog, not baseline scheduling, registration, feedback transport, or candidate-facing offer decisions.
+- `TASK-11-12` is now implemented in repo as the phase-2 role workspace bundle: manager/accountant workspaces are present on `/`, employee workspace is on `/employee`, and leader workspace is on `/leader`, with route guards, typed OpenAPI clients, backend integration coverage, frontend router/page tests, and canonical Sentry route tags.
+- The remaining follow-on work after the onboarding-dashboard and manager-workspace slices is limited to notifications, reporting, and admin/ops backlog, not baseline scheduling, registration, feedback transport, or candidate-facing offer decisions.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
 ## Active Queue After Current Slice
@@ -134,18 +136,14 @@
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `1` task.
+- Normalized open backlog count: `0` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
 - Repo backlog state now excludes `TASK-10-04`, and GitHub issue `#99` is closed following PR #124 (`7a5ca87`).
 - Repo backlog state now excludes `TASK-13-04`; the repo source of truth is the production legal evidence package and aligned EPIC-13 docs set.
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `1`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `0`-task count.
 - Current open backlog by delivery wave:
-  - Wave 3 phase-2 workspaces: `TASK-11-12`
-
-| Order | Task ID | Why Now |
-| --- | --- | --- |
-| 1 | TASK-11-12 | Phase-2 role workspaces bundle the remaining user-facing surfaces. |
+  - none; `TASK-11-12` is now normalized closed and retained below for lineage.
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 
