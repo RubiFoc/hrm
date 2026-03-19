@@ -63,6 +63,27 @@ apps/backend/tests/
 - Frontend typed contract generation must run from frozen spec:
   - `npm --prefix apps/frontend run api:types:generate`
 
+## Selective CI Policy
+- GitHub Actions uses `scripts/ci/select_ci_modes.py` to classify changed files before the
+  expensive backend, frontend, and browser smoke jobs start.
+- Required checks remain the same names for branch protection:
+  `docs-check`, `backend`, `frontend`, `browser-smoke`.
+- Backend job policy:
+  - `freeze_only` means only the OpenAPI freeze check should run.
+  - domain modes map to targeted pytest trees for the changed backend package.
+  - cross-cutting runtime/bootstrap changes fall back to `full`.
+- Frontend job policy:
+  - `types_only` means the generated OpenAPI type check should run without Vitest.
+  - `contract` changes keep `api:types:check` enabled even when page tests are also selected.
+  - domain modes map to targeted Vitest files instead of the whole frontend suite.
+- Browser smoke policy:
+  - the compose/browser smoke job only runs for auth, admin, candidate apply, CI-infra, and
+    compose/runtime changes that actually touch the flows it verifies.
+- When a task touches only one domain, prefer the same targeted verification locally instead of the
+  entire suite; reserve the full-suite commands for cross-cutting changes.
+- Selector regression coverage:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/test_ci_select_modes.py`
+
 ## Automation Rule Engine Verification (TASK-08-01/08-02/08-03/08-04)
 - Evaluator + executor + metric writer unit coverage:
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/automation`

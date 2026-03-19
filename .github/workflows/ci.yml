@@ -6,6 +6,10 @@ on:
   push:
     branches: [main]
 
+env:
+  CI_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+  CI_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   docs-check:
     runs-on: ubuntu-latest
@@ -22,11 +26,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect backend scope
+        id: backend_scope
+        run: |
+          modes="$(python3 scripts/ci/select_ci_modes.py backend --base-sha "${CI_BASE_SHA}" --head-sha "${CI_HEAD_SHA}")"
+          echo "modes=${modes}" >> "$GITHUB_OUTPUT"
+      - name: Skip backend job
+        if: steps.backend_scope.outputs.modes == 'skip'
+        run: echo "No backend-relevant files changed; skipping backend job."
       - name: Setup uv
+        if: steps.backend_scope.outputs.modes != 'skip'
         uses: astral-sh/setup-uv@v5
       - name: Setup Python
+        if: steps.backend_scope.outputs.modes != 'skip'
         run: uv python install 3.12
       - name: Cache uv
+        if: steps.backend_scope.outputs.modes != 'skip'
         uses: actions/cache@v4
         with:
           path: ~/.cache/uv
@@ -34,26 +51,154 @@ jobs:
           restore-keys: |
             uv-${{ runner.os }}-
       - name: Sync backend dependencies
+        if: steps.backend_scope.outputs.modes != 'skip'
         run: uv sync --project apps/backend --frozen || uv sync --project apps/backend
+      - name: Check OpenAPI freeze
+        if: steps.backend_scope.outputs.modes != 'skip'
+        run: ./scripts/check-openapi-freeze.sh
       - name: Lint backend
+        if: steps.backend_scope.outputs.modes != 'skip' && steps.backend_scope.outputs.modes != 'freeze_only'
         run: uv run --project apps/backend ruff check .
       - name: Test backend
-        run: uv run --project apps/backend pytest -q
-      - name: Check OpenAPI freeze
-        run: ./scripts/check-openapi-freeze.sh
+        if: steps.backend_scope.outputs.modes != 'skip' && steps.backend_scope.outputs.modes != 'freeze_only'
+        env:
+          BACKEND_CI_MODES: ${{ steps.backend_scope.outputs.modes }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import subprocess
+          import sys
+
+          modes = [mode for mode in os.environ["BACKEND_CI_MODES"].split(",") if mode]
+          if "full" in modes:
+              command = ["uv", "run", "--project", "apps/backend", "pytest", "-q"]
+          else:
+              targets_by_mode = {
+                  "core": [
+                      "apps/backend/tests/unit/core",
+                      "apps/backend/tests/unit/rbac",
+                      "apps/backend/tests/unit/test_cors.py",
+                      "apps/backend/tests/integration/auth/test_auth_stack.py",
+                      "apps/backend/tests/integration/security/test_audit_enforcement.py",
+                  ],
+                  "rbac": ["apps/backend/tests/unit/rbac"],
+                  "security": [
+                      "apps/backend/tests/unit/rbac",
+                      "apps/backend/tests/unit/test_cors.py",
+                      "apps/backend/tests/integration/auth/test_auth_stack.py",
+                      "apps/backend/tests/integration/security/test_audit_enforcement.py",
+                  ],
+                  "auth": [
+                      "apps/backend/tests/unit/auth",
+                      "apps/backend/tests/unit/rbac",
+                      "apps/backend/tests/unit/test_cors.py",
+                      "apps/backend/tests/integration/auth",
+                      "apps/backend/tests/integration/security/test_audit_enforcement.py",
+                  ],
+                  "admin": [
+                      "apps/backend/tests/unit/admin",
+                      "apps/backend/tests/unit/rbac",
+                      "apps/backend/tests/integration/admin",
+                      "apps/backend/tests/integration/security/test_audit_enforcement.py",
+                  ],
+                  "audit": [
+                      "apps/backend/tests/unit/audit",
+                      "apps/backend/tests/integration/audit",
+                  ],
+                  "automation": [
+                      "apps/backend/tests/unit/automation",
+                      "apps/backend/tests/integration/automation",
+                      "apps/backend/tests/integration/employee/test_onboarding_task_api.py",
+                      "apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py",
+                      "apps/backend/tests/unit/reporting/test_kpi_snapshot_service.py",
+                      "apps/backend/tests/integration/reporting/test_kpi_snapshot_api.py",
+                  ],
+                  "reporting": [
+                      "apps/backend/tests/unit/reporting",
+                      "apps/backend/tests/integration/reporting",
+                  ],
+                  "candidates": [
+                      "apps/backend/tests/unit/candidates",
+                      "apps/backend/tests/integration/candidates",
+                      "apps/backend/tests/integration/vacancies/test_public_apply_hardening.py",
+                  ],
+                  "vacancies": [
+                      "apps/backend/tests/unit/vacancies",
+                      "apps/backend/tests/integration/vacancies",
+                  ],
+                  "interviews": [
+                      "apps/backend/tests/unit/interviews",
+                      "apps/backend/tests/integration/interviews",
+                      "apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py",
+                  ],
+                  "employee": [
+                      "apps/backend/tests/unit/employee",
+                      "apps/backend/tests/integration/employee",
+                  ],
+                  "finance": [
+                      "apps/backend/tests/unit/finance",
+                      "apps/backend/tests/integration/finance",
+                  ],
+                  "notifications": [
+                      "apps/backend/tests/unit/notifications",
+                      "apps/backend/tests/integration/notifications",
+                  ],
+                  "scoring": [
+                      "apps/backend/tests/unit/scoring",
+                      "apps/backend/tests/integration/scoring",
+                  ],
+                  "platform": ["apps/backend/tests/unit/platform"],
+                }
+
+              targets: list[str] = []
+              for mode in modes:
+                  targets.extend(targets_by_mode.get(mode, []))
+
+              deduped_targets = list(dict.fromkeys(targets))
+              if not deduped_targets:
+                  print(
+                      "No targeted backend pytest paths matched CI modes; falling back to full suite.",
+                      file=sys.stderr,
+                  )
+                  command = ["uv", "run", "--project", "apps/backend", "pytest", "-q"]
+              else:
+                  command = [
+                      "uv",
+                      "run",
+                      "--project",
+                      "apps/backend",
+                      "pytest",
+                      "-q",
+                      *deduped_targets,
+                  ]
+
+          raise SystemExit(subprocess.call(command))
+          PY
 
   frontend:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect frontend scope
+        id: frontend_scope
+        run: |
+          modes="$(python3 scripts/ci/select_ci_modes.py frontend --base-sha "${CI_BASE_SHA}" --head-sha "${CI_HEAD_SHA}")"
+          echo "modes=${modes}" >> "$GITHUB_OUTPUT"
+      - name: Skip frontend job
+        if: steps.frontend_scope.outputs.modes == 'skip'
+        run: echo "No frontend-relevant files changed; skipping frontend job."
       - name: Setup Node
+        if: steps.frontend_scope.outputs.modes != 'skip'
         uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
           cache-dependency-path: apps/frontend/package-lock.json
       - name: Install frontend dependencies
+        if: steps.frontend_scope.outputs.modes != 'skip'
         run: |
           if [ -f apps/frontend/package-lock.json ]; then
             npm --prefix apps/frontend ci
@@ -61,11 +206,122 @@ jobs:
             npm --prefix apps/frontend install
           fi
       - name: Check frontend API types
+        if: steps.frontend_scope.outputs.modes == 'types_only' || contains(steps.frontend_scope.outputs.modes, 'contract')
         run: npm --prefix apps/frontend run api:types:check
       - name: Lint frontend
+        if: steps.frontend_scope.outputs.modes != 'skip' && steps.frontend_scope.outputs.modes != 'types_only'
         run: npm --prefix apps/frontend run lint
       - name: Test frontend
-        run: npm --prefix apps/frontend run test -- --run
+        if: steps.frontend_scope.outputs.modes != 'skip' && steps.frontend_scope.outputs.modes != 'types_only'
+        env:
+          FRONTEND_CI_MODES: ${{ steps.frontend_scope.outputs.modes }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import subprocess
+          import sys
+
+          modes = [mode for mode in os.environ["FRONTEND_CI_MODES"].split(",") if mode]
+          if "full" in modes:
+              command = ["npm", "--prefix", "apps/frontend", "run", "test", "--", "--run"]
+          else:
+              targets_by_mode = {
+                  "all_pages": [
+                      "apps/frontend/src/App.test.tsx",
+                      "apps/frontend/src/app/auth/session.test.ts",
+                      "apps/frontend/src/app/i18n.ts",
+                      "apps/frontend/src/app/observability/AppErrorBoundary.test.tsx",
+                      "apps/frontend/src/app/router.admin.test.tsx",
+                      "apps/frontend/src/app/router.auth.test.tsx",
+                      "apps/frontend/src/app/router.employee.test.tsx",
+                      "apps/frontend/src/app/router.leader.test.tsx",
+                      "apps/frontend/src/app/router.observability.test.tsx",
+                      "apps/frontend/src/components/NotificationsPanel.test.tsx",
+                  ],
+                  "api": [
+                      "apps/frontend/src/api/auth.test.ts",
+                      "apps/frontend/src/api/httpClient.test.ts",
+                      "apps/frontend/src/api/typedClient.test.ts",
+                      "apps/frontend/src/app/auth/session.test.ts",
+                  ],
+                  "login": [
+                      "apps/frontend/src/app/router.auth.test.tsx",
+                      "apps/frontend/src/pages/LoginPage.test.tsx",
+                  ],
+                  "candidate": [
+                      "apps/frontend/src/app/router.observability.test.tsx",
+                      "apps/frontend/src/pages/CandidatePage.test.tsx",
+                  ],
+                  "hr": [
+                      "apps/frontend/src/app/router.observability.test.tsx",
+                      "apps/frontend/src/pages/HrDashboardPage.test.tsx",
+                  ],
+                  "leader": [
+                      "apps/frontend/src/app/router.auth.test.tsx",
+                      "apps/frontend/src/app/router.leader.test.tsx",
+                      "apps/frontend/src/app/router.observability.test.tsx",
+                      "apps/frontend/src/pages/LeaderWorkspacePage.test.tsx",
+                  ],
+                  "manager": [
+                      "apps/frontend/src/components/NotificationsPanel.test.tsx",
+                      "apps/frontend/src/app/router.auth.test.tsx",
+                      "apps/frontend/src/app/router.observability.test.tsx",
+                      "apps/frontend/src/pages/ManagerWorkspacePage.test.tsx",
+                  ],
+                  "employee": [
+                      "apps/frontend/src/app/router.observability.test.tsx",
+                      "apps/frontend/src/app/router.employee.test.tsx",
+                      "apps/frontend/src/pages/EmployeeOnboardingPage.test.tsx",
+                  ],
+                  "accountant": [
+                      "apps/frontend/src/components/NotificationsPanel.test.tsx",
+                      "apps/frontend/src/app/router.auth.test.tsx",
+                      "apps/frontend/src/app/router.observability.test.tsx",
+                      "apps/frontend/src/pages/AccountantWorkspacePage.test.tsx",
+                  ],
+                  "admin": [
+                      "apps/frontend/src/app/router.admin.test.tsx",
+                      "apps/frontend/src/app/router.observability.test.tsx",
+                      "apps/frontend/src/pages/AdminEmployeeKeysManagementPage.test.tsx",
+                      "apps/frontend/src/pages/AdminStaffManagementPage.test.tsx",
+                  ],
+                  "notifications": [
+                      "apps/frontend/src/components/NotificationsPanel.test.tsx",
+                      "apps/frontend/src/pages/AccountantWorkspacePage.test.tsx",
+                      "apps/frontend/src/pages/ManagerWorkspacePage.test.tsx",
+                  ],
+                  "observability": [
+                      "apps/frontend/src/api/httpClient.test.ts",
+                      "apps/frontend/src/app/observability/AppErrorBoundary.test.tsx",
+                      "apps/frontend/src/app/router.observability.test.tsx",
+                  ],
+              }
+
+              targets: list[str] = []
+              for mode in modes:
+                  targets.extend(targets_by_mode.get(mode, []))
+
+              deduped_targets = list(dict.fromkeys(targets))
+              if not deduped_targets:
+                  print(
+                      "No targeted frontend Vitest paths matched CI modes; falling back to full suite.",
+                      file=sys.stderr,
+                  )
+                  command = ["npm", "--prefix", "apps/frontend", "run", "test", "--", "--run"]
+              else:
+                  command = [
+                      "npm",
+                      "--prefix",
+                      "apps/frontend",
+                      "run",
+                      "test",
+                      "--",
+                      "--run",
+                      *deduped_targets,
+                  ]
+
+          raise SystemExit(subprocess.call(command))
+          PY
 
   browser-smoke:
     runs-on: ubuntu-latest
@@ -73,16 +329,29 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect browser scope
+        id: browser_scope
+        run: |
+          modes="$(python3 scripts/ci/select_ci_modes.py browser --base-sha "${CI_BASE_SHA}" --head-sha "${CI_HEAD_SHA}")"
+          echo "modes=${modes}" >> "$GITHUB_OUTPUT"
+      - name: Skip browser smoke
+        if: steps.browser_scope.outputs.modes == 'skip'
+        run: echo "No browser-smoke-relevant files changed; skipping browser smoke."
       - name: Verify Chrome availability
+        if: steps.browser_scope.outputs.modes != 'skip'
         run: |
           google-chrome --version \
             || google-chrome-stable --version \
             || chromium-browser --version \
             || chromium --version
       - name: Start compose stack
+        if: steps.browser_scope.outputs.modes != 'skip'
         run: docker compose up -d --build
       - name: Run compose browser smoke
+        if: steps.browser_scope.outputs.modes != 'skip'
         run: ./scripts/smoke-compose.sh
       - name: Teardown compose stack
-        if: always()
+        if: always() && steps.browser_scope.outputs.modes != 'skip'
         run: docker compose down -v
