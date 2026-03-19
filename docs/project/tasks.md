@@ -134,16 +134,36 @@
 - The remaining candidate-domain follow-on work after `TASK-03-08` and `TASK-04-06` is limited to
   later ops/reporting slices, not baseline parsed-profile structure or scoring-quality tooling.
 
-## Normalized Open Backlog Snapshot
+## Remaining Backlog Snapshot
 
-- Normalized open backlog count: `0` tasks.
-- This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
-- Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
-- Repo backlog state now excludes `TASK-10-04`, and GitHub issue `#99` is closed following PR #124 (`7a5ca87`).
-- Repo backlog state now excludes `TASK-13-04`; the repo source of truth is the production legal evidence package and aligned EPIC-13 docs set.
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `0`-task count; it stays open until the external blocker artifacts for `CTRL-RU-04` and `CTRL-RU-06` exist as real evidence.
+- Remaining backlog items are repopulated below so the repo reflects both still-open work and repo-implemented slices that have not been formally closed yet.
+- P0:
+  - `COMPLIANCE-01`
+  - `TASK-12-01`
+  - `TASK-03-01/02/03/05/06/07`
+  - `TASK-02-01/02/03`
+  - `TASK-08-01/02/04`
+  - `TASK-10-01/02`
+  - `TASK-04-01/02/03/05`
+  - `TASK-05-01/02`
+  - `TASK-11-05/06/07/08/09`
+  - `TASK-13-01/02`
+- `COMPLIANCE-01` stays open until `CTRL-RU-04` and `CTRL-RU-06` have real evidence artifacts.
+- P1:
+  - `TASK-03-08`
+  - `TASK-06-01/02/03/04`
+  - `TASK-07-01/02/03/04`
+  - `TASK-09-01`
+  - `TASK-11-10/11`
+- `TASK-11-12` stays excluded because its umbrella backlog item is already normalized closed.
+- P2:
+  - none at the moment.
+- Repo-implemented slices stay in the backlog until formal issue/backlog closeout is completed; this list is intentionally broader than only net-new code gaps.
+
 - Current open backlog by delivery wave:
-  - none; `TASK-11-12` is now normalized closed and retained below for lineage.
+  - P0: `COMPLIANCE-01`, `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-10-01/02`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`
+  - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`, `TASK-11-10/11`
+  - P2: none at the moment
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 
