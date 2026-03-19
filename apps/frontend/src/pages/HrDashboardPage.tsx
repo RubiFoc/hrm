@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -199,19 +199,19 @@ export function HrDashboardPage() {
 
   const vacanciesQuery = useQuery({
     queryKey: ["hr-vacancies", accessToken],
-    queryFn: () => listVacancies(accessToken!),
+    queryFn: () => listVacancies(),
     enabled: Boolean(accessToken),
   });
 
   const candidatesQuery = useQuery({
     queryKey: ["hr-candidates", accessToken, effectiveCandidateQuery],
-    queryFn: () => listCandidateProfiles(accessToken!, effectiveCandidateQuery),
+    queryFn: () => listCandidateProfiles(effectiveCandidateQuery),
     enabled: Boolean(accessToken),
   });
 
   const transitionsQuery = useQuery({
     queryKey: ["hr-pipeline-history", accessToken, selectedVacancyId, selectedCandidateId],
-    queryFn: () => listPipelineTransitions(accessToken!, selectedVacancyId, selectedCandidateId),
+    queryFn: () => listPipelineTransitions(selectedVacancyId, selectedCandidateId),
     enabled: Boolean(accessToken && selectedVacancyId && selectedCandidateId),
   });
 
@@ -290,7 +290,7 @@ export function HrDashboardPage() {
   });
 
   const createVacancyMutation = useMutation({
-    mutationFn: (payload: VacancyCreateRequest) => createVacancy(accessToken!, payload),
+    mutationFn: (payload: VacancyCreateRequest) => createVacancy(payload),
     onSuccess: (vacancy) => {
       setFeedback({ type: "success", message: t("hrDashboard.createSuccess") });
       setCreateDraft(DEFAULT_VACANCY_DRAFT);
@@ -305,7 +305,7 @@ export function HrDashboardPage() {
 
   const updateVacancyMutation = useMutation({
     mutationFn: (payload: VacancyUpdateRequest) =>
-      updateVacancy(accessToken!, selectedVacancyId, payload),
+      updateVacancy(selectedVacancyId, payload),
     onSuccess: (vacancy) => {
       setFeedback({ type: "success", message: t("hrDashboard.updateSuccess") });
       setEditDraft(toVacancyDraft(vacancy));
@@ -317,8 +317,7 @@ export function HrDashboardPage() {
   });
 
   const transitionMutation = useMutation({
-    mutationFn: (payload: PipelineTransitionCreateRequest) =>
-      createPipelineTransition(accessToken!, payload),
+    mutationFn: (payload: PipelineTransitionCreateRequest) => createPipelineTransition(payload),
     onSuccess: () => {
       setFeedback({ type: "success", message: t("hrDashboard.transitionSuccess") });
       setTransitionReason("");
@@ -489,8 +488,8 @@ export function HrDashboardPage() {
     },
   });
 
-  const vacancyItems = vacanciesQuery.data?.items ?? [];
-  const candidateItems = candidatesQuery.data?.items ?? [];
+  const vacancyItems = useMemo(() => vacanciesQuery.data?.items ?? [], [vacanciesQuery.data?.items]);
+  const candidateItems = useMemo(() => candidatesQuery.data?.items ?? [], [candidatesQuery.data?.items]);
   const candidateTotal = candidatesQuery.data?.total ?? 0;
   const candidatePage = Math.floor(
     (effectiveCandidateQuery.offset ?? 0) / (effectiveCandidateQuery.limit ?? DEFAULT_CANDIDATE_LIMIT),

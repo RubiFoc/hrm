@@ -5,14 +5,17 @@ from __future__ import annotations
 import csv
 import json
 from datetime import UTC, datetime
-from io import StringIO
+from io import BytesIO, StringIO
 from uuid import UUID
+
+from openpyxl import load_workbook
 
 from hrm_backend.audit.schemas.read import AuditEventListItem
 from hrm_backend.audit.utils.exports import (
     AUDIT_EVENT_EXPORT_COLUMNS,
     render_audit_events_csv,
     render_audit_events_jsonl,
+    render_audit_events_xlsx,
 )
 
 
@@ -76,8 +79,35 @@ def test_render_audit_events_jsonl_is_parseable_and_newline_terminated() -> None
     assert json.loads(lines[0]) == items[0].model_dump(mode="json")
 
 
+def test_render_audit_events_xlsx_has_stable_sheet_and_row_order() -> None:
+    """Verify XLSX export keeps deterministic header and row order."""
+    items = [
+        _build_item(
+            event_id="00000000-0000-0000-0000-000000000401",
+            occurred_at=datetime(2026, 3, 16, 10, 0, tzinfo=UTC),
+            action="auth.login",
+        ),
+        _build_item(
+            event_id="00000000-0000-0000-0000-000000000402",
+            occurred_at=datetime(2026, 3, 16, 11, 0, tzinfo=UTC),
+            action="auth.logout",
+        ),
+    ]
+
+    payload = render_audit_events_xlsx(items)
+    workbook = load_workbook(filename=BytesIO(payload), read_only=True, data_only=True)
+    worksheet = workbook.active
+    rows = list(worksheet.iter_rows(values_only=True))
+
+    assert workbook.sheetnames == ["audit_events"]
+    assert tuple(rows[0]) == AUDIT_EVENT_EXPORT_COLUMNS
+    assert rows[1][0] == "00000000-0000-0000-0000-000000000401"
+    assert rows[2][0] == "00000000-0000-0000-0000-000000000402"
+    workbook.close()
+
+
 def test_export_helpers_are_deterministic_for_same_input() -> None:
-    """Verify both CSV and JSONL renderers return stable bytes for the same inputs."""
+    """Verify CSV, JSONL, and XLSX renderers return stable bytes for the same inputs."""
     items = [
         _build_item(
             event_id="00000000-0000-0000-0000-000000000301",
@@ -88,4 +118,4 @@ def test_export_helpers_are_deterministic_for_same_input() -> None:
 
     assert render_audit_events_csv(items) == render_audit_events_csv(items)
     assert render_audit_events_jsonl(items) == render_audit_events_jsonl(items)
-
+    assert render_audit_events_xlsx(items) == render_audit_events_xlsx(items)

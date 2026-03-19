@@ -18,6 +18,7 @@
 | ADMIN-01 | done | Merged in `main` via PR #48 |
 | ADMIN-02 | done/closed | GitHub issue #53 closed; merged in `main` via PR #51 (`bd96d86`) |
 | ADMIN-03 | done/closed | GitHub issue #52 closed; merged in `main` via PR #55 (`2c9c5b5`) |
+| ADMIN-04 | done/closed | Frontend admin candidates/vacancies/pipeline/audit consoles now reuse existing recruitment and audit contracts, keep the slice non-destructive, and include XLSX audit export support. |
 | TASK-01-01/02/03/04/05 | done/closed | GitHub issues #1, #2, #3, #4, and #24 were closed during backlog normalization; current repo/docs remain the source of truth for the implemented security foundation |
 | TASK-11-13 | done/closed | GitHub issue #67 closed; merged in `main` via PR #68 and PR #69 (`d8ea39e`) |
 | TASK-12-01 | implemented/local-compose-baseline | `docker-compose.yml`, Dockerfiles, `./scripts/smoke-compose.sh`, and CI compose browser smoke already verify the local stack (`frontend`, `backend`, `backend-worker`, `postgres`, `redis`, `minio`) plus bootstrap jobs |
@@ -38,7 +39,7 @@
 | TASK-04-06 | done/closed | GitHub issue #92 closed; merged in `main` via PR #111 (`eedcc0f`) with additive scoring quality harness tooling under `hrm_backend.scoring.evaluation`, deterministic fixture-mode `precision`/`recall` + `NDCG`/`MRR` + paraphrase robustness reporting, optional Ollama mode reuse, and backend unit/integration coverage |
 | TASK-04-04 | done/closed | Merged in `main` via PR #109 (`c60b48b`) with additive low-confidence manual-review metadata, configurable `SCORING_LOW_CONFIDENCE_THRESHOLD`, and localized shortlist warning UX that preserves score details |
 | TASK-11-07 | implemented/local-scoring-slice | `/` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
-| TASK-11-10 | implemented/local-observability-slice | Frontend Sentry now tags `/`, `/candidate`, `/login`, `/admin`, `/admin/staff`, and `/admin/employee-keys`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
+| TASK-11-10 | implemented/local-observability-slice | Frontend Sentry now tags `/`, `/candidate`, `/login`, `/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, and `/admin/audit`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
 | TASK-13-01/02 | implemented/local-compliance-slice | Legal-controls matrix now maps article-level obligations to current repo-backed controls and evidence registry entries with owners, verification sources, and update triggers |
 | TASK-05-01/02 | implemented/local-interview-slice | Interview slot planning, participant assignment, and Google Calendar sync/reconciliation baseline are implemented in repo on the existing route topology |
 | TASK-11-08 | implemented/local-interview-slice | Interview scheduling and candidate registration are implemented against `docs/project/interview-planning-pass.md`, with HR controls on `/`, public token registration on `/candidate`, and free-mode Google Calendar sync via service account + shared interviewer calendars |
@@ -57,7 +58,7 @@
 | TASK-09-04 | done/closed | GitHub issue #97 closed; merged in `main` via PR #116 (`966f3a8`) with recipient-scoped `/api/v1/notifications*`, embedded manager/accountant notifications UI on `/`, fail-closed read/update scope, on-demand digests, regenerated OpenAPI/frontend types, and synced architecture/test docs |
 | TASK-10-01 | implemented/local-kpi-snapshot-slice | Monthly KPI snapshots with admin-only rebuild/read API, reporting package, migration, unit/integration tests, and updated OpenAPI/frontend types are implemented in repo |
 | TASK-10-03 | done/closed | Merged in `main` via PR #122 with admin-only `GET /api/v1/audit/events` query API, `audit:read` RBAC permission, unit/integration coverage, updated OpenAPI freeze, and refreshed frontend generated types |
-| TASK-10-04 | done/closed | GitHub issue #99 closed; merged in `main` via PR #124 (`7a5ca87`) with controlled audit evidence export (`/api/v1/audit/events/export`) and KPI snapshot export (`/api/v1/reporting/kpi-snapshots/export`) attachments plus updated docs/diagrams and regenerated OpenAPI/frontend types |
+| TASK-10-04 | done/closed | GitHub issue #99 closed; merged in `main` via PR #124 (`7a5ca87`) with controlled audit evidence export (`/api/v1/audit/events/export`) in CSV/JSONL/XLSX and KPI snapshot export (`/api/v1/reporting/kpi-snapshots/export`) attachments plus updated docs/diagrams and regenerated OpenAPI/frontend types |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-12 Delivery Control Notes
@@ -97,7 +98,7 @@
 - `TASK-09-03` is now implemented as the additive accountant workspace follow-on slice: accountants use the existing `/` route for one read-only finance workspace, visibility stays limited to accountant-assigned onboarding tasks, and controlled CSV/XLSX exports reuse the same filtered row model without adding generic reporting infrastructure.
 - `TASK-09-03` post-merge closeout is complete: GitHub issue `#96` is closed, PR #114 (`c237296`) is merged in `main`, and this backlog snapshot is synchronized to the merged state.
 - `TASK-09-04` post-merge closeout is complete: GitHub issue `#97` is closed, PR #116 (`966f3a8`) is merged in `main`, and this backlog snapshot is synchronized to the merged state while keeping the notifications slice additive, fail-closed, and in-app only.
-- `TASK-10-04` is now implemented as a minimal export package: admin-only audit evidence export (`GET /api/v1/audit/events/export`) and leader/admin KPI snapshot export (`GET /api/v1/reporting/kpi-snapshots/export`) with business audit events written after content assembly to avoid self-inclusion.
+- `TASK-10-04` is now implemented as a minimal export package: admin-only audit evidence export (`GET /api/v1/audit/events/export`) in CSV/JSONL/XLSX and leader/admin KPI snapshot export (`GET /api/v1/reporting/kpi-snapshots/export`) with business audit events written after content assembly to avoid self-inclusion.
 - `TASK-10-04` post-merge closeout is complete: GitHub issue `#99` is closed, PR #124 (`7a5ca87`) is merged in `main`, and this backlog snapshot is synchronized to the merged state.
 - The remaining follow-on work after the onboarding-dashboard and manager-workspace slices is limited to the other phase-2 role workspaces, notifications, reporting, and admin/ops backlog, not baseline scheduling, registration, feedback transport, or candidate-facing offer decisions.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
@@ -115,6 +116,7 @@
 - `TASK-07-03` is no longer active queue work; the implemented source of truth is the repo-backed employee self-service onboarding portal on `/employee` plus `/api/v1/employees/me/onboarding*`.
 - `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/` and reused inside the manager workspace on the existing `/` route.
 - `TASK-09-01` is no longer active queue work; the implemented source of truth is the repo-backed manager workspace on `/` plus manager-scoped vacancy read endpoints on the existing `/api/v1/vacancies` namespace.
+- `ADMIN-04` is no longer active queue work; the implemented source of truth is the repo-backed admin control plane on `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, and `/admin/audit` with non-destructive recruitment and audit contract reuse.
 - `TASK-09-03` is no longer active queue work; the implemented source of truth is the repo-backed accountant workspace on `/` plus assignment-scoped finance read/export endpoints on `/api/v1/accounting/workspace*`.
 - `TASK-09-04` is no longer active queue work; the implemented source of truth is the repo-backed recipient-scoped notification API on `/api/v1/notifications*` plus the embedded manager/accountant notifications block on the existing `/` route.
 - `TASK-10-01` is no longer active queue work; the implemented source of truth is the repo-backed monthly KPI snapshot foundation with admin-only rebuild and leader/admin read APIs.
@@ -126,22 +128,21 @@
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `5` tasks.
+- Normalized open backlog count: `4` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
 - Repo backlog state now excludes `TASK-10-04`, and GitHub issue `#99` is closed following PR #124 (`7a5ca87`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `5`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `4`-task count.
 - Current open backlog by delivery wave:
-  - Wave 2 platform/ops/reporting: `ADMIN-04`, `ADMIN-05`, `TASK-13-03`, `TASK-13-04`
+  - Wave 2 platform/ops/reporting: `ADMIN-05`, `TASK-13-03`, `TASK-13-04`
   - Wave 3 phase-2 workspaces: `TASK-11-12`
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| 1 | ADMIN-04 | Remaining admin CRUD consoles close the privileged control-plane gap. |
-| 2 | ADMIN-05 | Admin observability dashboards round out audit and job support. |
-| 3 | TASK-13-03 | Release-gate compliance checklist is needed before any production sign-off. |
-| 4 | TASK-13-04 | Evidence package and sign-off workflow complete the compliance gate. |
-| 5 | TASK-11-12 | Phase-2 role workspaces bundle the remaining user-facing surfaces. |
+| 1 | ADMIN-05 | Admin observability dashboards round out audit and job support. |
+| 2 | TASK-13-03 | Release-gate compliance checklist is needed before any production sign-off. |
+| 3 | TASK-13-04 | Evidence package and sign-off workflow complete the compliance gate. |
+| 4 | TASK-11-12 | Phase-2 role workspaces bundle the remaining user-facing surfaces. |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 
@@ -309,7 +310,7 @@ Use this queue together with the global queue when planning phase implementation
 | FE-13 | TASK-11-07 | Delivered in local scoring slice: shortlist review block inside the existing `/` HR workspace with scoring polling and explainable payload rendering |
 | FE-14 | TASK-11-10 | Delivered in local observability slice: Sentry hardening for critical routes, shared HTTP failure capture, render boundary, and release/env tracing config without route changes |
 | FE-15 | TASK-11-08 | Next implementation slice: use the frozen interview planning spec to extend `/` and `/candidate` without adding candidate auth |
-| FE-16 | ADMIN-04 | Unified admin CRUD consoles |
+| FE-16 | ADMIN-04 | Delivered in local baseline: admin candidates/vacancies/pipeline/audit consoles with non-destructive CRUD and XLSX audit export |
 | FE-17 | ADMIN-05 | Admin observability and audit dashboards |
 | FE-18 | TASK-11-12 | Phase-2 role workspace rollout |
 

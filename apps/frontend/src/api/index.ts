@@ -3,6 +3,7 @@ export {
   downloadAccountingWorkspaceExport,
   listAccountingWorkspace,
 } from "./accountingWorkspace";
+export { downloadAuditEventsExport, listAuditEvents } from "./audit";
 export { downloadKpiSnapshotExport, readKpiSnapshot } from "./kpiSnapshots";
 export { getMe, login, logout } from "./auth";
 export { listAdminStaff, updateAdminStaff } from "./adminStaff";
@@ -31,7 +32,12 @@ export {
   getPublicCandidateCvParsingStatus,
 } from "./candidateAnalysis";
 export { applyToVacancyPublic } from "./candidateApplications";
-export { listCandidateProfiles } from "./candidateProfiles";
+export {
+  createCandidateProfile,
+  getCandidateProfile,
+  listCandidateProfiles,
+  updateCandidateProfile,
+} from "./candidateProfiles";
 export {
   createAdminEmployeeKey,
   listAdminEmployeeKeys,
@@ -55,6 +61,7 @@ export {
 export {
   createPipelineTransition,
   createVacancy,
+  getVacancy,
   listPipelineTransitions,
   listVacancies,
   updateVacancy,
@@ -66,6 +73,11 @@ export type {
   AccountingWorkspaceListResponse,
   AccountingWorkspaceRowResponse,
 } from "./accountingWorkspace";
+export type {
+  AuditEventExportFormat,
+  AuditEventListQuery,
+  AuditEventListResponse,
+} from "./audit";
 export type {
   KpiSnapshotExportFormat,
   KpiSnapshotMetric,
@@ -128,7 +140,9 @@ export type {
   CandidateListItemResponse,
   CandidateListQuery,
   CandidateListResponse,
+  CandidateCreateRequest,
   CandidateResponse,
+  CandidateUpdateRequest,
 } from "./candidateProfiles";
 export type {
   CalendarSyncStatus,

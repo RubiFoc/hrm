@@ -887,7 +887,7 @@ flowchart LR
   TOKEN -->|No| R401[Redirect /access-denied?reason=unauthorized]
   TOKEN -->|Yes| ROLE{Role == admin?}
   ROLE -->|No| R403[Redirect /access-denied?reason=forbidden]
-  ROLE -->|Yes| ADMIN[Render Admin Shell]
+  ROLE -->|Yes| ADMIN[Render Admin Shell with staff, key, candidate, vacancy, pipeline, and audit consoles]
 
   GUARD --> TAGS[Sentry tags: workspace=admin, role, route]
   TAGS --> SENTRY[Sentry]
@@ -967,7 +967,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-  USER[User opens critical route] --> ROUTE[Observed route: /, /employee, /candidate, /login, /admin*]
+  USER[User opens critical route] --> ROUTE[Observed route: /, /employee, /candidate, /login, /admin, /admin/staff, /admin/employee-keys, /admin/candidates, /admin/vacancies, /admin/pipeline, /admin/audit]
   ROUTE --> TAGS[Sentry tags: workspace=hr|manager|accountant|employee|candidate|auth|admin, role, route]
   TAGS --> SENTRY[Sentry]
 
@@ -1044,3 +1044,28 @@ sequenceDiagram
 Automation execution logs remain the operator-facing troubleshooting source of truth, while
 `automation_metric_events` is the durable KPI event stream used by reporting to compute
 `total_hr_operations_count`, `automated_hr_operations_count`, and the derived share metric.
+
+## Diagram 25: Admin Control Plane Slice (ADMIN-04)
+
+```mermaid
+flowchart LR
+  USER[Admin opens /admin] --> SHELL[Admin Shell]
+  SHELL --> CANDS[/admin/candidates]
+  SHELL --> VACS[/admin/vacancies]
+  SHELL --> PIPE[/admin/pipeline]
+  SHELL --> AUD[/admin/audit]
+
+  CANDS --> CAPI[GET/POST/PUT /api/v1/candidates*]
+  VACS --> VAPI[GET/POST/PUT /api/v1/vacancies*]
+  PIPE --> PAPI[GET /api/v1/vacancies + GET/POST /api/v1/pipeline/transitions]
+  AUD --> AAPI[GET /api/v1/audit/events + export csv/jsonl/xlsx]
+
+  CANDS --> TAGS[Sentry route tags: route=/admin/candidates]
+  VACS --> TAGS
+  PIPE --> TAGS
+  AUD --> TAGS
+```
+
+The ADMIN-04 slice stays frontend-first over the existing backend contracts. It keeps the control
+plane non-destructive, avoids a new admin backend namespace, and uses the audit export endpoint for
+read-only evidence downloads in CSV, JSONL, and XLSX formats.
