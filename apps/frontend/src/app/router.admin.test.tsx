@@ -38,7 +38,7 @@ describe("admin route guard", () => {
     window.localStorage.clear();
     fetchMock.mockReset();
     setTagMock.mockReset();
-    fetchMock.mockResolvedValue(
+    fetchMock.mockImplementation(() =>
       new Response(
         JSON.stringify({
           items: [],
@@ -84,6 +84,50 @@ describe("admin route guard", () => {
     expect(setTagMock).toHaveBeenCalledWith("workspace", "admin");
     expect(setTagMock).toHaveBeenCalledWith("role", "admin");
     expect(setTagMock).toHaveBeenCalledWith("route", "/admin/staff");
+  });
+
+  it("allows admin user into /admin/candidates and sets sentry route tag", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "admin");
+
+    renderWithPath("/admin/candidates");
+    expect(await screen.findByRole("heading", { name: /консоль кандидатов/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("role", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/admin/candidates");
+  });
+
+  it("allows admin user into /admin/vacancies and sets sentry route tag", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "admin");
+
+    renderWithPath("/admin/vacancies");
+    expect(await screen.findByRole("heading", { name: /консоль вакансий/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("role", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/admin/vacancies");
+  });
+
+  it("allows admin user into /admin/pipeline and sets sentry route tag", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "admin");
+
+    renderWithPath("/admin/pipeline");
+    expect(await screen.findByRole("heading", { name: /консоль pipeline/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("role", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/admin/pipeline");
+  });
+
+  it("allows admin user into /admin/audit and sets sentry route tag", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "admin");
+
+    renderWithPath("/admin/audit");
+    expect(await screen.findByRole("heading", { name: /консоль аудита/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("role", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/admin/audit");
   });
 
   it("allows admin user into /admin/employee-keys and sets sentry route tag", async () => {

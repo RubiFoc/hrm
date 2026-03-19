@@ -56,6 +56,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0049 | 2026-03-16 | accepted | Execute automation `notification.emit` actions via idempotent in-app notification executor | architect + backend-engineer | automation execution semantics, notification persistence, fail-closed guarantees |
 | ADR-0050 | 2026-03-16 | accepted | Add durable automation execution logs and ops read APIs (non-PII) | architect + backend-engineer | automation observability, DB schema, ops API, RBAC |
 | ADR-0051 | 2026-03-19 | accepted | Add durable automation KPI metric events and monthly share aggregation | architect + backend-engineer | automation reporting, KPI aggregation, leader workspace, OpenAPI contract |
+| ADR-0052 | 2026-03-19 | accepted | Deliver ADMIN-04 as a frontend-first admin control-plane slice over existing recruitment and audit contracts | architect + backend-engineer + frontend-engineer | frontend admin route topology, route tags, audit export UX, compliance-safe control plane |
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
@@ -976,7 +977,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 - Decision:
   - Add admin-only audit export endpoint:
     - `GET /api/v1/audit/events/export`
-    - formats: `csv`, `jsonl`
+    - formats: `csv`, `jsonl`, `xlsx`
     - reuse the existing audit query filter contract (`action`, `result`, `source`, `resource_type`, `correlation_id`, `occurred_from`, `occurred_to`) and deterministic ordering (`occurred_at DESC`, `event_id DESC`)
     - require bounded exports (`limit` + `offset`), avoiding unbounded “export all” in one request thread
     - record business audit event `audit.event:export` after export content assembly so the export does not include its own business audit row
@@ -989,6 +990,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 - Consequences:
   - Operators/leaders can download evidence and reporting artifacts without direct DB access.
   - Export work stays synchronous and must remain bounded; async exports/ZIP bundling remain a follow-up slice with explicit operational review.
+  - Audit export parity now includes native spreadsheet downloads without introducing a separate reporting job or table.
 
 ## ADR-0048
 - Context: `TASK-08-01` requires a minimal, safe automation foundation that can evaluate trigger events into planned actions without mutating core domain state, while keeping recipients and PII handling fail-closed.
@@ -1102,3 +1104,30 @@ Use this log for decisions that change interfaces, data models, deployment topol
     after this slice is deployed.
   - Architecture review: self-review completed on 2026-03-19; the change is additive, preserves
     existing RBAC and route boundaries, and keeps execution logs separate from KPI metrics.
+
+## ADR-0052
+- Context: ADMIN-04 needs to close the admin control-plane gap quickly without introducing a new
+  backend namespace, destructive data operations, or route churn beyond the existing `/admin/*`
+  shell.
+- Decision:
+  - Deliver the slice as a frontend-first control plane over existing backend contracts:
+    candidate profile list/get/create/update, vacancy list/get/create/update, pipeline transition
+    list/create, and audit list/export.
+  - Add dedicated admin routes:
+    - `/admin/candidates`
+    - `/admin/vacancies`
+    - `/admin/pipeline`
+    - `/admin/audit`
+  - Keep the slice non-destructive:
+    - no hard delete flows;
+    - archive/destructive policy remains a separate follow-up unless explicitly approved.
+  - Extend admin route tagging so each new route emits a canonical `route=/admin/*` value.
+  - Include XLSX alongside CSV/JSONL for admin audit exports because the backend already supports
+    the bounded evidence export contract.
+- Consequences:
+  - Admin operators get a usable control plane without changing the backend route topology.
+  - Compliance posture stays aligned with append-only audit and non-destructive management flows.
+  - Future delete/archive or admin-support dashboards can be split into separate ADRs if they need
+    independent policy or retention review.
+  - Architecture review: self-review completed on 2026-03-19; the change is additive, reuses
+    existing backend contracts, and does not introduce a new admin namespace.

@@ -7866,7 +7866,7 @@
     },
     "/api/v1/audit/events/export": {
       "get": {
-        "description": "Download audit events as CSV or JSONL attachment.",
+        "description": "Download audit events as CSV, JSONL, or XLSX attachment.",
         "operationId": "export_audit_events_api_v1_audit_events_export_get",
         "parameters": [
           {
@@ -7876,7 +7876,8 @@
             "schema": {
               "enum": [
                 "csv",
-                "jsonl"
+                "jsonl",
+                "xlsx"
               ],
               "title": "Format",
               "type": "string"
@@ -8036,6 +8037,7 @@
               "application/json": {
                 "schema": {}
               },
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
               "application/x-ndjson": {},
               "text/csv": {}
             },

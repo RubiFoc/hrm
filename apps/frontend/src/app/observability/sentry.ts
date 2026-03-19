@@ -148,6 +148,18 @@ function resolveWorkspaceTag(pathname: string): string {
 
 function resolveRouteTag(pathname: string): string {
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    if (pathname === "/admin/candidates" || pathname.startsWith("/admin/candidates/")) {
+      return "/admin/candidates";
+    }
+    if (pathname === "/admin/vacancies" || pathname.startsWith("/admin/vacancies/")) {
+      return "/admin/vacancies";
+    }
+    if (pathname === "/admin/pipeline" || pathname.startsWith("/admin/pipeline/")) {
+      return "/admin/pipeline";
+    }
+    if (pathname === "/admin/audit" || pathname.startsWith("/admin/audit/")) {
+      return "/admin/audit";
+    }
     if (pathname === "/admin/staff" || pathname.startsWith("/admin/staff/")) {
       return "/admin/staff";
     }

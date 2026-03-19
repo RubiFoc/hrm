@@ -5,12 +5,13 @@ from __future__ import annotations
 import csv
 import json
 from datetime import UTC, datetime, timedelta
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from openpyxl import load_workbook
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
@@ -396,6 +397,66 @@ async def test_admin_can_export_audit_events_as_jsonl(
     lines = response.text.strip().splitlines()
     assert len(lines) == 1
     assert json.loads(lines[0])["event_id"] == "00000000-0000-0000-0000-000000000301"
+
+
+async def test_admin_can_export_audit_events_as_xlsx(
+    configured_app,
+    api_client: AsyncClient,
+) -> None:
+    """Verify export supports XLSX output and returns parseable workbook payload."""
+    _, context_holder, database_url = configured_app
+    context_holder["context"] = AuthContext(
+        subject_id=uuid4(),
+        role="admin",
+        session_id=uuid4(),
+        token_id=uuid4(),
+        expires_at=9999999999,
+    )
+
+    now = datetime.now(UTC)
+    _insert_event(
+        database_url,
+        event_id="00000000-0000-0000-0000-000000000401",
+        occurred_at=now - timedelta(seconds=1),
+        action="auth.refresh",
+        result="success",
+        correlation_id="corr-xlsx-1",
+    )
+
+    response = await api_client.get(
+        "/api/v1/audit/events/export",
+        params={
+            "format": "xlsx",
+            "limit": 10,
+            "offset": 0,
+            "action": "auth.refresh",
+            "correlation_id": "corr-xlsx-1",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    assert response.headers["content-disposition"].endswith('.xlsx"')
+
+    workbook = load_workbook(filename=BytesIO(response.content), read_only=True, data_only=True)
+    worksheet = workbook.active
+    rows = list(worksheet.iter_rows(values_only=True))
+    header = rows[0]
+    event_id_index = header.index("event_id")
+    assert [row[event_id_index] for row in rows[1:]] == [
+        "00000000-0000-0000-0000-000000000401",
+    ]
+    workbook.close()
+
+    events = _load_events(database_url)
+    assert any(
+        event.action == "audit.event:export"
+        and event.result == "success"
+        and event.reason == "xlsx"
+        for event in events
+    )
 
 
 async def test_non_admin_gets_403_for_audit_events_export(

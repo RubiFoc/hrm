@@ -231,7 +231,7 @@ apps/backend/tests/
 
 | Capability | Unit Coverage | Integration Coverage | Required Evidence |
 | --- | --- | --- | --- |
-| Audit export attachments (CSV/JSONL) are deterministic and preserve audit-read filters/order | `apps/backend/tests/unit/audit/test_audit_export_rendering.py` | `apps/backend/tests/integration/audit/test_audit_event_api.py` | `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/audit apps/backend/tests/integration/audit` |
+| Audit export attachments (CSV/JSONL/XLSX) are deterministic and preserve audit-read filters/order | `apps/backend/tests/unit/audit/test_audit_export_rendering.py` | `apps/backend/tests/integration/audit/test_audit_event_api.py` | `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/audit apps/backend/tests/integration/audit`; XLSX workbook stays parseable with the stable `audit_events` sheet and header order |
 | KPI snapshot export attachments (CSV/XLSX) keep stable columns and ordering | `apps/backend/tests/unit/reporting/test_kpi_snapshot_export_rendering.py` | `apps/backend/tests/integration/reporting/test_kpi_snapshot_api.py` | `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/reporting apps/backend/tests/integration/reporting` |
 | Export endpoints return attachment content type + filename disposition | N/A | `apps/backend/tests/integration/audit/test_audit_event_api.py` + `apps/backend/tests/integration/reporting/test_kpi_snapshot_api.py` | `Content-Type` and `Content-Disposition` are asserted in integration tests |
 | RBAC for export endpoints stays fail-closed | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/audit/test_audit_event_api.py` + `apps/backend/tests/integration/reporting/test_kpi_snapshot_api.py` | non-privileged roles receive `403` and deny decisions are audited |
@@ -249,6 +249,20 @@ apps/backend/tests/
 | Admin guard non-regression | `apps/frontend/src/app/router.admin.test.tsx` | `./scripts/smoke-compose.sh` | unauthorized/forbidden redirects continue to work unchanged |
 | Browser login/logout roundtrip against compose stack | N/A | `scripts/browser_auth_smoke.py` via `./scripts/smoke-compose.sh` and CI `browser-smoke` job | browser reaches `/admin`, persists session, calls backend auth origin, logs out, and returns to `/login` |
 | Backend CORS preflight allows local Vite dev origin | `apps/backend/tests/unit/test_cors.py` + `apps/backend/tests/unit/auth/test_auth_settings.py` | `./scripts/smoke-compose.sh` | `OPTIONS /api/v1/auth/login` returns `200` with expected `Access-Control-Allow-*` headers |
+
+## Frontend Admin Control Plane Verification (ADMIN-04)
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Admin route guard covers `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, and `/admin/audit` with canonical Sentry route tags | `apps/frontend/src/app/router.admin.test.tsx` | N/A | each route opens inside the admin shell and emits the expected `route=/admin/*` tag |
+| Candidates console create/edit/list flow | `apps/frontend/src/pages/admin/AdminCandidatesPage.test.tsx` | N/A | localized list render, create payload, and selected detail refresh |
+| Vacancies console create/edit/list flow and pipeline shortcut | `apps/frontend/src/pages/admin/AdminVacanciesPage.test.tsx` | N/A | localized list render, create payload, and `/admin/pipeline` shortcut |
+| Pipeline console append flow | `apps/frontend/src/pages/admin/AdminPipelinePage.test.tsx` | N/A | vacancy + candidate selection, ordered history, and transition append |
+| Audit console filters and XLSX export | `apps/frontend/src/pages/admin/AdminAuditPage.test.tsx` | N/A | filtered list request and `format=xlsx` export download |
+
+Targeted local verification command:
+
+`npm --prefix apps/frontend test -- --run src/pages/admin/AdminCandidatesPage.test.tsx src/pages/admin/AdminVacanciesPage.test.tsx src/pages/admin/AdminPipelinePage.test.tsx src/pages/admin/AdminAuditPage.test.tsx src/app/router.admin.test.tsx`
 
 ## Frontend Candidate Workspace Verification (`TASK-11-06`, `TASK-11-09`, `TASK-11-11`)
 

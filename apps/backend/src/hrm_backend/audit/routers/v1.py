@@ -16,7 +16,11 @@ from hrm_backend.audit.schemas.export import AuditEventExportFormat
 from hrm_backend.audit.schemas.read import AuditEventListResponse
 from hrm_backend.audit.services.audit_read_service import AuditReadService
 from hrm_backend.audit.services.audit_service import AuditService, actor_from_auth_context
-from hrm_backend.audit.utils.exports import render_audit_events_csv, render_audit_events_jsonl
+from hrm_backend.audit.utils.exports import (
+    render_audit_events_csv,
+    render_audit_events_jsonl,
+    render_audit_events_xlsx,
+)
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.rbac import Role, require_permission
@@ -97,6 +101,7 @@ def list_audit_events(
             "content": {
                 "text/csv": {},
                 "application/x-ndjson": {},
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {},
             }
         },
         status.HTTP_403_FORBIDDEN: {"description": "RBAC denied"},
@@ -120,7 +125,7 @@ def export_audit_events(
     occurred_from: Annotated[datetime | None, Query()] = None,
     occurred_to: Annotated[datetime | None, Query()] = None,
 ) -> StreamingResponse:
-    """Download audit events as CSV or JSONL attachment."""
+    """Download audit events as CSV, JSONL, or XLSX attachment."""
     actor_sub, actor_role = actor_from_auth_context(auth_context)
     try:
         items = audit_read_service.export_events(
@@ -139,10 +144,14 @@ def export_audit_events(
             content = render_audit_events_csv(items)
             media_type = "text/csv"
             filename = f"audit-events-{timestamp}.csv"
-        else:
+        elif format == "jsonl":
             content = render_audit_events_jsonl(items)
             media_type = "application/x-ndjson"
             filename = f"audit-events-{timestamp}.jsonl"
+        else:
+            content = render_audit_events_xlsx(items)
+            media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            filename = f"audit-events-{timestamp}.xlsx"
         response = StreamingResponse(BytesIO(content), media_type=media_type)
         response.headers["Content-Disposition"] = f'attachment; filename="{filename}"'
     except HTTPException as exc:

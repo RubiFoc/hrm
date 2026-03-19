@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
-from io import StringIO
+from io import BytesIO, StringIO
 
 from hrm_backend.audit.schemas.read import AuditEventListItem
 
@@ -48,3 +48,26 @@ def render_audit_events_jsonl(items: list[AuditEventListItem]) -> bytes:
     ]
     return ("\n".join(lines) + ("\n" if lines else "")).encode("utf-8")
 
+
+def render_audit_events_xlsx(items: list[AuditEventListItem]) -> bytes:
+    """Render audit event items into one XLSX workbook attachment."""
+    from openpyxl import Workbook
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "audit_events"
+    worksheet.freeze_panes = "A2"
+    worksheet.append(list(AUDIT_EVENT_EXPORT_COLUMNS))
+    for item in items:
+        worksheet.append(_row_values(item))
+
+    payload = BytesIO()
+    workbook.save(payload)
+    workbook.close()
+    return payload.getvalue()
+
+
+def _row_values(item: AuditEventListItem) -> list[object]:
+    """Extract ordered export cell values from one audit event row."""
+    serialized = item.model_dump(mode="json")
+    return [serialized[column] for column in AUDIT_EVENT_EXPORT_COLUMNS]

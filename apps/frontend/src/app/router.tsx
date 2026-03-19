@@ -7,9 +7,13 @@ import { readAuthSession } from "./auth/session";
 import { RootLayout } from "../components/RootLayout";
 import { AccessDeniedPage } from "../pages/AccessDeniedPage";
 import { AccountantWorkspacePage } from "../pages/AccountantWorkspacePage";
+import { AdminAuditPage } from "../pages/admin/AdminAuditPage";
+import { AdminCandidatesPage } from "../pages/admin/AdminCandidatesPage";
 import { AdminEmployeeKeysManagementPage } from "../pages/AdminEmployeeKeysManagementPage";
+import { AdminPipelinePage } from "../pages/admin/AdminPipelinePage";
 import { AdminStaffManagementPage } from "../pages/AdminStaffManagementPage";
 import { AdminShellPage } from "../pages/AdminShellPage";
+import { AdminVacanciesPage } from "../pages/admin/AdminVacanciesPage";
 import { CandidatePage } from "../pages/CandidatePage";
 import { EmployeeOnboardingPage } from "../pages/EmployeeOnboardingPage";
 import { HrDashboardPage } from "../pages/HrDashboardPage";
@@ -76,6 +80,22 @@ export const appRoutes = [
           {
             path: "employee-keys",
             element: <AdminEmployeeKeysManagementPage />,
+          },
+          {
+            path: "candidates",
+            element: <AdminCandidatesPage />,
+          },
+          {
+            path: "vacancies",
+            element: <AdminVacanciesPage />,
+          },
+          {
+            path: "pipeline",
+            element: <AdminPipelinePage />,
+          },
+          {
+            path: "audit",
+            element: <AdminAuditPage />,
           },
         ],
       },

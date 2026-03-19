@@ -161,7 +161,7 @@ export interface paths {
         };
         /**
          * Export Audit Events
-         * @description Download audit events as CSV or JSONL attachment.
+         * @description Download audit events as CSV, JSONL, or XLSX attachment.
          */
         get: operations["export_audit_events_api_v1_audit_events_export_get"];
         put?: never;
@@ -4618,7 +4618,7 @@ export interface operations {
     export_audit_events_api_v1_audit_events_export_get: {
         parameters: {
             query: {
-                format: "csv" | "jsonl";
+                format: "csv" | "jsonl" | "xlsx";
                 limit?: number;
                 offset?: number;
                 action?: string | null;
@@ -4643,6 +4643,7 @@ export interface operations {
                 content: {
                     "application/json": unknown;
                     "application/x-ndjson": unknown;
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": unknown;
                     "text/csv": unknown;
                 };
             };

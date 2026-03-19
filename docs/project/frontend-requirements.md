@@ -90,6 +90,24 @@
 - Keep Sentry route tagging for admin workspace and ensure `/admin/employee-keys` emits `route=/admin/employee-keys`.
 - Keep frontend API layer typed against regenerated frozen OpenAPI artifacts.
 
+## ADMIN-04 Baseline
+- Add the admin control-plane consoles under the existing admin guard:
+  - `/admin/candidates`
+  - `/admin/vacancies`
+  - `/admin/pipeline`
+  - `/admin/audit`
+- Reuse existing backend contracts for the slice:
+  - candidate profile list/get/create/update;
+  - vacancy list/get/create/update;
+  - pipeline transition list/create and ordered history;
+  - audit list plus CSV/JSONL/XLSX export.
+- Keep the slice non-destructive:
+  - do not add hard delete flows;
+  - keep archive/destructive policy outside this baseline unless separately approved.
+- Preserve the current admin visual language and RU/EN support instead of cloning the HR dashboard shell.
+- Keep Sentry route tagging for admin workspace and ensure each new route emits its canonical `route=/admin/*` value.
+- Keep frontend API layer typed against regenerated frozen OpenAPI artifacts.
+
 ## TASK-11-13 Baseline
 - Add dedicated `/login` route/page for staff authentication UX.
 - Login flow must use existing backend API contracts:
@@ -132,6 +150,10 @@
   - `/admin`
   - `/admin/staff`
   - `/admin/employee-keys`
+  - `/admin/candidates`
+  - `/admin/vacancies`
+  - `/admin/pipeline`
+  - `/admin/audit`
 - Emit canonical Sentry tags on critical-route access:
   - `workspace`
   - `role`
@@ -144,7 +166,7 @@
   - `/employee` -> `workspace=employee`, `route=/employee`
   - `/candidate` -> `workspace=candidate`, `route=/candidate`
   - `/login` -> `workspace=auth`, `route=/login`
-  - `/admin`, `/admin/staff`, `/admin/employee-keys` -> `workspace=admin` with the matching canonical route
+  - `/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, `/admin/audit` -> `workspace=admin` with the matching canonical route
 - Capture frontend HTTP failures in the shared HTTP client with current route tags plus request metadata (`http_method`, `http_status`, request path).
 - Wrap the app shell in a localized render-failure boundary that reports the exception to Sentry and shows RU/EN fallback UI.
 - Configure release/environment/tracing through frontend env variables:
