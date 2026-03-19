@@ -61,7 +61,7 @@
 | TASK-10-04 | done/closed | GitHub issue #99 closed; merged in `main` via PR #124 (`7a5ca87`) with controlled audit evidence export (`/api/v1/audit/events/export`) in CSV/JSONL/XLSX and KPI snapshot export (`/api/v1/reporting/kpi-snapshots/export`) attachments plus updated docs/diagrams and regenerated OpenAPI/frontend types |
 | ADMIN-05 | done/closed | GitHub issue #87 closed; merged in `main` via PR #135 (`3eca7a1`) with a frontend-first admin observability dashboard on `/admin/observability` that reuses `/health`, audit preview, CV parsing status, and match-score status contracts. |
 | TASK-13-03 | done/closed | Repo-backed release-gate compliance checklist now makes EPIC-13 pre-prod and production sign-off explicit, with current critical controls, evidence IDs, verification commands, legal/security preconditions, and blocker states captured in the docs set. |
-| TASK-13-04 | done/closed | Repo-backed production legal evidence package now defines sign-off workflow, required attachments, evidence freshness rules, blocker handling, and `verified` exit criteria for critical controls without adding runtime/API changes. |
+| TASK-13-04 | done/closed | GitHub issue #62 is linked to PR #138; the repo-backed production legal evidence package now defines sign-off workflow, required attachments, evidence freshness rules, blocker handling, and `verified` exit criteria for critical controls without adding runtime/API changes. |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-12 Delivery Control Notes
