@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from hrm_backend.auth.schemas.token_claims import AuthContext
+from hrm_backend.automation.models.metric_event import AutomationMetricEvent
 from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.core.models.base import Base
-from hrm_backend.automation.models.metric_event import AutomationMetricEvent
 from hrm_backend.employee.models.hire_conversion import HireConversion
 from hrm_backend.employee.models.onboarding import OnboardingRun, OnboardingTask
 from hrm_backend.employee.models.profile import EmployeeProfile

@@ -16,12 +16,12 @@ from sqlalchemy.orm import sessionmaker
 
 from hrm_backend.automation.schemas.events import AutomationEvent
 from hrm_backend.automation.schemas.plans import PlannedNotificationEmitAction
-from hrm_backend.automation.services.metric_event_writer import AutomationMetricEventWriter
 from hrm_backend.automation.services.evaluator import AutomationEvaluator
 from hrm_backend.automation.services.execution_log_writer import (
     ActionExecutionResult,
     AutomationExecutionLogWriter,
 )
+from hrm_backend.automation.services.metric_event_writer import AutomationMetricEventWriter
 from hrm_backend.automation.utils.execution_logs import sanitize_error_text
 from hrm_backend.notifications.dao.notification_dao import NotificationDAO
 from hrm_backend.notifications.schemas.notification import NotificationCreate
@@ -361,7 +361,9 @@ class AutomationActionExecutor:
         failed_action_count: int,
     ) -> None:
         """Persist an automation KPI metric event as a best-effort side effect."""
-        automated_hr_operations_count = 1 if (succeeded_action_count > 0 or deduped_action_count > 0) else 0
+        automated_hr_operations_count = (
+            1 if (succeeded_action_count > 0 or deduped_action_count > 0) else 0
+        )
         self._metric_event_writer.record_event(
             event_type=event.event_type,
             trigger_event_id=event.trigger_event_id,

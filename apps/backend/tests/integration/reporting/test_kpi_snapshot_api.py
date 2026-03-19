@@ -17,16 +17,16 @@ from sqlalchemy.orm import Session
 from hrm_backend.audit.models.event import AuditEvent
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
-from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.automation.models.metric_event import AutomationMetricEvent
+from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.core.models.base import Base
 from hrm_backend.employee.models.hire_conversion import HireConversion
 from hrm_backend.employee.models.onboarding import OnboardingRun, OnboardingTask
 from hrm_backend.employee.models.profile import EmployeeProfile
 from hrm_backend.interviews.models.interview import Interview
 from hrm_backend.main import app
-from hrm_backend.settings import AppSettings, get_settings
 from hrm_backend.reporting.utils.metrics import KPI_METRIC_KEYS
+from hrm_backend.settings import AppSettings, get_settings
 from hrm_backend.vacancies.models.offer import Offer
 from hrm_backend.vacancies.models.pipeline_transition import PipelineTransition
 from hrm_backend.vacancies.models.vacancy import Vacancy
