@@ -165,6 +165,18 @@
   - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`, `TASK-11-10/11`
   - P2: none at the moment
 
+## GitHub Issue Queue
+
+- P0:
+  - `#58` `COMPLIANCE-01`
+  - `#142` `CTRL-RU-04` real RU data-residency evidence pack
+  - `#143` `CTRL-RU-06` ISPDn checklist and attestation pack
+- P1:
+  - `#144` `CTRL-BY-02` subject-rights request workflow and owner/SLA
+  - `#145` `CTRL-RU-03` data-subject request workflow and response SLA
+  - `#146` final PD retention windows by data class
+  - `#147` break-glass procedure and reviewer roster
+
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 
 ## Task Breakdown by Epic
