@@ -78,6 +78,56 @@ describe("LeaderWorkspacePage", () => {
               metric_value: 3,
               generated_at: "2026-03-14T10:00:00Z",
             },
+            {
+              metric_key: "candidates_applied_count",
+              metric_value: 5,
+              generated_at: "2026-03-14T10:00:00Z",
+            },
+            {
+              metric_key: "interviews_scheduled_count",
+              metric_value: 4,
+              generated_at: "2026-03-14T10:00:00Z",
+            },
+            {
+              metric_key: "offers_sent_count",
+              metric_value: 2,
+              generated_at: "2026-03-14T10:00:00Z",
+            },
+            {
+              metric_key: "offers_accepted_count",
+              metric_value: 1,
+              generated_at: "2026-03-14T10:00:00Z",
+            },
+            {
+              metric_key: "hires_count",
+              metric_value: 1,
+              generated_at: "2026-03-14T10:00:00Z",
+            },
+            {
+              metric_key: "onboarding_started_count",
+              metric_value: 1,
+              generated_at: "2026-03-14T10:00:00Z",
+            },
+            {
+              metric_key: "onboarding_tasks_completed_count",
+              metric_value: 8,
+              generated_at: "2026-03-14T10:00:00Z",
+            },
+            {
+              metric_key: "total_hr_operations_count",
+              metric_value: 12,
+              generated_at: "2026-03-14T10:00:00Z",
+            },
+            {
+              metric_key: "automated_hr_operations_count",
+              metric_value: 8,
+              generated_at: "2026-03-14T10:00:00Z",
+            },
+            {
+              metric_key: "automated_hr_operations_share_percent",
+              metric_value: 66,
+              generated_at: "2026-03-14T10:00:00Z",
+            },
           ],
         });
       }
@@ -94,6 +144,12 @@ describe("LeaderWorkspacePage", () => {
 
     const metricLabels = await screen.findAllByText(/vacancies created|создано вакансий/i);
     expect(metricLabels.length).toBeGreaterThan(0);
+    expect(
+      (await screen.findAllByText(/total hr operations|всего hr операций/i)).length,
+    ).toBeGreaterThan(0);
+    expect(
+      (await screen.findAllByText(/automated hr share|доля автоматизации/i)).length,
+    ).toBeGreaterThan(0);
     expect(screen.getByRole("button", { name: /export csv|выгрузить csv/i })).toBeDefined();
     expect(
       screen.getByRole("button", { name: /export excel|выгрузить excel/i }),

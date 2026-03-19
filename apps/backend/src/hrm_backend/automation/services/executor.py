@@ -16,6 +16,7 @@ from sqlalchemy.orm import sessionmaker
 
 from hrm_backend.automation.schemas.events import AutomationEvent
 from hrm_backend.automation.schemas.plans import PlannedNotificationEmitAction
+from hrm_backend.automation.services.metric_event_writer import AutomationMetricEventWriter
 from hrm_backend.automation.services.evaluator import AutomationEvaluator
 from hrm_backend.automation.services.execution_log_writer import (
     ActionExecutionResult,
@@ -55,6 +56,7 @@ class AutomationActionExecutor:
             future=True,
         )
         self._execution_log_writer = AutomationExecutionLogWriter(session_factory=session_factory)
+        self._metric_event_writer = AutomationMetricEventWriter(session_factory=session_factory)
 
     def plan(self, *, event: AutomationEvent) -> list[PlannedNotificationEmitAction]:
         """Build a deterministic action plan for one event.
@@ -170,6 +172,14 @@ class AutomationActionExecutor:
                     failed_action_count=0,
                     error=exc,
                 )
+            self._record_metric_event(
+                event=event,
+                outcome="failed",
+                planned_action_count=0,
+                succeeded_action_count=0,
+                deduped_action_count=0,
+                failed_action_count=0,
+            )
             return 0
 
         if not plan:
@@ -183,6 +193,14 @@ class AutomationActionExecutor:
                     failed_action_count=0,
                     error=None,
                 )
+            self._record_metric_event(
+                event=event,
+                outcome="no_rules",
+                planned_action_count=0,
+                succeeded_action_count=0,
+                deduped_action_count=0,
+                failed_action_count=0,
+            )
             return 0
 
         created_count, results, exec_error = self._execute_notification_plan(
@@ -207,6 +225,19 @@ class AutomationActionExecutor:
                 failed_action_count=failed,
                 error=exec_error if run_status == "failed" else None,
             )
+        self._record_metric_event(
+            event=event,
+            outcome=self._resolve_metric_outcome(
+                planned_action_count=len(results),
+                succeeded_action_count=succeeded,
+                deduped_action_count=deduped,
+                failed_action_count=failed,
+            ),
+            planned_action_count=len(results),
+            succeeded_action_count=succeeded,
+            deduped_action_count=deduped,
+            failed_action_count=failed,
+        )
 
         return created_count
 
@@ -318,3 +349,47 @@ class AutomationActionExecutor:
             )
 
         return len(created), results, None
+
+    def _record_metric_event(
+        self,
+        *,
+        event: AutomationEvent,
+        outcome: str,
+        planned_action_count: int,
+        succeeded_action_count: int,
+        deduped_action_count: int,
+        failed_action_count: int,
+    ) -> None:
+        """Persist an automation KPI metric event as a best-effort side effect."""
+        automated_hr_operations_count = 1 if (succeeded_action_count > 0 or deduped_action_count > 0) else 0
+        self._metric_event_writer.record_event(
+            event_type=event.event_type,
+            trigger_event_id=event.trigger_event_id,
+            event_time=event.event_time,
+            outcome=outcome,
+            total_hr_operations_count=1,
+            automated_hr_operations_count=automated_hr_operations_count,
+            planned_action_count=planned_action_count,
+            succeeded_action_count=succeeded_action_count,
+            deduped_action_count=deduped_action_count,
+            failed_action_count=failed_action_count,
+        )
+
+    @staticmethod
+    def _resolve_metric_outcome(
+        *,
+        planned_action_count: int,
+        succeeded_action_count: int,
+        deduped_action_count: int,
+        failed_action_count: int,
+    ) -> str:
+        """Derive the persisted automation KPI outcome label for one handled event."""
+        if planned_action_count == 0:
+            return "no_rules"
+        if succeeded_action_count > 0:
+            return "success"
+        if deduped_action_count > 0:
+            return "deduped"
+        if failed_action_count > 0:
+            return "failed"
+        return "failed"

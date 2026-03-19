@@ -1,8 +1,8 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-16
-- Updated by: coordinator
+- Date: 2026-03-19
+- Updated by: coordinator + backend-engineer
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -28,6 +28,7 @@
 | TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
 | TASK-02-04 | done/closed | GitHub issue #88 closed; merged in `main` via PR #128 (`3ad1c9e`) with manager-scoped vacancy overview + PII-redacted candidate snapshot visibility and offer status enrichment |
 | TASK-08-03 | done/closed | GitHub issue #20 closed; merged in `main` via PR #131 |
+| TASK-08-04 | implemented/local-automation-kpi-slice | Durable automation KPI metric events, monthly snapshot aggregation, leader labels, and docs/tests are implemented in repo |
 | TASK-11-06 | implemented/local-baseline | `/candidate` now supports public deep-link apply, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling |
 | TASK-11-05 | implemented/local-baseline | `/` now exposes staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
 | TASK-11-09 | implemented/local-baseline | RU/EN strings cover login, candidate apply/tracking/analysis, admin, and HR workspace critical flows |
@@ -118,24 +119,29 @@
 - `TASK-09-04` is no longer active queue work; the implemented source of truth is the repo-backed recipient-scoped notification API on `/api/v1/notifications*` plus the embedded manager/accountant notifications block on the existing `/` route.
 - `TASK-10-01` is no longer active queue work; the implemented source of truth is the repo-backed monthly KPI snapshot foundation with admin-only rebuild and leader/admin read APIs.
 - `TASK-10-02` is no longer active queue work; the implemented scope is leader read exposure for stored monthly KPI snapshots (no live aggregation), while rebuild remains admin-only.
+- `TASK-08-04` is no longer active queue work; the implemented source of truth is the repo-backed automation metric event stream and monthly KPI aggregation path.
 - `TASK-10-04` is no longer active queue work; the implemented source of truth is the bounded export attachments on `GET /api/v1/audit/events/export` and `GET /api/v1/reporting/kpi-snapshots/export`.
 - The remaining candidate-domain follow-on work after `TASK-03-08` and `TASK-04-06` is limited to
   later ops/reporting slices, not baseline parsed-profile structure or scoring-quality tooling.
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `11` tasks.
+- Normalized open backlog count: `5` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
 - Repo backlog state now excludes `TASK-10-04`, and GitHub issue `#99` is closed following PR #124 (`7a5ca87`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `11`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `5`-task count.
 - Current open backlog by delivery wave:
-  - Wave 2 platform/ops/reporting: `TASK-02-04`, `ADMIN-04`, `ADMIN-05`, `TASK-08-01`, `TASK-08-02`, `TASK-08-03`, `TASK-08-04`, `TASK-13-03`, `TASK-13-04`
-  - Wave 3 phase-2 workspaces: `TASK-09-02`, `TASK-11-12`
+  - Wave 2 platform/ops/reporting: `ADMIN-04`, `ADMIN-05`, `TASK-13-03`, `TASK-13-04`
+  - Wave 3 phase-2 workspaces: `TASK-11-12`
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| A-1 | TBD | Follow-on priority slot opened after TASK-10-02 completion |
+| 1 | ADMIN-04 | Remaining admin CRUD consoles close the privileged control-plane gap. |
+| 2 | ADMIN-05 | Admin observability dashboards round out audit and job support. |
+| 3 | TASK-13-03 | Release-gate compliance checklist is needed before any production sign-off. |
+| 4 | TASK-13-04 | Evidence package and sign-off workflow complete the compliance gate. |
+| 5 | TASK-11-12 | Phase-2 role workspaces bundle the remaining user-facing surfaces. |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 
@@ -251,7 +257,7 @@ Historical planning queue retained for lineage; implemented items from the execu
 | 27 | TASK-08-01 | Start automation to hit KPI target |
 | 28 | TASK-08-02 | Reliable automation execution |
 | 29 | TASK-08-03 | Operational support and troubleshooting |
-| 30 | TASK-08-04 | Automation KPI telemetry |
+| 30 | TASK-08-04 | Delivered in repo; retained as historical sequencing reference for automation KPI telemetry |
 | 31 | TASK-10-01 | KPI data layer foundation |
 | 32 | TASK-10-02 | Leader read exposure for stored KPI snapshots |
 | 33 | TASK-01-04 | Complete auditability of sensitive actions |

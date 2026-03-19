@@ -55,6 +55,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0048 | 2026-03-16 | accepted | Introduce automation rule model and deterministic trigger evaluator (planning only) | architect + backend-engineer | automation package boundary, domain seams, RBAC, OpenAPI contract |
 | ADR-0049 | 2026-03-16 | accepted | Execute automation `notification.emit` actions via idempotent in-app notification executor | architect + backend-engineer | automation execution semantics, notification persistence, fail-closed guarantees |
 | ADR-0050 | 2026-03-16 | accepted | Add durable automation execution logs and ops read APIs (non-PII) | architect + backend-engineer | automation observability, DB schema, ops API, RBAC |
+| ADR-0051 | 2026-03-19 | accepted | Add durable automation KPI metric events and monthly share aggregation | architect + backend-engineer | automation reporting, KPI aggregation, leader workspace, OpenAPI contract |
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
@@ -1073,3 +1074,31 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Operators can correlate execution issues with request traces using `correlation_id`/`trace_id`.
   - Storage growth requires a retention/purge mechanism; list/read APIs must remain bounded and
     indexed to avoid operational degradation.
+
+## ADR-0051
+- Context: `TASK-08-04` requires a durable, idempotent KPI event stream so monthly automation share
+  metrics can be rebuilt from an append-only source without reusing execution-log tables or adding
+  new HTTP routes.
+- Decision:
+  - Introduce `automation_metric_events` as the durable KPI source of truth, keyed by
+    `event_type + trigger_event_id`.
+  - Persist one metric row per handled automation trigger event from `AutomationActionExecutor`
+    after execution outcome is known, using a best-effort writer isolated from the main request
+    transaction.
+  - Store only aggregate, non-PII counts and outcome labels needed for reporting:
+    `event_time`, `outcome`, `total_hr_operations_count`, `automated_hr_operations_count`,
+    `planned_action_count`, `succeeded_action_count`, `deduped_action_count`, and
+    `failed_action_count`.
+  - Keep reporting on the existing KPI snapshot read/rebuild/export routes and aggregate the new
+    automation metric stream inside the monthly rebuild path.
+  - Derive `automated_hr_operations_share_percent` as floor division of the automated count by the
+    total count, returning `0` when the denominator is `0`.
+- Consequences:
+  - Leaders get automation KPI visibility through the existing snapshot API and `/leader` UI
+    without new route topology.
+  - The metric stream stays additive and idempotent, even when execution logs or notification
+    writes are retried.
+  - Historical backfill remains a separate follow-up because the stream only covers handled events
+    after this slice is deployed.
+  - Architecture review: self-review completed on 2026-03-19; the change is additive, preserves
+    existing RBAC and route boundaries, and keeps execution logs separate from KPI metrics.

@@ -112,7 +112,23 @@ class KpiSnapshotService:
                     end_at=end_at,
                 )
             ),
+            "total_hr_operations_count": self._aggregation_dao.count_total_hr_operations(
+                start_at=start_at,
+                end_at=end_at,
+            ),
+            "automated_hr_operations_count": self._aggregation_dao.count_automated_hr_operations(
+                start_at=start_at,
+                end_at=end_at,
+            ),
+            "automated_hr_operations_share_percent": 0,
         }
+        total_hr_operations_count = metrics_by_key["total_hr_operations_count"]
+        automated_hr_operations_count = metrics_by_key["automated_hr_operations_count"]
+        metrics_by_key["automated_hr_operations_share_percent"] = (
+            0
+            if total_hr_operations_count == 0
+            else (automated_hr_operations_count * 100) // total_hr_operations_count
+        )
 
         snapshots = [
             KpiSnapshot(

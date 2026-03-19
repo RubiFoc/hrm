@@ -16,6 +16,7 @@ from hrm_backend.audit.models.event import AuditEvent
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.candidates.models.profile import CandidateProfile
+from hrm_backend.automation.models.metric_event import AutomationMetricEvent
 from hrm_backend.core.models.base import Base
 from hrm_backend.employee.models.hire_conversion import HireConversion
 from hrm_backend.interviews.models.feedback import InterviewFeedback
@@ -147,6 +148,23 @@ def _load_hire_conversions(database_url: str) -> list[HireConversion]:
                     select(HireConversion).order_by(
                         HireConversion.converted_at.asc(),
                         HireConversion.conversion_id.asc(),
+                    )
+                ).scalars()
+            )
+    finally:
+        engine.dispose()
+
+
+def _load_metric_events(database_url: str) -> list[AutomationMetricEvent]:
+    """Load ordered automation KPI metric rows from database URL."""
+    engine = create_engine(database_url, future=True)
+    try:
+        with Session(engine) as session:
+            return list(
+                session.execute(
+                    select(AutomationMetricEvent).order_by(
+                        AutomationMetricEvent.event_time.asc(),
+                        AutomationMetricEvent.metric_event_id.asc(),
                     )
                 ).scalars()
             )
@@ -770,6 +788,12 @@ async def test_offer_lifecycle_api_blocks_and_unblocks_pipeline_resolution(
         for event in events
     )
 
+    metric_events = _load_metric_events(database_url)
+    assert len(metric_events) == 7
+    assert all(item.total_hr_operations_count == 1 for item in metric_events)
+    assert all(item.automated_hr_operations_count == 0 for item in metric_events)
+    assert all(item.outcome == "no_rules" for item in metric_events)
+
 
 async def test_offer_stage_and_decline_flow_return_stable_reason_codes(
     configured_app,
@@ -898,6 +922,12 @@ async def test_offer_stage_and_decline_flow_return_stable_reason_codes(
     )
     assert rejected_transition.status_code == 200
     assert rejected_transition.json()["to_stage"] == "rejected"
+
+    metric_events = _load_metric_events(database_url)
+    assert len(metric_events) == 7
+    assert all(item.total_hr_operations_count == 1 for item in metric_events)
+    assert all(item.automated_hr_operations_count == 0 for item in metric_events)
+    assert all(item.outcome == "no_rules" for item in metric_events)
 
 
 async def test_pipeline_transition_rbac_deny_is_audited(

@@ -3023,7 +3023,7 @@ export interface components {
              * Metric Key
              * @enum {string}
              */
-            metric_key: "vacancies_created_count" | "candidates_applied_count" | "interviews_scheduled_count" | "offers_sent_count" | "offers_accepted_count" | "hires_count" | "onboarding_started_count" | "onboarding_tasks_completed_count";
+            metric_key: "vacancies_created_count" | "candidates_applied_count" | "interviews_scheduled_count" | "offers_sent_count" | "offers_accepted_count" | "hires_count" | "onboarding_started_count" | "onboarding_tasks_completed_count" | "total_hr_operations_count" | "automated_hr_operations_count" | "automated_hr_operations_share_percent";
             /** Metric Value */
             metric_value: number;
         };

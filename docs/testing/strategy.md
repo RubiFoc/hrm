@@ -63,14 +63,16 @@ apps/backend/tests/
 - Frontend typed contract generation must run from frozen spec:
   - `npm --prefix apps/frontend run api:types:generate`
 
-## Automation Rule Engine Verification (TASK-08-01/08-02/08-03)
-- Evaluator + executor unit coverage:
+## Automation Rule Engine Verification (TASK-08-01/08-02/08-03/08-04)
+- Evaluator + executor + metric writer unit coverage:
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/automation`
 - Rule CRUD + RBAC integration coverage:
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/automation/test_automation_rule_api.py`
 - Execution log read APIs + RBAC integration coverage:
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/automation/test_automation_execution_log_api.py`
-- When automation endpoints or notification payload fields change, keep OpenAPI freeze and generated frontend types in sync:
+- KPI event stream coverage from the existing automation triggers:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py apps/backend/tests/integration/employee/test_onboarding_task_api.py`
+- When automation execution, metric stream, or notification payload fields change, keep OpenAPI freeze and generated frontend types in sync:
   - `./scripts/check-openapi-freeze.sh`
   - `npm --prefix apps/frontend run api:types:check`
 
@@ -188,8 +190,9 @@ apps/backend/tests/
 
 | Capability | Unit Coverage | Integration Coverage | Required Evidence |
 | --- | --- | --- | --- |
-| KPI aggregation per source table | `tests/unit/reporting/test_kpi_snapshot_service.py` | `tests/integration/reporting/test_kpi_snapshot_api.py` | `uv run --project apps/backend pytest -q` |
+| KPI aggregation per source table and automation metric stream | `tests/unit/reporting/test_kpi_snapshot_service.py` | `tests/integration/reporting/test_kpi_snapshot_api.py` | `uv run --project apps/backend pytest -q` |
 | Zero-fill semantics + idempotent rebuild | `tests/unit/reporting/test_kpi_snapshot_service.py` | `tests/integration/reporting/test_kpi_snapshot_api.py` | snapshot rows remain deterministic across rebuilds |
+| Automation totals and share are derived from durable metric events | `tests/unit/reporting/test_kpi_snapshot_service.py` | `tests/integration/reporting/test_kpi_snapshot_api.py` | `total_hr_operations_count`, `automated_hr_operations_count`, and `automated_hr_operations_share_percent` rebuild deterministically, including `total=0` |
 | Read API returns empty payload when snapshot is missing | N/A | `tests/integration/reporting/test_kpi_snapshot_api.py` | `metrics=[]` for missing months |
 | Read API does not fallback to live aggregation | N/A | `tests/integration/reporting/test_kpi_snapshot_api.py` | `metrics=[]` even when source data exists and snapshots are missing |
 | RBAC for KPI endpoints (leader/admin read, admin rebuild) | N/A | `tests/integration/reporting/test_kpi_snapshot_api.py` | leader `200` read, leader `403` rebuild, non-privileged roles `403` read |

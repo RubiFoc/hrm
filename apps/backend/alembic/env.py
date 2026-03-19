@@ -14,6 +14,7 @@ from hrm_backend.auth.models.staff_account import StaffAccount  # noqa: F401
 from hrm_backend.automation.models.action_execution import AutomationActionExecution  # noqa: F401
 from hrm_backend.automation.models.automation_rule import AutomationRule  # noqa: F401
 from hrm_backend.automation.models.execution_run import AutomationExecutionRun  # noqa: F401
+from hrm_backend.automation.models.metric_event import AutomationMetricEvent  # noqa: F401
 from hrm_backend.candidates.models.document import CandidateDocument  # noqa: F401
 from hrm_backend.candidates.models.parsing_job import CVParsingJob  # noqa: F401
 from hrm_backend.candidates.models.profile import CandidateProfile  # noqa: F401
