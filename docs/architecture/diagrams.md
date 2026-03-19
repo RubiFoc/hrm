@@ -967,8 +967,8 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-  USER[User opens critical route] --> ROUTE[Observed route: /, /employee, /candidate, /login, /admin, /admin/staff, /admin/employee-keys, /admin/candidates, /admin/vacancies, /admin/pipeline, /admin/audit, /admin/observability]
-  ROUTE --> TAGS[Sentry tags: workspace=hr|manager|accountant|employee|candidate|auth|admin, role, route]
+  USER[User opens critical route] --> ROUTE[Observed route: /, /employee, /leader, /candidate, /login, /admin, /admin/staff, /admin/employee-keys, /admin/candidates, /admin/vacancies, /admin/pipeline, /admin/audit, /admin/observability]
+  ROUTE --> TAGS[Sentry tags: workspace=hr|manager|accountant|employee|leader|candidate|auth|admin, role, route]
   TAGS --> SENTRY[Sentry]
 
   ROUTE --> UI[React page and query or mutation logic]

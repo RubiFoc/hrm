@@ -297,10 +297,12 @@ Runtime auth/browser integration settings:
 
 ### Frontend Sentry Diagnostics (`TASK-11-10`)
 - Critical routes covered by the baseline:
-  - `/` -> `workspace=hr`, `route=/`
+  - `/` -> `workspace=hr` for HR/admin, `workspace=manager` for manager, `workspace=accountant` for accountant, `route=/`
+  - `/employee` -> `workspace=employee`, `route=/employee`
+  - `/leader` -> `workspace=leader`, `route=/leader`
   - `/candidate` -> `workspace=candidate`, `route=/candidate`
   - `/login` -> `workspace=auth`, `route=/login`
-  - `/admin`, `/admin/staff`, `/admin/employee-keys` -> `workspace=admin` with canonical route tags
+  - `/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, `/admin/audit`, `/admin/observability` -> `workspace=admin` with canonical route tags
 - Expected capture paths:
   - route entry emits `workspace`, `role`, `route`
   - shared HTTP client captures request failures with `http_method`, optional `http_status`, and request path metadata
