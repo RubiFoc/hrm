@@ -1,7 +1,7 @@
 # Evidence Registry
 
 ## Last Updated
-- Date: 2026-03-16
+- Date: 2026-03-19
 - Updated by: backend-engineer + frontend-engineer
 
 ## Registry Model
@@ -11,6 +11,7 @@
 - `Artifact`: only real in-repo code/docs/scripts/tests or repeatable commands.
 - `Verification Source`: command or procedure that proves the artifact is current.
 - `Update Trigger`: concrete change that requires the row to be refreshed.
+- EPIC-13 release checks must treat any `planned` or `in-progress` critical control as a hard blocker; do not substitute a missing artifact with a placeholder evidence row.
 
 ## Evidence Entries
 
@@ -31,10 +32,11 @@
 | --- | --- | --- | --- |
 | CTRL-BY-02 | Runbook procedure for access/correction/deletion or stop-processing requests | backend + hr-ops | Before any public subject-rights workflow or production readiness review |
 | CTRL-RU-03 | Runbook/ticket workflow for data-subject requests under 152-ФЗ | backend + hr-ops | Before any production readiness review |
-| CTRL-RU-04 | Infra/data-residency ADR and deployment evidence for RU localization | architect + devops | Before storing production RU citizen data |
-| CTRL-RU-06 | ISPDn class checklist and attestation pack | security + business-analyst | Before first production release |
+| CTRL-RU-04 | Infra/data-residency ADR and deployment evidence for RU localization | architect + devops | Before storing production RU citizen data; blocks EPIC-13 pre-prod and production release until the gap is replaced by real evidence |
+| CTRL-RU-06 | ISPDn class checklist and attestation pack | security + business-analyst | Before first production release; blocks EPIC-13 pre-prod and production release until the pack exists as a real evidence artifact |
 
 ## Usage Rules
 - Use this registry together with `docs/project/legal-controls-matrix.md`; do not treat it as a substitute for legal review.
 - When a verification command changes, update the matching `Evidence ID` row in the same change.
 - When an artifact path is removed or renamed, either replace the evidence with a new real artifact or move the control back to a gap state.
+- The EPIC-13 release checklist must reference the current gap rows for `CTRL-RU-04` and `CTRL-RU-06`; these rows are blockers, not waivers.

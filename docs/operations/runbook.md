@@ -359,6 +359,8 @@ Runtime auth/browser integration settings:
 ## Compliance Baseline (Dev Non-Blocking, Prod Blocking)
 This section defines provisional operational controls until final legal/security sign-off.
 
+EPIC-13 release gating and sign-off requirements live in `docs/operations/release-checklist.md`.
+
 ### Data Retention Policy (Provisional)
 
 | Data Class | Storage | Retention Window | Disposal Strategy | Owner |
@@ -379,7 +381,7 @@ This section defines provisional operational controls until final legal/security
   - Object storage buckets with personal data must use server-side encryption.
   - Backups/snapshots must be encrypted and access-restricted.
 
-- TODO(owner: devops + security, due_trigger: before first production release): attach concrete infrastructure evidence (KMS/SSE/TLS termination config) to release checklist.
+- TODO(owner: devops + security, due_trigger: before first production release): attach concrete infrastructure evidence (KMS/SSE/TLS termination config) to the EPIC-13 release checklist and close the `CTRL-RU-04` gap with a real artifact.
 
 ### Access Policy and Review Cadence (Provisional)
 - Least-privilege access is mandatory for platform, database, object storage, and CI/CD.
@@ -393,9 +395,11 @@ This section defines provisional operational controls until final legal/security
 - TODO(owner: architect + security, due_trigger: before first production release): finalize break-glass procedure and reviewer roster.
 
 ### Release Gate Policy
-- Dev and test deployments are allowed with provisional controls.
-- Production release is blocked until critical controls in `docs/project/legal-controls-matrix.md` are at least `implemented`.
-- Production release is additionally blocked until legal/security sign-off marks critical controls as `verified`.
+- Dev and test deployments are allowed with provisional controls, but they do not waive EPIC-13 release gating.
+- `docs/operations/release-checklist.md` is the canonical pre-prod and production gate.
+- Pre-prod promotion is blocked if any critical control in `docs/project/legal-controls-matrix.md` remains `planned` or `in-progress`.
+- Production release is blocked unless every critical control is `verified` and legal/security sign-off records the refreshed evidence IDs.
+- The current hard blockers are the gap rows for `CTRL-RU-04` and `CTRL-RU-06`; release cannot proceed until those artifacts exist as real evidence, not placeholders.
 
 ## Incident Triage
 1. Confirm impact and affected user segment.
