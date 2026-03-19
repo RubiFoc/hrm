@@ -63,7 +63,7 @@
 | ADMIN-05 | done/closed | GitHub issue #87 closed; merged in `main` via PR #135 (`3eca7a1`) with a frontend-first admin observability dashboard on `/admin/observability` that reuses `/health`, audit preview, CV parsing status, and match-score status contracts. |
 | TASK-13-03 | done/closed | Repo-backed release-gate compliance checklist now makes EPIC-13 pre-prod and production sign-off explicit, with current critical controls, evidence IDs, verification commands, legal/security preconditions, and blocker states captured in the docs set. |
 | TASK-13-04 | done/closed | GitHub issue #62 is linked to PR #138; the repo-backed production legal evidence package now defines sign-off workflow, required attachments, evidence freshness rules, blocker handling, and `verified` exit criteria for critical controls without adding runtime/API changes. |
-| COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
+| COMPLIANCE-01 | planned | EPIC-13 umbrella tracking issue for repo normalization; no runtime scope, blocked by external evidence artifacts (`CTRL-RU-04`, `CTRL-RU-06`) |
 
 ## 2026-03-12 Delivery Control Notes
 - `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
@@ -141,7 +141,7 @@
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
 - Repo backlog state now excludes `TASK-10-04`, and GitHub issue `#99` is closed following PR #124 (`7a5ca87`).
 - Repo backlog state now excludes `TASK-13-04`; the repo source of truth is the production legal evidence package and aligned EPIC-13 docs set.
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `0`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `0`-task count; it stays open until the external blocker artifacts for `CTRL-RU-04` and `CTRL-RU-06` exist as real evidence.
 - Current open backlog by delivery wave:
   - none; `TASK-11-12` is now normalized closed and retained below for lineage.
 
