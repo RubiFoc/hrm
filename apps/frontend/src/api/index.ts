@@ -4,6 +4,7 @@ export {
   listAccountingWorkspace,
 } from "./accountingWorkspace";
 export { downloadAuditEventsExport, listAuditEvents } from "./audit";
+export { getBackendHealth } from "./platform";
 export { downloadKpiSnapshotExport, readKpiSnapshot } from "./kpiSnapshots";
 export { getMe, login, logout } from "./auth";
 export { listAdminStaff, updateAdminStaff } from "./adminStaff";
@@ -78,6 +79,7 @@ export type {
   AuditEventListQuery,
   AuditEventListResponse,
 } from "./audit";
+export type { BackendHealthResponse } from "./platform";
 export type {
   KpiSnapshotExportFormat,
   KpiSnapshotMetric,

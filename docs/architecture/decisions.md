@@ -1131,3 +1131,32 @@ Use this log for decisions that change interfaces, data models, deployment topol
     independent policy or retention review.
   - Architecture review: self-review completed on 2026-03-19; the change is additive, reuses
     existing backend contracts, and does not introduce a new admin namespace.
+
+## ADR-0053
+- Context: ADMIN-05 should give support staff a small observability entrypoint without opening a
+  new backend namespace, adding destructive behavior, or duplicating worker-health APIs when the
+  existing read surfaces already cover the needed diagnostics.
+- Decision:
+  - Deliver the slice as a frontend-first dashboard at `/admin/observability` under the existing
+    admin guard and shell.
+  - Reuse existing backend contracts only:
+    - shared `GET /health` backend health probe;
+    - admin audit preview via `GET /api/v1/audit/events`;
+    - candidate CV parsing status via
+      `GET /api/v1/candidates/{candidate_id}/cv/parsing-status`;
+    - match score status via
+      `GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}`.
+  - Keep the slice read-only and non-destructive:
+    - no create/update/delete actions;
+    - no new backend namespace for worker health or observability.
+  - Extend frontend route tagging so the new route emits canonical `route=/admin/observability`.
+- Consequences:
+  - Support staff get an operational dashboard without changing backend package boundaries or the
+    admin route shell.
+  - Existing health, audit, and job-status contracts remain the source of truth for observability
+    data.
+  - If a dedicated worker-health endpoint is later justified, it should be introduced as a separate
+    ADR rather than folded into this slice.
+  - Architecture review: self-review completed on 2026-03-19; the change is additive, reuses
+    existing read-only contracts, and does not introduce destructive behavior or a new backend
+    namespace.

@@ -10,6 +10,7 @@ import { AccountantWorkspacePage } from "../pages/AccountantWorkspacePage";
 import { AdminAuditPage } from "../pages/admin/AdminAuditPage";
 import { AdminCandidatesPage } from "../pages/admin/AdminCandidatesPage";
 import { AdminEmployeeKeysManagementPage } from "../pages/AdminEmployeeKeysManagementPage";
+import { AdminObservabilityPage } from "../pages/admin/AdminObservabilityPage";
 import { AdminPipelinePage } from "../pages/admin/AdminPipelinePage";
 import { AdminStaffManagementPage } from "../pages/AdminStaffManagementPage";
 import { AdminShellPage } from "../pages/AdminShellPage";
@@ -96,6 +97,10 @@ export const appRoutes = [
           {
             path: "audit",
             element: <AdminAuditPage />,
+          },
+          {
+            path: "observability",
+            element: <AdminObservabilityPage />,
           },
         ],
       },

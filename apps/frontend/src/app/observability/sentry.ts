@@ -160,6 +160,12 @@ function resolveRouteTag(pathname: string): string {
     if (pathname === "/admin/audit" || pathname.startsWith("/admin/audit/")) {
       return "/admin/audit";
     }
+    if (
+      pathname === "/admin/observability"
+      || pathname.startsWith("/admin/observability/")
+    ) {
+      return "/admin/observability";
+    }
     if (pathname === "/admin/staff" || pathname.startsWith("/admin/staff/")) {
       return "/admin/staff";
     }

@@ -12,12 +12,22 @@ const adminCards: AdminCardConfig[] = [
   { key: "vacancies", to: "/admin/vacancies" },
   { key: "pipeline", to: "/admin/pipeline" },
   { key: "audit", to: "/admin/audit" },
+  { key: "observability", to: "/admin/observability" },
   { key: "staff", to: "/admin/staff" },
   { key: "employeeKeys", to: "/admin/employee-keys" },
 ];
 
 /**
  * Admin landing page with navigation cards for privileged control-plane consoles.
+ *
+ * Inputs:
+ * - none; reads localized labels from the active translation catalog.
+ *
+ * Outputs:
+ * - React element tree containing the admin shell cards and links.
+ *
+ * Side effects:
+ * - none.
  */
 export function AdminShellPage() {
   const { t } = useTranslation();

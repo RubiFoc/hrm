@@ -4642,8 +4642,8 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                    "application/x-ndjson": unknown;
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": unknown;
+                    "application/x-ndjson": unknown;
                     "text/csv": unknown;
                 };
             };

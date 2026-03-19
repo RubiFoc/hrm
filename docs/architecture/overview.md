@@ -133,6 +133,14 @@ flowchart LR
    are computed server-side ->
    `kpi_snapshots` rows for the month are replaced atomically -> leader/admin read stored snapshot via
    `/api/v1/reporting/kpi-snapshots` (no live aggregation and no scheduler).
+15. Admin Observability Flow:
+   admin opens `/admin/observability` -> frontend emits canonical admin Sentry tags ->
+   read-only dashboard reuses existing health, audit, parsing, and scoring contracts ->
+   `GET /health` -> health card,
+   `GET /api/v1/audit/events?limit=5&offset=0` -> recent audit preview,
+   `GET /api/v1/candidates/{candidate_id}/cv/parsing-status` -> CV parsing status lookup,
+   `GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}` -> match score status lookup ->
+   localized UI renders operational support diagnostics without introducing a new backend namespace.
 
 ## Data Boundaries
 - Source of truth entities:

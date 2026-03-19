@@ -62,6 +62,19 @@ describe("frontend observability route tags", () => {
           }),
         );
       }
+      if (url.endsWith("/health")) {
+        return Promise.resolve(jsonResponse({ status: "ok" }));
+      }
+      if (url.includes("/api/v1/audit/events?")) {
+        return Promise.resolve(
+          jsonResponse({
+            items: [],
+            total: 0,
+            limit: 5,
+            offset: 0,
+          }),
+        );
+      }
       if (url.includes("/api/v1/accounting/workspace?")) {
         return Promise.resolve(
           jsonResponse({
@@ -219,5 +232,21 @@ describe("frontend observability route tags", () => {
     expect(setTagMock).toHaveBeenCalledWith("workspace", "leader");
     expect(setTagMock).toHaveBeenCalledWith("role", "leader");
     expect(setTagMock).toHaveBeenCalledWith("route", "/leader");
+  });
+
+  it("tags the admin observability route on /admin/observability", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "admin");
+
+    renderWithPath("/admin/observability");
+
+    expect(
+      await screen.findByRole("heading", {
+        name: /панель наблюдаемости|observability dashboard/i,
+      }),
+    ).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("role", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/admin/observability");
   });
 });

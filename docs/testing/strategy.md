@@ -264,6 +264,18 @@ Targeted local verification command:
 
 `npm --prefix apps/frontend test -- --run src/pages/admin/AdminCandidatesPage.test.tsx src/pages/admin/AdminVacanciesPage.test.tsx src/pages/admin/AdminPipelinePage.test.tsx src/pages/admin/AdminAuditPage.test.tsx src/app/router.admin.test.tsx`
 
+## Frontend Admin Observability Verification (ADMIN-05)
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Read-only observability slice on `/admin/observability` | `apps/frontend/src/pages/admin/AdminObservabilityPage.test.tsx` | `apps/frontend/src/app/router.admin.test.tsx` + `apps/frontend/src/app/router.observability.test.tsx` | localized RU/EN dashboard render, `/health` health card, audit preview, CV parsing lookup, and match score lookup |
+| Sentry route tag for admin observability screen | `apps/frontend/src/app/router.admin.test.tsx` | `apps/frontend/src/app/router.observability.test.tsx` | `route=/admin/observability` emitted by the admin guard |
+| Read-only support diagnostics reuse existing contracts | `apps/frontend/src/pages/admin/AdminObservabilityPage.test.tsx` | N/A | no destructive actions, no new backend namespace, and localized `404/409/422/http_*` error handling for lookup paths |
+
+Targeted local verification command:
+
+`npm --prefix apps/frontend test -- --run src/pages/admin/AdminObservabilityPage.test.tsx src/app/router.admin.test.tsx src/app/router.observability.test.tsx`
+
 ## Frontend Candidate Workspace Verification (`TASK-11-06`, `TASK-11-09`, `TASK-11-11`)
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
@@ -726,7 +738,7 @@ Acceptance rules for the implementation slice:
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
 | --- | --- | --- | --- |
 | Canonical Sentry tags on critical routes (`/`, `/candidate`, `/login`) | `apps/frontend/src/app/router.observability.test.tsx` | Manual QA against Sentry project or local browser verification | `workspace`, `role`, `route` tags match the documented route/workspace mapping |
-| Canonical Sentry tags on admin critical routes (`/admin`, `/admin/staff`, `/admin/employee-keys`) | `apps/frontend/src/app/router.admin.test.tsx` | Manual QA against Sentry project or admin route smoke | admin routes emit `workspace=admin` plus the canonical route tag |
+| Canonical Sentry tags on admin critical routes (`/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, `/admin/audit`, `/admin/observability`) | `apps/frontend/src/app/router.admin.test.tsx` | Manual QA against Sentry project or admin route smoke | admin routes emit `workspace=admin` plus the canonical route tag |
 | Shared HTTP failure capture with request metadata | `apps/frontend/src/api/httpClient.test.ts` | Manual failure injection against local backend or Sentry QA project | Sentry event includes current route tags plus `http_method`, `http_status`, and request path metadata |
 | Localized render-failure fallback boundary | `apps/frontend/src/app/observability/AppErrorBoundary.test.tsx` | Manual browser smoke with a forced render exception in QA build | crashing route renders RU/EN fallback UI and the exception is captured in Sentry |
 | Frontend non-regression after observability hardening | `npm --prefix apps/frontend run test -- --run` | existing compose smoke remains unchanged | no route, auth, CORS, or typed-client regression |
