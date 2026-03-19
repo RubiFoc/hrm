@@ -130,6 +130,19 @@ describe("admin route guard", () => {
     expect(setTagMock).toHaveBeenCalledWith("route", "/admin/audit");
   });
 
+  it("allows admin user into /admin/observability and sets sentry route tag", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "admin");
+
+    renderWithPath("/admin/observability");
+    expect(
+      await screen.findByRole("heading", { name: /панель наблюдаемости|observability dashboard/i }),
+    ).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("role", "admin");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/admin/observability");
+  });
+
   it("allows admin user into /admin/employee-keys and sets sentry route tag", async () => {
     window.localStorage.setItem("hrm_access_token", "token");
     window.localStorage.setItem("hrm_user_role", "admin");

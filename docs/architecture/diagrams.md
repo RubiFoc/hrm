@@ -967,7 +967,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-  USER[User opens critical route] --> ROUTE[Observed route: /, /employee, /candidate, /login, /admin, /admin/staff, /admin/employee-keys, /admin/candidates, /admin/vacancies, /admin/pipeline, /admin/audit]
+  USER[User opens critical route] --> ROUTE[Observed route: /, /employee, /candidate, /login, /admin, /admin/staff, /admin/employee-keys, /admin/candidates, /admin/vacancies, /admin/pipeline, /admin/audit, /admin/observability]
   ROUTE --> TAGS[Sentry tags: workspace=hr|manager|accountant|employee|candidate|auth|admin, role, route]
   TAGS --> SENTRY[Sentry]
 
@@ -1069,3 +1069,27 @@ flowchart LR
 The ADMIN-04 slice stays frontend-first over the existing backend contracts. It keeps the control
 plane non-destructive, avoids a new admin backend namespace, and uses the audit export endpoint for
 read-only evidence downloads in CSV, JSONL, and XLSX formats.
+
+## Diagram 26: Admin Observability Slice (ADMIN-05)
+
+```mermaid
+flowchart LR
+  ADM[Admin opens /admin/observability] --> GUARD[AdminGuard + AdminShell]
+  GUARD --> PAGE[AdminObservabilityPage]
+
+  PAGE --> HEALTH[GET /health]
+  PAGE --> AUDIT[GET /api/v1/audit/events?limit=5&offset=0]
+  PAGE --> PARSE[GET /api/v1/candidates/{candidate_id}/cv/parsing-status]
+  PAGE --> SCORE[GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}]
+
+  HEALTH --> UI[Read-only health, audit, and job-status cards]
+  AUDIT --> UI
+  PARSE --> UI
+  SCORE --> UI
+
+  GUARD --> TAGS[Sentry route tags: workspace=admin, route=/admin/observability]
+```
+
+The ADMIN-05 slice stays frontend-first over the existing read-only backend contracts. It reuses
+the shared health probe, audit preview, CV parsing status, and match score status endpoints
+without adding a new backend namespace or destructive behavior.
