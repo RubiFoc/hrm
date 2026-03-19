@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-19
-- Updated by: coordinator + backend-engineer
+- Updated by: coordinator + business-analyst + backend-engineer
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -60,6 +60,7 @@
 | TASK-10-03 | done/closed | Merged in `main` via PR #122 with admin-only `GET /api/v1/audit/events` query API, `audit:read` RBAC permission, unit/integration coverage, updated OpenAPI freeze, and refreshed frontend generated types |
 | TASK-10-04 | done/closed | GitHub issue #99 closed; merged in `main` via PR #124 (`7a5ca87`) with controlled audit evidence export (`/api/v1/audit/events/export`) in CSV/JSONL/XLSX and KPI snapshot export (`/api/v1/reporting/kpi-snapshots/export`) attachments plus updated docs/diagrams and regenerated OpenAPI/frontend types |
 | ADMIN-05 | done/closed | GitHub issue #87 closed; merged in `main` via PR #135 (`3eca7a1`) with a frontend-first admin observability dashboard on `/admin/observability` that reuses `/health`, audit preview, CV parsing status, and match-score status contracts. |
+| TASK-13-03 | done/closed | Repo-backed release-gate compliance checklist now makes EPIC-13 pre-prod and production sign-off explicit, with current critical controls, evidence IDs, verification commands, legal/security preconditions, and blocker states captured in the docs set. |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-12 Delivery Control Notes
@@ -83,7 +84,8 @@
 - `TASK-04-04` post-merge closeout is complete: the low-confidence fallback slice is merged in `main` via PR #109 (`c60b48b`), and this backlog snapshot is synchronized to the merged state while keeping the existing route tree and runtime topology unchanged.
 - `TASK-04-06` post-merge closeout is complete: GitHub issue `#92` was already closed before PR #111 (`eedcc0f`) merged, and this backlog snapshot is synchronized to the merged `main` state after verifying issue state, PR merge, and branch cleanup.
 - Scoring explainability (`TASK-04-05`) and the additive quality harness (`TASK-04-06`) are now implemented in repo without changing runtime routes, lifecycle states, or public scoring contracts.
-- The compliance follow-on slice (`TASK-13-01/02`) is now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
+- The compliance follow-on slices (`TASK-13-01/02`) are now implemented in repo as documentation and evidence-model work only; no runtime/API/routing changes were introduced.
+- `TASK-13-03` is now implemented in repo as a docs/process-only release gate; no runtime/API/routing changes were introduced.
 - The dedicated planning pass for `TASK-11-08` is implemented in repo as one backend+frontend interview slice without reopening auth, CORS, or the public candidate transport model.
 - Interview planning and Google Calendar sync baseline (`TASK-05-01/02`) are now implemented in repo; remaining interview backlog starts after the already-landed scheduling/registration and fairness slices.
 - The structured interview feedback and fairness gate slice (`TASK-05-03/04`) is now implemented in repo on top of the scheduling baseline, without reopening auth, CORS, route topology, or candidate transport.
@@ -130,20 +132,19 @@
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `3` tasks.
+- Normalized open backlog count: `2` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
 - Repo backlog state now excludes `TASK-10-04`, and GitHub issue `#99` is closed following PR #124 (`7a5ca87`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `3`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `2`-task count.
 - Current open backlog by delivery wave:
-  - Wave 2 platform/ops/reporting: `TASK-13-03`, `TASK-13-04`
+  - Wave 2 platform/ops/reporting: `TASK-13-04`
   - Wave 3 phase-2 workspaces: `TASK-11-12`
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| 1 | TASK-13-03 | Release-gate compliance checklist is needed before any production sign-off. |
-| 2 | TASK-13-04 | Evidence package and sign-off workflow complete the compliance gate. |
-| 3 | TASK-11-12 | Phase-2 role workspaces bundle the remaining user-facing surfaces. |
+| 1 | TASK-13-04 | Evidence package and sign-off workflow complete the compliance gate. |
+| 2 | TASK-11-12 | Phase-2 role workspaces bundle the remaining user-facing surfaces. |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 
@@ -317,7 +318,7 @@ Use this queue together with the global queue when planning phase implementation
 
 ## Milestone Cut Suggestion
 - `M1` (Phase 1 MVP): infra/security + ADMIN-01/02/03 + candidate CV intake/parsing/normalization + candidate self-service upload/tracking + HR vacancy/pipeline workspace baseline + RU/EN critical flows + browser smoke.
-- `M2` (Immediate post-baseline slice): `TASK-04-01/02/03 + TASK-11-07` as one scoring/shortlist-review deliverable, with `TASK-11-10` and `TASK-13-01/02` proceeding immediately after or in parallel.
+- `M2` (Immediate post-baseline slice): `TASK-04-01/02/03 + TASK-11-07` as one scoring/shortlist-review deliverable, with `TASK-11-10` and `TASK-13-01/02/03` proceeding immediately after or in parallel.
 - `M2` planning gate: completed in `docs/project/interview-planning-pass.md`; use that document as the baseline for interview scheduling/registration implementation.
 - `M3` (Phase 2 core): interview scheduling/fairness controls + offer-to-hire + onboarding workflows + phase-2 role workspace baseline.
 - `M4` (Phase 2 expansion): manager/leader/accountant rollout + reporting exports + notification optimization + final legal sign-off package.

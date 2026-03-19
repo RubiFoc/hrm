@@ -1,7 +1,7 @@
 # Legal Controls Matrix (Belarus + Russia)
 
 ## Last Updated
-- Date: 2026-03-09
+- Date: 2026-03-19
 - Updated by: business-analyst + architect + backend-engineer
 
 ## Status Legend
@@ -40,10 +40,14 @@
 
 ## Delivery Gate
 - Current stage delivery target is local runtime on the current device; production launch is not in scope for this stage.
-- Development environment is non-blocking for controls in `planned` or `in-progress` status.
-- Current repo-backed controls (`CTRL-BY-03`, `CTRL-RU-02`, `CTRL-RU-05`) can be treated as `implemented`, but none are `verified` yet.
-- Production release is blocked until all critical controls (`CTRL-BY-03`, `CTRL-RU-02`, `CTRL-RU-04`, `CTRL-RU-05`, `CTRL-RU-06`) reach at least `implemented`.
-- Production release is additionally blocked until legal sign-off confirms `verified` status and attached evidence for critical controls.
+- `docs/operations/release-checklist.md` is the canonical EPIC-13 pre-prod/production gate.
+- Development environment is non-blocking for controls in `planned` or `in-progress` status, but those states remain release blockers for EPIC-13.
+- Current repo-backed critical controls are:
+  - `implemented`: `CTRL-BY-03`, `CTRL-RU-02`, `CTRL-RU-05`
+  - `planned` gap: `CTRL-RU-04`, `CTRL-RU-06`
+- Pre-prod promotion requires all critical controls to be at least `implemented`, with current evidence rows and verification commands recorded in `docs/project/evidence-registry.md`.
+- Production release additionally requires legal/security sign-off, `verified` status for the implemented critical controls, and explicit closure of the `CTRL-RU-04` and `CTRL-RU-06` evidence gaps.
+- Any critical control that remains `planned` or `in-progress` is a hard blocker for both pre-prod and production release.
 - Execution tracking for this matrix is formalized under `EPIC-13` in:
   - `TASK-13-01` (article-level mapping),
   - `TASK-13-02` (evidence ownership model),
