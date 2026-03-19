@@ -59,6 +59,7 @@
 | TASK-10-01 | implemented/local-kpi-snapshot-slice | Monthly KPI snapshots with admin-only rebuild/read API, reporting package, migration, unit/integration tests, and updated OpenAPI/frontend types are implemented in repo |
 | TASK-10-03 | done/closed | Merged in `main` via PR #122 with admin-only `GET /api/v1/audit/events` query API, `audit:read` RBAC permission, unit/integration coverage, updated OpenAPI freeze, and refreshed frontend generated types |
 | TASK-10-04 | done/closed | GitHub issue #99 closed; merged in `main` via PR #124 (`7a5ca87`) with controlled audit evidence export (`/api/v1/audit/events/export`) in CSV/JSONL/XLSX and KPI snapshot export (`/api/v1/reporting/kpi-snapshots/export`) attachments plus updated docs/diagrams and regenerated OpenAPI/frontend types |
+| ADMIN-05 | done/closed | GitHub issue #87 closed; merged in `main` via PR #135 (`3eca7a1`) with a frontend-first admin observability dashboard on `/admin/observability` that reuses `/health`, audit preview, CV parsing status, and match-score status contracts. |
 | COMPLIANCE-01 | planned | EPIC-13 article-level legal mapping and evidence pack track |
 
 ## 2026-03-12 Delivery Control Notes
@@ -117,6 +118,7 @@
 - `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/` and reused inside the manager workspace on the existing `/` route.
 - `TASK-09-01` is no longer active queue work; the implemented source of truth is the repo-backed manager workspace on `/` plus manager-scoped vacancy read endpoints on the existing `/api/v1/vacancies` namespace.
 - `ADMIN-04` is no longer active queue work; the implemented source of truth is the repo-backed admin control plane on `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, and `/admin/audit` with non-destructive recruitment and audit contract reuse.
+- `ADMIN-05` is no longer active queue work; the implemented source of truth is the repo-backed admin observability dashboard on `/admin/observability` with read-only health, audit preview, and job-status lookup reuse.
 - `TASK-09-03` is no longer active queue work; the implemented source of truth is the repo-backed accountant workspace on `/` plus assignment-scoped finance read/export endpoints on `/api/v1/accounting/workspace*`.
 - `TASK-09-04` is no longer active queue work; the implemented source of truth is the repo-backed recipient-scoped notification API on `/api/v1/notifications*` plus the embedded manager/accountant notifications block on the existing `/` route.
 - `TASK-10-01` is no longer active queue work; the implemented source of truth is the repo-backed monthly KPI snapshot foundation with admin-only rebuild and leader/admin read APIs.
@@ -128,21 +130,20 @@
 
 ## Normalized Open Backlog Snapshot
 
-- Normalized open backlog count: `4` tasks.
+- Normalized open backlog count: `3` tasks.
 - This count excludes tasks already implemented in repo but retained in the historical planning tables below for lineage.
 - Repo backlog state now excludes `TASK-12-02`, and GitHub issue `#85` is closed following PR #105 (`a67bb8c`).
 - Repo backlog state now excludes `TASK-10-04`, and GitHub issue `#99` is closed following PR #124 (`7a5ca87`).
-- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `4`-task count.
+- Issue `#58` remains an umbrella `COMPLIANCE-01` tracking issue and is not included in the normalized `3`-task count.
 - Current open backlog by delivery wave:
-  - Wave 2 platform/ops/reporting: `ADMIN-05`, `TASK-13-03`, `TASK-13-04`
+  - Wave 2 platform/ops/reporting: `TASK-13-03`, `TASK-13-04`
   - Wave 3 phase-2 workspaces: `TASK-11-12`
 
 | Order | Task ID | Why Now |
 | --- | --- | --- |
-| 1 | ADMIN-05 | Admin observability dashboards round out audit and job support. |
-| 2 | TASK-13-03 | Release-gate compliance checklist is needed before any production sign-off. |
-| 3 | TASK-13-04 | Evidence package and sign-off workflow complete the compliance gate. |
-| 4 | TASK-11-12 | Phase-2 role workspaces bundle the remaining user-facing surfaces. |
+| 1 | TASK-13-03 | Release-gate compliance checklist is needed before any production sign-off. |
+| 2 | TASK-13-04 | Evidence package and sign-off workflow complete the compliance gate. |
+| 3 | TASK-11-12 | Phase-2 role workspaces bundle the remaining user-facing surfaces. |
 
 - Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
 
