@@ -79,18 +79,27 @@ create_smoke_admin() {
 load_first_interviewer_staff_id() {
   python3 - <<'PY'
 import json
+import os
 from pathlib import Path
 
-for line in Path(".env").read_text(encoding="utf-8").splitlines():
-    if line.startswith("INTERVIEW_STAFF_CALENDAR_MAP_JSON="):
-        raw = line.split("=", 1)[1].strip()
-        mapping = json.loads(raw)
-        if not isinstance(mapping, dict) or not mapping:
-            raise SystemExit("INTERVIEW_STAFF_CALENDAR_MAP_JSON must contain at least one entry")
-        print(next(iter(mapping)))
-        raise SystemExit(0)
+raw_mapping = os.environ.get("INTERVIEW_STAFF_CALENDAR_MAP_JSON")
+if raw_mapping is None or not raw_mapping.strip():
+    dotenv_path = Path(".env")
+    if dotenv_path.exists():
+        for line in dotenv_path.read_text(encoding="utf-8").splitlines():
+            if line.startswith("INTERVIEW_STAFF_CALENDAR_MAP_JSON="):
+                raw_mapping = line.split("=", 1)[1].strip()
+                break
 
-raise SystemExit("INTERVIEW_STAFF_CALENDAR_MAP_JSON not found in .env")
+if raw_mapping is None or not raw_mapping.strip():
+    raise SystemExit(
+        "INTERVIEW_STAFF_CALENDAR_MAP_JSON not found in environment or .env"
+    )
+
+mapping = json.loads(raw_mapping)
+if not isinstance(mapping, dict) or not mapping:
+    raise SystemExit("INTERVIEW_STAFF_CALENDAR_MAP_JSON must contain at least one entry")
+print(next(iter(mapping)))
 PY
 }
 
@@ -179,6 +188,19 @@ interview_payload = request_json(
 interview_id = interview_payload["interview_id"]
 
 deadline = time.monotonic() + 180.0
+
+def extract_interview_token(invite_url: str) -> str:
+    parsed = urllib.parse.urlparse(invite_url)
+    query_tokens = urllib.parse.parse_qs(parsed.query).get("interviewToken")
+    if query_tokens:
+        return query_tokens[0]
+
+    path_parts = [part for part in parsed.path.split("/") if part]
+    if len(path_parts) >= 3 and path_parts[-2] == "interview" and path_parts[-1]:
+        return path_parts[-1]
+
+    raise SystemExit(f"unrecognized candidate invite URL format: {invite_url}")
+
 while time.monotonic() < deadline:
     current = request_json(
         "GET",
@@ -186,7 +208,7 @@ while time.monotonic() < deadline:
     )
     invite_url = current.get("candidate_invite_url")
     if current.get("calendar_sync_status") == "synced" and invite_url:
-        token = urllib.parse.parse_qs(urllib.parse.urlparse(str(invite_url)).query)["interviewToken"][0]
+        token = extract_interview_token(str(invite_url))
         print(token)
         raise SystemExit(0)
     if current.get("calendar_sync_status") == "conflict":

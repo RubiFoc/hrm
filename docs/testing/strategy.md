@@ -79,6 +79,10 @@ apps/backend/tests/
 - Browser smoke policy:
   - the compose/browser smoke job only runs for auth, admin, candidate apply, candidate interview,
     CI-infra, and compose/runtime changes that actually touch the flows it verifies.
+  - compose browser smoke resolves `INTERVIEW_STAFF_CALENDAR_MAP_JSON` from the environment first
+    and only falls back to local `.env` for manual compose runs.
+  - compose browser smoke accepts both canonical `/candidate/interview/<token>` invite URLs and
+    legacy `?interviewToken=...` URLs when it extracts the browser interview token.
 - When a task touches only one domain, prefer the same targeted verification locally instead of the
   entire suite; reserve the full-suite commands for cross-cutting changes.
 - Selector regression coverage:
