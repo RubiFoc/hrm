@@ -16,7 +16,6 @@ import { listPublicVacancies, type PublicVacancyListItemResponse } from "../api"
 import { useSentryRouteTags } from "../app/observability/sentry";
 import { CandidateApplyTrackingWorkspace } from "../components/candidate/CandidateApplyTrackingWorkspace";
 import { PageHero } from "../components/PageHero";
-import { PublicRailCard } from "../components/public/PublicRailCard";
 import { formatDateLabel, normalizeInput } from "./careers/careersUtils";
 
 const EMPTY_PUBLIC_VACANCIES: PublicVacancyListItemResponse[] = [];
@@ -61,31 +60,6 @@ export function CareersVacancyPage() {
         imageSrc="/images/candidate-portal.jpg"
         imageAlt={t("careersPage.careersVacancyPage.imageAlt")}
         chips={heroChips}
-        sideContent={
-          <PublicRailCard
-            eyebrow={t("careersPage.careersVacancyPage.eyebrow")}
-            title={t("careersPage.careersVacancyPage.fallbackTitle")}
-            subtitle={t("careersPage.careersVacancyPage.subtitle")}
-            chips={heroChips}
-            items={[
-              {
-                title: t("careersPage.selectedRole.title"),
-                description:
-                  selectedVacancy?.department ?? t("careersPage.careersVacancyPage.summaryFallback"),
-              },
-              {
-                title: t("careersPage.careersVacancyPage.publishedAt"),
-                description: selectedVacancy
-                  ? formatDateLabel(selectedVacancy.created_at, i18n.language)
-                  : t("careersPage.careersVacancyPage.notFound"),
-              },
-              {
-                title: t("careersPage.careersVacancyPage.applyNoteTitle"),
-                description: t("careersPage.careersVacancyPage.applyNote"),
-              },
-            ]}
-          />
-        }
         actions={[
           {
             href: "/careers",
@@ -93,7 +67,6 @@ export function CareersVacancyPage() {
             variant: "outlined",
           },
         ]}
-        caption={t("careersPage.careersVacancyPage.caption")}
       />
 
       {vacanciesQuery.isLoading ? (
@@ -149,10 +122,6 @@ export function CareersVacancyPage() {
                         value: formatDateLabel(selectedVacancy.updated_at, i18n.language),
                       })}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {t("careersPage.careersVacancyPage.publishedAt")}:{" "}
-                      {formatDateLabel(selectedVacancy.created_at, i18n.language)}
-                    </Typography>
                   </Stack>
                 </Stack>
               ) : (
@@ -165,13 +134,6 @@ export function CareersVacancyPage() {
         <Grid2 size={{ xs: 12, lg: 7 }}>
           <Paper sx={{ p: 3, height: "100%" }}>
             <Stack spacing={2}>
-              <Stack spacing={1}>
-                <Typography variant="h6">{t("careersPage.careersVacancyPage.applyNoteTitle")}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t("careersPage.careersVacancyPage.applyNote")}
-                </Typography>
-              </Stack>
-
               <CandidateApplyTrackingWorkspace
                 queryVacancyId={routeVacancyId}
                 queryVacancyTitle={selectedVacancyTitle}

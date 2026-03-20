@@ -22,7 +22,6 @@ import {
 } from "../../api";
 import { useSentryRouteTags } from "../../app/observability/sentry";
 import { PageHero } from "../../components/PageHero";
-import { PublicRailCard } from "../../components/public/PublicRailCard";
 import { formatInterviewDateTime, normalizeInput } from "./candidateUtils";
 import { useParams } from "react-router-dom";
 
@@ -127,33 +126,6 @@ function CandidateInterviewRegistrationWorkspace({
         description={t("candidateInterview.subtitle")}
         imageSrc="/images/candidate-portal.jpg"
         imageAlt={t("candidatePortal.imageAlt")}
-        sideContent={
-          <PublicRailCard
-            eyebrow={t("candidateInterview.responseRail.eyebrow")}
-            title={t("candidateInterview.responseRail.title")}
-            subtitle={t("candidateInterview.responseRail.subtitle")}
-            chips={[
-              t("candidateInterview.actions.confirm"),
-              t("candidateInterview.actions.reschedule"),
-              t("candidateInterview.actions.decline"),
-            ]}
-            items={[
-              {
-                title: t("candidateInterview.responseRail.items.confirm.title"),
-                description: t("candidateInterview.responseRail.items.confirm.description"),
-              },
-              {
-                title: t("candidateInterview.responseRail.items.reschedule.title"),
-                description: t("candidateInterview.responseRail.items.reschedule.description"),
-              },
-              {
-                title: t("candidateInterview.responseRail.items.decline.title"),
-                description: t("candidateInterview.responseRail.items.decline.description"),
-              },
-            ]}
-            footnote={t("candidateInterview.noteHelp")}
-          />
-        }
       />
 
       {feedback ? <Alert severity={feedback.type}>{feedback.message}</Alert> : null}

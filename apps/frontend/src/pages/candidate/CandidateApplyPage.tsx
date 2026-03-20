@@ -5,7 +5,6 @@ import { useSearchParams } from "react-router-dom";
 import { useSentryRouteTags } from "../../app/observability/sentry";
 import { CandidateApplyTrackingWorkspace } from "../../components/candidate/CandidateApplyTrackingWorkspace";
 import { PageHero } from "../../components/PageHero";
-import { PublicRailCard } from "../../components/public/PublicRailCard";
 import { normalizeInput } from "./candidateUtils";
 
 /**
@@ -31,32 +30,6 @@ export function CandidateApplyPage() {
           t("candidatePortal.highlights.track"),
           t("candidatePortal.highlights.interview"),
         ]}
-        sideContent={
-          <PublicRailCard
-            eyebrow={t("candidateApply.prepRail.eyebrow")}
-            title={t("candidateApply.prepRail.title")}
-            subtitle={t("candidateApply.prepRail.subtitle")}
-            chips={[
-              t("candidatePortal.highlights.upload"),
-              t("candidatePortal.highlights.track"),
-              t("candidatePortal.highlights.interview"),
-            ]}
-            items={[
-              {
-                title: t("candidateApply.prepRail.items.file.title"),
-                description: t("candidateApply.prepRail.items.file.description"),
-              },
-              {
-                title: t("candidateApply.prepRail.items.tracking.title"),
-                description: t("candidateApply.prepRail.items.tracking.description"),
-              },
-              {
-                title: t("candidateApply.prepRail.items.account.title"),
-                description: t("candidateApply.prepRail.items.account.description"),
-              },
-            ]}
-          />
-        }
       />
 
       <CandidateApplyTrackingWorkspace
