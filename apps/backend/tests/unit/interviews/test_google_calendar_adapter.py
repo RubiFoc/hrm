@@ -116,6 +116,61 @@ def test_google_calendar_adapter_builds_meet_event_payload() -> None:
     }
 
 
+def test_google_calendar_adapter_retries_without_conference_data_on_meet_rejection(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify calendar sync still succeeds when Google rejects Meet conference creation."""
+    adapter = GoogleCalendarAdapter(
+        enabled=True,
+        service_account_key_path=_write_key_file(tmp_path),
+        staff_calendar_map={"staff-a": "alpha@example.com"},
+    )
+    created_calls: list[dict[str, object]] = []
+
+    monkeypatch.setattr(adapter, "_get_access_token", lambda: "token")
+    monkeypatch.setattr(adapter, "_find_conflicting_event_id", lambda **_: None)
+
+    def _create_or_update_event(**kwargs: object) -> dict[str, object]:
+        created_calls.append(kwargs)
+        if kwargs["include_conference_data"] is True:
+            raise RuntimeError(
+                "Google Calendar request failed with status 400: Invalid conference type value."
+            )
+        return {"id": "evt-alpha"}
+
+    monkeypatch.setattr(adapter, "_create_or_update_event", _create_or_update_event)
+
+    result = adapter.sync_schedule(
+        interview=_build_interview(interviewer_staff_ids=["staff-a"]),
+        vacancy_title="Backend Engineer",
+        candidate_display_name="Jane Doe",
+        existing_bindings=[],
+    )
+
+    assert result == CalendarSyncResult(
+        status="synced",
+        bindings=[
+            CalendarBindingSyncPayload(
+                interviewer_staff_id="staff-a",
+                calendar_id="alpha@example.com",
+                calendar_event_id="evt-alpha",
+            ),
+        ],
+        primary_calendar_event_id="evt-alpha",
+        resolved_location_details=None,
+    )
+    assert created_calls[0]["include_conference_data"] is True
+    assert created_calls[0]["payload"]["conferenceData"] == {
+        "createRequest": {
+            "requestId": "interview-1-2",
+            "conferenceSolutionKey": {"type": "hangoutsMeet"},
+        }
+    }
+    assert created_calls[1]["include_conference_data"] is False
+    assert "conferenceData" not in created_calls[1]["payload"]
+
+
 def test_google_calendar_adapter_syncs_primary_meet_then_secondary_shared_events(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

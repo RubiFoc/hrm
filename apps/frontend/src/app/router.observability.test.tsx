@@ -8,6 +8,7 @@ import { appRoutes } from "./router";
 
 const fetchMock = vi.fn();
 vi.stubGlobal("fetch", fetchMock);
+const INTERVIEW_TOKEN = "token-1";
 
 const { setTagMock } = vi.hoisted(() => ({
   setTagMock: vi.fn(),
@@ -59,6 +60,45 @@ describe("frontend observability route tags", () => {
               upcoming_interview_count: 0,
             },
             items: [],
+          }),
+        );
+      }
+      if (url.endsWith("/api/v1/public/vacancies")) {
+        return Promise.resolve(
+          jsonResponse({
+            items: [
+              {
+                vacancy_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+                title: "Backend Engineer",
+                description: "Build public APIs and candidate flows.",
+                department: "Engineering",
+                created_at: "2026-03-10T08:00:00Z",
+                updated_at: "2026-03-12T08:30:00Z",
+              },
+            ],
+          }),
+        );
+      }
+      if (url.endsWith(`/api/v1/public/interview-registrations/${INTERVIEW_TOKEN}`)) {
+        return Promise.resolve(
+          jsonResponse({
+            interview_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+            vacancy_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            vacancy_title: "Backend Engineer",
+            status: "awaiting_candidate_confirmation",
+            calendar_sync_status: "synced",
+            schedule_version: 1,
+            scheduled_start_at: "2026-03-12T07:00:00Z",
+            scheduled_end_at: "2026-03-12T08:00:00Z",
+            timezone: "Europe/Minsk",
+            location_kind: "google_meet",
+            location_details: "https://meet.google.com/test-room",
+            candidate_response_status: "pending",
+            candidate_response_note: null,
+            candidate_token_expires_at: "2026-03-12T20:00:00Z",
+            cancelled_by: null,
+            cancel_reason_code: null,
+            updated_at: "2026-03-09T10:00:00Z",
           }),
         );
       }
@@ -152,51 +192,87 @@ describe("frontend observability route tags", () => {
     cleanup();
   });
 
-  it("tags the HR workspace route on /", async () => {
+  it("tags the public company route on /", async () => {
+    renderWithPath("/");
+
+    expect(await screen.findByRole("heading", { name: /спокойный контур найма|build a calmer hiring flow/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "company");
+    expect(setTagMock).toHaveBeenCalledWith("role", "anonymous");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/");
+  });
+
+  it("tags the careers route on /careers", async () => {
+    renderWithPath("/careers");
+
+    expect(await screen.findByRole("heading", { name: /open roles|просматривайте открытые роли/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "careers");
+    expect(setTagMock).toHaveBeenCalledWith("role", "anonymous");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/careers");
+  });
+
+  it("tags the careers vacancy route on /careers/:vacancyId", async () => {
+    renderWithPath("/careers/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
+
+    expect(await screen.findByRole("heading", { name: /backend engineer/i })).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "careers");
+    expect(setTagMock).toHaveBeenCalledWith("role", "anonymous");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/careers");
+  });
+
+  it("tags the HR workspace route on /hr", async () => {
     window.localStorage.setItem("hrm_access_token", "token");
     window.localStorage.setItem("hrm_user_role", "hr");
 
-    renderWithPath("/");
+    renderWithPath("/hr");
 
     expect(await screen.findByRole("heading", { name: /recruitment workspace/i })).toBeDefined();
     expect(setTagMock).toHaveBeenCalledWith("workspace", "hr");
     expect(setTagMock).toHaveBeenCalledWith("role", "hr");
-    expect(setTagMock).toHaveBeenCalledWith("route", "/");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/hr");
   });
 
-  it("tags the manager workspace route on / with manager workspace", async () => {
+  it("tags the manager workspace route on /manager", async () => {
     window.localStorage.setItem("hrm_access_token", "token");
     window.localStorage.setItem("hrm_user_role", "manager");
 
-    renderWithPath("/");
+    renderWithPath("/manager");
 
     expect(await screen.findByRole("heading", { name: /кабинет менеджера/i })).toBeDefined();
     expect(setTagMock).toHaveBeenCalledWith("workspace", "manager");
     expect(setTagMock).toHaveBeenCalledWith("role", "manager");
-    expect(setTagMock).toHaveBeenCalledWith("route", "/");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/manager");
   });
 
-  it("tags the accountant workspace route on /", async () => {
+  it("tags the accountant workspace route on /accountant", async () => {
     window.localStorage.setItem("hrm_access_token", "token");
     window.localStorage.setItem("hrm_user_role", "accountant");
 
-    renderWithPath("/");
+    renderWithPath("/accountant");
 
     expect(
       await screen.findByRole("heading", { name: /accountant workspace|кабинет бухгалтера/i }),
     ).toBeDefined();
     expect(setTagMock).toHaveBeenCalledWith("workspace", "accountant");
     expect(setTagMock).toHaveBeenCalledWith("role", "accountant");
-    expect(setTagMock).toHaveBeenCalledWith("route", "/");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/accountant");
   });
 
-  it("tags the candidate workspace route on /candidate", async () => {
-    renderWithPath("/candidate");
+  it("tags the candidate apply route on /candidate/apply", async () => {
+    renderWithPath("/candidate/apply?vacancyId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa&vacancyTitle=Backend%20Engineer");
 
-    expect(await screen.findByRole("heading", { name: /кабинет кандидата/i })).toBeDefined();
+    expect(await screen.findByRole("heading", { name: /candidate workspace|кабинет кандидата/i })).toBeDefined();
     expect(setTagMock).toHaveBeenCalledWith("workspace", "candidate");
     expect(setTagMock).toHaveBeenCalledWith("role", "anonymous");
-    expect(setTagMock).toHaveBeenCalledWith("route", "/candidate");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/candidate/apply");
+  });
+
+  it("tags the candidate interview route on /candidate/interview/:interviewToken", async () => {
+    renderWithPath(`/candidate/interview/${INTERVIEW_TOKEN}`);
+
+    expect(await screen.findByText(/регистрация на интервью/i)).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "candidate");
+    expect(setTagMock).toHaveBeenCalledWith("role", "anonymous");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/candidate/interview");
   });
 
   it("tags the login route on /login", async () => {

@@ -25,6 +25,7 @@ export {
   listNotifications,
   markNotificationRead,
 } from "./notifications";
+export { listPublicVacancies } from "./publicVacancies";
 export { acceptOffer, declineOffer, getOffer, sendOffer, upsertOffer } from "./offers";
 export {
   getCandidateCvAnalysis,
@@ -124,6 +125,10 @@ export type {
   NotificationPayloadResponse,
   NotificationResponse,
 } from "./notifications";
+export type {
+  PublicVacancyListItemResponse,
+  PublicVacancyListResponse,
+} from "./publicVacancies";
 export type {
   OnboardingDashboardDetailResponse,
   OnboardingDashboardListQuery,

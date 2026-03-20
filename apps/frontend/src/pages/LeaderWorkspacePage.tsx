@@ -27,6 +27,7 @@ import {
 } from "../api";
 import { readAuthSession } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
+import { PageHero } from "../components/PageHero";
 
 type MetricKey = KpiSnapshotMetric["metric_key"];
 type SnapshotLookupResult = {
@@ -176,12 +177,12 @@ export function LeaderWorkspacePage() {
 
   return (
     <Stack spacing={3}>
-      <Stack spacing={1}>
-        <Typography variant="h4">{t("leaderWorkspace")}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("leaderWorkspaceSubtitle")}
-        </Typography>
-      </Stack>
+      <PageHero
+        title={t("leaderWorkspace")}
+        description={t("leaderWorkspaceSubtitle")}
+        imageSrc="/images/company-hero.jpg"
+        imageAlt={t("leaderWorkspace")}
+      />
 
       <Stack
         component="form"

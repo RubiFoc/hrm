@@ -86,7 +86,7 @@ const BASE_INTERVIEW = {
   candidate_response_status: "pending",
   candidate_response_note: null,
   candidate_token_expires_at: "2026-03-12T20:00:00Z",
-  candidate_invite_url: "https://frontend.example/candidate?interviewToken=token-1",
+  candidate_invite_url: "https://frontend.example/candidate/interview/token-1",
   calendar_event_id: "evt-1",
   last_synced_at: "2026-03-09T12:10:00Z",
   cancelled_by: null,
@@ -933,7 +933,7 @@ describe("HrDashboardPage", () => {
     await waitFor(() => {
       expect(screen.getByText(/синхронизировано/i)).toBeDefined();
       expect(
-        screen.getByDisplayValue("https://frontend.example/candidate?interviewToken=token-1"),
+        screen.getByDisplayValue("https://frontend.example/candidate/interview/token-1"),
       ).toBeDefined();
     });
   }, HR_DASHBOARD_SLOW_TEST_TIMEOUT_MS);
@@ -948,7 +948,7 @@ describe("HrDashboardPage", () => {
       interviewResend: () => {
         currentInterview = {
           ...currentInterview,
-          candidate_invite_url: "https://frontend.example/candidate?interviewToken=token-2",
+          candidate_invite_url: "https://frontend.example/candidate/interview/token-2",
         };
         return jsonResponse(currentInterview);
       },

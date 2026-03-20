@@ -28,6 +28,7 @@ import { readAuthSession } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
 import { NotificationsPanel } from "../components/NotificationsPanel";
 import { OnboardingDashboardPanel } from "../components/OnboardingDashboardPanel";
+import { PageHero } from "../components/PageHero";
 
 const EMPTY_OVERVIEW: ManagerWorkspaceOverviewResponse = {
   summary: {
@@ -45,7 +46,7 @@ const EMPTY_OVERVIEW: ManagerWorkspaceOverviewResponse = {
  */
 export function ManagerWorkspacePage() {
   const { t } = useTranslation();
-  useSentryRouteTags("/");
+  useSentryRouteTags("/manager");
   const session = readAuthSession();
   const accessToken = session.accessToken;
   const [selectedVacancyId, setSelectedVacancyId] = useState<string | null>(null);
@@ -85,12 +86,12 @@ export function ManagerWorkspacePage() {
 
   return (
     <Stack spacing={3}>
-      <Stack spacing={1}>
-        <Typography variant="h4">{t("managerWorkspace")}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("managerDashboard.subtitle")}
-        </Typography>
-      </Stack>
+      <PageHero
+        title={t("managerWorkspace")}
+        description={t("managerDashboard.subtitle")}
+        imageSrc="/images/company-hero.jpg"
+        imageAlt={t("managerWorkspace")}
+      />
 
       <NotificationsPanel accessToken={accessToken} workspace="manager" />
 

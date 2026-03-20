@@ -113,5 +113,11 @@ def test_browser_smoke_runs_for_login_and_candidate_apply_paths() -> None:
     assert selector._should_run_browser_smoke(["apps/frontend/src/pages/LoginPage.tsx"]) is True
     assert selector._should_run_browser_smoke(["apps/frontend/src/pages/CandidatePage.tsx"]) is True
     assert selector._should_run_browser_smoke(
+        ["apps/frontend/src/pages/candidate/CandidateInterviewRegistrationPage.tsx"]
+    ) is True
+    assert selector._should_run_browser_smoke(
+        ["scripts/browser_candidate_interview_smoke.py"]
+    ) is True
+    assert selector._should_run_browser_smoke(
         ["apps/frontend/src/pages/LeaderWorkspacePage.tsx"]
     ) is False

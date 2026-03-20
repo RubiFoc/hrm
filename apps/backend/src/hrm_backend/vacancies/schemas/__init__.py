@@ -19,6 +19,10 @@ from hrm_backend.vacancies.schemas.pipeline import (
     PipelineTransitionCreateRequest,
     PipelineTransitionResponse,
 )
+from hrm_backend.vacancies.schemas.public_vacancy import (
+    PublicVacancyListItemResponse,
+    PublicVacancyListResponse,
+)
 from hrm_backend.vacancies.schemas.vacancy import (
     VacancyCreateRequest,
     VacancyListResponse,
@@ -31,6 +35,8 @@ __all__ = [
     "VacancyUpdateRequest",
     "VacancyResponse",
     "VacancyListResponse",
+    "PublicVacancyListItemResponse",
+    "PublicVacancyListResponse",
     "PipelineTransitionCreateRequest",
     "PipelineTransitionResponse",
     "PublicVacancyApplicationResponse",

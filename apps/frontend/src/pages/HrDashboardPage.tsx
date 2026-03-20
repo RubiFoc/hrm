@@ -72,7 +72,9 @@ import {
 } from "../api";
 import { readAuthSession } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
+import { PageHero } from "../components/PageHero";
 import { OnboardingDashboardPanel } from "../components/OnboardingDashboardPanel";
+import { HrWorkspaceNav } from "./hr/HrWorkspaceNav";
 
 const PIPELINE_STAGE_OPTIONS: PipelineTransitionCreateRequest["to_stage"][] = [
   "applied",
@@ -143,7 +145,7 @@ const OFFER_MUTABLE_STATUS: OfferStatus = "draft";
  */
 export function HrDashboardPage() {
   const { t } = useTranslation();
-  useSentryRouteTags("/");
+  useSentryRouteTags("/hr");
   const queryClient = useQueryClient();
   const session = readAuthSession();
   const accessToken = session.accessToken;
@@ -813,12 +815,19 @@ export function HrDashboardPage() {
 
   return (
     <Stack spacing={3}>
-      <Stack spacing={1}>
-        <Typography variant="h4">{t("hrDashboard.title")}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("hrDashboard.subtitle")}
-        </Typography>
-      </Stack>
+      <PageHero
+        title={t("hrDashboard.title")}
+        description={t("hrDashboard.subtitle")}
+        imageSrc="/images/company-hero.jpg"
+        imageAlt={t("hrDashboard.title")}
+        chips={[
+          t("hrDashboard.shortlist.title"),
+          t("hrDashboard.interviews.title"),
+          t("hrDashboard.offers.title"),
+        ]}
+      />
+
+      <HrWorkspaceNav />
 
       {feedback ? <Alert severity={feedback.type}>{feedback.message}</Alert> : null}
 

@@ -1,11 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { CssBaseline, ThemeProvider } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import * as Sentry from "@sentry/react";
 
 import { App } from "./App";
 import "./styles.css";
 import "./app/i18n";
+import { appTheme } from "./theme";
 
 const dsn = normalizeEnvValue(import.meta.env.VITE_SENTRY_DSN);
 if (dsn) {
@@ -23,9 +25,12 @@ const queryClient = new QueryClient();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
+    <ThemeProvider theme={appTheme}>
+      <CssBaseline />
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </ThemeProvider>
   </React.StrictMode>,
 );
 

@@ -38,6 +38,7 @@ from hrm_backend.vacancies.services.manager_workspace_service import ManagerWork
 from hrm_backend.vacancies.services.offer_service import OfferService
 from hrm_backend.vacancies.services.public_apply_policy import PublicApplyPolicyService
 from hrm_backend.vacancies.services.public_apply_rate_limiter import PublicApplyRateLimiter
+from hrm_backend.vacancies.services.public_vacancy_service import PublicVacancyService
 from hrm_backend.vacancies.services.vacancy_service import VacancyService
 
 SessionDependency = Annotated[Session, Depends(get_db_session)]
@@ -164,6 +165,11 @@ def get_public_apply_policy_service(
         email_cooldown_seconds=settings.public_apply_email_cooldown_seconds,
         dedup_window_seconds=settings.public_apply_dedup_window_seconds,
     )
+
+
+def get_public_vacancy_service(session: SessionDependency) -> PublicVacancyService:
+    """Build public careers-board vacancy service dependency."""
+    return PublicVacancyService(vacancy_dao=VacancyDAO(session=session))
 
 
 def get_vacancy_application_service(

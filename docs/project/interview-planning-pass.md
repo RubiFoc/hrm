@@ -1,19 +1,21 @@
 # Interview Planning Pass (`TASK-11-08`, `TASK-05-01`, `TASK-05-02`)
 
 ## Last Updated
-- Date: 2026-03-10
-- Updated by: architect + backend-engineer + frontend-engineer
+- Date: 2026-03-20
+- Updated by: architect + frontend-engineer
 
 ## Purpose
 - This document is a planning-only deliverable. It freezes the product and interface decisions required before interview scheduling implementation starts.
 - It does not introduce runtime, API, routing, auth, or infrastructure changes by itself.
+- Route names in the implemented frontend are now aligned with ADR-0054 and the candidate route split:
+  HR controls live on `/hr`, the public company landing is `/`, public application entry is `/careers`, the canonical public apply shell is `/candidate/apply`, and `/candidate` remains compatibility-only.
 
 ## Scope of the Next Implementation Slice
 - HR scheduling and rescheduling of one active interview per `vacancy_id + candidate_id`.
 - Candidate self-service confirmation, reschedule request, and cancellation through a public invitation token.
 - Google Calendar synchronization for staff/interviewer calendars with explicit sync states and conflict handling.
-- HR review and control inside the existing `/` workspace.
-- Candidate interview registration inside the existing `/candidate` route.
+- HR review and control inside the dedicated `/hr` workspace.
+- Candidate interview registration on `/candidate/interview/:interviewToken` with `/candidate` compatibility redirects.
 
 ## Out of Scope for the Next Slice
 - Candidate authentication or any return to a candidate session model.
@@ -37,7 +39,7 @@
 | Candidate via public token | Read current interview invitation, confirm, request reschedule, cancel/decline | Edit vacancy data, choose interviewers, change slot directly, read internal HR notes |
 | Background calendar sync worker | Create/update calendar event, persist sync status, persist conflict/failure reason | Decide candidate-facing product behavior beyond persisted status rules |
 
-The first frontend implementation remains HR-only on `/`. Manager role keeps backend permission compatibility but does not get a dedicated UI in this slice.
+The implemented frontend keeps the HR interview controls on `/hr`. Manager role keeps backend permission compatibility but does not get a dedicated UI in this slice.
 
 ## Canonical Entity Model
 
@@ -209,7 +211,7 @@ One interview row represents one active interview process for a single `vacancy_
 ## Frontend Route and UX Model
 
 ### HR Route
-- Keep the current HR workspace on `/`.
+- Keep the current HR workspace on `/hr`.
 - Add an interview scheduling block beside the existing shortlist review area when a vacancy and candidate are selected.
 - Required HR UI elements:
   - create interview form;
@@ -219,11 +221,12 @@ One interview row represents one active interview process for a single `vacancy_
   - localized errors for `403`, `404`, `409`, `422`, and generic HTTP failures.
 
 ### Candidate Route
-- Keep the existing public route `/candidate`.
-- Add an interview-registration mode selected by `?interviewToken=<token>`.
+- Keep `/candidate` as the compatibility redirect shell.
+- Use `/candidate/apply` for the public apply/tracking flow.
+- Use `/candidate/interview/:interviewToken` for interview registration.
 - Route mode rules:
-  - `vacancyId` mode: public apply/tracking flow;
-  - `interviewToken` mode: interview registration flow;
+  - `vacancyId` mode: public apply/tracking flow on `/candidate/apply`;
+  - `interviewToken` mode: interview registration flow on `/candidate/interview/:interviewToken`;
   - mixed parameters are invalid and must render a localized error state.
 - Candidate interview mode must show:
   - vacancy title and interview schedule;
@@ -246,7 +249,7 @@ One interview row represents one active interview process for a single `vacancy_
   - calendar `queued/running/synced/conflict/failed` transitions;
   - candidate token `confirm/reschedule/cancel` paths;
   - expired/revoked token handling;
-  - `/candidate?interviewToken=...` route-mode rendering and localized failures.
+  - `/candidate/interview/:interviewToken` route-mode rendering and localized failures.
 
 ## Explicit Deferrals
 - `TASK-05-03` keeps structured feedback out of the scheduling slice and is planned separately in `docs/project/interview-feedback-fairness-pass.md`.

@@ -1,9 +1,9 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter } from "react-router-dom";
 
 import { AdminGuard } from "./guards/AdminGuard";
 import { EmployeeGuard } from "./guards/EmployeeGuard";
 import { LeaderGuard } from "./guards/LeaderGuard";
-import { readAuthSession } from "./auth/session";
+import { RoleGuard } from "./guards/RoleGuard";
 import { RootLayout } from "../components/RootLayout";
 import { AccessDeniedPage } from "../pages/AccessDeniedPage";
 import { AccountantWorkspacePage } from "../pages/AccountantWorkspacePage";
@@ -16,28 +16,21 @@ import { AdminStaffManagementPage } from "../pages/AdminStaffManagementPage";
 import { AdminShellPage } from "../pages/AdminShellPage";
 import { AdminVacanciesPage } from "../pages/admin/AdminVacanciesPage";
 import { CandidatePage } from "../pages/CandidatePage";
+import { CareersPage } from "../pages/CareersPage";
+import { CareersVacancyPage } from "../pages/CareersVacancyPage";
+import { CompanyHomePage } from "../pages/CompanyHomePage";
 import { EmployeeOnboardingPage } from "../pages/EmployeeOnboardingPage";
 import { HrDashboardPage } from "../pages/HrDashboardPage";
+import { HrInterviewsPage } from "../pages/hr/HrInterviewsPage";
+import { HrOffersPage } from "../pages/hr/HrOffersPage";
+import { HrOverviewPage } from "../pages/hr/HrOverviewPage";
+import { HrPipelinePage } from "../pages/hr/HrPipelinePage";
+import { HrVacanciesPage } from "../pages/hr/HrVacanciesPage";
 import { LeaderWorkspacePage } from "../pages/LeaderWorkspacePage";
 import { LoginPage } from "../pages/LoginPage";
 import { ManagerWorkspacePage } from "../pages/ManagerWorkspacePage";
-
-function WorkspaceHomePage() {
-  const session = readAuthSession();
-  if (session.accessToken && session.role === "employee") {
-    return <Navigate to="/employee" replace />;
-  }
-  if (session.accessToken && session.role === "leader") {
-    return <Navigate to="/leader" replace />;
-  }
-  if (session.accessToken && session.role === "manager") {
-    return <ManagerWorkspacePage />;
-  }
-  if (session.accessToken && session.role === "accountant") {
-    return <AccountantWorkspacePage />;
-  }
-  return <HrDashboardPage />;
-}
+import { CandidateApplyPage } from "../pages/candidate/CandidateApplyPage";
+import { CandidateInterviewRegistrationPage } from "../pages/candidate/CandidateInterviewRegistrationPage";
 
 export const appRoutes = [
   {
@@ -46,11 +39,77 @@ export const appRoutes = [
     children: [
       {
         index: true,
-        element: <WorkspaceHomePage />,
+        element: <CompanyHomePage />,
+      },
+      {
+        path: "careers",
+        element: <CareersPage />,
+      },
+      {
+        path: "careers/:vacancyId",
+        element: <CareersVacancyPage />,
       },
       {
         path: "candidate",
         element: <CandidatePage />,
+      },
+      {
+        path: "candidate/apply",
+        element: <CandidateApplyPage />,
+      },
+      {
+        path: "candidate/interview/:interviewToken",
+        element: <CandidateInterviewRegistrationPage />,
+      },
+      {
+        path: "hr",
+        element: <RoleGuard allowedRoles={["admin", "hr"]} />,
+        children: [
+          {
+            index: true,
+            element: <HrOverviewPage />,
+          },
+          {
+            path: "vacancies",
+            element: <HrVacanciesPage />,
+          },
+          {
+            path: "pipeline",
+            element: <HrPipelinePage />,
+          },
+          {
+            path: "interviews",
+            element: <HrInterviewsPage />,
+          },
+          {
+            path: "offers",
+            element: <HrOffersPage />,
+          },
+          {
+            path: "workbench",
+            element: <HrDashboardPage />,
+          },
+        ],
+      },
+      {
+        path: "manager",
+        element: <RoleGuard allowedRoles={["manager"]} />,
+        children: [
+          {
+            index: true,
+            element: <ManagerWorkspacePage />,
+          },
+        ],
+      },
+      {
+        path: "accountant",
+        element: <RoleGuard allowedRoles={["accountant"]} />,
+        children: [
+          {
+            index: true,
+            element: <AccountantWorkspacePage />,
+          },
+        ],
       },
       {
         path: "leader",

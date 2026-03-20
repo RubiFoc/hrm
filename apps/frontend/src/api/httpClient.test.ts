@@ -79,6 +79,7 @@ describe("apiRequest observability", () => {
   it("captures network failures with the active workspace tags", async () => {
     window.localStorage.setItem("hrm_access_token", "token");
     window.localStorage.setItem("hrm_user_role", "hr");
+    window.history.pushState({}, "", "/hr");
     const networkError = new Error("network down");
     fetchMock.mockRejectedValue(networkError);
 
@@ -87,7 +88,7 @@ describe("apiRequest observability", () => {
     expect(withScopeMock).toHaveBeenCalledTimes(1);
     expect(scopeSetTagMock).toHaveBeenCalledWith("workspace", "hr");
     expect(scopeSetTagMock).toHaveBeenCalledWith("role", "hr");
-    expect(scopeSetTagMock).toHaveBeenCalledWith("route", "/");
+    expect(scopeSetTagMock).toHaveBeenCalledWith("route", "/hr");
     expect(scopeSetTagMock).toHaveBeenCalledWith("http_method", "GET");
     expect(scopeSetExtraMock).toHaveBeenCalledWith("http_request_path", "/api/v1/vacancies");
     expect(captureExceptionMock).toHaveBeenCalledWith(networkError);
@@ -96,6 +97,7 @@ describe("apiRequest observability", () => {
   it("captures binary download failures with route and HTTP metadata", async () => {
     window.localStorage.setItem("hrm_access_token", "token");
     window.localStorage.setItem("hrm_user_role", "accountant");
+    window.history.pushState({}, "", "/accountant");
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ detail: "http_403" }), {
         status: 403,
@@ -110,7 +112,7 @@ describe("apiRequest observability", () => {
     expect(withScopeMock).toHaveBeenCalledTimes(1);
     expect(scopeSetTagMock).toHaveBeenCalledWith("workspace", "accountant");
     expect(scopeSetTagMock).toHaveBeenCalledWith("role", "accountant");
-    expect(scopeSetTagMock).toHaveBeenCalledWith("route", "/");
+    expect(scopeSetTagMock).toHaveBeenCalledWith("route", "/accountant");
     expect(scopeSetTagMock).toHaveBeenCalledWith("http_method", "GET");
     expect(scopeSetTagMock).toHaveBeenCalledWith("http_status", "403");
     expect(scopeSetExtraMock).toHaveBeenCalledWith(

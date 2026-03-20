@@ -3,10 +3,12 @@ import { webcrypto } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 
 import "../app/i18n";
 import { CandidatePage } from "./CandidatePage";
+import { CandidateApplyPage } from "./candidate/CandidateApplyPage";
+import { CandidateInterviewRegistrationPage } from "./candidate/CandidateInterviewRegistrationPage";
 
 const fetchMock = vi.fn();
 const digestMock = vi.fn(async () => new Uint8Array(32).buffer);
@@ -50,7 +52,14 @@ function renderCandidatePage(pathname = "/candidate") {
   render(
     <MemoryRouter initialEntries={[pathname]}>
       <QueryClientProvider client={queryClient}>
-        <CandidatePage />
+        <Routes>
+          <Route path="/candidate" element={<CandidatePage />} />
+          <Route path="/candidate/apply" element={<CandidateApplyPage />} />
+          <Route
+            path="/candidate/interview/:interviewToken"
+            element={<CandidateInterviewRegistrationPage />}
+          />
+        </Routes>
       </QueryClientProvider>
     </MemoryRouter>,
   );
@@ -333,13 +342,14 @@ describe("CandidatePage", () => {
     ).toBeDefined();
   });
 
-  it("renders localized invalid-link state for mixed vacancy and interview params", async () => {
+  it("prefers interview registration when mixed legacy params are present", async () => {
+    installCandidateInterviewFetchMock();
     renderCandidatePage(
       `/candidate?vacancyId=aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa&interviewToken=${INTERVIEW_TOKEN}`,
     );
 
     expect(
-      await screen.findByText(/ссылка некорректна: одновременно переданы параметры вакансии и интервью/i),
+      await screen.findByText(/регистрация на интервью/i),
     ).toBeDefined();
   });
 

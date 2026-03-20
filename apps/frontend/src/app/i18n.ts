@@ -4,7 +4,7 @@ import { initReactI18next } from "react-i18next";
 const resources = {
   en: {
     translation: {
-      appTitle: "HRM Recruitment Workspace",
+      appTitle: "Northstar HRM",
       hrWorkspace: "HR Workspace",
       managerWorkspace: "Manager Workspace",
       leaderWorkspace: "Leader Workspace",
@@ -12,6 +12,305 @@ const resources = {
       employeeWorkspace: "Employee Workspace",
       candidateWorkspace: "Candidate Workspace",
       adminWorkspace: "Admin Workspace",
+      navigation: {
+        brandEyebrow: "Company portal",
+        company: "Company",
+        careers: "Careers",
+        workspace: "Workspace",
+      },
+      hrWorkspaceNav: {
+        ariaLabel: "HR workspace navigation",
+        overview: "Overview",
+        vacancies: "Vacancies",
+        pipeline: "Pipeline",
+        interviews: "Interviews",
+        offers: "Offers",
+        workbench: "Full workbench",
+      },
+      hrWorkspacePages: {
+        overview: {
+          title: "Split the HR workspace into focused pages.",
+          subtitle:
+            "Keep the recruitment hub, but jump into smaller route slices for vacancies, pipeline, interviews, and offers.",
+          storyTitle: "What changed",
+          storySubtitle:
+            "The main HR workspace stays available, but the day-to-day actions now have their own pages.",
+          onboardingTitle: "Onboarding progress stays visible",
+          onboardingSubtitle:
+            "The embedded onboarding panel remains on the overview so HR can still watch employee setup without leaving the workspace.",
+        },
+        cards: {
+          vacancies: {
+            title: "Vacancies",
+            description: "Create and edit openings in one smaller page.",
+            cta: "Open vacancies",
+          },
+          pipeline: {
+            title: "Pipeline",
+            description: "Filter candidates, append transitions, and review shortlist scores.",
+            cta: "Open pipeline",
+          },
+          interviews: {
+            title: "Interviews",
+            description: "Schedule interviews and manage feedback in a focused view.",
+            cta: "Open interviews",
+          },
+          offers: {
+            title: "Offers",
+            description: "Handle draft, send, accepted, and declined states separately.",
+            cta: "Open offers",
+          },
+        },
+        vacancies: {
+          title: "Vacancy workspace",
+          subtitle:
+            "Create, edit, and review openings without the rest of the recruitment toolkit.",
+        },
+        pipeline: {
+          title: "Pipeline workspace",
+          subtitle:
+            "Filter candidates, append transitions, and review shortlist scoring on one focused page.",
+          vacancyLabel: "Vacancy",
+          vacancyPlaceholder: "Choose a vacancy",
+          noCandidateSelected: "Choose a candidate to see the selected context.",
+        },
+        interviews: {
+          title: "Interview workspace",
+          subtitle:
+            "Schedule interviews, monitor calendar sync, and manage feedback on a focused page.",
+          vacancyLabel: "Vacancy",
+          vacancyPlaceholder: "Choose a vacancy",
+        },
+        offers: {
+          title: "Offer workspace",
+          subtitle:
+            "Keep the draft, send, accepted, and declined offer states on one focused page.",
+          vacancyLabel: "Vacancy",
+          vacancyPlaceholder: "Choose a vacancy",
+        },
+      },
+      companyHome: {
+        eyebrow: "Human-centered hiring operations",
+        title: "Build a calmer hiring flow for teams, candidates, and operators.",
+        subtitle:
+          "Northstar HRM combines candidate intake, role workspaces, interview coordination, onboarding, and operational visibility in one deliberate experience.",
+        imageAlt: "Business team in a modern office",
+        caption:
+          "Refreshed company shell with separate role pages, public careers access, and bilingual candidate entry.",
+        actions: {
+          careers: "Explore careers",
+          workspace: "Open my workspace",
+          login: "Staff login",
+        },
+        highlights: {
+          hiring: "Public careers entry",
+          transparency: "Separate role workspaces",
+          localization: "RU/EN support",
+        },
+        metrics: {
+          recruitment: {
+            label: "One place for recruitment, onboarding, and reporting.",
+            value: "6 roles",
+          },
+          roles: {
+            label: "Dedicated role pages after login instead of one overloaded root route.",
+            value: "1 role = 1 page",
+          },
+          experience: {
+            label: "Candidate upload supports CV submission and progress tracking.",
+            value: "PDF + DOCX",
+          },
+        },
+        pillars: {
+          hiring: {
+            title: "Fair hiring conversations",
+            description:
+              "Structured candidate intake, explainable scoring, and interview flow visibility stay readable for recruiters and managers.",
+          },
+          teams: {
+            title: "Role-first daily work",
+            description:
+              "HR, managers, employees, leaders, and accountants land in their own focused workspace after authentication.",
+          },
+          operations: {
+            title: "Operational clarity",
+            description:
+              "Critical workflows remain observable, localized, and stable for local verification and day-to-day use.",
+          },
+        },
+        rolesSection: {
+          title: "Focused spaces for every operating role",
+          subtitle:
+            "The refreshed layout reduces route ambiguity and gives each role a more intentional entrypoint.",
+        },
+        roles: {
+          hr: {
+            title: "HR",
+            description:
+              "Run vacancy management, shortlist review, interview coordination, offers, and onboarding visibility from one recruitment command center.",
+          },
+          manager: {
+            title: "Manager",
+            description:
+              "See team hiring status, interview activity, candidate snapshots, and onboarding progress without HR-only controls.",
+          },
+          employee: {
+            title: "Employee",
+            description:
+              "Track onboarding tasks, accepted-offer context, due dates, and role-specific checklists in a self-service view.",
+          },
+          leader: {
+            title: "Leader",
+            description:
+              "Review KPI snapshots, period exports, and operational trend signals through a separate reporting workspace.",
+          },
+          accountant: {
+            title: "Accountant",
+            description:
+              "Open a finance-oriented onboarding workspace with filtered exports and accountant-scoped operational rows.",
+          },
+        },
+        careersBanner: {
+          title: "Careers now live on the public company surface",
+          description:
+            "Candidates can move from the company story straight into CV upload and status tracking without entering staff-only routes.",
+          primaryAction: "Go to careers",
+          secondaryActionWorkspace: "Back to workspace",
+          secondaryActionLogin: "Sign in as staff",
+        },
+        portalRail: {
+          eyebrow: "Public entrypoints",
+          title: "Two clear ways into the product",
+          subtitle:
+            "Visitors stay on the company surface while staff land in their workspace after sign-in.",
+          items: {
+            careers: {
+              title: "Browse careers",
+              description:
+                "Open the public board and shareable vacancy pages without creating an account.",
+            },
+            workspace: {
+              title: "Open workspace",
+              description:
+                "Authenticated staff go straight to the role page that matches their access.",
+            },
+            language: {
+              title: "Switch language",
+              description: "RU and EN stay one tap away in the top bar.",
+            },
+          },
+        },
+      },
+      careersPage: {
+        eyebrow: "Career center",
+        title: "Browse open roles and share your CV.",
+        subtitle:
+          "The careers board shows the currently open vacancies, and the same page keeps CV upload and tracking in one place.",
+        imageAlt: "Team members reviewing open roles around a laptop",
+        caption:
+          "Public candidate entrypoint for open roles, CV submission, parsing-status tracking, and later interview registration.",
+        highlights: {
+          board: "Open roles board",
+          cvUpload: "Resume upload + tracking",
+          ruEn: "RU/EN ready",
+        },
+        boardSection: {
+          title: "Open roles",
+          subtitle: "Filter by department or search by title before pre-filling the apply form.",
+          searchLabel: "Search roles",
+          searchPlaceholder: "Search by title, department, or keywords",
+          departmentLabel: "Department",
+          allDepartments: "All departments",
+          loading: "Loading open roles...",
+          error: "We could not load the public role board.",
+          retry: "Retry",
+          empty: "No open roles match the current filters.",
+          openBadge: "Open",
+          selectAction: "Use this role",
+          selectedAction: "Selected",
+          openAction: "Open role page",
+          updatedAt: "Updated {{value}}",
+          count_one: "{{count}} open role",
+          count_other: "{{count}} open roles",
+        },
+        selectedRole: {
+          title: "Selected role",
+          open: "Open",
+          vacancyId: "Vacancy ID",
+          updatedAt: "Updated {{value}}",
+          clear: "Clear selection",
+          empty: "Pick a role from the board to prefill the application form.",
+          directLink:
+            "You opened a direct link for {{vacancyTitle}}. The application form below keeps that role prefilled.",
+          directLinkHelp:
+            "Use the clear action to return to the public board and pick another open role.",
+        },
+        heroCard: {
+          title: "How vacancy pages work",
+          subtitle:
+            "The public board is only the starting point. Each vacancy now has a shareable page for details and application.",
+          note:
+            "Legacy query links still redirect to the role page, so old recruiter links keep working.",
+          stepLabel: "Step {{value}}",
+          steps: {
+            browse: {
+              title: "Browse open roles",
+              description:
+                "Review the current public vacancies by department or keyword before you decide.",
+            },
+            select: {
+              title: "Open the vacancy page",
+              description:
+                "Use the card button to open the shareable role page for details and application.",
+            },
+            upload: {
+              title: "Upload your CV",
+              description:
+                "Continue on the role page to attach a readable PDF or DOCX, then keep the tracking ID for follow-up.",
+            },
+          },
+        },
+        careersVacancyPage: {
+          eyebrow: "Role page",
+          fallbackTitle: "Role details",
+          subtitle:
+            "Open the role page to review the vacancy and continue to the application form.",
+          imageAlt: "Candidate reviewing a vacancy detail page",
+          caption: "Shareable public vacancy page for review and application.",
+          backAction: "Back to open roles",
+          notFound: "This role is no longer listed on the public board.",
+          summaryFallback: "The public board no longer has a matching record for this vacancy.",
+          publishedAt: "Published",
+          applyNoteTitle: "Why this page exists",
+          applyNote:
+            "The vacancy detail page keeps the application focused on one role and preserves a shareable link for recruiters and candidates.",
+          chips: {
+            open: "Open role",
+            shareable: "Shareable link",
+          },
+        },
+        applySection: {
+          sectionTitle: "Apply and track from one place",
+          sectionSubtitle:
+            "The application workspace now lives on the shareable vacancy page, while the board helps candidates choose a role.",
+          workspaceTitle: "Application workspace",
+          workspaceSubtitle:
+            "Open the role page from the board or paste a vacancy ID if you arrived from a recruiter link.",
+          workspaceSubtitleSelected: "The form below is now focused on {{vacancyTitle}}.",
+        },
+      },
+      candidatePortal: {
+        eyebrow: "Candidate portal",
+        title: "Candidate space for applications and interview links.",
+        subtitle:
+          "Use this page for legacy vacancy deep links, parsing-status tracking, and interview-registration invitations shared by HR.",
+        imageAlt: "Candidate and recruiter discussion",
+        highlights: {
+          upload: "CV upload",
+          track: "Status tracking",
+          interview: "Interview registration",
+        },
+      },
       leaderWorkspaceSubtitle:
         "Review stored monthly KPI snapshots and export management reporting attachments.",
       accountantWorkspaceSubtitle:
@@ -46,6 +345,28 @@ const resources = {
         subtitle:
           "Submit your profile and CV for the target vacancy, then track parsing progress with the generated tracking ID.",
         title: "Apply to vacancy",
+        prepRail: {
+          eyebrow: "Before you submit",
+          title: "Keep the public apply flow simple",
+          subtitle:
+            "A few small checks help the CV parser and the status tracker move faster.",
+          items: {
+            file: {
+              title: "Attach a readable CV",
+              description:
+                "PDF or DOCX works best for parsing and evidence extraction.",
+            },
+            tracking: {
+              title: "Save the tracking ID",
+              description: "The same ID powers the status and analysis panels.",
+            },
+            account: {
+              title: "No account required",
+              description:
+                "Apply anonymously and come back through the public tracking link.",
+            },
+          },
+        },
         diagnosticMode:
           "Diagnostic mode is active because the page was opened without a vacancy deep link. Enter the vacancy ID manually for local verification.",
         vacancySummary: "You are applying to: {{vacancyTitle}}",
@@ -110,6 +431,26 @@ const resources = {
         title: "Interview registration",
         subtitle:
           "Review the scheduled interview, confirm attendance, request a reschedule, or decline the invitation.",
+        responseRail: {
+          eyebrow: "Interview link",
+          title: "Respond in the way that fits your schedule",
+          subtitle:
+            "The token link stays anonymous and keeps the interview flow lightweight.",
+          items: {
+            confirm: {
+              title: "Confirm attendance",
+              description: "Use this when the current slot works for you.",
+            },
+            reschedule: {
+              title: "Request a reschedule",
+              description: "Send a note if you need a different time window.",
+            },
+            decline: {
+              title: "Decline politely",
+              description: "Use this when you cannot attend the interview.",
+            },
+          },
+        },
         loading: "Loading interview details...",
         confirmSuccess: "Interview attendance confirmed.",
         rescheduleSuccess: "Reschedule request sent.",
@@ -202,8 +543,10 @@ const resources = {
         },
       },
       loginPage: {
+        eyebrow: "Staff access",
         title: "Staff Login",
         subtitle: "Sign in to open your workspace.",
+        imageAlt: "Team preparing for a meeting",
         sessionBootstrap: "Checking current session...",
         fields: {
           identifier: "Login or email",
@@ -1419,7 +1762,7 @@ const resources = {
   },
   ru: {
     translation: {
-      appTitle: "HRM Платформа найма",
+      appTitle: "Northstar HRM",
       hrWorkspace: "Рабочее место HR",
       managerWorkspace: "Кабинет менеджера",
       leaderWorkspace: "Кабинет руководителя",
@@ -1427,6 +1770,367 @@ const resources = {
       employeeWorkspace: "Кабинет сотрудника",
       candidateWorkspace: "Кабинет кандидата",
       adminWorkspace: "Админ пространство",
+      navigation: {
+        brandEyebrow: "Корпоративный портал",
+        company: "Компания",
+        careers: "Карьера",
+        workspace: "Рабочее место",
+      },
+      hrWorkspaceNav: {
+        ariaLabel: "Навигация HR workspace",
+        overview: "Обзор",
+        vacancies: "Вакансии",
+        pipeline: "Pipeline",
+        interviews: "Интервью",
+        offers: "Офферы",
+        workbench: "Полный workbench",
+      },
+      hrWorkspacePages: {
+        overview: {
+          title: "Разделите HR workspace на фокусные страницы.",
+          subtitle:
+            "Главный центр подбора остаётся доступен, но вакансии, pipeline, интервью и офферы теперь живут в отдельных маршрутах.",
+          storyTitle: "Что изменилось",
+          storySubtitle:
+            "Основной HR workspace остаётся, а ежедневные действия теперь вынесены на отдельные страницы.",
+          onboardingTitle: "Прогресс онбординга остаётся виден",
+          onboardingSubtitle:
+            "Встроенная панель онбординга остаётся на обзорной странице, чтобы HR мог следить за оформлением сотрудников не покидая workspace.",
+        },
+        cards: {
+          vacancies: {
+            title: "Вакансии",
+            description: "Создавайте и редактируйте openings на отдельной странице.",
+            cta: "Открыть вакансии",
+          },
+          pipeline: {
+            title: "Pipeline",
+            description: "Фильтруйте кандидатов, добавляйте переходы и смотрите score.",
+            cta: "Открыть pipeline",
+          },
+          interviews: {
+            title: "Интервью",
+            description: "Назначайте интервью и управляйте feedback в одном месте.",
+            cta: "Открыть интервью",
+          },
+          offers: {
+            title: "Офферы",
+            description: "Отдельно ведите draft, отправку, accepted и declined состояния.",
+            cta: "Открыть офферы",
+          },
+        },
+        vacancies: {
+          title: "Workspace вакансий",
+          subtitle:
+            "Создавайте, редактируйте и просматривайте вакансии без остальных HR-инструментов.",
+        },
+        pipeline: {
+          title: "Workspace pipeline",
+          subtitle:
+            "Фильтруйте кандидатов, добавляйте переходы и смотрите score на отдельной странице.",
+          vacancyLabel: "Вакансия",
+          vacancyPlaceholder: "Выберите вакансию",
+          noCandidateSelected: "Выберите кандидата, чтобы увидеть выбранный контекст.",
+        },
+        interviews: {
+          title: "Workspace интервью",
+          subtitle:
+            "Назначайте интервью, отслеживайте синхронизацию календаря и управляйте feedback на отдельной странице.",
+          vacancyLabel: "Вакансия",
+          vacancyPlaceholder: "Выберите вакансию",
+        },
+        offers: {
+          title: "Workspace офферов",
+          subtitle:
+            "Отдельно ведите draft, отправку, accepted и declined состояния оффера.",
+          vacancyLabel: "Вакансия",
+          vacancyPlaceholder: "Выберите вакансию",
+        },
+      },
+      companyHome: {
+        eyebrow: "Осмысленный HR-опыт для всей компании",
+        title: "Спокойный контур найма для команд, кандидатов и внутренних ролей.",
+        subtitle:
+          "Northstar HRM объединяет intake кандидатов, role-based кабинеты, интервью, onboarding и операционную видимость в одном продуманном интерфейсе.",
+        imageAlt: "Команда в современном офисе",
+        caption:
+          "Обновлённый corporate shell с отдельными страницами по ролям, публичным careers-входом и двуязычным candidate entry.",
+        actions: {
+          careers: "Открыть careers",
+          workspace: "Открыть рабочее место",
+          login: "Вход для сотрудников",
+        },
+        highlights: {
+          hiring: "Публичный career entry",
+          transparency: "Отдельные кабинеты по ролям",
+          localization: "Поддержка RU/EN",
+        },
+        metrics: {
+          recruitment: {
+            label: "Одна система для recruitment, onboarding и reporting.",
+            value: "6 ролей",
+          },
+          roles: {
+            label: "Отдельные role pages после входа вместо одной перегруженной корневой страницы.",
+            value: "1 роль = 1 страница",
+          },
+          experience: {
+            label: "Кандидаты могут загрузить CV и отслеживать прогресс с одного входа.",
+            value: "PDF + DOCX",
+          },
+        },
+        pillars: {
+          hiring: {
+            title: "Прозрачный hiring flow",
+            description:
+              "Структурированный intake, explainable scoring и видимость интервью остаются понятными для HR и менеджеров.",
+          },
+          teams: {
+            title: "Role-first рабочий день",
+            description:
+              "HR, менеджеры, сотрудники, руководители и бухгалтеры после входа попадают в свой сфокусированный кабинет.",
+          },
+          operations: {
+            title: "Операционная ясность",
+            description:
+              "Критичные процессы остаются наблюдаемыми, локализованными и стабильными для локальной проверки и ежедневной работы.",
+          },
+        },
+        rolesSection: {
+          title: "Отдельное пространство для каждой операционной роли",
+          subtitle:
+            "Обновлённая структура убирает неоднозначность маршрутов и даёт каждой роли более осмысленную точку входа.",
+        },
+        roles: {
+          hr: {
+            title: "HR",
+            description:
+              "Управляйте вакансиями, shortlist-review, интервью, offer flow и видимостью onboarding из единого recruitment-центра.",
+          },
+          manager: {
+            title: "Менеджер",
+            description:
+              "Смотрите найм по своей команде, интервью-активность, срез по кандидатам и onboarding-прогресс без HR-only действий.",
+          },
+          employee: {
+            title: "Сотрудник",
+            description:
+              "Отслеживайте onboarding tasks, контекст принятого offer, сроки и персональный checklist в self-service формате.",
+          },
+          leader: {
+            title: "Руководитель",
+            description:
+              "Открывайте KPI snapshot'ы, периодические выгрузки и сигналы по операционной динамике в отдельном reporting workspace.",
+          },
+          accountant: {
+            title: "Бухгалтер",
+            description:
+              "Работайте в finance-ориентированном onboarding workspace с отфильтрованными выгрузками и accountant-scoped строками.",
+          },
+        },
+        careersBanner: {
+          title: "Careers теперь живёт на публичной поверхности компании",
+          description:
+            "Кандидаты переходят от истории компании сразу к загрузке CV и отслеживанию статуса, не попадая в staff-only маршруты.",
+          primaryAction: "Перейти в careers",
+          secondaryActionWorkspace: "Вернуться в рабочее место",
+          secondaryActionLogin: "Войти как сотрудник",
+        },
+        portalRail: {
+          eyebrow: "Публичные входы",
+          title: "Два понятных пути в продукт",
+          subtitle:
+            "Посетители остаются на публичной поверхности компании, а сотрудники после входа сразу попадают в своё рабочее место.",
+          items: {
+            careers: {
+              title: "Просматривать careers",
+              description:
+                "Открывайте публичную доску и shareable-страницы вакансий без создания аккаунта.",
+            },
+            workspace: {
+              title: "Открыть рабочее место",
+              description:
+                "Аутентифицированные сотрудники сразу попадают на страницу своей роли.",
+            },
+            language: {
+              title: "Сменить язык",
+              description: "RU и EN доступны в верхней панели в один клик.",
+            },
+          },
+        },
+      },
+      careersPage: {
+        eyebrow: "Career center",
+        title: "Просматривайте открытые роли и отправляйте CV.",
+        subtitle:
+          "На careers-board видны только открытые вакансии, а та же страница держит загрузку CV и tracking в одном месте.",
+        imageAlt: "Команда просматривает открытые роли за ноутбуком",
+        caption:
+          "Публичная точка входа кандидата для открытых ролей, отправки CV, tracking статуса парсинга и дальнейшей регистрации на интервью.",
+        highlights: {
+          board: "Доска открытых ролей",
+          professionAgnostic: "Профессие-независимый intake CV",
+          cvUpload: "Загрузка резюме + tracking",
+          ruEn: "Готово для RU/EN",
+        },
+        boardSection: {
+          title: "Открытые роли",
+          subtitle: "Отфильтруйте вакансии по отделу или поиску, а затем сразу заполните форму отклика.",
+          searchLabel: "Поиск ролей",
+          searchPlaceholder: "Поиск по названию, отделу или ключевым словам",
+          departmentLabel: "Отдел",
+          allDepartments: "Все отделы",
+          loading: "Загружаем открытые роли...",
+          error: "Не удалось загрузить публичную доску вакансий.",
+          retry: "Повторить",
+          empty: "Под текущие фильтры ничего не нашлось.",
+          openBadge: "Открыта",
+          selectAction: "Выбрать роль",
+          selectedAction: "Выбрано",
+          openAction: "Открыть страницу роли",
+          updatedAt: "Обновлено {{value}}",
+          count_one: "{{count}} открытая роль",
+          count_other: "{{count}} открытых ролей",
+        },
+        selectedRole: {
+          title: "Выбранная роль",
+          open: "Открыта",
+          vacancyId: "ID вакансии",
+          updatedAt: "Обновлено {{value}}",
+          clear: "Сбросить выбор",
+          empty: "Выберите роль на доске, чтобы подставить её в форму отклика.",
+          directLink:
+            "Вы открыли прямую ссылку на {{vacancyTitle}}. Форма ниже оставляет эту роль выбранной.",
+          directLinkHelp:
+            "Сбросьте выбор, чтобы вернуться к публичной доске и открыть другую вакансию.",
+        },
+        heroCard: {
+          eyebrow: "Перед откликом",
+          title: "Как работают страницы вакансий",
+          subtitle:
+            "Публичная доска только задаёт старт. У каждой вакансии теперь есть shareable-страница с описанием и откликом.",
+          note:
+            "Старые query-ссылки автоматически ведут на страницу роли, поэтому старые ссылки рекрутера продолжают работать.",
+          stepLabel: "Шаг {{value}}",
+          steps: {
+            link: {
+              title: "Нужна ссылка на вакансию",
+              description:
+                "Мы используем link от рекрутера или job posting, чтобы прикрепить отклик к правильной вакансии.",
+            },
+            file: {
+              title: "Подготовьте читаемый PDF или DOCX",
+              description:
+                "Чистое резюме помогает парсингу быстрее извлечь опыт и ускоряет review flow.",
+            },
+            track: {
+              title: "Сохраните tracking ID",
+              description:
+                "После отправки та же страница показывает статус парсинга и дальнейшие обновления по интервью.",
+            },
+            browse: {
+              title: "Посмотрите открытые роли",
+              description:
+                "Оцените актуальные вакансии по отделу или ключевым словам.",
+            },
+            select: {
+              title: "Откройте страницу вакансии",
+              description:
+                "Нажмите кнопку на карточке, чтобы открыть shareable-страницу вакансии с деталями и откликом.",
+            },
+            upload: {
+              title: "Загрузите CV",
+              description:
+                "Продолжите на странице роли, прикрепите читаемый PDF или DOCX и сохраните tracking ID для follow-up.",
+            },
+          },
+        },
+        careersVacancyPage: {
+          eyebrow: "Страница вакансии",
+          fallbackTitle: "Выбранная вакансия",
+          subtitle:
+            "Откройте страницу роли, чтобы посмотреть вакансию и перейти к форме отклика.",
+          imageAlt: "Кандидат просматривает страницу вакансии",
+          caption: "Публичная shareable-страница вакансии для просмотра и отклика.",
+          backAction: "Назад к вакансиям",
+          notFound: "Эта вакансия больше не отображается на публичной доске.",
+          summaryFallback: "На публичной доске больше нет совпадающей записи по этой вакансии.",
+          publishedAt: "Опубликовано",
+          applyNoteTitle: "Зачем нужна эта страница",
+          applyNote:
+            "Страница вакансии сохраняет отклик привязанным к одной роли и даёт shareable-ссылку для рекрутера и кандидата.",
+          chips: {
+            open: "Открыта",
+            shareable: "Shareable-ссылка",
+          },
+        },
+        processSection: {
+          title: "Как выглядит путь отклика",
+          subtitle:
+            "Ниже показано, как публичный отклик проходит от ссылки на вакансию до дальнейшего follow-up.",
+        },
+        process: {
+          stepLabel: "Шаг {{value}}",
+          roleFit: {
+            title: "Выберите нужную вакансию",
+            description:
+              "Используйте vacancy link или vacancy ID от рекрутера, чтобы отклик попал в корректный hiring pipeline.",
+          },
+          cvReview: {
+            title: "Загрузите и проверьте CV",
+            description:
+              "Прикрепите PDF или DOCX, отправьте контактные данные и сохраните tracking ID для дальнейшей проверки статуса.",
+          },
+          interview: {
+            title: "Будьте готовы к следующему шагу",
+            description:
+              "Тот же публичный transport позже поддерживает подтверждение интервью, запрос переноса и отказ.",
+          },
+        },
+        applySection: {
+          sectionTitle: "Отклик и tracking в одном месте",
+          sectionSubtitle:
+            "Пространство отклика теперь живёт на shareable-странице вакансии, а доска помогает выбрать роль.",
+          workspaceTitle: "Пространство отклика",
+          workspaceSubtitle:
+            "Откройте страницу роли с доски или вставьте vacancy ID, если пришли по ссылке рекрутера.",
+          workspaceSubtitleSelected: "Форма ниже сейчас сфокусирована на вакансии «{{vacancyTitle}}».",
+        },
+        supportSection: {
+          title: "Что важно знать кандидату",
+          subtitle:
+            "Эти подсказки делают публичную точку входа понятнее и помогают избежать лишних ошибок при отклике.",
+        },
+        supportCards: {
+          link: {
+            title: "Нужен vacancy ID?",
+            description:
+              "Используйте ссылку от рекрутера или попросите vacancy ID перед отправкой отклика.",
+          },
+          files: {
+            title: "Поддерживаемые файлы",
+            description:
+              "Поддерживаются PDF и DOCX. Проверьте, что файл читается и содержит актуальную версию CV.",
+          },
+          followUp: {
+            title: "Что дальше",
+            description:
+              "После отправки мы возвращаем candidate ID и tracking ID, чтобы прогресс парсинга был виден на странице.",
+          },
+        },
+      },
+      candidatePortal: {
+        eyebrow: "Кандидатский портал",
+        title: "Пространство кандидата для откликов и interview links.",
+        subtitle:
+          "Используйте эту страницу для legacy vacancy deep link, tracking parsing-status и приглашений на интервью от HR.",
+        imageAlt: "Кандидат и рекрутер обсуждают детали",
+        highlights: {
+          upload: "Загрузка CV",
+          track: "Отслеживание статуса",
+          interview: "Регистрация на интервью",
+        },
+      },
       leaderWorkspaceSubtitle:
         "Просматривайте месячные KPI snapshot'ы и выгружайте вложения для управленческой отчётности.",
       accountantWorkspaceSubtitle:
@@ -1461,6 +2165,28 @@ const resources = {
         subtitle:
           "Отправьте профиль и CV по выбранной вакансии, затем отслеживайте прогресс парсинга по выданному tracking ID.",
         title: "Отклик на вакансию",
+        prepRail: {
+          eyebrow: "Перед отправкой",
+          title: "Сделайте публичный отклик проще",
+          subtitle:
+            "Несколько небольших проверок помогают CV-parser и tracking-статусу работать быстрее.",
+          items: {
+            file: {
+              title: "Прикрепите читаемое CV",
+              description:
+                "Лучше всего подходят PDF или DOCX для парсинга и извлечения evidence.",
+            },
+            tracking: {
+              title: "Сохраните tracking ID",
+              description: "Этот же ID открывает панели статуса и анализа.",
+            },
+            account: {
+              title: "Аккаунт не нужен",
+              description:
+                "Откликайтесь анонимно и возвращайтесь по публичной tracking-ссылке.",
+            },
+          },
+        },
         diagnosticMode:
           "Активирован diagnostic mode, потому что страница открыта без vacancy deep link. Для локальной проверки введите vacancy ID вручную.",
         vacancySummary: "Вы откликаетесь на: {{vacancyTitle}}",
@@ -1526,6 +2252,26 @@ const resources = {
         title: "Регистрация на интервью",
         subtitle:
           "Проверьте детали интервью, подтвердите участие, запросите перенос или отклоните приглашение.",
+        responseRail: {
+          eyebrow: "Ссылка на интервью",
+          title: "Ответьте так, как удобно вам",
+          subtitle:
+            "Токен-ссылка остаётся анонимной и делает процесс интервью лёгким.",
+          items: {
+            confirm: {
+              title: "Подтвердить участие",
+              description: "Используйте этот вариант, если слот вам подходит.",
+            },
+            reschedule: {
+              title: "Запросить перенос",
+              description: "Оставьте комментарий, если нужен другой временной интервал.",
+            },
+            decline: {
+              title: "Вежливо отклонить",
+              description: "Подойдёт, если вы не можете участвовать в интервью.",
+            },
+          },
+        },
         loading: "Загрузка деталей интервью...",
         confirmSuccess: "Участие в интервью подтверждено.",
         rescheduleSuccess: "Запрос на перенос отправлен.",
@@ -1618,8 +2364,10 @@ const resources = {
         },
       },
       loginPage: {
+        eyebrow: "Staff access",
         title: "Вход для сотрудников",
         subtitle: "Войдите, чтобы открыть рабочее пространство.",
+        imageAlt: "Команда готовится к встрече",
         sessionBootstrap: "Проверяем текущую сессию...",
         fields: {
           identifier: "Логин или email",

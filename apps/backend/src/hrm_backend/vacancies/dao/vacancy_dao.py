@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from hrm_backend.vacancies.models.vacancy import Vacancy
@@ -67,6 +68,19 @@ class VacancyDAO:
         return list(
             self._session.query(Vacancy)
             .order_by(Vacancy.created_at.asc(), Vacancy.vacancy_id.asc())
+            .all()
+        )
+
+    def list_public_vacancies(self) -> list[Vacancy]:
+        """Load open vacancies sorted for public careers browsing."""
+        return list(
+            self._session.query(Vacancy)
+            .filter(func.lower(Vacancy.status) == "open")
+            .order_by(
+                Vacancy.updated_at.desc(),
+                Vacancy.created_at.desc(),
+                Vacancy.vacancy_id.asc(),
+            )
             .all()
         )
 

@@ -110,7 +110,7 @@ describe("login route", () => {
     const router = renderWithPath("/login");
 
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe("/");
+      expect(router.state.location.pathname).toBe("/hr");
     });
     await waitFor(() => {
       expect(fetchMock.mock.calls.some((call) => String(call[0]).endsWith("/api/v1/auth/me"))).toBe(true);
@@ -178,7 +178,7 @@ describe("login route", () => {
     });
   });
 
-  it("redirects already-authenticated manager from /login to manager workspace on /", async () => {
+  it("redirects already-authenticated manager from /login to /manager", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
     window.localStorage.setItem("hrm_refresh_token", "refresh-token");
     window.localStorage.setItem("hrm_user_role", "manager");
@@ -258,7 +258,7 @@ describe("login route", () => {
     const router = renderWithPath("/login");
 
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe("/");
+      expect(router.state.location.pathname).toBe("/manager");
     });
     await waitFor(() => {
       expect(
@@ -269,7 +269,7 @@ describe("login route", () => {
     });
   });
 
-  it("redirects already-authenticated accountant from /login to accountant workspace on /", async () => {
+  it("redirects already-authenticated accountant from /login to /accountant", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
     window.localStorage.setItem("hrm_refresh_token", "refresh-token");
     window.localStorage.setItem("hrm_user_role", "accountant");
@@ -305,7 +305,7 @@ describe("login route", () => {
     const router = renderWithPath("/login");
 
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe("/");
+      expect(router.state.location.pathname).toBe("/accountant");
     });
     await waitFor(() => {
       expect(

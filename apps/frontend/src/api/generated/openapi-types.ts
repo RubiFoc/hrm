@@ -970,6 +970,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/vacancies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Public Vacancies
+         * @description List open vacancies for the public careers board.
+         */
+        get: operations["list_public_vacancies_api_v1_public_vacancies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/kpi-snapshots": {
         parameters: {
             query?: never;
@@ -4107,6 +4127,41 @@ export interface components {
             vacancy_id: string;
         };
         /**
+         * PublicVacancyListItemResponse
+         * @description Public-facing vacancy card payload.
+         */
+        PublicVacancyListItemResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Department */
+            department: string;
+            /** Description */
+            description: string;
+            /** Title */
+            title: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+        };
+        /**
+         * PublicVacancyListResponse
+         * @description Public vacancy board payload.
+         */
+        PublicVacancyListResponse: {
+            /** Items */
+            items: components["schemas"]["PublicVacancyListItemResponse"][];
+        };
+        /**
          * RefreshRequest
          * @description Input payload for access/refresh token rotation.
          */
@@ -6091,6 +6146,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_public_vacancies_api_v1_public_vacancies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicVacancyListResponse"];
                 };
             };
         };

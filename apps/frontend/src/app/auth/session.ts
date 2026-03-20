@@ -82,18 +82,24 @@ export function clearAuthSession(): void {
  */
 export function resolveWorkspaceRoute(role: AuthRole | null): string {
   if (!role) {
-    return "/access-denied?reason=forbidden";
+    return "/";
   }
-  if (role === "admin") {
-    return "/admin";
+  switch (role) {
+    case "admin":
+      return "/admin";
+    case "hr":
+      return "/hr";
+    case "manager":
+      return "/manager";
+    case "employee":
+      return "/employee";
+    case "leader":
+      return "/leader";
+    case "accountant":
+      return "/accountant";
+    default:
+      return "/";
   }
-  if (role === "employee") {
-    return "/employee";
-  }
-  if (role === "leader") {
-    return "/leader";
-  }
-  return "/";
 }
 
 /**

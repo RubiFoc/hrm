@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from hrm_backend.vacancies.services.offer_service import OfferService
     from hrm_backend.vacancies.services.public_apply_policy import PublicApplyPolicyService
     from hrm_backend.vacancies.services.public_apply_rate_limiter import PublicApplyRateLimiter
+    from hrm_backend.vacancies.services.public_vacancy_service import PublicVacancyService
     from hrm_backend.vacancies.services.vacancy_service import VacancyService
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "VacancyApplicationService",
     "PublicApplyRateLimiter",
     "PublicApplyPolicyService",
+    "PublicVacancyService",
 ]
 
 
@@ -46,4 +48,8 @@ def __getattr__(name: str) -> Any:
         from hrm_backend.vacancies.services.public_apply_policy import PublicApplyPolicyService
 
         return PublicApplyPolicyService
+    if name == "PublicVacancyService":
+        from hrm_backend.vacancies.services.public_vacancy_service import PublicVacancyService
+
+        return PublicVacancyService
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

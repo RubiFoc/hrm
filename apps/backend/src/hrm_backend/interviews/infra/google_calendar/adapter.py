@@ -149,24 +149,47 @@ class GoogleCalendarAdapter:
 
         primary_staff_id = sorted_staff_ids[0]
         primary_binding = binding_map.get(primary_staff_id)
-        primary_response = self._create_or_update_event(
-            access_token=access_token,
-            calendar_id=calendar_targets[primary_staff_id],
-            current_binding=primary_binding,
-            payload=self.build_event_payload(
-                interview=interview,
-                vacancy_title=vacancy_title,
-                candidate_display_name=candidate_display_name,
-                location_details=interview.location_details,
-                include_conference_data=(
-                    interview.location_kind == "google_meet" and primary_binding is None
-                ),
-                conference_request_id=f"{interview.interview_id}-{interview.schedule_version}",
-            ),
-            include_conference_data=(
-                interview.location_kind == "google_meet" and primary_binding is None
-            ),
+        include_conference_data = (
+            interview.location_kind == "google_meet" and primary_binding is None
         )
+        conference_request_id = (
+            f"{interview.interview_id}-{interview.schedule_version}"
+            if include_conference_data
+            else None
+        )
+        payload_kwargs = {
+            "interview": interview,
+            "vacancy_title": vacancy_title,
+            "candidate_display_name": candidate_display_name,
+            "location_details": interview.location_details,
+        }
+        primary_payload = self.build_event_payload(
+            **payload_kwargs,
+            include_conference_data=include_conference_data,
+            conference_request_id=conference_request_id,
+        )
+        try:
+            primary_response = self._create_or_update_event(
+                access_token=access_token,
+                calendar_id=calendar_targets[primary_staff_id],
+                current_binding=primary_binding,
+                payload=primary_payload,
+                include_conference_data=include_conference_data,
+            )
+        except RuntimeError as exc:
+            if not include_conference_data or not self._should_retry_without_conference_data(exc):
+                raise
+            primary_response = self._create_or_update_event(
+                access_token=access_token,
+                calendar_id=calendar_targets[primary_staff_id],
+                current_binding=primary_binding,
+                payload=self.build_event_payload(
+                    **payload_kwargs,
+                    include_conference_data=False,
+                    conference_request_id=None,
+                ),
+                include_conference_data=False,
+            )
         resolved_location_details = (
             self._extract_meet_link(primary_response)
             if interview.location_kind == "google_meet"
@@ -453,6 +476,12 @@ class GoogleCalendarAdapter:
             ) from exc
         except urllib.error.URLError as exc:
             raise RuntimeError(f"Google Calendar request failed: {exc.reason}") from exc
+
+    @staticmethod
+    def _should_retry_without_conference_data(exc: RuntimeError) -> bool:
+        """Return whether Meet conference creation should retry without conferenceData."""
+        message = str(exc).lower()
+        return "invalid conference type value" in message or "conference type value" in message
 
     @staticmethod
     def _extract_meet_link(payload: dict[str, object]) -> str | None:
