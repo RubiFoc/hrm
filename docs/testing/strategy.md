@@ -76,6 +76,7 @@ apps/backend/tests/
   - `types_only` means the generated OpenAPI type check should run without Vitest.
   - `contract` changes keep `api:types:check` enabled even when page tests are also selected.
   - domain modes map to targeted Vitest files instead of the whole frontend suite.
+  - the GitHub Actions frontend test step normalizes repo-root `apps/frontend/...` targets to frontend-relative paths before invoking Vitest under `apps/frontend`.
 - Browser smoke policy:
   - the compose/browser smoke job only runs for auth, admin, candidate apply, candidate interview,
     CI-infra, and compose/runtime changes that actually touch the flows it verifies.
