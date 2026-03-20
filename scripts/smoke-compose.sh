@@ -92,9 +92,7 @@ if raw_mapping is None or not raw_mapping.strip():
                 break
 
 if raw_mapping is None or not raw_mapping.strip():
-    raise SystemExit(
-        "INTERVIEW_STAFF_CALENDAR_MAP_JSON not found in environment or .env"
-    )
+    raise SystemExit(2)
 
 mapping = json.loads(raw_mapping)
 if not isinstance(mapping, dict) or not mapping:
@@ -411,17 +409,25 @@ python3 scripts/browser_candidate_apply_smoke.py \
   --vacancy-title "${SMOKE_VACANCY_TITLE}" \
   --result-file "${SMOKE_CANDIDATE_APPLY_RESULT_FILE}"
 
-SMOKE_INTERVIEWER_STAFF_ID="$(load_first_interviewer_staff_id)"
-SMOKE_INTERVIEW_TOKEN="$(create_smoke_interview_token \
-  "${SMOKE_CANDIDATE_APPLY_RESULT_FILE}" \
-  "${SMOKE_VACANCY_ID}" \
-  "${ACCESS_TOKEN}" \
-  "${SMOKE_INTERVIEWER_STAFF_ID}")"
+if SMOKE_INTERVIEWER_STAFF_ID="$(load_first_interviewer_staff_id)"; then
+  SMOKE_INTERVIEW_TOKEN="$(create_smoke_interview_token \
+    "${SMOKE_CANDIDATE_APPLY_RESULT_FILE}" \
+    "${SMOKE_VACANCY_ID}" \
+    "${ACCESS_TOKEN}" \
+    "${SMOKE_INTERVIEWER_STAFF_ID}")"
 
-echo "[smoke] checking browser public candidate interview flow..."
-python3 scripts/browser_candidate_interview_smoke.py \
-  --frontend-url "http://localhost:5173/candidate/interview" \
-  --api-origin "http://localhost:8000" \
-  --interview-token "${SMOKE_INTERVIEW_TOKEN}"
+  echo "[smoke] checking browser public candidate interview flow..."
+  python3 scripts/browser_candidate_interview_smoke.py \
+    --frontend-url "http://localhost:5173/candidate/interview" \
+    --api-origin "http://localhost:8000" \
+    --interview-token "${SMOKE_INTERVIEW_TOKEN}"
+else
+  load_status=$?
+  if [ "${load_status}" -eq 2 ]; then
+    echo "[smoke] skipping browser public candidate interview flow because INTERVIEW_STAFF_CALENDAR_MAP_JSON is not configured"
+  else
+    exit "${load_status}"
+  fi
+fi
 
 echo "[smoke] all docker-compose smoke checks passed."

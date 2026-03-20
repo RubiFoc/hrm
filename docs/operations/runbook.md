@@ -148,8 +148,8 @@ Runtime auth/browser integration settings:
   - `INTERVIEW_STAFF_CALENDAR_MAP_JSON`
   - `INTERVIEW_SYNC_QUEUE_NAME`
 - The compose smoke resolves `INTERVIEW_STAFF_CALENDAR_MAP_JSON` from the environment first and
-  falls back to local `.env` for manual runs, so GitHub Actions no longer depends on a checked-in
-  `.env` file.
+  falls back to local `.env` for manual runs; when neither source is available, the interview
+  browser step is skipped instead of failing the whole smoke.
 - The compose smoke accepts both canonical `/candidate/interview/<token>` invite URLs and legacy
   `?interviewToken=...` URLs when it extracts the public interview token for the browser step.
 - Invite-link runtime settings:
