@@ -44,6 +44,7 @@
 | TASK-11-14 | done/closed | Frontend-refresh closeout complete: the public company landing page on `/` ships with careers navigation and checked-in media assets. |
 | TASK-11-15 | done/closed | Frontend-refresh closeout complete: staff workspaces are split onto dedicated role routes with role-based post-login redirects. |
 | TASK-11-16 | done/closed | Frontend-refresh closeout complete: the refreshed visual system and careers upload surface ship with checked-in image assets. |
+| TASK-11-17 | done/closed | Public company landing, careers, vacancy detail, candidate apply, and candidate interview pages now use leaner shells with secondary rail blocks removed and copy density reduced; `/` reads as a premium corporate homepage with a clear company overview, careers entrypoint, and footer. |
 | TASK-13-01/02 | implemented/local-compliance-slice | Legal-controls matrix now maps article-level obligations to current repo-backed controls and evidence registry entries with owners, verification sources, and update triggers |
 | TASK-05-01/02 | implemented/local-interview-slice | Interview slot planning, participant assignment, and Google Calendar sync/reconciliation baseline are implemented in repo on the existing route topology |
 | TASK-11-08 | implemented/local-interview-slice | Interview scheduling and candidate registration are implemented against `docs/project/interview-planning-pass.md`, with HR controls on `/hr`, public token registration on `/candidate/interview/:interviewToken`, `/candidate` compatibility redirects, and free-mode Google Calendar sync via service account + shared interviewer calendars |
@@ -112,6 +113,7 @@
 - `TASK-11-12` is now implemented in repo as the phase-2 role workspace bundle: manager/accountant workspaces are present on `/manager` and `/accountant`, employee workspace is on `/employee`, leader workspace is on `/leader`, and the HR overview plus legacy `/hr/workbench` shell are present alongside the split HR pages, with route guards, typed OpenAPI clients, frontend router/page tests, and canonical Sentry route tags.
 - `TASK-11-10/11` are now implemented and formally closed as the frontend observability and Chrome-browser verification slice.
 - `TASK-11-14/15/16` are now implemented and formally closed as the urgent frontend-refresh slice: the app now has a public company landing page on `/`, a branded careers surface on `/careers`, checked-in image assets, split HR route pages with a legacy workbench path, dedicated role pages after login, and a refreshed visual system.
+- `TASK-11-17` is now implemented and formally closed as the public copy-density cleanup slice: the public company landing, careers, candidate, and role-shell pages now read as a premium corporate surface with leaner shells and a clearer homepage, careers entrypoint, and footer.
 - The remaining follow-on work after the onboarding-dashboard and manager-workspace slices is limited to notifications, reporting, and admin/ops backlog, not baseline scheduling, registration, feedback transport, or candidate-facing offer decisions.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
@@ -162,14 +164,12 @@
   - `TASK-07-01/02/03/04`
   - `TASK-09-01`
 - `TASK-11-12` stays excluded because its umbrella backlog item is already normalized closed.
-- P2:
-  - none at the moment.
-- Repo-implemented slices stay in the backlog until formal issue/backlog closeout is completed; this list is intentionally broader than only net-new code gaps.
+- P2: none
 
 - Current open backlog by delivery wave:
   - P0: `COMPLIANCE-01`, `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-10-01/02`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`
   - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`
-  - P2: none at the moment
+  - P2: none
 
 ## GitHub Issue Queue
 
@@ -216,6 +216,7 @@
 | TASK-11-14 | EPIC-11 | Add public company landing page with careers navigation and branded media assets | Phase 1-2 | P0 | TASK-11-01, TASK-11-04, TASK-11-06 |
 | TASK-11-15 | EPIC-11 | Split staff workspaces onto dedicated role routes (`/hr`, `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`, `/hr/workbench`, `/manager`, `/accountant`) with role-based post-login redirects | Phase 1-2 | P0 | TASK-11-03, TASK-11-12, TASK-11-13 |
 | TASK-11-16 | EPIC-11 | Refresh frontend visual system and careers upload surface with checked-in image assets | Phase 1-2 | P0 | TASK-11-04, TASK-11-06, TASK-11-09 |
+| TASK-11-17 | EPIC-11 | Closed public copy-density cleanup slice for the premium company landing, careers, candidate, and role-shell pages | Phase 1-2 | done/closed | TASK-11-09, TASK-11-14, TASK-11-15, TASK-11-16 |
 | ADMIN-01 | ADMIN-EPIC-01 | Implement admin auth guard and admin shell (frontend/backend contract) | Phase 1 | P0 | TASK-01-02, TASK-11-03 |
 | ADMIN-02 | ADMIN-EPIC-01 | Implement staff management APIs/UI (create/update/disable) | Phase 1 | P0 | ADMIN-01 |
 | ADMIN-03 | ADMIN-EPIC-01 | Implement employee registration key management APIs/UI (generate/revoke/list) | Phase 1 | P0 | ADMIN-01 |
@@ -355,6 +356,7 @@ Use this queue together with the global queue when planning phase implementation
 | FE-16 | TASK-11-07 | Delivered in local scoring slice: shortlist review block inside `/hr/workbench` with scoring polling and explainable payload rendering |
 | FE-17 | TASK-11-10 | Closed frontend observability slice: Sentry hardening for critical routes, shared HTTP failure capture, render boundary, and release/env tracing config |
 | FE-18 | TASK-11-08 | Delivered interview slice: planning-baseline scheduling on `/hr/interviews` with legacy `/hr/workbench` compatibility and token registration on `/candidate/interview/:interviewToken` without candidate auth |
+| FE-19 | TASK-11-17 | Closed frontend copy-density cleanup slice for the refreshed public company, careers, candidate, and role-shell pages |
 
 ## Milestone Cut Suggestion
 - `M1` (Phase 1 MVP): infra/security + ADMIN-01/02/03 + candidate CV intake/parsing/normalization + candidate self-service upload/tracking + HR vacancy/pipeline workspace baseline + RU/EN critical flows + browser smoke.

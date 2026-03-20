@@ -78,6 +78,5 @@ describe("CareersVacancyPage", () => {
     ).toBeDefined();
     expect(await screen.findByRole("heading", { name: /application workspace/i })).toBeDefined();
     expect(await screen.findByRole("link", { name: /back to open roles/i })).toBeDefined();
-    expect(screen.getByText(/shareable public vacancy page for review and application/i)).toBeDefined();
   });
 });

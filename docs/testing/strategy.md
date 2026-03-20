@@ -76,6 +76,7 @@ apps/backend/tests/
   - `types_only` means the generated OpenAPI type check should run without Vitest.
   - `contract` changes keep `api:types:check` enabled even when page tests are also selected.
   - domain modes map to targeted Vitest files instead of the whole frontend suite.
+  - the GitHub Actions frontend test step normalizes repo-root `apps/frontend/...` targets to frontend-relative paths before invoking Vitest under `apps/frontend`.
 - Browser smoke policy:
   - the compose/browser smoke job only runs for auth, admin, candidate apply, candidate interview,
     CI-infra, and compose/runtime changes that actually touch the flows it verifies.
@@ -299,6 +300,7 @@ Targeted local verification command:
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
 | --- | --- | --- | --- |
+| Public company landing route (`/`) renders the premium corporate homepage and keeps public/private entrypoints clear | `apps/frontend/src/App.test.tsx` | `apps/frontend/src/app/router.observability.test.tsx` + local browser verification on `/` | root page shows the company overview landing, keeps careers and staff-login/workspace CTAs, and emits canonical company route tags |
 | Public careers job board contract (`GET /api/v1/public/vacancies`) | `apps/backend/tests/unit/vacancies/test_public_vacancy_service.py` | `apps/backend/tests/integration/vacancies/test_public_vacancies_api.py` | the public board exposes only open vacancies, keeps the schema read-only, and omits staff-only fields |
 | Public careers route contract (`/careers`) and legacy candidate fallback | `apps/frontend/src/pages/CareersPage.test.tsx` + `apps/frontend/src/pages/CandidatePage.test.tsx` | `./scripts/smoke-compose.sh` | careers page loads the public open-role board, selecting a role pre-fills the workspace, and the manual vacancy ID fallback still works when query param is absent |
 | Browser SHA-256 checksum + multipart public apply submission | `apps/frontend/src/pages/CandidatePage.test.tsx` + `apps/frontend/src/api/typedClient.test.ts` | `./scripts/smoke-compose.sh` | browser submit uses a real PDF fixture, hits `POST /api/v1/vacancies/{vacancy_id}/applications`, and persists returned tracking context |

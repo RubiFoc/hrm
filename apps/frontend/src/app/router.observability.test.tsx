@@ -195,7 +195,11 @@ describe("frontend observability route tags", () => {
   it("tags the public company route on /", async () => {
     renderWithPath("/");
 
-    expect(await screen.findByRole("heading", { name: /спокойный контур найма|build a calmer hiring flow/i })).toBeDefined();
+    expect(
+      await screen.findByRole("heading", {
+        name: /northstar hrm is a large company with several business directions|northstar hrm — большая компания с несколькими направлениями работы/i,
+      }),
+    ).toBeDefined();
     expect(setTagMock).toHaveBeenCalledWith("workspace", "company");
     expect(setTagMock).toHaveBeenCalledWith("role", "anonymous");
     expect(setTagMock).toHaveBeenCalledWith("route", "/");

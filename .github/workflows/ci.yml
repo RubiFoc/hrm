@@ -302,6 +302,9 @@ jobs:
                   targets.extend(targets_by_mode.get(mode, []))
 
               deduped_targets = list(dict.fromkeys(targets))
+              normalized_targets = [
+                  target.removeprefix("apps/frontend/") for target in deduped_targets
+              ]
               if not deduped_targets:
                   print(
                       "No targeted frontend Vitest paths matched CI modes; falling back to full suite.",
@@ -317,7 +320,7 @@ jobs:
                       "test",
                       "--",
                       "--run",
-                      *deduped_targets,
+                      *normalized_targets,
                   ]
 
           raise SystemExit(subprocess.call(command))

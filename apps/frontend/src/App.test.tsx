@@ -18,6 +18,15 @@ describe("App", () => {
         <App />
       </QueryClientProvider>,
     );
-    expect(screen.getByRole("heading", { name: /спокойный контур найма|build a calmer hiring flow/i })).toBeDefined();
+    expect(
+      screen.getByRole("heading", {
+        name: /northstar hrm is a large company with several business directions|northstar hrm — большая компания с несколькими направлениями работы/i,
+      }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("heading", {
+        name: /one company, multiple directions|одна компания, несколько направлений/i,
+      }),
+    ).toBeDefined();
   });
 });
