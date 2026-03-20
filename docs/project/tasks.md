@@ -1,8 +1,8 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-19
-- Updated by: coordinator + business-analyst + architect
+- Date: 2026-03-20
+- Updated by: coordinator + business-analyst + frontend-engineer
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -30,33 +30,36 @@
 | TASK-02-04 | done/closed | GitHub issue #88 closed; merged in `main` via PR #128 (`3ad1c9e`) with manager-scoped vacancy overview + PII-redacted candidate snapshot visibility and offer status enrichment |
 | TASK-08-03 | done/closed | GitHub issue #20 closed; merged in `main` via PR #131 |
 | TASK-08-04 | implemented/local-automation-kpi-slice | Durable automation KPI metric events, monthly snapshot aggregation, leader labels, and docs/tests are implemented in repo |
-| TASK-11-06 | implemented/local-baseline | `/candidate` now supports public deep-link apply, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling |
-| TASK-11-05 | implemented/local-baseline | `/` now exposes staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
+| TASK-11-06 | implemented/local-baseline | Public candidate apply/tracking now runs on `/careers` with checked-in branding, a browseable open-role board backed by `GET /api/v1/public/vacancies`, shareable vacancy detail/apply pages on `/careers/:vacancyId`, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling; `/candidate/apply` now hosts the compatibility apply shell and `/candidate` redirects into it |
+| TASK-11-05 | implemented/local-baseline | HR recruitment UX is now split across `/hr` overview, `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`, and legacy `/hr/workbench`, covering staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
 | TASK-11-09 | implemented/local-baseline | RU/EN strings cover login, candidate apply/tracking/analysis, admin, and HR workspace critical flows |
-| TASK-11-11 | implemented/local-baseline | Compose browser smoke covers both staff login and public candidate apply journeys through headless Chrome |
+| TASK-11-11 | done/closed | Compose browser smoke covers staff login and public candidate apply journeys through headless Chrome on the shareable careers vacancy route; this baseline is already integrated into the compose smoke path. |
 | TASK-04-01/02/03 | implemented/local-scoring-slice | Dedicated `hrm_backend/scoring` package, Ollama adapter, async scoring jobs/artifacts, and frozen scoring API contract are present in repo with unit and integration coverage |
 | TASK-04-05 | implemented/local-scoring-slice | Score payloads and HR shortlist review now expose matched requirements, missing competencies, and evidence snippets from parsed CV analysis |
 | TASK-04-06 | done/closed | GitHub issue #92 closed; merged in `main` via PR #111 (`eedcc0f`) with additive scoring quality harness tooling under `hrm_backend.scoring.evaluation`, deterministic fixture-mode `precision`/`recall` + `NDCG`/`MRR` + paraphrase robustness reporting, optional Ollama mode reuse, and backend unit/integration coverage |
 | TASK-04-04 | done/closed | Merged in `main` via PR #109 (`c60b48b`) with additive low-confidence manual-review metadata, configurable `SCORING_LOW_CONFIDENCE_THRESHOLD`, and localized shortlist warning UX that preserves score details |
-| TASK-11-07 | implemented/local-scoring-slice | `/` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
-| TASK-11-10 | implemented/local-observability-slice | Frontend Sentry now tags `/`, `/employee`, `/leader`, `/candidate`, `/login`, `/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, `/admin/audit`, and `/admin/observability`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
-| TASK-11-12 | implemented/local-phase-2-role-workspaces-slice | Repo-backed manager/accountant workspaces on `/`, employee workspace on `/employee`, and leader workspace on `/leader` are implemented with route guards, typed OpenAPI clients, backend integration coverage, frontend router/page tests, and canonical Sentry route tags; the umbrella backlog item is now normalized closed. |
+| TASK-11-07 | implemented/local-scoring-slice | Legacy HR workbench on `/hr/workbench` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
+| TASK-11-10 | done/closed | Frontend Sentry now tags `/`, `/careers`, `/careers/:vacancyId`, `/hr`, `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`, `/hr/workbench`, `/manager`, `/accountant`, `/employee`, `/leader`, `/candidate`, `/candidate/apply`, `/candidate/interview/:interviewToken`, `/login`, `/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, `/admin/audit`, and `/admin/observability`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
+| TASK-11-12 | implemented/local-phase-2-role-workspaces-slice | Repo-backed manager/accountant workspaces on `/manager` and `/accountant`, employee workspace on `/employee`, leader workspace on `/leader`, and HR overview plus legacy `/hr/workbench` shell are implemented with route guards, typed OpenAPI clients, backend integration coverage, frontend router/page tests, and canonical Sentry route tags; the umbrella backlog item is now normalized closed. |
+| TASK-11-14 | done/closed | Frontend-refresh closeout complete: the public company landing page on `/` ships with careers navigation and checked-in media assets. |
+| TASK-11-15 | done/closed | Frontend-refresh closeout complete: staff workspaces are split onto dedicated role routes with role-based post-login redirects. |
+| TASK-11-16 | done/closed | Frontend-refresh closeout complete: the refreshed visual system and careers upload surface ship with checked-in image assets. |
 | TASK-13-01/02 | implemented/local-compliance-slice | Legal-controls matrix now maps article-level obligations to current repo-backed controls and evidence registry entries with owners, verification sources, and update triggers |
 | TASK-05-01/02 | implemented/local-interview-slice | Interview slot planning, participant assignment, and Google Calendar sync/reconciliation baseline are implemented in repo on the existing route topology |
-| TASK-11-08 | implemented/local-interview-slice | Interview scheduling and candidate registration are implemented against `docs/project/interview-planning-pass.md`, with HR controls on `/`, public token registration on `/candidate`, and free-mode Google Calendar sync via service account + shared interviewer calendars |
+| TASK-11-08 | implemented/local-interview-slice | Interview scheduling and candidate registration are implemented against `docs/project/interview-planning-pass.md`, with HR controls on `/hr`, public token registration on `/candidate/interview/:interviewToken`, `/candidate` compatibility redirects, and free-mode Google Calendar sync via service account + shared interviewer calendars |
 | TASK-05-03/04 | done/closed | GitHub issues #16 and #17 are closed; merged in `main` via PR #82 (`182875c`) with schedule-versioned feedback and the existing `interview -> offer` fairness gate |
-| TASK-06-01 | implemented/local-offer-slice | Offer persistence, staff lifecycle APIs on the existing vacancy route tree, `/` offer workflow UI, and `offer -> hired/rejected` guards are present in repo with OpenAPI/frontend/backend coverage |
+| TASK-06-01 | implemented/local-offer-slice | Offer persistence, staff lifecycle APIs on the existing vacancy route tree, `/hr` offer workflow UI, and `offer -> hired/rejected` guards are present in repo with OpenAPI/frontend/backend coverage |
 | TASK-06-02 | implemented/local-hire-conversion-slice | The existing `POST /api/v1/pipeline/transitions` flow now persists one durable `hire_conversions` handoff atomically with successful `offer -> hired`, while employee profile creation and onboarding execution remain deferred |
 | TASK-06-03 | implemented/local-employee-profile-slice | Staff-only `POST/GET /api/v1/employees` now bootstrap one durable `employee_profiles` row from `hire_conversions`, validate frozen snapshots, and prepare the employee-domain trigger surface for onboarding |
 | TASK-06-04 | implemented/local-onboarding-trigger-slice | Successful `POST /api/v1/employees` now atomically creates both `employee_profiles` and one durable `onboarding_runs` artifact, and employee read responses expose additive onboarding metadata |
 | TASK-07-01 | implemented/local-onboarding-template-slice | Staff-only `POST/GET/PUT /api/v1/onboarding/templates` now manage durable checklist templates and items, including one active default template for later onboarding-task generation |
 | TASK-07-02 | implemented/local-onboarding-task-slice | Employee bootstrap now atomically materializes `onboarding_tasks` from the active template, and staff can list/update/backfill tasks on `/api/v1/onboarding/runs/{onboarding_id}/tasks` |
 | TASK-07-03 | implemented/local-employee-portal-slice | Employee-only `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*` now expose self-service onboarding tasks with durable employee-profile identity linking and localized frontend coverage |
-| TASK-07-04 | implemented/local-onboarding-dashboard-slice | `GET /api/v1/onboarding/runs*` now exposes HR/admin read-all plus manager-scoped onboarding progress visibility, with the dashboard embedded on `/` for HR and reused as the onboarding block inside the existing manager workspace on the same `/` route |
-| TASK-09-01 | implemented/local-manager-workspace-slice | Manager users now land on `/` in a read-only hiring + onboarding workspace backed by manager-scoped vacancy APIs, explicit `vacancies.hiring_manager_staff_id` ownership, and the reused onboarding dashboard block, while HR/admin keep the existing recruitment workspace on `/` |
+| TASK-07-04 | implemented/local-onboarding-dashboard-slice | `GET /api/v1/onboarding/runs*` now exposes HR/admin read-all plus manager-scoped onboarding progress visibility, with the dashboard embedded on `/hr` for HR and reused as the onboarding block inside `/manager` |
+| TASK-09-01 | implemented/local-manager-workspace-slice | Manager users now land on `/manager` in a read-only hiring + onboarding workspace backed by manager-scoped vacancy APIs, explicit `vacancies.hiring_manager_staff_id` ownership, and the reused onboarding dashboard block, while HR/admin keep the recruitment workspace on `/hr` |
 | TASK-09-02 | done/closed | GitHub issue #95 closed; merged in `main` via PR #126 (`06b605e`) with a read-only leader/admin KPI workspace on `/leader`, bounded lookback fallback to the latest available snapshot month, and CSV/XLSX export reuse |
-| TASK-09-03 | done/closed | GitHub issue #96 closed; merged in `main` via PR #114 (`c237296`) with accountant workspace routing on `/`, assignment-scoped `/api/v1/accounting/workspace*`, controlled CSV/XLSX exports, and solo-mode architecture self-review workflow alignment |
-| TASK-09-04 | done/closed | GitHub issue #97 closed; merged in `main` via PR #116 (`966f3a8`) with recipient-scoped `/api/v1/notifications*`, embedded manager/accountant notifications UI on `/`, fail-closed read/update scope, on-demand digests, regenerated OpenAPI/frontend types, and synced architecture/test docs |
+| TASK-09-03 | done/closed | GitHub issue #96 closed; merged in `main` via PR #114 (`c237296`) with accountant workspace routing on `/accountant`, assignment-scoped `/api/v1/accounting/workspace*`, controlled CSV/XLSX exports, and solo-mode architecture self-review workflow alignment |
+| TASK-09-04 | done/closed | GitHub issue #97 closed; merged in `main` via PR #116 (`966f3a8`) with recipient-scoped `/api/v1/notifications*`, embedded manager/accountant notifications UI on `/manager` and `/accountant`, fail-closed read/update scope, on-demand digests, regenerated OpenAPI/frontend types, and synced architecture/test docs |
 | TASK-10-01 | implemented/local-kpi-snapshot-slice | Monthly KPI snapshots with admin-only rebuild/read API, reporting package, migration, unit/integration tests, and updated OpenAPI/frontend types are implemented in repo |
 | TASK-10-03 | done/closed | Merged in `main` via PR #122 with admin-only `GET /api/v1/audit/events` query API, `audit:read` RBAC permission, unit/integration coverage, updated OpenAPI freeze, and refreshed frontend generated types |
 | TASK-10-04 | done/closed | GitHub issue #99 closed; merged in `main` via PR #124 (`7a5ca87`) with controlled audit evidence export (`/api/v1/audit/events/export`) in CSV/JSONL/XLSX and KPI snapshot export (`/api/v1/reporting/kpi-snapshots/export`) attachments plus updated docs/diagrams and regenerated OpenAPI/frontend types |
@@ -99,14 +102,16 @@
 - `TASK-07-01` is now implemented as the next onboarding slice: HR/admin can create, read, list, and replace onboarding checklist templates on a dedicated staff onboarding route, while task assignment/execution remains deferred.
 - `TASK-07-02` is now implemented as the task-materialization slice: successful `POST /api/v1/employees` fails closed without an active template, otherwise atomically writes `employee_profiles + onboarding_runs + onboarding_tasks`, and HR/admin can read, patch, and backfill tasks on the existing onboarding route tree.
 - `TASK-07-03` is now implemented as the employee self-service follow-on slice: authenticated employees use the new `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*`, while the backend resolves and durably links the employee profile from the existing auth session without reopening the auth or CORS model.
-- `TASK-07-04` is now implemented as the HR/manager visibility follow-on slice: `/api/v1/onboarding/runs*` exposes read-only onboarding progress data, HR/admin see all runs inside the existing `/` workspace, and managers reuse the same dashboard block inside their role-specific workspace without widening task-mutation permissions.
-- `TASK-09-01` is now implemented as the additive manager workspace follow-on slice: managers use the existing `/` route for one read-only hiring + onboarding workspace, vacancy hiring visibility is scoped by explicit `vacancies.hiring_manager_staff_id`, and onboarding visibility stays task-assignment-scoped through the existing onboarding APIs.
-- `TASK-09-03` is now implemented as the additive accountant workspace follow-on slice: accountants use the existing `/` route for one read-only finance workspace, visibility stays limited to accountant-assigned onboarding tasks, and controlled CSV/XLSX exports reuse the same filtered row model without adding generic reporting infrastructure.
+- `TASK-07-04` is now implemented as the HR/manager visibility follow-on slice: `/api/v1/onboarding/runs*` exposes read-only onboarding progress data, HR/admin see all runs inside `/hr`, and managers reuse the same dashboard block inside `/manager` without widening task-mutation permissions.
+- `TASK-09-01` is now implemented as the additive manager workspace follow-on slice: managers use `/manager` for one read-only hiring + onboarding workspace, vacancy hiring visibility is scoped by explicit `vacancies.hiring_manager_staff_id`, and onboarding visibility stays task-assignment-scoped through the existing onboarding APIs.
+- `TASK-09-03` is now implemented as the additive accountant workspace follow-on slice: accountants use `/accountant` for one read-only finance workspace, visibility stays limited to accountant-assigned onboarding tasks, and controlled CSV/XLSX exports reuse the same filtered row model without adding generic reporting infrastructure.
 - `TASK-09-03` post-merge closeout is complete: GitHub issue `#96` is closed, PR #114 (`c237296`) is merged in `main`, and this backlog snapshot is synchronized to the merged state.
 - `TASK-09-04` post-merge closeout is complete: GitHub issue `#97` is closed, PR #116 (`966f3a8`) is merged in `main`, and this backlog snapshot is synchronized to the merged state while keeping the notifications slice additive, fail-closed, and in-app only.
 - `TASK-10-04` is now implemented as a minimal export package: admin-only audit evidence export (`GET /api/v1/audit/events/export`) in CSV/JSONL/XLSX and leader/admin KPI snapshot export (`GET /api/v1/reporting/kpi-snapshots/export`) with business audit events written after content assembly to avoid self-inclusion.
 - `TASK-10-04` post-merge closeout is complete: GitHub issue `#99` is closed, PR #124 (`7a5ca87`) is merged in `main`, and this backlog snapshot is synchronized to the merged state.
-- `TASK-11-12` is now implemented in repo as the phase-2 role workspace bundle: manager/accountant workspaces are present on `/`, employee workspace is on `/employee`, and leader workspace is on `/leader`, with route guards, typed OpenAPI clients, backend integration coverage, frontend router/page tests, and canonical Sentry route tags.
+- `TASK-11-12` is now implemented in repo as the phase-2 role workspace bundle: manager/accountant workspaces are present on `/manager` and `/accountant`, employee workspace is on `/employee`, leader workspace is on `/leader`, and the HR overview plus legacy `/hr/workbench` shell are present alongside the split HR pages, with route guards, typed OpenAPI clients, frontend router/page tests, and canonical Sentry route tags.
+- `TASK-11-10/11` are now implemented and formally closed as the frontend observability and Chrome-browser verification slice.
+- `TASK-11-14/15/16` are now implemented and formally closed as the urgent frontend-refresh slice: the app now has a public company landing page on `/`, a branded careers surface on `/careers`, checked-in image assets, split HR route pages with a legacy workbench path, dedicated role pages after login, and a refreshed visual system.
 - The remaining follow-on work after the onboarding-dashboard and manager-workspace slices is limited to notifications, reporting, and admin/ops backlog, not baseline scheduling, registration, feedback transport, or candidate-facing offer decisions.
 - Existing auth/CORS/public candidate transport assumptions stay unchanged across the observability and compliance follow-on slices.
 
@@ -121,16 +126,18 @@
 - `TASK-07-01` is no longer active queue work; the implemented source of truth is the repo-backed onboarding checklist template API on `/api/v1/onboarding/templates`.
 - `TASK-07-02` is no longer active queue work; the implemented source of truth is the repo-backed onboarding task generation/backfill/update API on `/api/v1/onboarding/runs/{onboarding_id}/tasks`.
 - `TASK-07-03` is no longer active queue work; the implemented source of truth is the repo-backed employee self-service onboarding portal on `/employee` plus `/api/v1/employees/me/onboarding*`.
-- `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/` and reused inside the manager workspace on the existing `/` route.
-- `TASK-09-01` is no longer active queue work; the implemented source of truth is the repo-backed manager workspace on `/` plus manager-scoped vacancy read endpoints on the existing `/api/v1/vacancies` namespace.
+- `TASK-07-04` is no longer active queue work; the implemented source of truth is the repo-backed onboarding progress dashboard on `/api/v1/onboarding/runs*`, embedded for HR on `/hr` and reused inside `/manager`.
+- `TASK-09-01` is no longer active queue work; the implemented source of truth is the repo-backed manager workspace on `/manager` plus manager-scoped vacancy read endpoints on the existing `/api/v1/vacancies` namespace.
 - `ADMIN-04` is no longer active queue work; the implemented source of truth is the repo-backed admin control plane on `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, and `/admin/audit` with non-destructive recruitment and audit contract reuse.
 - `ADMIN-05` is no longer active queue work; the implemented source of truth is the repo-backed admin observability dashboard on `/admin/observability` with read-only health, audit preview, and job-status lookup reuse.
-- `TASK-09-03` is no longer active queue work; the implemented source of truth is the repo-backed accountant workspace on `/` plus assignment-scoped finance read/export endpoints on `/api/v1/accounting/workspace*`.
-- `TASK-09-04` is no longer active queue work; the implemented source of truth is the repo-backed recipient-scoped notification API on `/api/v1/notifications*` plus the embedded manager/accountant notifications block on the existing `/` route.
+- `TASK-09-03` is no longer active queue work; the implemented source of truth is the repo-backed accountant workspace on `/accountant` plus assignment-scoped finance read/export endpoints on `/api/v1/accounting/workspace*`.
+- `TASK-09-04` is no longer active queue work; the implemented source of truth is the repo-backed recipient-scoped notification API on `/api/v1/notifications*` plus the embedded manager/accountant notifications blocks on `/manager` and `/accountant`.
 - `TASK-10-01` is no longer active queue work; the implemented source of truth is the repo-backed monthly KPI snapshot foundation with admin-only rebuild and leader/admin read APIs.
 - `TASK-10-02` is no longer active queue work; the implemented scope is leader read exposure for stored monthly KPI snapshots (no live aggregation), while rebuild remains admin-only.
 - `TASK-08-04` is no longer active queue work; the implemented source of truth is the repo-backed automation metric event stream and monthly KPI aggregation path.
 - `TASK-10-04` is no longer active queue work; the implemented source of truth is the bounded export attachments on `GET /api/v1/audit/events/export` and `GET /api/v1/reporting/kpi-snapshots/export`.
+- `TASK-11-10/11` are no longer active queue work; the frontend observability and browser verification closeout is formally complete and the implemented source of truth is the current repo-backed Sentry tagging and browser smoke coverage.
+- `TASK-11-14/15/16` are no longer active queue work; the frontend-refresh closeout is formally complete and the implemented source of truth is the current repo-backed public company landing, role-route split, and refreshed visual system.
 - The remaining candidate-domain follow-on work after `TASK-03-08` and `TASK-04-06` is limited to
   later ops/reporting slices, not baseline parsed-profile structure or scoring-quality tooling.
 
@@ -154,7 +161,6 @@
   - `TASK-06-01/02/03/04`
   - `TASK-07-01/02/03/04`
   - `TASK-09-01`
-  - `TASK-11-10/11`
 - `TASK-11-12` stays excluded because its umbrella backlog item is already normalized closed.
 - P2:
   - none at the moment.
@@ -162,7 +168,7 @@
 
 - Current open backlog by delivery wave:
   - P0: `COMPLIANCE-01`, `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-10-01/02`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`
-  - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`, `TASK-11-10/11`
+  - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`
   - P2: none at the moment
 
 ## GitHub Issue Queue
@@ -177,7 +183,7 @@
   - `#146` final PD retention windows by data class
   - `#147` break-glass procedure and reviewer roster
 
-- Execution rule for follow-on interview work: keep the implemented `/` and `/candidate?interviewToken=...` topology, candidate-auth exclusion, and token-based public transport unchanged unless a separate ADR reopens that scope.
+- Execution rule for follow-on interview work: keep the implemented `/hr`, `/candidate/apply`, and `/candidate/interview/:interviewToken` topology, plus the public company/careers entrypoints on `/` and `/careers`, unchanged unless a separate ADR reopens that scope.
 
 ## Task Breakdown by Epic
 
@@ -200,13 +206,16 @@
 | TASK-11-04 | EPIC-11 | Implement shared UI component system, forms, validation, and accessibility baseline | Phase 1 | P0 | TASK-11-01 |
 | TASK-11-05 | EPIC-11 | Implement HR vacancy and pipeline workspace UI (after candidate intake baseline) | Phase 1 | P0 | TASK-11-03, TASK-02-02 |
 | TASK-11-06 | EPIC-11 | Implement candidate self-service workspace UI (CV upload, profile confirmation) | Phase 1 | P0 | TASK-11-03, TASK-03-02 |
-| TASK-11-07 | EPIC-11 | Implement shortlist and match-scoring review UI inside the existing HR workspace on `/` with confidence visualization | Phase 1 | P0 | TASK-11-06, TASK-04-03 |
+| TASK-11-07 | EPIC-11 | Implement shortlist and match-scoring review UI inside the dedicated HR workspace on `/hr` with confidence visualization | Phase 1 | P0 | TASK-11-06, TASK-04-03 |
 | TASK-11-08 | EPIC-11 | Implement interview scheduling and candidate interview-registration UI with Google Calendar sync status after a dedicated planning pass for interview product rules | Phase 1 | P0 | TASK-11-05, TASK-11-06, TASK-05-02 |
 | TASK-11-09 | EPIC-11 | Implement RU/EN localization infrastructure and translations for critical v1 flows | Phase 1 | P0 | TASK-11-02, TASK-11-05, TASK-11-06 |
 | TASK-11-10 | EPIC-11 | Implement frontend observability with Sentry (error tracking, performance metrics, release markers) | Phase 1-2 | P1 | TASK-11-02 |
 | TASK-11-11 | EPIC-11 | Implement Chrome compatibility checks and regression verification for critical v1 journeys | Phase 1 | P1 | TASK-11-05, TASK-11-06 |
 | TASK-11-12 | EPIC-11 | Implement phase-2 role workspaces (manager, employee, accountant, leader) | Phase 2 | P1 | TASK-06-03, TASK-07-04, TASK-09-01 |
 | TASK-11-13 | EPIC-11 | Implement staff login window and session bootstrap UX | Phase 1 | P0 | TASK-01-02, TASK-11-03 |
+| TASK-11-14 | EPIC-11 | Add public company landing page with careers navigation and branded media assets | Phase 1-2 | P0 | TASK-11-01, TASK-11-04, TASK-11-06 |
+| TASK-11-15 | EPIC-11 | Split staff workspaces onto dedicated role routes (`/hr`, `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`, `/hr/workbench`, `/manager`, `/accountant`) with role-based post-login redirects | Phase 1-2 | P0 | TASK-11-03, TASK-11-12, TASK-11-13 |
+| TASK-11-16 | EPIC-11 | Refresh frontend visual system and careers upload surface with checked-in image assets | Phase 1-2 | P0 | TASK-11-04, TASK-11-06, TASK-11-09 |
 | ADMIN-01 | ADMIN-EPIC-01 | Implement admin auth guard and admin shell (frontend/backend contract) | Phase 1 | P0 | TASK-01-02, TASK-11-03 |
 | ADMIN-02 | ADMIN-EPIC-01 | Implement staff management APIs/UI (create/update/disable) | Phase 1 | P0 | ADMIN-01 |
 | ADMIN-03 | ADMIN-EPIC-01 | Implement employee registration key management APIs/UI (generate/revoke/list) | Phase 1 | P0 | ADMIN-01 |
@@ -328,28 +337,28 @@ Use this queue together with the global queue when planning phase implementation
 
 | Frontend Order | Task ID | Why Now |
 | --- | --- | --- |
-| FE-1 | TASK-11-13 | Critical login window for local verification and daily staff workflow entry |
-| FE-2 | TASK-11-01 | Mandatory React.js foundation for all user-facing flows |
-| FE-3 | TASK-11-02 | Engineering baseline prevents frontend quality drift |
-| FE-4 | TASK-11-03 | Security and role boundaries must be enforced in UI early |
-| FE-5 | TASK-11-04 | Shared components and accessibility reduce rework |
-| FE-6 | ADMIN-01 | Admin shell baseline for privileged workspace |
-| FE-7 | ADMIN-02 | Staff management UI for operational onboarding |
-| FE-8 | ADMIN-03 | Employee key management UI for staff registration flow |
-| FE-9 | TASK-11-06 | Delivered in local baseline: candidate deep-link apply, tracking, and analysis read UX |
-| FE-10 | TASK-11-09 | Delivered in local baseline for login/admin/candidate/HR critical flows |
-| FE-11 | TASK-11-05 | Delivered in local baseline: staff vacancy CRUD and pipeline workspace on `/` |
-| FE-12 | TASK-11-11 | Delivered in local baseline: Chrome browser smoke for login + public candidate apply |
-| FE-13 | TASK-11-07 | Delivered in local scoring slice: shortlist review block inside the existing `/` HR workspace with scoring polling and explainable payload rendering |
-| FE-14 | TASK-11-10 | Delivered in local observability slice: Sentry hardening for critical routes, shared HTTP failure capture, render boundary, and release/env tracing config without route changes |
-| FE-15 | TASK-11-08 | Next implementation slice: use the frozen interview planning spec to extend `/` and `/candidate` without adding candidate auth |
-| FE-16 | ADMIN-04 | Delivered in local baseline: admin candidates/vacancies/pipeline/audit consoles with non-destructive CRUD and XLSX audit export |
-| FE-17 | ADMIN-05 | Admin observability and audit dashboards |
-| FE-18 | TASK-11-12 | Phase-2 role workspace rollout |
+| FE-1 | TASK-11-14 | Closed frontend-refresh slice: public company landing page on `/` with careers navigation and branded media assets |
+| FE-2 | TASK-11-15 | Closed frontend-refresh slice: split HR routes on `/hr`, `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`, and `/hr/workbench`, plus `/manager` and `/accountant`, with role-based post-login redirects |
+| FE-3 | TASK-11-16 | Closed frontend-refresh slice: refreshed visual system and branded careers upload surface with checked-in image assets |
+| FE-4 | TASK-11-13 | Critical login window for local verification and daily staff workflow entry |
+| FE-5 | TASK-11-01 | Mandatory React.js foundation for all user-facing flows |
+| FE-6 | TASK-11-02 | Engineering baseline prevents frontend quality drift |
+| FE-7 | TASK-11-03 | Security and role boundaries must be enforced in UI early |
+| FE-8 | TASK-11-04 | Shared components and accessibility reduce rework |
+| FE-9 | ADMIN-01 | Admin shell baseline for privileged workspace |
+| FE-10 | ADMIN-02 | Staff management UI for operational onboarding |
+| FE-11 | ADMIN-03 | Employee key management UI for staff registration flow |
+| FE-12 | TASK-11-06 | Delivered in local baseline: public careers job board, shareable vacancy detail/apply page, tracking, and analysis read UX with `/candidate/apply` and `/candidate/interview/:interviewToken` compatibility shells behind `/candidate` |
+| FE-13 | TASK-11-09 | Delivered in local baseline for login/public/company/HR critical flows |
+| FE-14 | TASK-11-05 | Delivered in local baseline: staff vacancy CRUD and pipeline workspace now split across `/hr`, `/hr/vacancies`, `/hr/pipeline`, and `/hr/workbench` |
+| FE-15 | TASK-11-11 | Closed frontend baseline: Chrome browser smoke for login + public candidate apply on `/candidate/apply` and the shareable careers vacancy route |
+| FE-16 | TASK-11-07 | Delivered in local scoring slice: shortlist review block inside `/hr/workbench` with scoring polling and explainable payload rendering |
+| FE-17 | TASK-11-10 | Closed frontend observability slice: Sentry hardening for critical routes, shared HTTP failure capture, render boundary, and release/env tracing config |
+| FE-18 | TASK-11-08 | Delivered interview slice: planning-baseline scheduling on `/hr/interviews` with legacy `/hr/workbench` compatibility and token registration on `/candidate/interview/:interviewToken` without candidate auth |
 
 ## Milestone Cut Suggestion
 - `M1` (Phase 1 MVP): infra/security + ADMIN-01/02/03 + candidate CV intake/parsing/normalization + candidate self-service upload/tracking + HR vacancy/pipeline workspace baseline + RU/EN critical flows + browser smoke.
-- `M2` (Immediate post-baseline slice): `TASK-04-01/02/03 + TASK-11-07` as one scoring/shortlist-review deliverable, with `TASK-11-10` and `TASK-13-01/02/03` proceeding immediately after or in parallel.
+- `M2` (Immediate post-baseline slice): `TASK-04-01/02/03 + TASK-11-07` as one scoring/shortlist-review deliverable, with `TASK-13-01/02/03` proceeding immediately after or in parallel.
 - `M2` planning gate: completed in `docs/project/interview-planning-pass.md`; use that document as the baseline for interview scheduling/registration implementation.
 - `M3` (Phase 2 core): interview scheduling/fairness controls + offer-to-hire + onboarding workflows + phase-2 role workspace baseline.
 - `M4` (Phase 2 expansion): manager/leader/accountant rollout + reporting exports + notification optimization + final legal sign-off package.

@@ -1,8 +1,8 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-19
-- Updated by: coordinator + devops-engineer + architect
+- Date: 2026-03-20
+- Updated by: coordinator + devops-engineer + frontend-engineer
 
 ## Local Environment (Docker Compose)
 ### Prerequisites
@@ -151,6 +151,7 @@ Runtime auth/browser integration settings:
   - `INTERVIEW_PUBLIC_TOKEN_SECRET`
   - `PUBLIC_FRONTEND_BASE_URL`
 - Local compose acceptance does not require live Google Calendar verification; interview sync is diagnosed separately when interview runtime behavior changes.
+- If Google Calendar rejects Meet conference creation with `Invalid conference type value`, the adapter retries the event without `conferenceData` so the interview still syncs and mints a public token; only the optional Meet link is omitted.
 
 ### Smoke Verification
 1. Validate normalized compose file: `docker compose config`.
@@ -165,11 +166,12 @@ Runtime auth/browser integration settings:
    - browser auth requests target `http://localhost:8000` rather than relative `/api/...` on the frontend origin;
    - browser CORS preflight succeeds for cross-origin auth requests during login/logout.
    - staff API creates one deterministic `open` vacancy for browser candidate smoke;
-  - headless Chrome completes `/candidate?vacancyId=...&vacancyTitle=... -> /api/v1/vacancies/{vacancy_id}/applications -> /api/v1/public/cv-parsing-jobs/{job_id}` using the checked-in valid PDF fixture `apps/backend/tests/fixtures/candidates/sample_cv_en.pdf`;
+   - headless Chrome loads the public board from `GET /api/v1/public/vacancies` and then completes `/careers/<vacancy_id>?vacancyTitle=... -> /api/v1/vacancies/{vacancy_id}/applications -> /api/v1/public/cv-parsing-jobs/{job_id}` using the checked-in valid PDF fixture `apps/backend/tests/fixtures/candidates/sample_cv_en.pdf`;
    - candidate browser requests target `http://localhost:8000` rather than relative `/api/...` on the frontend origin;
    - candidate smoke succeeds when public tracking reaches at least `queued` or `running`; `analysis_ready=true` is preferred but not required.
+   - headless Chrome then opens `/candidate/interview/<token>` for the freshly issued public interview token, confirms the interview, and verifies the registration endpoint stays on the backend origin;
    - scoring/Ollama verification is intentionally excluded from compose smoke; validate the scoring slice through targeted unit and integration suites to avoid nondeterministic browser smoke failures.
-   - Google Calendar verification is intentionally excluded from compose smoke; disabled or unreachable calendar integration does not block local compose baseline acceptance.
+   - Google Calendar provider verification is intentionally excluded from compose smoke; the interview smoke only checks that a fresh interview reaches `synced`, issues a public token, and survives the Meet-conference fallback when Google rejects `conferenceData`.
 4. For reproducibility checks, run one teardown/restart cycle:
    - `docker compose down`
    - `docker compose up -d --build`
@@ -212,17 +214,26 @@ Runtime auth/browser integration settings:
   4. Run `python3 scripts/browser_auth_smoke.py ...` with a known-good staff account to reproduce the browser path outside manual DevTools.
   5. If origin differs from default Vite dev host, add it to `HRM_CORS_ALLOWED_ORIGINS` and restart backend.
 
-### Candidate Browser Integration Diagnostics (`/candidate`)
-- Canonical deep link:
+### Candidate Browser Integration Diagnostics (`/candidate/apply` and `/careers`)
+- Public board entry:
+  - `/careers`
+- Shareable vacancy detail/apply page:
+  - `/careers/<uuid>?vacancyTitle=<display-only>`
+- Compatibility apply shell:
+  - `/candidate/apply?vacancyId=<uuid>&vacancyTitle=<display-only>`
+- Legacy-compatible deep link:
   - `/candidate?vacancyId=<uuid>&vacancyTitle=<display-only>`
+- Candidate interview registration:
+  - `/candidate/interview/<token>`
 - Tracking storage contract:
   - `sessionStorage["hrm_candidate_application_context"] = {"vacancyId": "...", "candidateId": "...", "parsingJobId": "...", "vacancyTitle": "..."}`
 - Expected public API path sequence:
+  - `GET /api/v1/public/vacancies`
   - `POST /api/v1/vacancies/{vacancy_id}/applications`
   - `GET /api/v1/public/cv-parsing-jobs/{job_id}`
   - optional `GET /api/v1/public/cv-parsing-jobs/{job_id}/analysis`
 - Browser verification command:
-  - `python3 scripts/browser_candidate_apply_smoke.py --frontend-url http://localhost:5173/candidate --api-origin http://localhost:8000 --vacancy-id <vacancy_id> --vacancy-title <title>`
+  - `python3 scripts/browser_candidate_apply_smoke.py --frontend-url http://localhost:5173/candidate/apply --api-origin http://localhost:8000 --vacancy-id <vacancy_id> --vacancy-title <title>`
 - Expected minimal success signal:
   - application submit returns `200/201`
   - `hrm_candidate_application_context` is present in session storage
@@ -235,7 +246,26 @@ Runtime auth/browser integration settings:
   5. If status becomes `failed`, inspect `backend-worker` logs for native extraction errors such as unreadable PDF/DOCX or empty extracted text.
   6. If status never moves past `queued`, inspect `backend-worker` logs; compose smoke still treats `queued/running` as acceptable minimum.
 
-### HR Shortlist Review Diagnostics (`/`)
+### Candidate Interview Browser Integration Diagnostics (`/candidate/interview/:interviewToken`)
+- Endpoint sequence:
+  - `GET /api/v1/public/interview-registrations/{token}`
+  - `POST /api/v1/public/interview-registrations/{token}/confirm`
+  - optional `POST /api/v1/public/interview-registrations/{token}/request-reschedule`
+  - optional `POST /api/v1/public/interview-registrations/{token}/cancel`
+- Browser verification command:
+  - `python3 scripts/browser_candidate_interview_smoke.py --frontend-url http://localhost:5173/candidate/interview --api-origin http://localhost:8000 --interview-token <token>`
+- Expected minimal success signal:
+  - the token page loads from the public registration endpoint;
+  - confirm action returns `200`;
+  - the page renders the interview-confirmed success state.
+- Triage sequence:
+  1. Confirm the page was opened with a fresh token from a synced interview.
+  2. Inspect browser Network tab and confirm interview requests target `http://localhost:8000`, not relative `/api/...` on `localhost:5173`.
+  3. Verify the HR interview response shows `calendar_sync_status=synced` and a non-empty `candidate_invite_url`.
+  4. If the page returns `404` or `410`, verify token freshness and schedule-version alignment on the HR interview row.
+  5. If confirm returns `409`, inspect whether the interview has already been confirmed, cancelled, or rescheduled.
+
+### HR Shortlist Review Diagnostics (`/hr`)
 - API path sequence:
   - `POST /api/v1/vacancies/{vacancy_id}/match-scores`
   - `GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}`
@@ -297,10 +327,16 @@ Runtime auth/browser integration settings:
 
 ### Frontend Sentry Diagnostics (`TASK-11-10`)
 - Critical routes covered by the baseline:
-  - `/` -> `workspace=hr` for HR/admin, `workspace=manager` for manager, `workspace=accountant` for accountant, `route=/`
+  - `/` -> `workspace=company`, `route=/`
+  - `/careers` -> `workspace=careers`, `route=/careers`
+  - `/hr` -> `workspace=hr`, `route=/hr`
+  - `/manager` -> `workspace=manager`, `route=/manager`
+  - `/accountant` -> `workspace=accountant`, `route=/accountant`
   - `/employee` -> `workspace=employee`, `route=/employee`
   - `/leader` -> `workspace=leader`, `route=/leader`
   - `/candidate` -> `workspace=candidate`, `route=/candidate`
+  - `/candidate/apply` -> `workspace=candidate`, `route=/candidate/apply`
+  - `/candidate/interview/:interviewToken` -> `workspace=candidate`, `route=/candidate/interview`
   - `/login` -> `workspace=auth`, `route=/login`
   - `/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, `/admin/audit`, `/admin/observability` -> `workspace=admin` with canonical route tags
 - Expected capture paths:

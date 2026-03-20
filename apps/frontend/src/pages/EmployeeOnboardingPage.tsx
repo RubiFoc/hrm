@@ -22,6 +22,7 @@ import {
 } from "../api";
 import { readAuthSession } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
+import { PageHero } from "../components/PageHero";
 
 type FeedbackState = {
   type: "success" | "error";
@@ -79,7 +80,12 @@ export function EmployeeOnboardingPage() {
   if (!accessToken) {
     return (
       <Stack spacing={2}>
-        <Typography variant="h4">{t("employeeWorkspace")}</Typography>
+        <PageHero
+          title={t("employeeWorkspace")}
+          description={t("employeePortal.subtitle")}
+          imageSrc="/images/candidate-portal.jpg"
+          imageAlt={t("employeeWorkspace")}
+        />
         <Alert severity="warning">{t("employeePortal.authRequired")}</Alert>
       </Stack>
     );
@@ -97,7 +103,12 @@ export function EmployeeOnboardingPage() {
   if (portalQuery.isError) {
     return (
       <Stack spacing={2}>
-        <Typography variant="h4">{t("employeeWorkspace")}</Typography>
+        <PageHero
+          title={t("employeeWorkspace")}
+          description={t("employeePortal.subtitle")}
+          imageSrc="/images/candidate-portal.jpg"
+          imageAlt={t("employeeWorkspace")}
+        />
         <Alert severity="error">{resolveEmployeePortalError(portalQuery.error, t)}</Alert>
       </Stack>
     );
@@ -111,12 +122,12 @@ export function EmployeeOnboardingPage() {
 
   return (
     <Stack spacing={3}>
-      <Stack spacing={1}>
-        <Typography variant="h4">{t("employeePortal.title")}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("employeePortal.subtitle")}
-        </Typography>
-      </Stack>
+      <PageHero
+        title={t("employeePortal.title")}
+        description={t("employeePortal.subtitle")}
+        imageSrc="/images/candidate-portal.jpg"
+        imageAlt={t("employeePortal.title")}
+      />
 
       {feedback ? <Alert severity={feedback.type}>{feedback.message}</Alert> : null}
 

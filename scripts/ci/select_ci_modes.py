@@ -175,6 +175,7 @@ FRONTEND_CANDIDATE_PATTERNS = (
     "apps/frontend/src/api/candidateProfiles.ts",
     "apps/frontend/src/app/candidate/applicationContext.ts",
     "apps/frontend/src/pages/CandidatePage.*",
+    "apps/frontend/src/pages/candidate/**",
 )
 FRONTEND_HR_PATTERNS = (
     "apps/frontend/src/api/candidateAnalysis.ts",
@@ -483,11 +484,13 @@ def _should_run_browser_smoke(changed_files: list[str]) -> bool:
         "apps/frontend/src/pages/AdminEmployeeKeysManagementPage.*",
         "apps/frontend/src/pages/AdminStaffManagementPage.*",
         "apps/frontend/src/pages/CandidatePage.*",
+        "apps/frontend/src/pages/candidate/**",
         "apps/frontend/src/pages/LoginPage.*",
         "docker-compose.yml",
         "docker-compose.*.yml",
         "scripts/browser_auth_smoke.py",
         "scripts/browser_candidate_apply_smoke.py",
+        "scripts/browser_candidate_interview_smoke.py",
         "scripts/smoke-compose.sh",
         "scripts/ci/**",
     ]

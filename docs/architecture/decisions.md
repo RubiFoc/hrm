@@ -57,6 +57,12 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0050 | 2026-03-16 | accepted | Add durable automation execution logs and ops read APIs (non-PII) | architect + backend-engineer | automation observability, DB schema, ops API, RBAC |
 | ADR-0051 | 2026-03-19 | accepted | Add durable automation KPI metric events and monthly share aggregation | architect + backend-engineer | automation reporting, KPI aggregation, leader workspace, OpenAPI contract |
 | ADR-0052 | 2026-03-19 | accepted | Deliver ADMIN-04 as a frontend-first admin control-plane slice over existing recruitment and audit contracts | architect + backend-engineer + frontend-engineer | frontend admin route topology, route tags, audit export UX, compliance-safe control plane |
+| ADR-0053 | 2026-03-19 | accepted | Add read-only admin observability dashboard on existing `/admin/observability` route | architect + frontend-engineer | frontend admin UX, observability, support operations |
+| ADR-0054 | 2026-03-19 | accepted | Reopen frontend route topology for public company landing, careers, and dedicated role pages | architect + frontend-engineer | frontend routing, public UX, observability, design system |
+| ADR-0055 | 2026-03-20 | accepted | Split the HR workspace into focused nested routes while preserving the legacy workbench | architect + frontend-engineer | frontend routing, HR workspace UX, route tags, documentation |
+| ADR-0056 | 2026-03-20 | accepted | Add a public vacancy board endpoint for careers while keeping the guided apply flow on `/careers` | architect + frontend-engineer | recruitment API, public careers UX, OpenAPI contract, frontend typed client |
+| ADR-0057 | 2026-03-20 | accepted | Split public careers into board and shareable vacancy detail routes | architect + frontend-engineer | frontend routing, public careers UX, smoke verification, route tags |
+| ADR-0058 | 2026-03-20 | accepted | Split public candidate transport into dedicated apply and interview routes with `/candidate` compatibility redirects | architect + frontend-engineer | frontend routing, public candidate UX, observability, browser smoke, documentation |
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.
@@ -499,7 +505,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Keep candidate access anonymous through a public opaque invitation token stored hashed in the backend and bound to `interview_id + schedule_version`.
   - Keep the existing route topology:
     - HR interview controls extend `/`
-    - candidate interview registration extends `/candidate` through `?interviewToken=<token>`
+    - candidate interview registration extends `/candidate` through `?interviewToken=<token>` at the time of this decision; the later candidate-route split in ADR-0058 moved it to `/candidate/interview/:interviewToken`
   - Do not introduce candidate auth, new CORS rules, or a new route tree in the interview slice.
   - Separate business interview state from calendar execution state:
     - interview `status`: `pending_sync`, `awaiting_candidate_confirmation`, `confirmed`, `reschedule_requested`, `cancelled`
@@ -529,7 +535,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
     - previous schedule-version feedback remains audit history but does not satisfy the fairness gate
   - Keep the existing route topology:
     - HR feedback UX extends `/`
-    - candidate route `/candidate` remains unchanged and never exposes interviewer feedback
+    - candidate route `/candidate` remains unchanged and never exposes interviewer feedback at the time of this decision; the later candidate-route split in ADR-0058 moved public candidate transport to `/candidate/apply` and `/candidate/interview/:interviewToken`
   - Keep the existing transition endpoint `POST /api/v1/pipeline/transitions`; when `to_stage=offer`, run the fairness gate there instead of adding a parallel offer-decision API.
   - Limit the fairness gate in this slice to current-version completeness and payload validity:
     - all assigned interviewers must submit feedback for the active `schedule_version`
@@ -1160,3 +1166,138 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Architecture review: self-review completed on 2026-03-19; the change is additive, reuses
     existing read-only contracts, and does not introduce destructive behavior or a new backend
     namespace.
+
+## ADR-0054
+- Context: the previous frontend route model overloaded `/` with multiple staff experiences and had
+  no public company entrypoint, which made the UI harder to understand and blocked a branded
+  careers surface with checked-in visual assets.
+- Decision:
+  - Reopen the frontend route topology for the public and staff UX layer.
+  - Introduce a public company landing page on `/`.
+  - Introduce a public careers page on `/careers` that reuses the existing public candidate apply
+    API contract and, at the time of this decision, kept `/candidate?interviewToken=...` for
+    interview-registration links before the later candidate-route split in ADR-0058.
+  - Split staff workspaces onto dedicated role routes:
+    - `/hr`
+    - `/manager`
+    - `/accountant`
+    - `/leader`
+    - `/employee`
+    - `/admin`
+  - Change post-login redirects so staff land directly on their role page instead of the old
+    overloaded `/` split.
+  - Refresh the shared visual system with a new theme, public-facing hero sections, and checked-in
+    image assets under the frontend project.
+  - Extend canonical Sentry route tagging to include:
+    - `workspace=company` on `/`
+    - `workspace=careers` on `/careers`
+    - `workspace=hr` on `/hr`
+    - `workspace=manager` on `/manager`
+    - `workspace=accountant` on `/accountant`
+- Consequences:
+  - Public visitors now have a clear company-first entrypoint before entering careers and CV upload.
+  - Staff users now land in clearer role-specific pages after login, reducing ambiguity around the
+    previous shared `/` route.
+  - Existing public candidate apply and interview-registration backend contracts remain reusable, so
+    the change stays frontend-first and does not require new backend namespaces.
+  - Browser smoke, observability docs, and route-based test expectations must stay synchronized with
+    the reopened route model.
+  - Architecture review: self-review completed on 2026-03-19; the change intentionally reopens the
+    previously frozen frontend route topology, but it remains additive at the backend/API boundary
+    and preserves the public candidate transport model.
+
+## ADR-0055
+- Context: the HR workspace has grown into several distinct staff tasks, and keeping them all inside
+  one large `/hr` page makes navigation harder to understand while still needing a compatibility
+  path for the existing consolidated workbench.
+- Decision:
+  - Split the HR entrypoint into a small overview page on `/hr` plus focused nested routes:
+    - `/hr/vacancies`
+    - `/hr/pipeline`
+    - `/hr/interviews`
+    - `/hr/offers`
+    - `/hr/workbench`
+  - Keep `/hr/workbench` as the legacy consolidated route so existing deep links and direct tests
+    remain viable during the transition.
+  - Reuse the canonical HR workspace Sentry tag and docs references so the split remains grouped
+    as one workspace in telemetry and support workflows.
+- Consequences:
+  - HR users get a clearer entrypoint and faster access to the specific task they need.
+  - Existing workbench behavior stays available without forcing an abrupt route migration.
+  - Route-based smoke tests and documentation must describe both the overview page and the retained
+    workbench path.
+  - Architecture review: self-review completed on 2026-03-20; the change is frontend-route-only,
+    additive, and intentionally preserves the consolidated workbench for compatibility.
+
+## ADR-0056
+- Context: the public careers page already supported guided CV submission, but candidates still
+  needed a browseable open-role surface that did not expose staff-only vacancy data or force a
+  separate public CMS.
+- Decision:
+  - Add a read-only public vacancy board endpoint at `GET /api/v1/public/vacancies`.
+  - Return only open vacancies in the public schema:
+    - `vacancy_id`
+    - `title`
+    - `description`
+    - `department`
+    - `created_at`
+    - `updated_at`
+  - Load the public board on `/careers` and let candidates open the shareable vacancy
+    detail/apply page on `/careers/:vacancyId`.
+  - Keep the board query redirect and legacy recruiter deep links available for manual vacancy ID
+    fallback.
+  - Keep staff-only vacancy fields and mutation contracts out of the public API surface.
+- Consequences:
+  - `/careers` becomes a real public job board without widening the anonymous write surface.
+  - The backend exposes one new read-only public endpoint, and the frontend must keep its typed
+    client and frozen OpenAPI artifacts synchronized.
+  - Recruiter deep links still work, the application workspace now lives on the shareable vacancy
+    page, and public browsing is the primary entrypoint on the careers board.
+  - Architecture review: self-review completed on 2026-03-20; the change is additive, read-only,
+    and intentionally avoids exposing staff-only vacancy fields.
+
+## ADR-0057
+- Context: the public careers board now has enough structure to separate browsing from applying,
+  and the combined board-plus-apply layout makes the public surface harder to scan and share.
+- Decision:
+  - Keep `/careers` as the public board that loads `GET /api/v1/public/vacancies`.
+  - Add `/careers/:vacancyId` as the canonical shareable vacancy detail and application page.
+  - Redirect legacy `/careers?vacancyId=...&vacancyTitle=...` links to the detail route while
+    keeping `/candidate?...` legacy interview-registration links unchanged until the later
+    candidate-route split in ADR-0058.
+  - Keep canonical Sentry route grouping on `route=/careers` for both board and detail pages.
+- Consequences:
+  - Public browsing and application are now split into smaller pages without a new backend vacancy
+    detail endpoint.
+  - Smoke/browser verification and docs now reference the shareable vacancy route as the canonical
+    careers path.
+  - Legacy board query links still work via redirect, preserving recruiter-issued links and older
+    local smoke fixtures.
+  - Architecture review: self-review completed on 2026-03-20; the route change is additive and
+    keeps backend contracts stable.
+
+## ADR-0058
+- Context: the public candidate journey had grown into a single overloaded `/candidate` surface
+  that mixed apply/tracking and interview registration, while browser smoke and Sentry route tags
+  needed stable canonical paths for each public flow.
+- Decision:
+  - Keep `/candidate` as a compatibility redirect shell only.
+  - Move public apply/tracking to `/candidate/apply`.
+  - Move public interview registration to `/candidate/interview/:interviewToken`.
+  - Generate HR invite URLs in the canonical `/candidate/interview/:interviewToken` form while
+    keeping `/candidate` as the compatibility redirect shell for legacy links.
+  - Preserve legacy query links by redirecting:
+    - `/candidate?vacancyId=...` -> `/candidate/apply?vacancyId=...`
+    - `/candidate?interviewToken=...` -> `/candidate/interview/:interviewToken`
+  - Keep canonical Sentry route tags on:
+    - `route=/candidate/apply`
+    - `route=/candidate/interview`
+- Consequences:
+  - Candidate apply and interview registration now have distinct route surfaces, which makes the
+    public UX easier to understand and test.
+  - Legacy links continue to work through the redirect shell, so recruiter-issued URLs do not
+    break during the route transition.
+  - Browser smoke can target the apply shell directly, while interview route tests can assert the
+    public token flow separately.
+  - Architecture review: self-review completed on 2026-03-20; the change is additive, frontend
+    route-only, and preserves the existing public vacancy application and interview API contracts.

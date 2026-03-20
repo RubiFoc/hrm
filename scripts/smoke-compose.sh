@@ -76,6 +76,135 @@ create_smoke_admin() {
     --password "${password}" >/dev/null
 }
 
+load_first_interviewer_staff_id() {
+  python3 - <<'PY'
+import json
+from pathlib import Path
+
+for line in Path(".env").read_text(encoding="utf-8").splitlines():
+    if line.startswith("INTERVIEW_STAFF_CALENDAR_MAP_JSON="):
+        raw = line.split("=", 1)[1].strip()
+        mapping = json.loads(raw)
+        if not isinstance(mapping, dict) or not mapping:
+            raise SystemExit("INTERVIEW_STAFF_CALENDAR_MAP_JSON must contain at least one entry")
+        print(next(iter(mapping)))
+        raise SystemExit(0)
+
+raise SystemExit("INTERVIEW_STAFF_CALENDAR_MAP_JSON not found in .env")
+PY
+}
+
+create_smoke_interview_token() {
+  local apply_result_file="$1"
+  local vacancy_id="$2"
+  local bearer_token="$3"
+  local interviewer_staff_id="$4"
+
+  python3 - "${apply_result_file}" "${vacancy_id}" "${bearer_token}" "${interviewer_staff_id}" <<'PY'
+import json
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+
+apply_result_file = Path(sys.argv[1])
+vacancy_id = sys.argv[2]
+bearer_token = sys.argv[3]
+interviewer_staff_id = sys.argv[4]
+base_url = "http://localhost:8000"
+
+payload = json.loads(apply_result_file.read_text(encoding="utf-8"))
+candidate_id = payload["candidate_id"]
+candidate_seed = int(candidate_id.replace("-", "")[:8], 16)
+
+
+def request_json(method: str, url: str, body: dict[str, object] | None = None) -> dict[str, object]:
+    data = None if body is None else json.dumps(body).encode("utf-8")
+    headers = {"Authorization": f"Bearer {bearer_token}"}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+    request = urllib.request.Request(url, data=data, headers=headers, method=method)
+    try:
+        with urllib.request.urlopen(request, timeout=30.0) as response:  # noqa: S310
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise SystemExit(f"{method} {url} failed with {exc.code}: {detail}") from exc
+    except urllib.error.URLError as exc:
+        raise SystemExit(f"{method} {url} failed: {exc}") from exc
+
+
+history = request_json(
+    "GET",
+    f"{base_url}/api/v1/pipeline/transitions?vacancy_id={vacancy_id}&candidate_id={candidate_id}",
+)
+items = history.get("items", [])
+current_stage = items[-1]["to_stage"] if items else None
+stage_order = ["applied", "screening", "shortlist"]
+if current_stage is not None and current_stage not in stage_order:
+    raise SystemExit(f"unexpected candidate stage before interview: {current_stage}")
+
+pending_stages = stage_order if current_stage is None else stage_order[stage_order.index(current_stage) + 1 :]
+for stage in pending_stages:
+    request_json(
+        "POST",
+        f"{base_url}/api/v1/pipeline/transitions",
+        {
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_id,
+            "to_stage": stage,
+            "reason": f"move_to_{stage}",
+        },
+    )
+
+future_date = (
+    datetime.now(UTC).date() + timedelta(days=1 + (candidate_seed % 21))
+).isoformat()
+interview_payload = request_json(
+    "POST",
+    f"{base_url}/api/v1/vacancies/{vacancy_id}/interviews",
+    {
+        "candidate_id": candidate_id,
+        "scheduled_start_local": f"{future_date}T03:00:00",
+        "scheduled_end_local": f"{future_date}T04:00:00",
+        "timezone": "Europe/Minsk",
+        "location_kind": "google_meet",
+        "location_details": None,
+        "interviewer_staff_ids": [interviewer_staff_id],
+    },
+)
+interview_id = interview_payload["interview_id"]
+
+deadline = time.monotonic() + 180.0
+while time.monotonic() < deadline:
+    current = request_json(
+        "GET",
+        f"{base_url}/api/v1/vacancies/{vacancy_id}/interviews/{interview_id}",
+    )
+    invite_url = current.get("candidate_invite_url")
+    if current.get("calendar_sync_status") == "synced" and invite_url:
+        token = urllib.parse.parse_qs(urllib.parse.urlparse(str(invite_url)).query)["interviewToken"][0]
+        print(token)
+        raise SystemExit(0)
+    if current.get("calendar_sync_status") == "conflict":
+        raise SystemExit(
+            "interview sync conflicted: "
+            f"{current.get('calendar_sync_reason_code')} | {current.get('calendar_sync_error_detail')}"
+        )
+    if current.get("calendar_sync_status") == "failed":
+        raise SystemExit(
+            "interview sync failed: "
+            f"{current.get('calendar_sync_reason_code')} | {current.get('calendar_sync_error_detail')}"
+        )
+    time.sleep(2.0)
+
+raise SystemExit("interview sync did not finish before the timeout elapsed")
+PY
+}
+
 echo "[smoke] validating docker compose service status..."
 COMPOSE_PS_JSON="$(docker compose ps --all --format json)"
 python3 - "${COMPOSE_PS_JSON}" <<'PY'
@@ -251,10 +380,26 @@ PY
 )"
 
 echo "[smoke] checking browser public candidate apply flow..."
+SMOKE_CANDIDATE_APPLY_RESULT_FILE="$(mktemp /tmp/hrm-browser-candidate-apply-XXXX.json)"
+trap 'if [ -n "${SMOKE_CANDIDATE_APPLY_RESULT_FILE:-}" ]; then rm -f "${SMOKE_CANDIDATE_APPLY_RESULT_FILE}"; fi' EXIT
 python3 scripts/browser_candidate_apply_smoke.py \
-  --frontend-url "http://localhost:5173/candidate" \
+  --frontend-url "http://localhost:5173/candidate/apply" \
   --api-origin "http://localhost:8000" \
   --vacancy-id "${SMOKE_VACANCY_ID}" \
-  --vacancy-title "${SMOKE_VACANCY_TITLE}"
+  --vacancy-title "${SMOKE_VACANCY_TITLE}" \
+  --result-file "${SMOKE_CANDIDATE_APPLY_RESULT_FILE}"
+
+SMOKE_INTERVIEWER_STAFF_ID="$(load_first_interviewer_staff_id)"
+SMOKE_INTERVIEW_TOKEN="$(create_smoke_interview_token \
+  "${SMOKE_CANDIDATE_APPLY_RESULT_FILE}" \
+  "${SMOKE_VACANCY_ID}" \
+  "${ACCESS_TOKEN}" \
+  "${SMOKE_INTERVIEWER_STAFF_ID}")"
+
+echo "[smoke] checking browser public candidate interview flow..."
+python3 scripts/browser_candidate_interview_smoke.py \
+  --frontend-url "http://localhost:5173/candidate/interview" \
+  --api-origin "http://localhost:8000" \
+  --interview-token "${SMOKE_INTERVIEW_TOKEN}"
 
 echo "[smoke] all docker-compose smoke checks passed."

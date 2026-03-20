@@ -688,8 +688,8 @@ class InterviewService:
                 token_nonce=entity.candidate_token_nonce,
             )
             candidate_invite_url = (
-                f"{self._settings.public_frontend_base_url.rstrip('/')}/candidate"
-                f"?interviewToken={raw_token}"
+                f"{self._settings.public_frontend_base_url.rstrip('/')}"
+                f"/candidate/interview/{raw_token}"
             )
         return HRInterviewResponse(
             interview_id=UUID(entity.interview_id),

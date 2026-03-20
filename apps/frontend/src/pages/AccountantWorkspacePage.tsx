@@ -27,6 +27,7 @@ import {
 import { readAuthSession } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
 import { NotificationsPanel } from "../components/NotificationsPanel";
+import { PageHero } from "../components/PageHero";
 
 const ROWS_PER_PAGE = 20;
 
@@ -35,7 +36,7 @@ const ROWS_PER_PAGE = 20;
  */
 export function AccountantWorkspacePage() {
   const { t } = useTranslation();
-  useSentryRouteTags("/");
+  useSentryRouteTags("/accountant");
   const session = readAuthSession();
   const accessToken = session.accessToken;
   const [page, setPage] = useState(0);
@@ -90,12 +91,12 @@ export function AccountantWorkspacePage() {
 
   return (
     <Stack spacing={3}>
-      <Stack spacing={1}>
-        <Typography variant="h4">{t("accountantWorkspace")}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("accountantWorkspaceSubtitle")}
-        </Typography>
-      </Stack>
+      <PageHero
+        title={t("accountantWorkspace")}
+        description={t("accountantWorkspaceSubtitle")}
+        imageSrc="/images/careers-team.jpg"
+        imageAlt={t("accountantWorkspace")}
+      />
 
       <NotificationsPanel accessToken={accessToken} workspace="accountant" />
 

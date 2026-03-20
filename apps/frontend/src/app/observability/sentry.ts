@@ -118,15 +118,20 @@ function resolveObservabilityTags(pathname: string): ObservabilityTags {
 }
 
 function resolveWorkspaceTag(pathname: string): string {
-  const session = readAuthSession();
   if (pathname === "/") {
-    if (session.role === "manager") {
-      return "manager";
-    }
-    if (session.role === "accountant") {
-      return "accountant";
-    }
+    return "company";
+  }
+  if (pathname === "/careers" || pathname.startsWith("/careers/")) {
+    return "careers";
+  }
+  if (pathname === "/hr" || pathname.startsWith("/hr/")) {
     return "hr";
+  }
+  if (pathname === "/manager" || pathname.startsWith("/manager/")) {
+    return "manager";
+  }
+  if (pathname === "/accountant" || pathname.startsWith("/accountant/")) {
+    return "accountant";
   }
   if (pathname === "/leader" || pathname.startsWith("/leader/")) {
     return "leader";
@@ -134,7 +139,7 @@ function resolveWorkspaceTag(pathname: string): string {
   if (pathname === "/employee" || pathname.startsWith("/employee/")) {
     return "employee";
   }
-  if (pathname === "/candidate") {
+  if (pathname === "/candidate" || pathname.startsWith("/candidate/")) {
     return "candidate";
   }
   if (pathname === "/login") {
@@ -182,6 +187,27 @@ function resolveRouteTag(pathname: string): string {
   }
   if (pathname === "/employee" || pathname.startsWith("/employee/")) {
     return "/employee";
+  }
+  if (pathname === "/hr" || pathname.startsWith("/hr/")) {
+    return "/hr";
+  }
+  if (pathname === "/manager" || pathname.startsWith("/manager/")) {
+    return "/manager";
+  }
+  if (pathname === "/accountant" || pathname.startsWith("/accountant/")) {
+    return "/accountant";
+  }
+  if (pathname === "/careers" || pathname.startsWith("/careers/")) {
+    return "/careers";
+  }
+  if (pathname === "/candidate/apply" || pathname.startsWith("/candidate/apply/")) {
+    return "/candidate/apply";
+  }
+  if (
+    pathname === "/candidate/interview"
+    || pathname.startsWith("/candidate/interview/")
+  ) {
+    return "/candidate/interview";
   }
   if (pathname === "/candidate" || pathname.startsWith("/candidate/")) {
     return "/candidate";

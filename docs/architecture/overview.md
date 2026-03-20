@@ -1,8 +1,8 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-19
-- Updated by: architect + backend-engineer
+- Date: 2026-03-20
+- Updated by: architect + frontend-engineer
 
 ## System Context
 HRM platform for Belarus and Russia that supports candidate selection across professions and
@@ -38,7 +38,7 @@ flowchart LR
 ## Logical Components
 | Component | Responsibility | Input | Output | Owner |
 | --- | --- | --- | --- | --- |
-| React.js + TypeScript Web App | Role-based UX for all user groups, localization (ru/en), candidate self-service | User actions | API requests, UI states | frontend |
+| React.js + TypeScript Web App | Public company landing, careers board and shareable vacancy detail/application surface, role-based workspaces, localization (ru/en), candidate self-service | User actions | API requests, UI states | frontend |
 | Frontend Telemetry | Client-side route tags, HTTP/render failure capture, release markers, and browser tracing | Browser navigation, frontend errors, request failures | Sentry issues, traces, and tagged events | frontend |
 | API Gateway | AuthN/AuthZ entrypoint and request routing | HTTPS requests | Routed calls, access decisions | platform |
 | Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
@@ -57,22 +57,23 @@ flowchart LR
 
 ## Key Flows
 1. Candidate Screening Flow:
-   candidate profile + CV -> native PDF/DOCX text extraction -> RU/EN normalization + universal
+   candidate opens `/careers`, then a shareable vacancy page on `/careers/{vacancy_id}` or the compatibility apply shell on `/candidate/apply?vacancyId=...` (legacy `/candidate?vacancyId=...`) -> candidate profile + CV ->
+   native PDF/DOCX text extraction -> RU/EN normalization + universal
    workplace/education/title/date/skills enrichment + evidence extraction ->
-   recruiter selects vacancy + candidate in `/` -> explicit scoring request ->
+   recruiter selects vacancy + candidate in `/hr/pipeline` or legacy `/hr/workbench` -> explicit scoring request ->
    `409` if parsed CV analysis is not ready, otherwise async scoring via Ollama
    (external host by default; compose-local only when `ai-local` profile is enabled explicitly) ->
    persisted score artifact -> recruiter review -> shortlist.
 2. Interview Scheduling Flow:
-   recruiter selects vacancy + candidate in `/` -> interview create/reschedule ->
+   recruiter selects vacancy + candidate in `/hr/interviews` or legacy `/hr/workbench` -> interview create/reschedule ->
    async Google Calendar sync for staff calendars -> sync success issues a public invitation token ->
-   HR shares `candidate_invite_url` manually -> candidate opens `/candidate?interviewToken=...` ->
-   confirm / request reschedule / decline -> assigned interviewer submits structured feedback on `/` after the interview window closes ->
+   HR shares `candidate_invite_url` manually -> candidate opens `/candidate/interview/{interview_token}` ->
+   confirm / request reschedule / decline -> assigned interviewer submits structured feedback on `/hr/interviews` or legacy `/hr/workbench` after the interview window closes ->
    `POST /api/v1/pipeline/transitions` applies current-version completeness gate before `interview -> offer`.
 3. Offer Workflow:
    after successful `interview -> offer`, the recruitment domain persists one offer row for the current
-   vacancy/candidate pair -> HR updates draft terms on the existing vacancy route tree ->
-   HR marks the offer as `sent`, then records `accepted` or `declined` manually in `/` ->
+   vacancy/candidate pair -> HR updates draft terms on `/hr/offers` or legacy `/hr/workbench` ->
+   HR marks the offer as `sent`, then records `accepted` or `declined` manually in `/hr/offers` ->
    `POST /api/v1/pipeline/transitions` allows `offer -> hired` only after `accepted`; on success the
    same request appends the `hired` transition and persists one durable `hire_conversion` handoff for
    the employee domain, while `offer -> rejected` still requires `declined`.
@@ -85,11 +86,11 @@ flowchart LR
    (or lazily reconciles by exact e-mail on first access) ->
    employee updates self-actionable task status on `/api/v1/employees/me/onboarding/tasks/{task_id}` ->
    completion tracking ->
-   HR/admin open `/` for an embedded onboarding progress panel or manager opens `/` for the full manager workspace ->
+   HR/admin open `/hr` for an embedded onboarding progress panel or manager opens `/manager` for the full manager workspace ->
    `GET /api/v1/onboarding/runs` + `GET /api/v1/onboarding/runs/{onboarding_id}` return summary/detail views
    that stay limited to runs with manager-assigned tasks when the actor is a manager.
 5. Manager Workspace Flow:
-   manager opens `/` -> frontend resolves `ManagerWorkspacePage` ->
+   manager opens `/manager` -> frontend resolves `ManagerWorkspacePage` ->
    `GET /api/v1/vacancies/manager-workspace` validates `manager_workspace:read` ->
    recruitment domain loads only vacancies where `vacancies.hiring_manager_staff_id=<actor>` ->
    latest pipeline transitions, candidate counts, and active interviews build a deterministic hiring summary and vacancy list ->
@@ -97,7 +98,7 @@ flowchart LR
    the same page reuses the onboarding dashboard block from `/api/v1/onboarding/runs*` plus
    `GET /api/v1/notifications*` for unread manager notifications and digest counters.
 6. Accountant Workspace Flow:
-   accountant opens `/` -> frontend resolves `AccountantWorkspacePage` ->
+   accountant opens `/accountant` -> frontend resolves `AccountantWorkspacePage` ->
    `GET /api/v1/accounting/workspace` validates `accounting:read` ->
    finance adapter loads `employee_profiles + onboarding_runs + onboarding_tasks` from the employee domain ->
    finance adapter keeps only runs with `assigned_role=accountant` or `assigned_staff_id=<actor>` ->
@@ -107,7 +108,7 @@ flowchart LR
    rule trigger -> deterministic evaluator -> executor -> notification side effects ->
    durable execution logs + automation metric events -> KPI snapshot rebuild.
 8. Public Candidate Apply Flow:
-   anonymous vacancy application -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> native PDF/DOCX extraction + persisted analysis artifacts -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
+   anonymous visitor opens `/careers` -> public open-role board loads from `GET /api/v1/public/vacancies` -> candidate opens a shareable vacancy page on `/careers/{vacancy_id}` or follows a recruiter deep link -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> native PDF/DOCX extraction + persisted analysis artifacts -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
 9. Authentication Flow:
    staff key issuance -> staff register/login (login/email + password) -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
 10. Admin Staff Governance Flow:
@@ -124,7 +125,7 @@ flowchart LR
    HR/admin updates `vacancies.hiring_manager_staff_id` or onboarding task assignment metadata ->
    notification domain resolves only active manager/accountant recipients ->
    deduped `notifications` rows are persisted in the same request transaction ->
-   recipient opens `/` -> `GET /api/v1/notifications/digest` computes summary counters on demand ->
+   recipient opens `/manager` or `/accountant` -> `GET /api/v1/notifications/digest` computes summary counters on demand ->
    `GET /api/v1/notifications?status=unread` returns recipient-owned unread items ->
    `POST /api/v1/notifications/{notification_id}/read` marks only that recipient row as read.
 14. KPI Snapshot Rebuild Flow:
@@ -238,6 +239,11 @@ flowchart LR
   `/api/v1/vacancies/{vacancy_id}/manager-workspace/candidates`) gated by
   `manager_workspace:read` and explicit vacancy ownership through
   `vacancies.hiring_manager_staff_id`.
+- Implemented HR workspace boundary:
+  the frontend now splits the recruitment entrypoint into `/hr` for overview plus focused nested
+  pages (`/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`) while retaining
+  `/hr/workbench` as the legacy consolidated path for compatibility, targeted testing, and direct
+  deep links.
 - Implemented finance adapter boundary:
   `hrm_backend/finance` owns read-only accountant workspace APIs on `/api/v1/accounting/workspace`
   and `/api/v1/accounting/workspace/export`, gated by `accounting:read` and fail-closed
@@ -266,6 +272,9 @@ flowchart LR
 - Async runtime baseline: dedicated `backend-worker` (Celery) processing DB-backed jobs on
   `cv_parsing`, `match_scoring`, and `interview_sync` queues.
 - Frontend style: React.js + TypeScript SPA with role-based route guards and shared component system.
+- Frontend HR route topology: `/hr` is the staff overview route, the focused work pages live under
+  `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, and `/hr/offers`, and `/hr/workbench`
+  remains the compatibility route for the consolidated recruitment shell.
 - Frontend libraries: MUI, React Router, TanStack Query, React Hook Form, Zod, i18next.
 - Browser support target: Google Chrome.
 - Monitoring: Sentry.
@@ -300,7 +309,7 @@ flowchart LR
 - Scope risk from broad v1 expectation.
 - AI output quality variance across candidate domains and CV formats.
 - Interview workflow is implemented from `docs/project/interview-planning-pass.md`, but runtime still carries calendar-integration and manual-invite delivery risk because the free Google Calendar mode depends on manually shared interviewer calendars.
-- Offer workflow currently records candidate decisions through staff actions on `/`; candidate-facing offer acceptance/decline transport is intentionally out of scope for this slice.
+- Offer workflow currently records candidate decisions through staff actions on `/hr/offers` and the legacy `/hr/workbench`; candidate-facing offer acceptance/decline transport is intentionally out of scope for this slice.
 - Hire conversion handoff, employee bootstrap, onboarding-start persistence, checklist template
   management, onboarding task generation, employee self-service portal, HR/manager onboarding
   progress dashboard, and the additive manager workspace are now implemented, but manager hiring
@@ -317,10 +326,10 @@ flowchart LR
 
 ## Delivery Phases
 1. Phase 1 baseline:
-   admin control plane, public candidate intake/tracking, HR vacancy/pipeline workspace, and browser smoke.
+   admin control plane, public candidate intake/tracking, split HR workspace pages with legacy workbench compatibility, and browser smoke.
 2. Phase 1 scoring slice:
-   dedicated scoring backend package + async scoring lifecycle + shortlist review in the existing HR workspace.
+   dedicated scoring backend package + async scoring lifecycle + shortlist review in the HR pipeline/workbench routes.
 3. Phase 1 interview scheduling slice:
-   implemented from the planning baseline in `docs/project/interview-planning-pass.md` without changing candidate auth or route topology; Google Calendar sync uses a service-account key plus manually shared interviewer calendars, while candidate delivery remains a manual invite-link flow.
+   implemented from the planning baseline in `docs/project/interview-planning-pass.md` without changing candidate auth or candidate transport; Google Calendar sync uses a service-account key plus manually shared interviewer calendars, while candidate delivery remains a manual invite-link flow on the split HR interview routes and legacy workbench.
 4. Phase 2:
    Manager/Employee/Accountant/Leader capabilities, expanded automation and reporting.

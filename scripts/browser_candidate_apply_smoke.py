@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Browser-level smoke verification for the public candidate application flow.
 
-This script opens the public candidate page in a real headless Chrome session,
-submits a CV application through the React UI, verifies that browser requests
-target the configured backend origin, and confirms tracking state is persisted
-to session storage.
+This script opens the public candidate application route in a real headless
+Chrome session, submits a CV application through the React UI, verifies that
+browser requests target the configured backend origin, and confirms tracking
+state is persisted to session storage. Legacy `/candidate` deep links remain
+supported when the caller passes that base URL. When ``--result-file`` is set,
+the script also writes the created vacancy/candidate identifiers so a follow-up
+interview smoke can continue from the same compose data.
 """
 
 from __future__ import annotations
@@ -44,7 +47,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--frontend-url",
         required=True,
-        help="Frontend candidate URL without query string, for example http://localhost:5173/candidate",
+        help=(
+            "Frontend careers or candidate URL without query string, for example "
+            "http://localhost:5173/careers"
+        ),
     )
     parser.add_argument(
         "--api-origin",
@@ -66,18 +72,41 @@ def parse_args() -> argparse.Namespace:
         default="/tmp/hrm-browser-candidate-smoke",
         help="Directory for failure artifacts such as screenshots",
     )
+    parser.add_argument(
+        "--result-file",
+        default=None,
+        help="Optional JSON file for downstream smoke steps to read the generated candidate id.",
+    )
     return parser.parse_args()
 
 
 def build_candidate_url(frontend_url: str, vacancy_id: str, vacancy_title: str) -> str:
-    """Build the canonical public candidate deep link for the smoke journey."""
-    query = urlencode(
-        {
-            "vacancyId": vacancy_id,
-            "vacancyTitle": vacancy_title,
-        }
-    )
-    return f"{frontend_url.rstrip('/')}?{query}"
+    """Build the canonical public vacancy deep link for the smoke journey.
+
+    Legacy `/candidate` bases remain query-based. Dedicated apply bases keep
+    query-based vacancy context. Public careers bases use the shareable vacancy
+    detail route.
+    """
+    base_url = frontend_url.rstrip("/")
+    if base_url.endswith("/candidate"):
+        query = urlencode(
+            {
+                "vacancyId": vacancy_id,
+                "vacancyTitle": vacancy_title,
+            }
+        )
+        return f"{base_url}?{query}"
+    if base_url.endswith("/candidate/apply"):
+        query = urlencode(
+            {
+                "vacancyId": vacancy_id,
+                "vacancyTitle": vacancy_title,
+            }
+        )
+        return f"{base_url}?{query}"
+
+    query = urlencode({"vacancyTitle": vacancy_title})
+    return f"{base_url}/{vacancy_id}?{query}"
 
 
 def build_submit_expression(email: str) -> str:
@@ -342,6 +371,20 @@ def run_browser_candidate_smoke(args: argparse.Namespace) -> None:
             print(
                 "[browser-smoke] public candidate apply flow completed successfully with "
                 f"tracking status={current_status}."
+            )
+
+        if args.result_file:
+            result_path = Path(args.result_file)
+            result_path.parent.mkdir(parents=True, exist_ok=True)
+            result_payload = {
+                "vacancy_id": args.vacancy_id,
+                "vacancy_title": args.vacancy_title,
+                "candidate_id": candidate_id,
+                "parsing_job_id": parsing_job_id,
+            }
+            result_path.write_text(
+                json.dumps(result_payload, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
             )
     except Exception:
         screenshot_path = write_failure_artifacts(session, artifacts_dir)

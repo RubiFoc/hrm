@@ -77,8 +77,8 @@ apps/backend/tests/
   - `contract` changes keep `api:types:check` enabled even when page tests are also selected.
   - domain modes map to targeted Vitest files instead of the whole frontend suite.
 - Browser smoke policy:
-  - the compose/browser smoke job only runs for auth, admin, candidate apply, CI-infra, and
-    compose/runtime changes that actually touch the flows it verifies.
+  - the compose/browser smoke job only runs for auth, admin, candidate apply, candidate interview,
+    CI-infra, and compose/runtime changes that actually touch the flows it verifies.
 - When a task touches only one domain, prefer the same targeted verification locally instead of the
   entire suite; reserve the full-suite commands for cross-cutting changes.
 - Selector regression coverage:
@@ -152,8 +152,8 @@ apps/backend/tests/
   - headless Chrome browser auth path `/login -> login -> me -> logout -> /login`;
   - browser auth requests use `VITE_API_BASE_URL` backend origin rather than relative frontend origin;
   - browser-triggered CORS preflight succeeds for auth endpoints.
-  - staff API creates one deterministic open vacancy fixture for the public browser scenario;
-  - headless Chrome public candidate path `/candidate?vacancyId=...&vacancyTitle=... -> POST /api/v1/vacancies/{vacancy_id}/applications -> GET /api/v1/public/cv-parsing-jobs/{job_id} -> optional GET /analysis`;
+  - staff API creates one deterministic open vacancy fixture for the public browser scenario and the public careers board loads via `GET /api/v1/public/vacancies`;
+  - headless Chrome public candidate path `/candidate/apply?vacancyId=...` (legacy `/candidate?...` and `/careers/<uuid>?vacancyTitle=...` remain compatible) -> `POST /api/v1/vacancies/{vacancy_id}/applications -> GET /api/v1/public/cv-parsing-jobs/{job_id} -> optional GET /analysis`;
   - browser public candidate requests use `VITE_API_BASE_URL` backend origin rather than relative frontend origin;
   - smoke passes when the public tracking status reaches at least `queued`/`running`; `analysis_ready=true` is preferred but not mandatory for compose success.
   - Google Calendar and Ollama integrations are intentionally excluded from compose smoke; their reachability is not required for local compose baseline acceptance.
@@ -290,27 +290,29 @@ Targeted local verification command:
 
 `npm --prefix apps/frontend test -- --run src/pages/admin/AdminObservabilityPage.test.tsx src/app/router.admin.test.tsx src/app/router.observability.test.tsx`
 
-## Frontend Candidate Workspace Verification (`TASK-11-06`, `TASK-11-09`, `TASK-11-11`)
+## Frontend Candidate Workspace Verification
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
 | --- | --- | --- | --- |
-| Deep-link candidate route contract (`/candidate?vacancyId=...&vacancyTitle=...`) and diagnostic fallback | `apps/frontend/src/pages/CandidatePage.test.tsx` | `./scripts/smoke-compose.sh` | candidate page accepts deep link, falls back to manual vacancy ID only when query param is absent |
+| Public careers job board contract (`GET /api/v1/public/vacancies`) | `apps/backend/tests/unit/vacancies/test_public_vacancy_service.py` | `apps/backend/tests/integration/vacancies/test_public_vacancies_api.py` | the public board exposes only open vacancies, keeps the schema read-only, and omits staff-only fields |
+| Public careers route contract (`/careers`) and legacy candidate fallback | `apps/frontend/src/pages/CareersPage.test.tsx` + `apps/frontend/src/pages/CandidatePage.test.tsx` | `./scripts/smoke-compose.sh` | careers page loads the public open-role board, selecting a role pre-fills the workspace, and the manual vacancy ID fallback still works when query param is absent |
 | Browser SHA-256 checksum + multipart public apply submission | `apps/frontend/src/pages/CandidatePage.test.tsx` + `apps/frontend/src/api/typedClient.test.ts` | `./scripts/smoke-compose.sh` | browser submit uses a real PDF fixture, hits `POST /api/v1/vacancies/{vacancy_id}/applications`, and persists returned tracking context |
 | Session storage tracking contract (`hrm_candidate_application_context`) | `apps/frontend/src/pages/CandidatePage.test.tsx` | `./scripts/smoke-compose.sh` | stored payload contains `vacancyId`, `candidateId`, and `parsingJobId` |
 | Public tracking and analysis polling by `parsing_job_id` | `apps/frontend/src/pages/CandidatePage.test.tsx` | `./scripts/smoke-compose.sh` | browser reaches at least `queued/running`; analysis/evidence render when ready |
 | Localized candidate apply/tracking errors (`409`, `429`, `422`, generic) | `apps/frontend/src/pages/CandidatePage.test.tsx` | manual smoke or compose browser smoke with fixture variations | localized RU/EN mapping for duplicate/cooldown/validation/network failures |
 | Browser origin correctness for public candidate requests | N/A | `scripts/browser_candidate_apply_smoke.py` via `./scripts/smoke-compose.sh` and CI `browser-smoke` job | apply/tracking requests target backend origin instead of relative frontend origin |
+| Browser origin correctness for public candidate interview requests | `apps/frontend/src/pages/candidate/CandidateInterviewRegistrationPage.tsx` + `apps/frontend/src/pages/CandidatePage.test.tsx` | `scripts/browser_candidate_interview_smoke.py` via `./scripts/smoke-compose.sh` and CI `browser-smoke` job | interview registration and confirm requests target backend origin and complete from the browser |
 
-## Frontend HR Workspace Verification (`TASK-11-05`, `TASK-11-09`)
+## Frontend HR Workspace Split Verification
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
 | --- | --- | --- | --- |
-| Vacancy list/create/edit UI on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | `./scripts/smoke-compose.sh` creates vacancy through staff API for downstream browser use | staff user can create and update vacancy through typed API wrappers |
-| Server-filtered candidate selector, apply/reset filters, and pagination on `/` (`TASK-03-04`) | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration: `apps/backend/tests/integration/candidates/test_candidate_api.py` | HR candidate selector uses server query params (`search`, `analysis_ready`, vacancy-scoped filters, `limit/offset`) and preserves selected-candidate context across pagination |
-| Candidate selection and pipeline transition append | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration: `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | valid transition appends and invalid transition returns localized `422` |
-| Ordered transition history/timeline render | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration: `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | timeline reflects append-only transition history for selected vacancy + candidate |
-| Offer lifecycle block on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend offer/pipeline integration below | HR can save draft, mark sent, record accepted/declined, and see localized blockers in the existing workspace |
-| Localized HR workspace errors (`403`, `404`, `422`, generic) | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | manual role smoke with expired/forbidden session variants | recruiter-facing failures remain readable in RU/EN |
+| HR overview route `/hr` renders the shared entrypoint and split-route navigation | `apps/frontend/src/app/router.hr-split.test.tsx` | `./scripts/smoke-compose.sh` and router smoke | overview page links to the focused HR pages and keeps the canonical `workspace=hr`/`route=/hr` grouping |
+| Vacancy list/create/edit UI on `/hr/vacancies` | `apps/frontend/src/app/router.hr-split.test.tsx` | `./scripts/smoke-compose.sh` creates vacancy through staff API for downstream browser use | staff user can create and update vacancy through typed API wrappers |
+| Pipeline candidate selector, apply/reset filters, and transition append on `/hr/pipeline` (`TASK-03-04`) | `apps/frontend/src/app/router.hr-split.test.tsx` | backend integration: `apps/backend/tests/integration/candidates/test_candidate_api.py` and `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | HR candidate selector uses server query params (`search`, `analysis_ready`, vacancy-scoped filters, `limit/offset`) and preserves selected-candidate context across pagination |
+| Interview and offer pages on `/hr/interviews` and `/hr/offers` | `apps/frontend/src/app/router.hr-split.test.tsx` | backend interview/offer integration suites | split pages render localized summary and mutation controls without reopening candidate auth |
+| Legacy workbench on `/hr/workbench` keeps shortlist review, transition history, scheduling, and offer lifecycle blocks | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration suites below | legacy consolidated shell still renders candidate selection, scoring, interview, and offer flows |
+| Localized HR workspace errors (`403`, `404`, `422`, generic`) across split routes | `apps/frontend/src/app/router.hr-split.test.tsx`, `apps/frontend/src/pages/HrDashboardPage.test.tsx` | manual role smoke with expired/forbidden session variants | recruiter-facing failures remain readable in RU/EN |
 
 ## Scoring and Shortlist Review Verification (`TASK-04-01/02/03`, `TASK-04-06`, `TASK-11-07`)
 
@@ -335,6 +337,7 @@ Targeted local verification command:
 | Low-confidence manual-review warning (`TASK-04-04`) | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | localized RU/EN warning renders for low-confidence succeeded scores without hiding score cards, while high-confidence responses do not show the warning |
 
 ### Acceptance Rules
+- Keep `/hr` as the overview page, `/hr/workbench` as the compatibility shell, and the focused route pages split out.
 - Freeze OpenAPI and update generated frontend types in the same change.
 - Keep the current compose smoke green.
 - Do not regress auth or CORS behavior.
@@ -347,6 +350,10 @@ Targeted local verification command:
   rerun the same command with `--mode ollama`.
 - Keep the quality harness outside runtime request handling and public scoring contracts; do not
   regenerate OpenAPI or frontend types unless a separate change modifies the public API.
+
+Targeted local verification command:
+
+`npm --prefix apps/frontend run test -- --run src/app/router.hr-split.test.tsx src/pages/HrDashboardPage.test.tsx`
 
 ## Interview Scheduling and Candidate Registration Verification (`TASK-11-08`, `TASK-05-01`, `TASK-05-02`)
 
@@ -362,14 +369,15 @@ Current implementation coverage must stay green at minimum:
 | One-active-interview rule per `vacancy_id + candidate_id` | `apps/backend/tests/unit/interviews/test_lifecycle.py` | `apps/backend/tests/integration/interviews/test_interview_api.py` | duplicate active interview returns `409` |
 | Candidate invitation token hashing, expiry, and schedule-version invalidation | `apps/backend/tests/unit/interviews/test_token_manager.py` | `apps/backend/tests/integration/interviews/test_interview_api.py` | revoked/rescheduled tokens return `404`; expired token returns `410` |
 | Candidate public actions (`confirm`, `request-reschedule`, `cancel`) | `apps/backend/tests/unit/interviews/test_lifecycle.py` + `apps/backend/tests/unit/interviews/test_token_manager.py` | `apps/backend/tests/integration/interviews/test_interview_api.py` | token-bound actions update state without candidate auth |
-| HR route integration on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend interview integration suite | create/reschedule/cancel and sync-state render are localized and stable |
-| Candidate route-mode integration on `/candidate?interviewToken=...` | `apps/frontend/src/pages/CandidatePage.test.tsx` | backend interview integration suite | candidate interview mode renders localized `404/409/410/422` errors and rejects mixed route params |
+| HR route integration on `/hr/interviews` and legacy `/hr/workbench` | `apps/frontend/src/app/router.hr-split.test.tsx`, `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend interview integration suite | create/reschedule/cancel and sync-state render are localized and stable |
+| Candidate route-mode integration on `/candidate/interview/:interviewToken` | `apps/frontend/src/pages/CandidatePage.test.tsx` | backend interview integration suite | candidate interview mode renders localized `404/409/410/422` errors and the `/candidate` redirect shell prioritizes interview routing when both legacy params are present |
 
 Operational assumptions for the current interview slice:
 - Freeze OpenAPI and generated frontend types in the same change.
 - Keep candidate transport anonymous and token-based.
 - Do not add candidate auth, Vite proxy rewrites, or new CORS behavior.
 - Free Google Calendar mode uses a service-account JSON key and calendars manually shared with that service account; missing calendar mapping returns `422 interviewer_calendar_not_configured`, while missing runtime calendar configuration returns `503 calendar_not_configured`.
+- If Google rejects Meet conference creation with `Invalid conference type value`, the adapter retries without `conferenceData` so compose and interview-token smoke still exercise the public registration flow.
 - Keep compose smoke green without adding nondeterministic Google Calendar browser automation.
 
 ## Structured Interview Feedback and Fairness Verification (`TASK-05-03`, `TASK-05-04`)
@@ -386,11 +394,11 @@ Current implementation coverage includes at minimum:
 | Reschedule invalidates old feedback for gate purposes | `apps/backend/tests/unit/interviews/test_feedback.py` | `apps/backend/tests/integration/interviews/test_interview_api.py` | previous `schedule_version` feedback is readable as history but blocks `interview -> offer` |
 | Fairness gate on existing `interview -> offer` transition | `apps/backend/tests/unit/interviews/test_feedback.py` | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | `409` detail codes for `interview_feedback_window_not_open`, `interview_feedback_missing`, `interview_feedback_incomplete`, and `interview_feedback_stale` |
 | Successful `interview -> offer` after complete current-version panel feedback | N/A | pipeline transition integration suite | transition succeeds without adding a new route or pipeline stage |
-| HR feedback UX on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | summary, current-user form, and localized fairness blocker messages render correctly |
+| HR feedback UX on `/hr/workbench` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | summary, current-user form, and localized fairness blocker messages render correctly |
 
 Acceptance rules for the implementation slice:
 - Freeze OpenAPI and update generated frontend types in the same change.
-- Keep auth, CORS, route topology, and anonymous candidate transport unchanged.
+- Keep auth, CORS, and anonymous candidate transport unchanged; the split HR route topology is covered by the HR workspace split verification section.
 
 ## Hire Conversion and Employee Handoff Verification (`TASK-06-02`)
 
@@ -564,8 +572,8 @@ Current implementation coverage includes at minimum:
 | Dashboard aggregation and manager-scope filtering are deterministic | `apps/backend/tests/unit/employee/test_onboarding_dashboard_service.py` | N/A | summary counters, progress percent, overdue counts, and manager-visible run set are stable for the same onboarding/task input set |
 | Dashboard list/detail APIs return read-only onboarding progress views with stable filter semantics | N/A | `apps/backend/tests/integration/employee/test_onboarding_dashboard_api.py` | `GET /api/v1/onboarding/runs` and `GET /api/v1/onboarding/runs/{onboarding_id}` honor search, task-status, overdue, and visibility filters |
 | RBAC allows `admin/hr/manager` read access and denies `employee` role | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/employee/test_onboarding_dashboard_api.py` | denied roles receive `403` and audit writes; manager reads stay limited to assignment-scoped runs |
-| HR workspace embeds onboarding progress without regressing the existing recruitment flow on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | N/A | HR page still renders vacancy/pipeline controls and the embedded onboarding dashboard block with localized summary/detail state |
-| Manager-facing onboarding visibility remains reusable inside the full manager workspace on `/` | `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx`, `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx` | N/A | manager login redirects to `/`, the manager page renders the embedded onboarding visibility block, and Sentry emits `workspace=manager`, `role=manager`, `route=/` |
+| HR overview on `/hr` embeds onboarding progress without regressing the legacy workbench on `/hr/workbench` | `apps/frontend/src/app/router.hr-split.test.tsx`, `apps/frontend/src/pages/HrDashboardPage.test.tsx` | N/A | HR overview still renders onboarding summary/detail state and the legacy workbench keeps the deeper recruitment controls |
+| Manager-facing onboarding visibility remains reusable inside the full manager workspace on `/manager` | `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx`, `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx` | N/A | manager login redirects to `/manager`, the manager page renders the embedded onboarding visibility block, and Sentry emits `workspace=manager`, `role=manager`, `route=/manager` |
 
 Acceptance rules for the implementation slice:
 - Keep the current route tree; do not add a separate manager dashboard path.
@@ -592,11 +600,11 @@ Current implementation coverage includes at minimum:
 | Vacancy-scoped hiring summary and PII-redacted candidate snapshot ordering are deterministic | `apps/backend/tests/unit/vacancies/test_manager_workspace_service.py` | N/A | overview vacancies sort by latest activity, candidate snapshot rows sort by latest stage activity, offer status mapping stays stable, and candidate PII fields remain absent from the manager snapshot schema |
 | Manager workspace APIs stay fail-closed outside explicit vacancy ownership scope | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/vacancies/test_manager_workspace_api.py` | `manager_workspace:read` is allowed, legacy HR vacancy list access stays `403`, and out-of-scope vacancy snapshot reads return `404 manager_workspace_vacancy_not_found` |
 | Vacancy assignment to a hiring manager is explicit and validated on create/update | N/A | `apps/backend/tests/integration/vacancies/test_manager_workspace_api.py` | HR/admin can set or clear `hiring_manager_login`, while missing, inactive, or wrong-role managers fail closed with stable reason codes |
-| Manager `/` route renders loading, empty, error, and success states for the full workspace | `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx` | N/A | the page renders hiring summary, vacancy list, localized error mapping, selected-vacancy snapshot, and embedded onboarding visibility without exposing mutation controls or candidate PII fields |
-| HR/admin `/` workspace stays unchanged while manager route observability remains canonical | `apps/frontend/src/pages/HrDashboardPage.test.tsx`, `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx` | N/A | HR/admin continue to land on the existing recruitment workspace, manager login still redirects to `/`, and Sentry tags remain `workspace=manager`, `route=/` |
+| Manager `/manager` route renders loading, empty, error, and success states for the full workspace | `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx` | N/A | the page renders hiring summary, vacancy list, localized error mapping, selected-vacancy snapshot, and embedded onboarding visibility without exposing mutation controls or candidate PII fields |
+| HR overview and split routes stay canonical while manager route observability remains canonical | `apps/frontend/src/app/router.hr-split.test.tsx`, `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx` | N/A | HR/admin land on `/hr`, focused HR pages stay grouped under `route=/hr`, manager login redirects to `/manager`, and Sentry tags stay aligned with the dedicated role routes |
 
 Acceptance rules for the implementation slice:
-- Keep the existing `/` route split by role; do not add a separate manager-only path.
+- Keep the dedicated `/manager` route; do not collapse manager UX back into the public landing or HR route.
 - Keep manager APIs read-only and scoped by explicit vacancy ownership; do not widen manager access to vacancy, pipeline, candidate, onboarding-task, scoring, or offer mutations.
 - Keep manager candidate visibility PII-redacted; do not expose candidate contact fields or CV-analysis artifacts in manager snapshot payloads.
 - Keep auth, CORS, and public candidate transport unchanged.
@@ -641,11 +649,11 @@ Current implementation coverage includes at minimum:
 | Accountant visibility predicate, deterministic ordering, and row counters stay stable | `apps/backend/tests/unit/finance/test_accounting_workspace_service.py` | N/A | only accountant-assigned runs are visible, counters remain deterministic, and non-accountant/unassigned runs stay excluded |
 | CSV and XLSX exports reuse one shared column contract and row values | `apps/backend/tests/unit/finance/test_accounting_workspace_service.py` | `apps/backend/tests/integration/finance/test_accounting_workspace_api.py` | header order matches across formats, XLSX sheet name stays `accounting_workspace`, and exported values match the same filtered row set |
 | Accountant workspace APIs stay fail-closed outside accountant/admin RBAC scope | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/finance/test_accounting_workspace_api.py` | `accountant` and `admin` can read/export, `hr/manager/leader/employee` receive `403`, and denied reads are audited |
-| Accountant `/` route renders loading, empty, error, and success states with dual export actions | `apps/frontend/src/pages/AccountantWorkspacePage.test.tsx` | N/A | page renders search, paginated read-only table, localized errors, and both `Export CSV` / `Export Excel` actions |
-| Route dispatch and observability stay canonical on `/` for accountant role | `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx`, `apps/frontend/src/api/httpClient.test.ts` | N/A | accountant login redirects to `/`, `/` emits `workspace=accountant`, and binary download failures are captured with accountant route tags |
+| Accountant `/accountant` route renders loading, empty, error, and success states with dual export actions | `apps/frontend/src/pages/AccountantWorkspacePage.test.tsx` | N/A | page renders search, paginated read-only table, localized errors, and both `Export CSV` / `Export Excel` actions |
+| Route dispatch and observability stay canonical on `/accountant` for accountant role | `apps/frontend/src/app/router.auth.test.tsx`, `apps/frontend/src/app/router.observability.test.tsx`, `apps/frontend/src/api/httpClient.test.ts` | N/A | accountant login redirects to `/accountant`, `/accountant` emits `workspace=accountant`, and binary download failures are captured with accountant route tags |
 
 Acceptance rules for the implementation slice:
-- Keep the existing `/` route split by role; do not add a separate accountant-only path.
+- Keep the dedicated `/accountant` route; do not widen accountant UX into the public landing or HR workspace.
 - Keep accountant APIs read-only and assignment-scoped; do not widen accountant access to HR vacancy, pipeline, onboarding-task mutation, payroll, or generic reporting controls.
 - Freeze OpenAPI and update generated frontend types in the same change because a new finance API surface is introduced.
 - Keep auth, CORS, employee self-service routes, manager workspace rules, and public candidate transport unchanged.
@@ -669,11 +677,11 @@ Current implementation coverage includes at minimum:
 | Notification emitters fan out to manager/accountant recipients and dedupe repeated writes | `apps/backend/tests/unit/notifications/test_notification_service.py` | `apps/backend/tests/integration/notifications/test_notification_api.py` | vacancy ownership and onboarding assignment changes create one recipient-scoped in-app row per newly visible recipient, while repeated writes do not duplicate rows |
 | Notification reads and mark-read writes stay fail-closed on `recipient_staff_id=<current subject>` | `apps/backend/tests/unit/notifications/test_notification_service.py`, `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/notifications/test_notification_api.py` | out-of-scope roles get `403`, wrong recipients get `404 notification_not_found`, and only recipient-owned rows change to `read` |
 | Digest counters stay role-specific and server-computed on demand | `apps/backend/tests/unit/notifications/test_notification_service.py` | `apps/backend/tests/integration/notifications/test_notification_api.py` | manager digests include owned-open-vacancy counts, accountant digests do not, and task counters reflect current assignment scope |
-| Embedded manager/accountant notifications UI renders loading, empty, success, and mark-read paths | `apps/frontend/src/components/NotificationsPanel.test.tsx`, `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx`, `apps/frontend/src/pages/AccountantWorkspacePage.test.tsx` | N/A | both `/` workspaces render the shared notifications block, localized summary chips, unread items, and `Mark as read` without route changes |
+| Embedded manager/accountant notifications UI renders loading, empty, success, and mark-read paths | `apps/frontend/src/components/NotificationsPanel.test.tsx`, `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx`, `apps/frontend/src/pages/AccountantWorkspacePage.test.tsx` | N/A | both `/manager` and `/accountant` workspaces render the shared notifications block, localized summary chips, unread items, and `Mark as read` without route changes |
 | OpenAPI freeze and generated frontend types stay synced with the notification contract | `npm --prefix apps/frontend run api:types:check` | `./scripts/check-openapi-freeze.sh` | notification endpoints and schemas exist in `docs/api/openapi.frozen.json` and `apps/frontend/src/api/generated/openapi-types.ts` |
 
 Acceptance rules for the implementation slice:
-- Keep route topology unchanged; notifications stay embedded inside the existing `/` manager/accountant workspaces.
+- Keep notifications embedded inside the dedicated `/manager` and `/accountant` workspaces.
 - Keep delivery in-app only; do not add email, SMS, webhooks, outbox, scheduler, event-bus, or template-editor behavior.
 - Keep reads and updates fail-closed on `recipient_staff_id=<current subject>`.
 - Emit notifications only on assignment or ownership change and keep dedupe mandatory.
@@ -699,11 +707,11 @@ Current implementation coverage includes at minimum:
 | Offer draft persistence on the existing vacancy route tree | `apps/backend/tests/unit/vacancies/test_offer_lifecycle.py` | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | `GET/PUT /api/v1/vacancies/{vacancy_id}/offers/{candidate_id}` works without adding a new top-level route tree |
 | Fairness-gated `interview -> offer` bootstrap | covered by `TASK-05-03/04` unit/integration suite | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | successful `interview -> offer` still depends on the existing fairness gate and auto-provisions offer state |
 | `offer -> hired` requires accepted offer; `offer -> rejected` requires declined offer | `apps/backend/tests/unit/vacancies/test_offer_lifecycle.py` | `apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py` | pipeline transition endpoint returns `409 offer_not_accepted` / `409 offer_not_declined` before terminal conversion |
-| HR offer UX on `/` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | draft save, send, accept flow, and localized hired blocker render correctly in the existing HR workspace |
+| HR offer UX on `/hr/offers` and legacy `/hr/workbench` | `apps/frontend/src/pages/HrDashboardPage.test.tsx` | backend integration above | draft save, send, accept flow, and localized hired blocker render correctly in the offer workspace |
 
 Acceptance rules for the implementation slice:
 - Freeze OpenAPI and update generated frontend types in the same change.
-- Keep auth, CORS, route topology, and anonymous candidate transport unchanged.
+- Keep auth, CORS, and anonymous candidate transport unchanged; preserve the split HR route topology and legacy workbench compatibility.
 - Keep the fairness gate on the existing `interview -> offer` transition; do not add a candidate-facing offer decision endpoint in this slice.
 - Minimum verification set:
   - `./scripts/check-docs-structure.sh`
@@ -747,11 +755,11 @@ Acceptance rules for the implementation slice:
 | Frontend `/admin/employee-keys` rendering and interactions | `apps/frontend/src/pages/AdminEmployeeKeysManagementPage.test.tsx` | route guard tests in `apps/frontend/src/app/router.admin.test.tsx` | list/filter/pagination, create/revoke actions, localized errors |
 | Sentry route tag for employee-key screen | N/A | `apps/frontend/src/app/router.admin.test.tsx` + QA Sentry smoke | `route=/admin/employee-keys` tag emitted by `AdminGuard` |
 
-## Frontend Observability Verification (`TASK-11-10`)
+## Frontend Observability Verification
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
 | --- | --- | --- | --- |
-| Canonical Sentry tags on critical routes (`/`, `/candidate`, `/login`) | `apps/frontend/src/app/router.observability.test.tsx` | Manual QA against Sentry project or local browser verification | `workspace`, `role`, `route` tags match the documented route/workspace mapping |
+| Canonical Sentry tags on critical routes (`/`, `/candidate`, `/candidate/apply`, `/candidate/interview/:interviewToken`, `/login`) | `apps/frontend/src/app/router.observability.test.tsx` | Manual QA against Sentry project or local browser verification | `workspace`, `role`, `route` tags match the documented route/workspace mapping |
 | Canonical Sentry tags on admin critical routes (`/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, `/admin/audit`, `/admin/observability`) | `apps/frontend/src/app/router.admin.test.tsx` | Manual QA against Sentry project or admin route smoke | admin routes emit `workspace=admin` plus the canonical route tag |
 | Shared HTTP failure capture with request metadata | `apps/frontend/src/api/httpClient.test.ts` | Manual failure injection against local backend or Sentry QA project | Sentry event includes current route tags plus `http_method`, `http_status`, and request path metadata |
 | Localized render-failure fallback boundary | `apps/frontend/src/app/observability/AppErrorBoundary.test.tsx` | Manual browser smoke with a forced render exception in QA build | crashing route renders RU/EN fallback UI and the exception is captured in Sentry |
@@ -767,7 +775,8 @@ Acceptance rules for the implementation slice:
 - `npm --prefix apps/frontend run test -- --run`
 - `uv run --project apps/backend pytest apps/backend/tests/unit/test_cors.py apps/backend/tests/unit/auth/test_auth_settings.py -q`
 - `python3 scripts/browser_auth_smoke.py --frontend-url http://localhost:5173/login --api-origin http://localhost:8000 --login <login> --password <password>`
-- `python3 scripts/browser_candidate_apply_smoke.py --frontend-url http://localhost:5173/candidate --api-origin http://localhost:8000 --vacancy-id <vacancy_id> --vacancy-title <title>`
+- `python3 scripts/browser_candidate_apply_smoke.py --frontend-url http://localhost:5173/candidate/apply --api-origin http://localhost:8000 --vacancy-id <vacancy_id> --vacancy-title <title>`
+- `python3 scripts/browser_candidate_interview_smoke.py --frontend-url http://localhost:5173/candidate/interview --api-origin http://localhost:8000 --interview-token <token>`
 - `./scripts/smoke-compose.sh`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic upgrade head`
 - `DATABASE_URL=sqlite+pysqlite:///tmp/hrm_alembic_security.db uv run --project apps/backend alembic downgrade -1`

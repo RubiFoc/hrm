@@ -18,6 +18,6 @@ describe("App", () => {
         <App />
       </QueryClientProvider>,
     );
-    expect(screen.getByText(/HRM/i)).toBeDefined();
+    expect(screen.getByRole("heading", { name: /спокойный контур найма|build a calmer hiring flow/i })).toBeDefined();
   });
 });

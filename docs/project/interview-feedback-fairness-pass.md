@@ -1,33 +1,35 @@
 # Interview Feedback and Fairness Pass (`TASK-05-03`, `TASK-05-04`)
 
 ## Last Updated
-- Date: 2026-03-10
-- Updated by: architect + backend-engineer + frontend-engineer
+- Date: 2026-03-20
+- Updated by: architect + frontend-engineer
 
 ## Purpose
 - This document is a planning-only deliverable.
 - It freezes the product and interface decisions required before implementation of structured interview feedback and fairness gating starts.
 - It does not introduce runtime, API, routing, auth, or infrastructure changes by itself.
+- Route names in the implemented frontend are now aligned with ADR-0054 and the candidate route split:
+  HR controls live on `/hr`, the public company landing is `/`, public application entry is `/careers`, the canonical public apply shell is `/candidate/apply`, and `/candidate` remains compatibility-only.
 
 ## Scope of the Next Implementation Slice
 - Structured interviewer feedback capture for the current interview panel.
 - Readable HR summary of submitted and missing interviewer feedback.
 - Fairness gate before the existing pipeline transition from `interview` to `offer`.
-- Feedback UX inside the existing HR workspace on `/`.
+- Feedback UX inside the dedicated HR workspace on `/hr`.
 - Backend validation and audit behavior for feedback submission and decision gating.
 
 ## Out of Scope for the Next Slice
 - Candidate authentication or any change to public token-based candidate transport.
 - New route tree, new candidate route mode, or new CORS behavior.
 - Notification-service rollout for interviewer reminders or feedback chasers.
-- Manager-specific frontend workspace outside the existing `/` screen.
+- Manager-specific frontend workspace outside the dedicated `/manager` screen.
 - Automatic hire/reject decisions based on feedback sentiment.
 - New recruitment pipeline stages or route topology changes.
 - Google Calendar browser automation inside compose smoke.
 
 ## Preserved Constraints
-- Keep HR controls on `/`.
-- Keep candidate interview registration on `/candidate?interviewToken=<token>`.
+- Keep HR controls on `/hr`.
+- Keep candidate interview registration on `/candidate/interview/:interviewToken`.
 - Do not reopen auth model, CORS model, route topology, or public candidate transport model.
 - Keep changes minimal and reversible when implementation starts.
 - Freeze OpenAPI and generated frontend types in the same implementation change.
@@ -218,7 +220,7 @@ The fairness gate is evaluated only when the existing pipeline transition reques
 ## Frontend Route and UX Model
 
 ### HR Route
-- Keep the existing HR workspace on `/`.
+- Keep the existing HR workspace on `/hr`.
 - Add an interview-feedback block that becomes active when:
   - a vacancy is selected;
   - a candidate is selected;
@@ -238,13 +240,13 @@ The fairness gate is evaluated only when the existing pipeline transition reques
 - Show localized `403`, `404`, `409`, `422`, and generic HTTP errors.
 
 ### Offer Transition UX
-- Keep the current pipeline transition controls on `/`.
+- Keep the current pipeline transition controls on `/hr`.
 - When the selected target stage is `offer`, surface the current fairness summary before submit.
 - If backend returns one of the fairness `409` codes, render a localized blocker message instead of a generic transition failure.
 
 ### Candidate Route
-- Keep `/candidate` unchanged for this slice.
-- Do not expose interviewer feedback or fairness summary through public token endpoints.
+- Keep `/candidate` as the compatibility redirect shell for this slice.
+- Do not expose interviewer feedback or fairness summary through public token endpoints or the dedicated apply/interview public routes.
 
 ## Pipeline and Audit Boundaries
 - Feedback submission does not create a new pipeline stage.

@@ -324,9 +324,15 @@ async def _create_interview(
 
 
 def _extract_token(invite_url: str) -> str:
-    """Extract public interview token from invite URL."""
+    """Extract the public interview token from a canonical or legacy invite URL."""
     parsed = urlparse(invite_url)
-    return parse_qs(parsed.query)["interviewToken"][0]
+    token = parse_qs(parsed.query).get("interviewToken")
+    if token:
+        return token[0]
+    path_parts = [part for part in parsed.path.split("/") if part]
+    if path_parts:
+        return path_parts[-1]
+    raise AssertionError(f"invite URL does not contain an interview token: {invite_url}")
 
 
 def _build_worker(configured_app) -> InterviewSyncWorkerService:
@@ -540,7 +546,9 @@ async def test_hr_reschedule_cancel_and_resend_invite_flow(
     initial_payload = fetched.json()
     assert initial_payload["status"] == "awaiting_candidate_confirmation"
     assert initial_payload["calendar_sync_status"] == "synced"
-    assert initial_payload["candidate_invite_url"].startswith("https://frontend.example/candidate?")
+    assert initial_payload["candidate_invite_url"].startswith(
+        "https://frontend.example/candidate/interview/"
+    )
     original_token = _extract_token(initial_payload["candidate_invite_url"])
 
     resent = await api_client.post(

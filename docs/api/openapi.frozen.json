@@ -6677,6 +6677,67 @@
         "title": "PublicVacancyApplicationResponse",
         "type": "object"
       },
+      "PublicVacancyListItemResponse": {
+        "additionalProperties": false,
+        "description": "Public-facing vacancy card payload.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "department": {
+            "title": "Department",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vacancy_id",
+          "title",
+          "description",
+          "department",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "PublicVacancyListItemResponse",
+        "type": "object"
+      },
+      "PublicVacancyListResponse": {
+        "additionalProperties": false,
+        "description": "Public vacancy board payload.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PublicVacancyListItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "PublicVacancyListResponse",
+        "type": "object"
+      },
       "RefreshRequest": {
         "description": "Input payload for access/refresh token rotation.",
         "properties": {
@@ -10666,6 +10727,28 @@
         "summary": "Request Public Reschedule",
         "tags": [
           "interviews"
+        ]
+      }
+    },
+    "/api/v1/public/vacancies": {
+      "get": {
+        "description": "List open vacancies for the public careers board.",
+        "operationId": "list_public_vacancies_api_v1_public_vacancies_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicVacancyListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Public Vacancies",
+        "tags": [
+          "vacancies"
         ]
       }
     },

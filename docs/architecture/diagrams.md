@@ -1,8 +1,8 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-19
-- Updated by: architect + backend-engineer
+- Date: 2026-03-20
+- Updated by: architect + frontend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -177,7 +177,7 @@ sequenceDiagram
   participant WORKER as Match Scoring Worker
   participant OLL as Ollama
 
-  HR->>UI: Select vacancy + candidate on `/`
+  HR->>UI: Select vacancy + candidate on `/hr`
   UI->>API: GET candidate context / parsed-analysis readiness
   API->>CAND: Read active document + parsed analysis status
   CAND-->>API: Ready or not-ready state
@@ -221,7 +221,7 @@ sequenceDiagram
   participant GCAL as Google Calendar
   participant C as Candidate
 
-  HR->>UI: Propose interview slot
+  HR->>UI: Propose interview slot on `/hr/interviews` or legacy `/hr/workbench`
   UI->>API: POST /api/v1/vacancies/{vacancy_id}/interviews
   API->>INT: Validate stage, one-active-interview rule, and staff participants
   INT->>GCA: Enqueue calendar sync
@@ -229,10 +229,10 @@ sequenceDiagram
   GCAL-->>GCA: synced | conflict | failed
   GCA-->>INT: Persist sync result
   INT-->>API: status + calendar_sync_status + invite metadata
-  API-->>UI: Show sync state in HR workspace on /
+  API-->>UI: Show sync state in HR workspace on `/hr/interviews`
   UI-->>HR: Copy candidate_invite_url after sync success
   HR->>C: Share invite link manually
-  C->>UI: Open /candidate?interviewToken=...
+  C->>UI: Open /candidate/interview/{interview_token}
   UI->>API: GET /api/v1/public/interview-registrations/{token}
   API-->>UI: Current invitation payload
   C->>UI: Confirm / Request reschedule / Decline
@@ -240,7 +240,7 @@ sequenceDiagram
   API->>INT: Apply token-bound action
   INT-->>API: Updated interview state
   API-->>UI: Updated candidate-facing status
-  REV->>UI: Open feedback block on `/` after interview end
+  REV->>UI: Open feedback block on `/hr/interviews` or legacy `/hr/workbench` after interview end
   UI->>API: GET /api/v1/vacancies/{vacancy_id}/interviews/{interview_id}/feedback
   API->>INT: Read current-version panel summary
   INT-->>API: Summary + gate state
@@ -259,7 +259,7 @@ sequenceDiagram
   UI->>API: GET/PUT /api/v1/vacancies/{vacancy_id}/offers/{candidate_id}
   API->>INT: Read or upsert persisted offer row
   INT-->>API: offer payload (`draft`/`sent`/`accepted`/`declined`)
-  API-->>UI: Render offer lifecycle block on `/`
+  API-->>UI: Render offer lifecycle block on `/hr/offers`
   HR->>UI: Record accepted or declined
   UI->>API: POST /api/v1/vacancies/{vacancy_id}/offers/{candidate_id}/accept|decline
   API->>INT: Validate `sent` state and persist decision metadata
@@ -280,7 +280,7 @@ sequenceDiagram
   API-->>UI: Employee bootstrap success or localized blocker
 ```
 
-The interview flow is now implemented from `docs/project/interview-planning-pass.md` and `docs/project/interview-feedback-fairness-pass.md`, and the downstream offer flow now stays on the same vacancy route tree without adding candidate auth or a new top-level route tree. In the current free-mode runtime, Google Calendar access is service-account based, each interviewer calendar is shared manually with that service account, candidate delivery still uses `candidate_invite_url` instead of Google guest invitations, the fairness guard stays on the existing `interview -> offer` transition, offer acceptance/decline remains staff-recorded in `/`, successful `offer -> hired` persists one durable `hire_conversion` handoff, the follow-on staff employee bootstrap runs on `POST /api/v1/employees` where `employee_profiles`, `onboarding_runs`, and materialized `onboarding_tasks` commit atomically against the current active template, the employee self-service portal stays on `/employee` plus `/api/v1/employees/me/onboarding*`, and HR/admin plus managers now observe onboarding progress on the existing `/` route through `GET /api/v1/onboarding/runs*`.
+The interview flow is now implemented from `docs/project/interview-planning-pass.md` and `docs/project/interview-feedback-fairness-pass.md`, and the downstream offer flow now stays on the same vacancy route tree without adding candidate auth or a new top-level route tree. In the current free-mode runtime, Google Calendar access is service-account based, each interviewer calendar is shared manually with that service account, candidate delivery still uses `candidate_invite_url` instead of Google guest invitations, the candidate now opens `/candidate/interview/{interview_token}`, the fairness guard stays on the existing `interview -> offer` transition, offer acceptance/decline remains staff-recorded in `/hr/offers` and legacy `/hr/workbench`, successful `offer -> hired` persists one durable `hire_conversion` handoff, the follow-on staff employee bootstrap runs on `POST /api/v1/employees` where `employee_profiles`, `onboarding_runs`, and materialized `onboarding_tasks` commit atomically against the current active template, the employee self-service portal stays on `/employee` plus `/api/v1/employees/me/onboarding*`, and HR/admin plus managers now observe onboarding progress on `/hr` and `/manager` through `GET /api/v1/onboarding/runs*`.
 
 ## Diagram 6: Onboarding Template Management Sequence
 
@@ -396,7 +396,7 @@ sequenceDiagram
   participant EMP as Employee Domain
   participant DB as PostgreSQL
 
-  STAFF->>UI: Open `/` and load the onboarding visibility block
+  STAFF->>UI: Open the role workspace (`/hr` or `/manager`) and load the onboarding visibility block
   UI->>API: GET /api/v1/onboarding/runs?search&task_status&overdue_only
   API->>EMP: Validate `onboarding_dashboard:read`
   EMP->>DB: Load onboarding runs + employee profiles + materialized tasks
@@ -417,7 +417,7 @@ sequenceDiagram
   else Run is visible
     EMP->>DB: Load ordered onboarding tasks for selected run
     EMP-->>API: detail payload with employee summary + tasks
-    API-->>UI: Render detail panel on the same `/` route
+    API-->>UI: Render detail panel on the same role route
   end
 ```
 
@@ -432,7 +432,7 @@ sequenceDiagram
   participant EMP as Employee Domain
   participant DB as PostgreSQL
 
-  MGR->>UI: Open `/`
+  MGR->>UI: Open `/manager`
   UI->>API: GET /api/v1/vacancies/manager-workspace
   API->>VAC: Validate `manager_workspace:read`
   VAC->>DB: Load vacancies where `hiring_manager_staff_id=<actor>`
@@ -469,7 +469,7 @@ sequenceDiagram
   participant EMP as Employee Domain Tables
   participant AUD as Audit Service
 
-  ACC->>UI: Open `/`
+  ACC->>UI: Open `/accountant`
   UI->>API: GET /api/v1/accounting/workspace?search&limit&offset
   API->>FIN: Validate `accounting:read`
   FIN->>EMP: Load `employee_profiles + onboarding_runs + onboarding_tasks`
@@ -513,7 +513,7 @@ sequenceDiagram
   end
   NOTIFY->>DB: Persist deduped `notifications` rows in the same transaction
 
-  USER->>UI: Open `/`
+  USER->>UI: Open `/manager` or `/accountant`
   UI->>API: GET /api/v1/notifications/digest
   API->>NOTIFY: Validate recipient scope + compute digest on demand
   NOTIFY->>DB: Load unread rows + current vacancy/task counters
@@ -530,6 +530,27 @@ sequenceDiagram
   API->>NOTIFY: Re-validate `recipient_staff_id=<actor>`
   NOTIFY->>DB: Set `read_at` for that recipient row
   API-->>UI: Updated read state
+```
+
+## Diagram 9D: HR Workspace Route Topology
+
+```mermaid
+flowchart LR
+  HR[HR/admin staff user]
+  OVER[/hr overview]
+  VAC[/hr/vacancies]
+  PIPE[/hr/pipeline]
+  INT[/hr/interviews]
+  OFF[/hr/offers]
+  WB[/hr/workbench]
+
+  HR --> OVER
+  OVER --> VAC
+  OVER --> PIPE
+  OVER --> INT
+  OVER --> OFF
+  OVER --> WB
+  WB -. legacy consolidated path .-> OVER
 ```
 
 ## Diagram 10: Deployment and Trust Boundaries
@@ -583,7 +604,10 @@ sequenceDiagram
   participant Q as Celery/Redis
   participant AUD as Audit/Monitoring
 
-  C->>UI: Fill contacts + upload CV
+  C->>UI: Open `/careers` and browse open roles (or the compatibility apply shell `/candidate/apply?vacancyId=...`, legacy `/candidate?vacancyId=...`)
+  UI->>API: GET /api/v1/public/vacancies
+  API-->>UI: open-role board payload
+  C->>UI: Open `/careers/{vacancy_id}` or follow a legacy query deep link redirected to the same page, then fill contacts + upload CV
   UI->>API: POST /api/v1/vacancies/{vacancy_id}/applications
   API->>VAC: validate anti-abuse + vacancy + cv payload
   VAC->>RL: check buckets (ip, ip+vacancy, email+vacancy)
@@ -602,6 +626,8 @@ sequenceDiagram
   UI->>API: GET /api/v1/public/cv-parsing-jobs/{job_id}/analysis (when ready)
   API-->>UI: parsed profile + evidence snippets
 ```
+
+Current implementation keeps `/careers` as the browseable board and `/careers/:vacancyId` as the shareable vacancy detail/apply page, while legacy recruiter links on `/careers?vacancyId=...`, `/candidate/apply?vacancyId=...`, and `/candidate?vacancyId=...` redirect into the same application workspace.
 
 ## Diagram 12: Delivery Pipeline (GitHub + CI)
 
@@ -967,8 +993,8 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-  USER[User opens critical route] --> ROUTE[Observed route: /, /employee, /leader, /candidate, /login, /admin, /admin/staff, /admin/employee-keys, /admin/candidates, /admin/vacancies, /admin/pipeline, /admin/audit, /admin/observability]
-  ROUTE --> TAGS[Sentry tags: workspace=hr|manager|accountant|employee|leader|candidate|auth|admin, role, route]
+  USER[User opens critical route] --> ROUTE[Observed route: /, /careers, /hr, /manager, /accountant, /employee, /leader, /candidate, /candidate/apply, /candidate/interview/:interviewToken, /login, /admin, /admin/staff, /admin/employee-keys, /admin/candidates, /admin/vacancies, /admin/pipeline, /admin/audit, /admin/observability]
+  ROUTE --> TAGS[Sentry tags: workspace=company|careers|hr|manager|accountant|employee|leader|candidate|auth|admin, role, route]
   TAGS --> SENTRY[Sentry]
 
   ROUTE --> UI[React page and query or mutation logic]

@@ -1,8 +1,8 @@
 # Product Epics
 
 ## Last Updated
-- Date: 2026-03-19
-- Updated by: architect + backend-engineer + business-analyst
+- Date: 2026-03-20
+- Updated by: architect + frontend-engineer
 
 ## Planning Baseline
 - Jurisdictions: Belarus and Russia.
@@ -25,7 +25,7 @@
   structured CV enrichment for workplaces with held positions, education, normalized titles,
   normalized dates/ranges, generic skills, and evidence traceability.
 - `EPIC-02` backend scope is materially implemented for Phase 1 local baseline: vacancy CRUD, canonical pipeline transitions, and ordered transition history.
-- `EPIC-11` local baseline now includes candidate self-service, HR vacancy/pipeline workspace, RU/EN strings for critical flows, and browser smoke for login + public candidate apply.
+- `EPIC-11` local baseline now includes candidate self-service, HR vacancy/pipeline workspace, RU/EN strings for critical flows, browser smoke for login + public candidate apply via `/candidate/apply`, and public interview registration on `/candidate/interview/:interviewToken` with `/candidate` compatibility redirects.
 - The immediate next epic gap is the handoff from parsed candidate data into `EPIC-04` recruiter-facing scoring review.
 - `EPIC-05` interview scheduling baseline is now implemented in repo from `docs/project/interview-planning-pass.md`; remaining interview backlog starts after scheduling/registration and must not reopen auth, routing, or public token transport.
 - `EPIC-08` automation scope is materially implemented for the current slice: durable execution logs already exist, and `automation_metric_events` now provides the KPI event stream used to calculate automation share in the existing snapshot flow.
@@ -85,8 +85,8 @@
 ### EPIC-11: React.js Frontend Foundation and Role UX
 - Frontend is implemented with React.js + TypeScript and shared architecture conventions.
 - Role-based navigation and protected routes are implemented.
-- Candidate self-service baseline is implemented through public deep links (`/candidate?vacancyId=...&vacancyTitle=...`), browser checksum upload, and tracking-by-job-id with interview registration delivered as dedicated follow-up flow.
-- Core phase workspaces are delivered with consistent form/error behavior, including HR vacancy/pipeline controls on `/`.
+- Candidate self-service baseline is implemented through the public careers board on `/careers`, shareable vacancy detail/apply pages on `/careers/:vacancyId`, compatibility apply routing on `/candidate/apply`, legacy deep-link compatibility on `/candidate`, and interview registration on `/candidate/interview/:interviewToken`.
+- Core phase workspaces are delivered with consistent form/error behavior, including HR vacancy/pipeline controls on `/hr`.
 - Frontend observability through Sentry and accessibility baseline are in place.
 - RU/EN localization and Chrome support are verified for critical v1 journeys, with browser smoke covering staff login and public candidate apply.
 

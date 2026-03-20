@@ -1,7 +1,7 @@
 # Frontend Requirements (React.js)
 
 ## Last Updated
-- Date: 2026-03-19
+- Date: 2026-03-20
 - Updated by: architect + backend-engineer + frontend-engineer
 
 ## Fixed Technical Requirement
@@ -9,6 +9,7 @@
 
 ## Baseline Frontend Requirements
 - Role-based UI for: HR, Candidate, Manager, Employee, Leader, Accountant.
+- Public company landing page on `/` with a visible careers entry, public job-board link, and checked-in image assets.
 - Secure authentication flow with protected routes and session handling.
 - Staff login window (`/login`) must be available for local verification and daily staff workspace entry without manual `localStorage` edits.
 - Integration with backend APIs via typed/stable API client.
@@ -20,7 +21,7 @@
   1. Admin workspace,
   2. Candidate CV upload and parsing visibility,
   3. HR vacancy/pipeline workspace,
-  4. shortlist review inside the existing HR workspace on `/`,
+  4. shortlist review inside the dedicated HR workbench on `/hr/workbench`, with `/hr` acting as the overview page and nested routes for vacancies/pipeline/interviews/offers,
   5. interview scheduling/registration from the dedicated planning baseline in `docs/project/interview-planning-pass.md`.
 - Interview scheduling UX with Google Calendar sync status visibility remains required and must now follow `docs/project/interview-planning-pass.md`.
 - Consistent UI components and validation behavior across modules.
@@ -43,7 +44,8 @@
 | UI framework/design system | Popular ready-made libraries |
 | Localization | `ru` + `en` in v1 |
 | Browser support | Google Chrome |
-| Candidate portal scope | CV upload + self information confirmation + public token-based interview registration on `/candidate` |
+| Candidate portal scope | Public company landing on `/`, public careers board on `/careers`, shareable vacancy detail/apply on `/careers/:vacancyId`, legacy compatibility redirect on `/candidate`, public apply workspace on `/candidate/apply`, and public token-based interview registration on `/candidate/interview/:interviewToken` |
+| HR route split | `/hr` is the overview route; focused HR pages live on `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, and `/hr/offers`; `/hr/workbench` keeps the legacy consolidated shell; nested HR routes keep the canonical `workspace=hr` / `route=/hr` telemetry grouping |
 | Mobile depth | No mobile app, responsive web only |
 | Frontend monitoring | Sentry |
 
@@ -133,9 +135,11 @@
   - `hrm_user_role`
 - Post-login redirect rules:
   - `admin` -> `/admin`
+  - `hr` -> `/hr`
+  - `manager` -> `/manager`
+  - `accountant` -> `/accountant`
   - `employee` -> `/employee`
   - `leader` -> `/leader`
-  - `hr`, `manager`, `accountant` -> `/`
   - unknown role -> `/access-denied?reason=forbidden`
 - `/login` behavior rules:
   - already-authenticated valid session -> redirect to role workspace;
@@ -143,8 +147,8 @@
 - Login UI must expose RU/EN user-readable error states for `401`, `422`, and generic HTTP failures.
 
 ## TASK-11-07 Baseline
-- Do not add a new route. Extend the current HR workspace on `/`.
-- In `HrDashboardPage`, add a shortlist review block that becomes active only when both a vacancy and a candidate are selected.
+- Keep the HR overview on `/hr` and the legacy consolidated workbench on `/hr/workbench`.
+- In `HrDashboardPage` (served on `/hr/workbench`), keep a shortlist review block that becomes active only when both a vacancy and a candidate are selected.
 - Required UX elements:
   - `Run score` action;
   - `queued`, `running`, `succeeded`, and `failed` state rendering;
@@ -154,12 +158,24 @@
 - Typed frontend API wrappers must consume only artifacts generated from frozen OpenAPI.
 - Browser smoke must not be expanded to cover scoring; keep scoring verification on unit/integration level.
 
-## TASK-11-10 Baseline
+## Frontend Observability Baseline
 - Keep the route topology stable and track changes in explicit task baselines. Current topology:
   - `/`
+  - `/careers`
+  - `/careers/:vacancyId`
+  - `/hr`
+  - `/hr/vacancies`
+  - `/hr/pipeline`
+  - `/hr/interviews`
+  - `/hr/offers`
+  - `/hr/workbench`
+  - `/manager`
+  - `/accountant`
   - `/leader`
   - `/employee`
   - `/candidate`
+  - `/candidate/apply`
+  - `/candidate/interview/:interviewToken`
   - `/login`
   - `/admin`
   - `/admin/staff`
@@ -174,11 +190,17 @@
   - `role`
   - `route`
 - Required route/workspace mapping:
-  - `/` -> `workspace=hr`, `route=/` for `admin` and `hr`
-  - `/` -> `workspace=manager`, `route=/` for `manager`
-  - `/` -> `workspace=accountant`, `route=/` for `accountant`
+  - `/` -> `workspace=company`, `route=/`
+  - `/careers` -> `workspace=careers`, `route=/careers`
+  - `/careers/:vacancyId` -> `workspace=careers`, `route=/careers`
+  - `/hr` -> `workspace=hr`, `route=/hr` for `admin` and `hr`
+  - `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`, `/hr/workbench` -> `workspace=hr`, `route=/hr` so the split HR screens keep grouped telemetry and the legacy workbench stays aligned with existing route tags
+  - `/manager` -> `workspace=manager`, `route=/manager`
+  - `/accountant` -> `workspace=accountant`, `route=/accountant`
   - `/leader` -> `workspace=leader`, `route=/leader` for `leader` and `admin`
   - `/employee` -> `workspace=employee`, `route=/employee`
+  - `/candidate/apply` -> `workspace=candidate`, `route=/candidate/apply`
+  - `/candidate/interview/:interviewToken` -> `workspace=candidate`, `route=/candidate/interview`
   - `/candidate` -> `workspace=candidate`, `route=/candidate`
   - `/login` -> `workspace=auth`, `route=/login`
   - `/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, `/admin/audit`, `/admin/observability` -> `workspace=admin` with the matching canonical route
@@ -194,20 +216,21 @@
 ## TASK-11-08 Planned Slice
 - Planning baseline source of truth: `docs/project/interview-planning-pass.md`.
 - Keep the current route model:
-  - HR scheduling stays on `/`;
-  - candidate interview registration stays on `/candidate?interviewToken=<token>`.
+  - HR scheduling lives on `/hr/interviews`, while `/hr/workbench` remains the compatibility path for the consolidated workbench;
+  - candidate apply/tracking lives on `/candidate/apply`;
+  - candidate interview registration lives on `/candidate/interview/<token>`;
+  - `/candidate` remains the compatibility redirect shell for legacy query links.
 - HR workspace requirements:
-  - do not add a new HR route;
   - add interview scheduling controls only when vacancy and candidate are selected;
   - show both business `status` and `calendar_sync_status`;
   - expose `candidate_invite_url` only to authorized staff users;
   - support `reschedule`, `cancel`, and `resend invite`.
 - Candidate route requirements:
-  - keep public access anonymous and token-based;
+  - keep public access anonymous and token-based on `/candidate/interview/:interviewToken`;
   - support `Confirm`, `Request reschedule`, and `Decline`;
   - render localized `404`, `409`, `410`, `422`, and generic HTTP errors;
-  - reject mixed `vacancyId` and `interviewToken` modes with a localized invalid-link state.
-- Do not introduce candidate auth, new CORS rules, or a new routing tree in this slice.
+  - reject mixed `vacancyId` and `interviewToken` modes with a localized invalid-link state on the compatibility shell.
+- Do not introduce candidate auth or new CORS rules; keep the compatibility shell thin and redirect-only.
 - Invitation delivery remains manual in the next slice; do not add notification-service scope here.
 
 ## TASK-07-03 Baseline
@@ -235,10 +258,9 @@
 - Keep auth, CORS, public candidate transport, and the staff onboarding route tree unchanged in this slice.
 
 ## TASK-07-04 Baseline
-- Keep the current route tree intact; do not add a new manager dashboard path.
-- Use the existing `/` route for both staff workspaces:
-  - `hr`/`admin` keep the current recruitment workspace and render onboarding progress as an embedded block;
-  - `manager` uses `/` as a standalone onboarding dashboard.
+- Keep the dedicated role route topology intact:
+  - `hr`/`admin` use `/hr` for the overview plus embedded onboarding progress, and `/hr/workbench` for the legacy consolidated recruitment workspace;
+  - `manager` uses `/manager` as the standalone onboarding dashboard.
 - Read onboarding progress through the new read-only onboarding endpoints:
   - `GET /api/v1/onboarding/runs`
   - `GET /api/v1/onboarding/runs/{onboarding_id}`
@@ -251,14 +273,13 @@
   - `admin`/`hr` can read all onboarding runs;
   - `manager` can read only runs where at least one task is assigned to `assigned_role=manager` or `assigned_staff_id=<current manager subject>`.
 - Manager access is read-only in this slice; task assignment, status patching, and backfill remain on the existing admin/HR staff routes.
-- Emit canonical Sentry tags for `/` based on resolved role:
-  - `workspace=hr` for HR/admin-style workspace
-  - `workspace=manager` for manager dashboard
+- Emit canonical Sentry tags for dedicated role pages:
+  - `workspace=hr`, `route=/hr` for HR/admin-style workspace
+  - `workspace=manager`, `route=/manager` for manager dashboard
 - Keep auth, CORS, public candidate transport, employee portal contracts, and onboarding task mutation routes unchanged in this slice.
 
 ## TASK-02-04 Baseline
-- Keep the existing route topology intact; do not add a manager-only path.
-- Use the existing `/` route for the manager workspace (`manager` resolves to `ManagerWorkspacePage` on `/`).
+- Use the dedicated `/manager` route for the manager workspace.
 - Read manager hiring visibility through the dedicated manager-scoped vacancy APIs:
   - `GET /api/v1/vacancies/manager-workspace`
   - `GET /api/v1/vacancies/{vacancy_id}/manager-workspace/candidates`
@@ -274,8 +295,9 @@
   - candidate snapshot table ordered by latest stage activity (deterministic);
   - localized `loading`, `empty`, `401/403/404`, and generic error states.
 - Keep the embedded onboarding visibility block and notifications panel inside the manager workspace unchanged in this slice.
-- Emit canonical Sentry tags for `/` based on resolved role:
-  - `workspace=manager` for manager workspace.
+- Emit canonical Sentry tags for `/manager`:
+  - `workspace=manager`
+  - `route=/manager`
 - Keep auth, CORS, public candidate transport, and HR route semantics unchanged in this slice.
 
 ## TASK-09-02 Baseline
@@ -293,8 +315,8 @@
   - `Export CSV` and `Export Excel` actions with binary download helper;
   - localized loading, empty, and `401/403/422/generic` error states.
 - Navigation/role split:
-  - `leader` default workspace is `/leader` (and `/` redirects to `/leader`);
-  - `admin` keeps HR workspace on `/` and can open `/leader` for KPI review.
+  - `leader` default workspace is `/leader`;
+  - `admin` keeps the HR workspace on `/hr` and can open `/leader` for KPI review.
 - Emit canonical Sentry tags on `/leader` access:
   - `workspace=leader`
   - `route=/leader`
@@ -302,11 +324,7 @@
   - do not expose rebuild controls (`POST /api/v1/reporting/kpi-snapshots/rebuild` remains admin-only).
 
 ## TASK-09-03 Baseline
-- Keep the existing route topology intact; do not add a new accountant-only path.
-- Use the existing `/` route for accountant users:
-  - `accountant` resolves to a dedicated accountant workspace page;
-  - `hr`/`admin` keep the HR workspace on `/`;
-  - `manager` keeps the manager workspace on `/`.
+- Use the dedicated `/accountant` route for accountant users.
 - Read accountant workspace data through dedicated read-only finance adapter endpoints:
   - `GET /api/v1/accounting/workspace`
   - `GET /api/v1/accounting/workspace/export?format=csv|xlsx`
@@ -324,15 +342,13 @@
   - support both RFC4180-style UTF-8 CSV and native `.xlsx`;
   - both formats must contain the same filtered full result set and the same ordered columns;
   - binary downloads must use a dedicated frontend helper instead of the JSON-only API wrapper.
-- Emit canonical Sentry tags for `/` based on resolved role:
-  - `workspace=accountant` for accountant workspace.
+- Emit canonical Sentry tags for `/accountant`:
+  - `workspace=accountant`
+  - `route=/accountant`
 - Keep auth, CORS, employee self-service routes, HR/manager route topology, and generic reporting/export infrastructure unchanged in this slice.
 
 ## TASK-09-04 Baseline
-- Keep the existing route topology intact; do not add a notifications-only path.
-- Reuse the existing `/` role split:
-  - `manager` keeps `ManagerWorkspacePage` on `/`;
-  - `accountant` keeps `AccountantWorkspacePage` on `/`.
+- Keep notifications embedded in the dedicated `/manager` and `/accountant` workspaces; do not add a notifications-only path.
 - Read in-app notifications through dedicated recipient-scoped APIs:
   - `GET /api/v1/notifications?status=unread|all&limit&offset`
   - `GET /api/v1/notifications/digest`

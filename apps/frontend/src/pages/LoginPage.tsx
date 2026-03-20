@@ -15,6 +15,7 @@ import {
   writeAuthSession,
 } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
+import { PageHero } from "../components/PageHero";
 
 const loginSchema = z.object({
   identifier: z.string().trim().min(1),
@@ -119,38 +120,43 @@ export function LoginPage() {
   }
 
   return (
-    <Box display="flex" justifyContent="center">
-      <Paper sx={{ width: "100%", maxWidth: 440, p: 3 }}>
-        <Stack spacing={2} component="form" onSubmit={handleSubmit(onSubmit)}>
-          <Typography variant="h4">{t("loginPage.title")}</Typography>
-          <Typography variant="body2" color="text.secondary">
-            {t("loginPage.subtitle")}
-          </Typography>
+    <Stack spacing={3}>
+      <PageHero
+        eyebrow={t("loginPage.eyebrow")}
+        title={t("loginPage.title")}
+        description={t("loginPage.subtitle")}
+        imageSrc="/images/company-hero.jpg"
+        imageAlt={t("loginPage.imageAlt")}
+      />
 
-          <TextField
-            label={t("loginPage.fields.identifier")}
-            autoComplete="username"
-            {...register("identifier")}
-            error={Boolean(errors.identifier)}
-            helperText={errors.identifier ? t("loginPage.errors.requiredField") : " "}
-          />
-          <TextField
-            type="password"
-            label={t("loginPage.fields.password")}
-            autoComplete="current-password"
-            {...register("password")}
-            error={Boolean(errors.password)}
-            helperText={errors.password ? t("loginPage.errors.requiredField") : " "}
-          />
+      <Box display="flex" justifyContent="center">
+        <Paper sx={{ width: "100%", maxWidth: 460, p: 3 }}>
+          <Stack spacing={2} component="form" onSubmit={handleSubmit(onSubmit)}>
+            <TextField
+              label={t("loginPage.fields.identifier")}
+              autoComplete="username"
+              {...register("identifier")}
+              error={Boolean(errors.identifier)}
+              helperText={errors.identifier ? t("loginPage.errors.requiredField") : " "}
+            />
+            <TextField
+              type="password"
+              label={t("loginPage.fields.password")}
+              autoComplete="current-password"
+              {...register("password")}
+              error={Boolean(errors.password)}
+              helperText={errors.password ? t("loginPage.errors.requiredField") : " "}
+            />
 
-          {requestError ? <Alert severity="error">{requestError}</Alert> : null}
+            {requestError ? <Alert severity="error">{requestError}</Alert> : null}
 
-          <Button type="submit" variant="contained" disabled={isSubmitting}>
-            {isSubmitting ? t("loginPage.submitLoading") : t("loginPage.submit")}
-          </Button>
-        </Stack>
-      </Paper>
-    </Box>
+            <Button type="submit" variant="contained" disabled={isSubmitting}>
+              {isSubmitting ? t("loginPage.submitLoading") : t("loginPage.submit")}
+            </Button>
+          </Stack>
+        </Paper>
+      </Box>
+    </Stack>
   );
 }
 

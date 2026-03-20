@@ -80,6 +80,18 @@ describe("resolveAdminGuardDecision", () => {
 });
 
 describe("resolveWorkspaceRoute", () => {
+  it("routes hr role to /hr", () => {
+    expect(resolveWorkspaceRoute("hr")).toBe("/hr");
+  });
+
+  it("routes manager role to /manager", () => {
+    expect(resolveWorkspaceRoute("manager")).toBe("/manager");
+  });
+
+  it("routes accountant role to /accountant", () => {
+    expect(resolveWorkspaceRoute("accountant")).toBe("/accountant");
+  });
+
   it("routes employee role to /employee", () => {
     expect(resolveWorkspaceRoute("employee")).toBe("/employee");
   });

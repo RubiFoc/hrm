@@ -13,6 +13,7 @@ from hrm_backend.rbac import Role, require_permission
 from hrm_backend.vacancies.dependencies.vacancies import (
     get_manager_workspace_service,
     get_offer_service,
+    get_public_vacancy_service,
     get_vacancy_application_service,
     get_vacancy_service,
 )
@@ -31,6 +32,7 @@ from hrm_backend.vacancies.schemas.pipeline import (
     PipelineTransitionListResponse,
     PipelineTransitionResponse,
 )
+from hrm_backend.vacancies.schemas.public_vacancy import PublicVacancyListResponse
 from hrm_backend.vacancies.schemas.vacancy import (
     VacancyCreateRequest,
     VacancyListResponse,
@@ -40,9 +42,11 @@ from hrm_backend.vacancies.schemas.vacancy import (
 from hrm_backend.vacancies.services.application_service import VacancyApplicationService
 from hrm_backend.vacancies.services.manager_workspace_service import ManagerWorkspaceService
 from hrm_backend.vacancies.services.offer_service import OfferService
+from hrm_backend.vacancies.services.public_vacancy_service import PublicVacancyService
 from hrm_backend.vacancies.services.vacancy_service import VacancyService
 
 router = APIRouter(tags=["vacancies"])
+public_router = APIRouter(prefix="/api/v1/public/vacancies", tags=["vacancies"])
 VacancyServiceDependency = Annotated[VacancyService, Depends(get_vacancy_service)]
 ManagerWorkspaceServiceDependency = Annotated[
     ManagerWorkspaceService,
@@ -53,6 +57,10 @@ VacancyApplicationServiceDependency = Annotated[
     VacancyApplicationService,
     Depends(get_vacancy_application_service),
 ]
+PublicVacancyServiceDependency = Annotated[
+    PublicVacancyService,
+    Depends(get_public_vacancy_service),
+]
 CurrentAuthContext = Annotated[AuthContext, Depends(get_current_auth_context)]
 VacancyCreateRole = Annotated[Role, Depends(require_permission("vacancy:create"))]
 VacancyReadRole = Annotated[Role, Depends(require_permission("vacancy:read"))]
@@ -60,6 +68,14 @@ VacancyUpdateRole = Annotated[Role, Depends(require_permission("vacancy:update")
 PipelineTransitionRole = Annotated[Role, Depends(require_permission("pipeline:transition"))]
 PipelineReadRole = Annotated[Role, Depends(require_permission("pipeline:read"))]
 ManagerWorkspaceRole = Annotated[Role, Depends(require_permission("manager_workspace:read"))]
+
+
+@public_router.get("", response_model=PublicVacancyListResponse)
+def list_public_vacancies(
+    service: PublicVacancyServiceDependency,
+) -> PublicVacancyListResponse:
+    """List open vacancies for the public careers board."""
+    return service.list_public_vacancies()
 
 
 @router.post("/api/v1/vacancies", response_model=VacancyResponse)
