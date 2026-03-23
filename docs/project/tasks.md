@@ -176,7 +176,6 @@
 - P0:
   - `#58` `COMPLIANCE-01`
 - P1:
-  - `#146` final PD retention windows by data class
   - `#147` break-glass procedure and reviewer roster
   - RU-scope issues `#142`, `#143`, and `#145` should be closed as de-scoped after ADR-0059.
 
