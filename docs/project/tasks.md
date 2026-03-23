@@ -61,7 +61,7 @@
 | TASK-09-02 | done/closed | GitHub issue #95 closed; merged in `main` via PR #126 (`06b605e`) with a read-only leader/admin KPI workspace on `/leader`, bounded lookback fallback to the latest available snapshot month, and CSV/XLSX export reuse |
 | TASK-09-03 | done/closed | GitHub issue #96 closed; merged in `main` via PR #114 (`c237296`) with accountant workspace routing on `/accountant`, assignment-scoped `/api/v1/accounting/workspace*`, controlled CSV/XLSX exports, and solo-mode architecture self-review workflow alignment |
 | TASK-09-04 | done/closed | GitHub issue #97 closed; merged in `main` via PR #116 (`966f3a8`) with recipient-scoped `/api/v1/notifications*`, embedded manager/accountant notifications UI on `/manager` and `/accountant`, fail-closed read/update scope, on-demand digests, regenerated OpenAPI/frontend types, and synced architecture/test docs |
-| TASK-10-01 | implemented/local-kpi-snapshot-slice | Monthly KPI snapshots with admin-only rebuild/read API, reporting package, migration, unit/integration tests, and updated OpenAPI/frontend types are implemented in repo |
+| TASK-10-01 | done/closed | Merged in `main` via commit `bed745f` (`TASK-10-01: add KPI snapshot foundation`) with monthly KPI snapshot data model + aggregation pipeline, admin-only rebuild API, stored snapshot read surface, migration, reporting unit/integration coverage, and synchronized OpenAPI/frontend generated types |
 | TASK-10-02 | done/closed | Leader/admin read-only KPI snapshots on `/leader` consume stored snapshots with bounded lookback fallback and export reuse; merged in `main` via PR #126 (`06b605e`). |
 | TASK-10-03 | done/closed | Merged in `main` via PR #122 with admin-only `GET /api/v1/audit/events` query API, `audit:read` RBAC permission, unit/integration coverage, updated OpenAPI freeze, and refreshed frontend generated types |
 | TASK-10-04 | done/closed | GitHub issue #99 closed; merged in `main` via PR #124 (`7a5ca87`) with controlled audit evidence export (`/api/v1/audit/events/export`) in CSV/JSONL/XLSX and KPI snapshot export (`/api/v1/reporting/kpi-snapshots/export`) attachments plus updated docs/diagrams and regenerated OpenAPI/frontend types |
@@ -109,6 +109,7 @@
 - `TASK-09-03` is now implemented as the additive accountant workspace follow-on slice: accountants use `/accountant` for one read-only finance workspace, visibility stays limited to accountant-assigned onboarding tasks, and controlled CSV/XLSX exports reuse the same filtered row model without adding generic reporting infrastructure.
 - `TASK-09-03` post-merge closeout is complete: GitHub issue `#96` is closed, PR #114 (`c237296`) is merged in `main`, and this backlog snapshot is synchronized to the merged state.
 - `TASK-09-04` post-merge closeout is complete: GitHub issue `#97` is closed, PR #116 (`966f3a8`) is merged in `main`, and this backlog snapshot is synchronized to the merged state while keeping the notifications slice additive, fail-closed, and in-app only.
+- `TASK-10-01` post-merge closeout is complete: the monthly KPI snapshot foundation is synchronized to merged `main` evidence via commit `bed745f` (`TASK-10-01: add KPI snapshot foundation`) with no additional runtime/API changes required in this closeout pass.
 - `TASK-10-04` is now implemented as a minimal export package: admin-only audit evidence export (`GET /api/v1/audit/events/export`) in CSV/JSONL/XLSX and leader/admin KPI snapshot export (`GET /api/v1/reporting/kpi-snapshots/export`) with business audit events written after content assembly to avoid self-inclusion.
 - `TASK-10-04` post-merge closeout is complete: GitHub issue `#99` is closed, PR #124 (`7a5ca87`) is merged in `main`, and this backlog snapshot is synchronized to the merged state.
 - `TASK-11-12` is now implemented in repo as the phase-2 role workspace bundle: manager/accountant workspaces are present on `/manager` and `/accountant`, employee workspace is on `/employee`, leader workspace is on `/leader`, and the HR overview plus legacy `/hr/workbench` shell are present alongside the split HR pages, with route guards, typed OpenAPI clients, frontend router/page tests, and canonical Sentry route tags.
@@ -135,7 +136,7 @@
 - `ADMIN-05` is no longer active queue work; the implemented source of truth is the repo-backed admin observability dashboard on `/admin/observability` with read-only health, audit preview, and job-status lookup reuse.
 - `TASK-09-03` is no longer active queue work; the implemented source of truth is the repo-backed accountant workspace on `/accountant` plus assignment-scoped finance read/export endpoints on `/api/v1/accounting/workspace*`.
 - `TASK-09-04` is no longer active queue work; the implemented source of truth is the repo-backed recipient-scoped notification API on `/api/v1/notifications*` plus the embedded manager/accountant notifications blocks on `/manager` and `/accountant`.
-- `TASK-10-01` is no longer active queue work; the implemented source of truth is the repo-backed monthly KPI snapshot foundation with admin-only rebuild and leader/admin read APIs.
+- `TASK-10-01` post-merge closeout is complete: the repo-backed monthly KPI snapshot foundation is closed with merged evidence `bed745f` and follow-on leader/admin read exposure tracked by `TASK-10-02`.
 - `TASK-10-02` post-merge closeout is complete: leader/admin KPI snapshot reads on `/leader` are stored-snapshot-only with admin-only rebuild; merged in `main` via PR #126 (`06b605e`).
 - `TASK-08-04` is no longer active queue work; the implemented source of truth is the repo-backed automation metric event stream and monthly KPI aggregation path.
 - `TASK-10-04` is no longer active queue work; the implemented source of truth is the bounded export attachments on `GET /api/v1/audit/events/export` and `GET /api/v1/reporting/kpi-snapshots/export`.
@@ -152,7 +153,6 @@
   - `TASK-03-01/02/03/05/06/07`
   - `TASK-02-01/02/03`
   - `TASK-08-01/02/04`
-  - `TASK-10-01`
   - `TASK-04-01/02/03/05`
   - `TASK-05-01/02`
   - `TASK-11-05/06/07/08/09`
@@ -166,7 +166,7 @@
 - P2: none
 
 - Current open backlog by delivery wave:
-  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-10-01`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`
+  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`
   - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`
   - P2: none
 
