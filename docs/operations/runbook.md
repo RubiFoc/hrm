@@ -64,6 +64,33 @@ Shortcut wrappers:
   - Example:
     `curl -H "Authorization: Bearer <token>" "http://localhost:8000/api/v1/reporting/kpi-snapshots/export?period_month=2026-03-01&format=xlsx" -o kpi-snapshot-2026-03.xlsx`
 
+### Subject Rights Requests (CTRL-BY-02)
+- Owner: backend + hr-ops, with legal consulted for refusals or retention exceptions.
+- SLA acknowledgement: within 3 business days of intake.
+- SLA completion: within 30 calendar days from identity verification date; extensions require legal approval and must be logged.
+- Intake: written request to the HR/ops contact; record the intake channel and timestamp.
+
+#### Workflow
+1. Register the request in the subject-rights log using the template below.
+2. Verify requester identity against existing staff/candidate records before disclosing any data.
+3. Classify the request type: access, correction, deletion, or stop-processing.
+4. Enumerate data sources in scope: primary database records, stored documents (MinIO), and audit events.
+5. Execute the action or record the legal basis for refusal or partial fulfillment.
+6. Respond in writing with the action taken, scope covered, and completion date.
+
+#### Subject-Rights Log Template
+- Request ID
+- Intake timestamp
+- Intake channel
+- Requester name and identifiers used for verification
+- Verification date
+- Request type
+- Data sources reviewed
+- Action taken or refusal basis
+- Response date
+- SLA due date
+- Owner
+
 Runtime auth/browser integration settings:
 - Frontend browser API base URL: `VITE_API_BASE_URL` (compose default: `http://localhost:8000`).
 - Frontend Sentry envs:
@@ -445,7 +472,7 @@ Assumption: release-specific evidence outputs and legal/security approvals are a
 - `docs/project/production-legal-evidence-package.md` is the canonical package manifest for repo-backed evidence, external attachments, freshness rules, and sign-off sequencing.
 - Pre-prod promotion is blocked if any critical control in `docs/project/legal-controls-matrix.md` remains `planned` or `in-progress`.
 - Production release is blocked unless every critical control is `verified` and legal/security sign-off records the refreshed evidence IDs.
-- The current hard blockers are `CTRL-BY-01` (in-progress) and `CTRL-BY-02` (planned); production release also remains blocked until `CTRL-BY-03` is verified and signed off.
+- The current hard blockers are `CTRL-BY-01` (in-progress) and `CTRL-BY-02` (implemented but unverified); production release also remains blocked until `CTRL-BY-03` is verified and signed off.
 
 ### Production Sign-Off Handling
 1. Freeze the release candidate commit/tag before collecting approval evidence.

@@ -18,7 +18,7 @@
 
 ## Known Blocking Controls
 - `CTRL-BY-01` is in-progress and blocks pre-prod/production until it is `verified`.
-- `CTRL-BY-02` is planned and blocks pre-prod/production until the runbook procedure exists and is `verified`.
+- `CTRL-BY-02` is implemented; it no longer blocks pre-prod, but production release still requires `verified` status.
 - `CTRL-BY-03` is implemented, but production release still requires `verified` status and refreshed evidence plus legal/security sign-off.
 
 ## Required Package Attachments
@@ -26,7 +26,7 @@
   - the current `docs/project/legal-controls-matrix.md`;
   - the current `docs/project/evidence-registry.md`;
   - the current `docs/project/production-legal-evidence-package.md`;
-  - the release-candidate outputs for `EVID-001`, `EVID-002`, `EVID-003`, `EVID-004`, and `EVID-006` as applicable.
+  - the release-candidate outputs for `EVID-001`, `EVID-002`, `EVID-003`, `EVID-004`, `EVID-006`, and `EVID-007` as applicable.
 - External / non-repo inputs:
   - legal sign-off record;
   - security sign-off record.
@@ -42,7 +42,7 @@
 | Control ID | Current status | Required threshold | Owner | Evidence IDs | Verification source/command | Sign-off prerequisite | Blocker if planned/in-progress |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | CTRL-BY-01 | in-progress | Pre-prod: `implemented`; production: `verified` | business-analyst + frontend | `EVID-002`, `EVID-003` | `./scripts/check-openapi-freeze.sh`, `npm --prefix apps/frontend run api:types:check`, frontend tests | Legal sign-off must confirm consent and purpose-bound contracts | Blocks both gates while the control remains `planned` or `in-progress` |
-| CTRL-BY-02 | planned | Pre-prod: `implemented`; production: `verified` | backend + hr-ops | none (gap) | No current in-repo command; release stays blocked until a runbook procedure exists and is registered | Legal sign-off requires the subject-rights runbook to exist | Blocks both gates while the control remains `planned` or `in-progress` |
+| CTRL-BY-02 | implemented | Pre-prod: `implemented`; production: `verified` | backend + hr-ops | `EVID-007` | Runbook review for owner/SLA and log template | Legal sign-off must confirm the subject-rights runbook and SLA | Blocks production until the control is `verified` |
 | CTRL-BY-03 | implemented | Pre-prod: `implemented`; production: `verified` | architect + backend + devops | `EVID-001`, `EVID-004`, `EVID-006` | `EVID-001` backend security/auth tests, `EVID-004` compose smoke, `EVID-006` docs/config review | Legal/security sign-off must confirm RBAC, immutable audit events, storage baseline, and smoke evidence are current | Blocks both gates until the control is at least `implemented` with current evidence |
 
 ## Release Preconditions
