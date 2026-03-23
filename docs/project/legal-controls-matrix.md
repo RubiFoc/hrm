@@ -36,7 +36,7 @@
   - `implemented`: `CTRL-BY-03`, `CTRL-BY-02`
   - `in-progress`: `CTRL-BY-01`
 - Pre-prod promotion requires all critical controls to be at least `implemented`, with current evidence rows and verification commands recorded in `docs/project/evidence-registry.md`.
-- Production release additionally requires legal/security sign-off, `verified` status for the implemented critical controls, and explicit closure of the remaining `CTRL-BY-01` gap.
+- Production release additionally requires legal/security sign-off and `verified` status for every critical control; `CTRL-BY-01` must reach `implemented` before it can be verified.
 - `CTRL-BY-03` stays `implemented` until the package manifest shows fresh release-candidate evidence plus non-repo legal/security approvals for the same release candidate.
 - Any critical control that remains `planned` or `in-progress` is a hard blocker for both pre-prod and production release.
 - Execution tracking for this matrix is formalized under `EPIC-13` in:
