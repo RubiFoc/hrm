@@ -1,8 +1,8 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-20
-- Updated by: coordinator + devops-engineer + frontend-engineer
+- Date: 2026-03-23
+- Updated by: coordinator
 
 ## Local Environment (Docker Compose)
 ### Prerequisites
@@ -426,7 +426,7 @@ Assumption: release-specific evidence outputs and legal/security approvals are a
   - Object storage buckets with personal data must use server-side encryption.
   - Backups/snapshots must be encrypted and access-restricted.
 
-- TODO(owner: devops + security, due_trigger: before first production release): attach concrete infrastructure evidence (KMS/SSE/TLS termination config) to the EPIC-13 release checklist and close the `CTRL-RU-04` gap with a real artifact.
+- TODO(owner: devops + security, due_trigger: before first production release): attach concrete encryption evidence (KMS/SSE/TLS termination config) to the EPIC-13 release checklist.
 
 ### Access Policy and Review Cadence (Provisional)
 - Least-privilege access is mandatory for platform, database, object storage, and CI/CD.
@@ -445,7 +445,7 @@ Assumption: release-specific evidence outputs and legal/security approvals are a
 - `docs/project/production-legal-evidence-package.md` is the canonical package manifest for repo-backed evidence, external attachments, freshness rules, and sign-off sequencing.
 - Pre-prod promotion is blocked if any critical control in `docs/project/legal-controls-matrix.md` remains `planned` or `in-progress`.
 - Production release is blocked unless every critical control is `verified` and legal/security sign-off records the refreshed evidence IDs.
-- The current hard blockers are the gap rows for `CTRL-RU-04` and `CTRL-RU-06`; release cannot proceed until those artifacts exist as real evidence, not placeholders.
+- The current hard blockers are `CTRL-BY-01` (in-progress) and `CTRL-BY-02` (planned); production release also remains blocked until `CTRL-BY-03` is verified and signed off.
 
 ### Production Sign-Off Handling
 1. Freeze the release candidate commit/tag before collecting approval evidence.

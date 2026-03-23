@@ -1,11 +1,11 @@
 # Product Epics
 
 ## Last Updated
-- Date: 2026-03-20
-- Updated by: architect + frontend-engineer
+- Date: 2026-03-23
+- Updated by: coordinator
 
 ## Planning Baseline
-- Jurisdictions: Belarus and Russia.
+- Jurisdictions: Belarus only.
 - Legal baseline: `docs/project/legal-framework.md`.
 - Product scope: general HRM workflows and CV analysis for workers across industries, not only IT.
 - Mandatory integrations: Ollama, Google Calendar.
@@ -80,7 +80,7 @@
 ### EPIC-01: Identity, Roles, and Data Compliance Foundation
 - Role-based access is enforced for all user groups.
 - Access to sensitive personal data is audited.
-- Data retention and storage policies are defined for Belarus/Russia scope.
+- Data retention and storage policies are defined for Belarus scope.
 
 ### EPIC-11: React.js Frontend Foundation and Role UX
 - Frontend is implemented with React.js + TypeScript and shared architecture conventions.
@@ -91,7 +91,7 @@
 - RU/EN localization and Chrome support are verified for critical v1 journeys, with browser smoke covering staff login and public candidate apply.
 
 ### EPIC-13: Compliance Control Mapping and Legal Evidence Pack
-- Article-level obligations for Belarus/Russia NPAs are mapped to concrete controls.
+- Article-level obligations for Belarus NPAs are mapped to concrete controls.
 - Every critical control has owner, status, and verifiable evidence link.
 - Legal controls matrix is maintained with release-gate readiness states.
 - Production gate includes legal/security sign-off packet assembled from evidence.

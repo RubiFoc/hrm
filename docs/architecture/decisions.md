@@ -63,6 +63,15 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0056 | 2026-03-20 | accepted | Add a public vacancy board endpoint for careers while keeping the guided apply flow on `/careers` | architect + frontend-engineer | recruitment API, public careers UX, OpenAPI contract, frontend typed client |
 | ADR-0057 | 2026-03-20 | accepted | Split public careers into board and shareable vacancy detail routes | architect + frontend-engineer | frontend routing, public careers UX, smoke verification, route tags |
 | ADR-0058 | 2026-03-20 | accepted | Split public candidate transport into dedicated apply and interview routes with `/candidate` compatibility redirects | architect + frontend-engineer | frontend routing, public candidate UX, observability, browser smoke, documentation |
+| ADR-0059 | 2026-03-23 | accepted | De-scope Russia jurisdiction and keep Belarus-only compliance scope | coordinator | compliance scope, legal controls, release gate |
+
+## ADR-0059
+- Context: The project is delivered from a Belarus-local environment and will not operate a dedicated Russia service.
+- Decision: Remove Russia jurisdiction requirements from the compliance baseline and keep Belarus-only legal scope for the current product stage.
+- Consequences:
+  - Russia-specific controls, evidence, and release-gate blockers are removed from the compliance docs.
+  - Belarus controls remain the only compliance scope and continue to govern release gating.
+  - If Russia scope is reintroduced later, a new ADR and refreshed legal controls matrix will be required.
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.

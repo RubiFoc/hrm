@@ -1,8 +1,8 @@
 # Project Brief
 
 ## Last Updated
-- Date: 2026-03-11
-- Updated by: architect + backend-engineer
+- Date: 2026-03-23
+- Updated by: coordinator
 
 ## Problem Statement
 Build a general HRM platform that simplifies candidate-to-vacancy matching before interviews,
@@ -55,7 +55,7 @@ Metric formula:
 - Frontend-specific requirements are documented in `docs/project/frontend-requirements.md`.
 
 ## Constraints
-- Comply with personal data storage and processing laws for Belarus and Russia.
+- Comply with personal data storage and processing laws for Belarus.
 - Compliance baseline is defined in `docs/project/legal-framework.md`.
 - Protect sensitive personal data.
 - Environment configuration from `.env` must be implemented through

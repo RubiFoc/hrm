@@ -1,8 +1,8 @@
 # Engineering Best Practices
 
 ## Last Updated
-- Date: 2026-03-04
-- Updated by: architect + backend-engineer
+- Date: 2026-03-23
+- Updated by: coordinator
 
 These practices are mandatory for development and documentation.
 
@@ -36,7 +36,7 @@ These practices are mandatory for development and documentation.
 - Apply least-privilege access by default.
 - Encrypt sensitive data in transit and at rest.
 - Record access to sensitive data in immutable audit logs.
-- Follow Belarus/Russia data storage standards and retention policy.
+- Follow Belarus data storage standards and retention policy.
 
 ## 4. Data and Reliability
 - Keep one source of truth per entity.

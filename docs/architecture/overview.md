@@ -1,11 +1,11 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-20
-- Updated by: architect + frontend-engineer
+- Date: 2026-03-23
+- Updated by: coordinator
 
 ## System Context
-HRM platform for Belarus and Russia that supports candidate selection across professions and
+HRM platform for Belarus that supports candidate selection across professions and
 industries, fair interview workflows, onboarding, HR automation, and operational workflows for HR,
 managers, employees, leaders, and accountants.
 
@@ -300,7 +300,7 @@ flowchart LR
 - Performance:
   async processing for CV parsing/scoring and reporting-heavy operations.
 - Security:
-  personal data protection aligned with Belarus/Russia data storage standards, strict role-based access control, immutable audit trail.
+  personal data protection aligned with Belarus data storage standards, strict role-based access control, immutable audit trail.
 - Observability:
   structured logs, metrics by domain, trace IDs across API and async jobs; Sentry for frontend
   route tags, HTTP/render failure capture, release markers, and browser traces.
