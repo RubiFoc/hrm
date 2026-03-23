@@ -176,7 +176,6 @@
 - P0:
   - `#58` `COMPLIANCE-01`
 - P1:
-  - `#147` break-glass procedure and reviewer roster
   - RU-scope issues `#142`, `#143`, and `#145` should be closed as de-scoped after ADR-0059.
 
 - Execution rule for follow-on interview work: keep the implemented `/hr`, `/candidate/apply`, and `/candidate/interview/:interviewToken` topology, plus the public company/careers entrypoints on `/` and `/careers`, unchanged unless a separate ADR reopens that scope.
