@@ -23,18 +23,17 @@
 | EVID-003 | CTRL-BY-01 | frontend-engineer | `apps/frontend/src/pages/CandidatePage.tsx`, `apps/frontend/src/pages/LoginPage.tsx`, `apps/frontend/src/api/auth.ts` | `npm --prefix apps/frontend run test -- --run src/pages/CandidatePage.test.tsx src/pages/LoginPage.test.tsx src/api/auth.test.ts` | Any field added/removed on login or candidate-apply flows |
 | EVID-004 | CTRL-BY-03 | qa-engineer + devops-engineer | `./scripts/smoke-compose.sh`, `scripts/browser_auth_smoke.py`, `scripts/browser_candidate_apply_smoke.py` | `docker compose up -d --build`, `./scripts/smoke-compose.sh` | Any compose topology, critical browser flow, or CORS/runtime change |
 | EVID-006 | CTRL-BY-03 | devops-engineer + backend-engineer | `.env.example`, `docker-compose.yml`, `docs/operations/runbook.md` | `./scripts/check-docs-structure.sh`, compose config review, `./scripts/smoke-compose.sh` | Any object-storage, encryption, compose env, or runbook change |
+| EVID-007 | CTRL-BY-02 | backend + hr-ops | `docs/operations/runbook.md` (Subject Rights Requests section) | `./scripts/check-docs-structure.sh`, runbook review for owner/SLA and log template | Any change to subject-rights workflow, SLA, intake channel, or owner |
 
 ## Coverage Gaps (No Current Evidence Artifact)
-
-| Control ID | Missing Artifact | Owner | Due Trigger |
-| --- | --- | --- | --- |
-| CTRL-BY-02 | Runbook procedure for access/correction/deletion or stop-processing requests | backend + hr-ops | Before any public subject-rights workflow or production readiness review |
+- None. All critical controls have repo-backed evidence artifacts registered above.
 
 ## Production Package Scope (TASK-13-04)
 - Canonical package manifest: `docs/project/production-legal-evidence-package.md`.
 - Repo-backed critical-control evidence available today:
   - `CTRL-BY-03`: `EVID-001`, `EVID-004`, `EVID-006`
   - `CTRL-BY-01`: `EVID-002`, `EVID-003`
+  - `CTRL-BY-02`: `EVID-007`
 - Non-repo approvals and missing-gap attachments must stay outside this registry until they exist as real artifacts; do not create synthetic evidence rows for missing artifacts.
 
 ## Usage Rules

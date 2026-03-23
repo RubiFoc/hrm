@@ -67,7 +67,7 @@
 | ADMIN-05 | done/closed | GitHub issue #87 closed; merged in `main` via PR #135 (`3eca7a1`) with a frontend-first admin observability dashboard on `/admin/observability` that reuses `/health`, audit preview, CV parsing status, and match-score status contracts. |
 | TASK-13-03 | done/closed | Repo-backed release-gate compliance checklist now makes EPIC-13 pre-prod and production sign-off explicit, with current critical controls, evidence IDs, verification commands, legal/security preconditions, and blocker states captured in the docs set. |
 | TASK-13-04 | done/closed | GitHub issue #62 is linked to PR #138; the repo-backed production legal evidence package now defines sign-off workflow, required attachments, evidence freshness rules, blocker handling, and `verified` exit criteria for critical controls without adding runtime/API changes. |
-| COMPLIANCE-01 | in-progress/belarus-only | EPIC-13 umbrella tracking issue for repo normalization; no runtime scope; Russia jurisdiction de-scoped via ADR-0059; Belarus controls now define the compliance gate (`CTRL-BY-01` in-progress, `CTRL-BY-02` planned) |
+| COMPLIANCE-01 | in-progress/belarus-only | EPIC-13 umbrella tracking issue for repo normalization; no runtime scope; Russia jurisdiction de-scoped via ADR-0059; Belarus controls now define the compliance gate (`CTRL-BY-01` in-progress, `CTRL-BY-02` implemented via `EVID-007`) |
 
 ## 2026-03-12 Delivery Control Notes
 - `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
@@ -157,7 +157,7 @@
   - `TASK-05-01/02`
   - `TASK-11-05/06/07/08/09`
   - `TASK-13-01/02`
-- `COMPLIANCE-01` stays open until `CTRL-BY-01` is implemented and `CTRL-BY-02` has a real runbook evidence artifact.
+- `COMPLIANCE-01` stays open until `CTRL-BY-01` is implemented and `CTRL-BY-02` is `verified` (legal sign-off attached).
 - P1:
   - `TASK-03-08`
   - `TASK-06-01/02/03/04`
@@ -176,7 +176,6 @@
 - P0:
   - `#58` `COMPLIANCE-01`
 - P1:
-  - `#144` `CTRL-BY-02` subject-rights request workflow and owner/SLA
   - `#146` final PD retention windows by data class
   - `#147` break-glass procedure and reviewer roster
   - RU-scope issues `#142`, `#143`, and `#145` should be closed as de-scoped after ADR-0059.
