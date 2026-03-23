@@ -62,6 +62,7 @@
 | TASK-09-03 | done/closed | GitHub issue #96 closed; merged in `main` via PR #114 (`c237296`) with accountant workspace routing on `/accountant`, assignment-scoped `/api/v1/accounting/workspace*`, controlled CSV/XLSX exports, and solo-mode architecture self-review workflow alignment |
 | TASK-09-04 | done/closed | GitHub issue #97 closed; merged in `main` via PR #116 (`966f3a8`) with recipient-scoped `/api/v1/notifications*`, embedded manager/accountant notifications UI on `/manager` and `/accountant`, fail-closed read/update scope, on-demand digests, regenerated OpenAPI/frontend types, and synced architecture/test docs |
 | TASK-10-01 | implemented/local-kpi-snapshot-slice | Monthly KPI snapshots with admin-only rebuild/read API, reporting package, migration, unit/integration tests, and updated OpenAPI/frontend types are implemented in repo |
+| TASK-10-02 | done/closed | Leader/admin read-only KPI snapshots on `/leader` consume stored snapshots with bounded lookback fallback and export reuse; merged in `main` via PR #126 (`06b605e`). |
 | TASK-10-03 | done/closed | Merged in `main` via PR #122 with admin-only `GET /api/v1/audit/events` query API, `audit:read` RBAC permission, unit/integration coverage, updated OpenAPI freeze, and refreshed frontend generated types |
 | TASK-10-04 | done/closed | GitHub issue #99 closed; merged in `main` via PR #124 (`7a5ca87`) with controlled audit evidence export (`/api/v1/audit/events/export`) in CSV/JSONL/XLSX and KPI snapshot export (`/api/v1/reporting/kpi-snapshots/export`) attachments plus updated docs/diagrams and regenerated OpenAPI/frontend types |
 | ADMIN-05 | done/closed | GitHub issue #87 closed; merged in `main` via PR #135 (`3eca7a1`) with a frontend-first admin observability dashboard on `/admin/observability` that reuses `/health`, audit preview, CV parsing status, and match-score status contracts. |
@@ -135,7 +136,7 @@
 - `TASK-09-03` is no longer active queue work; the implemented source of truth is the repo-backed accountant workspace on `/accountant` plus assignment-scoped finance read/export endpoints on `/api/v1/accounting/workspace*`.
 - `TASK-09-04` is no longer active queue work; the implemented source of truth is the repo-backed recipient-scoped notification API on `/api/v1/notifications*` plus the embedded manager/accountant notifications blocks on `/manager` and `/accountant`.
 - `TASK-10-01` is no longer active queue work; the implemented source of truth is the repo-backed monthly KPI snapshot foundation with admin-only rebuild and leader/admin read APIs.
-- `TASK-10-02` is no longer active queue work; the implemented scope is leader read exposure for stored monthly KPI snapshots (no live aggregation), while rebuild remains admin-only.
+- `TASK-10-02` post-merge closeout is complete: leader/admin KPI snapshot reads on `/leader` are stored-snapshot-only with admin-only rebuild; merged in `main` via PR #126 (`06b605e`).
 - `TASK-08-04` is no longer active queue work; the implemented source of truth is the repo-backed automation metric event stream and monthly KPI aggregation path.
 - `TASK-10-04` is no longer active queue work; the implemented source of truth is the bounded export attachments on `GET /api/v1/audit/events/export` and `GET /api/v1/reporting/kpi-snapshots/export`.
 - `TASK-11-10/11` are no longer active queue work; the frontend observability and browser verification closeout is formally complete and the implemented source of truth is the current repo-backed Sentry tagging and browser smoke coverage.
@@ -151,7 +152,7 @@
   - `TASK-03-01/02/03/05/06/07`
   - `TASK-02-01/02/03`
   - `TASK-08-01/02/04`
-  - `TASK-10-01/02`
+  - `TASK-10-01`
   - `TASK-04-01/02/03/05`
   - `TASK-05-01/02`
   - `TASK-11-05/06/07/08/09`
@@ -165,7 +166,7 @@
 - P2: none
 
 - Current open backlog by delivery wave:
-  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-10-01/02`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`
+  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-10-01`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`
   - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`
   - P2: none
 
