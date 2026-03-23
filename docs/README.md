@@ -13,7 +13,7 @@ This folder is the single source of truth for project context required for deliv
 - `project/sprint-m1-plan.md`: Approved M1 sprint ownership by role
 - `project/frontend-requirements.md`: React.js frontend requirements and confirmed decisions
 - `project/migration-notes-auth-login.md`: Client migration note for auth login contract changes
-- `project/legal-framework.md`: Priority NPAs for Belarus and Russia compliance baseline
+- `project/legal-framework.md`: Priority NPAs for Belarus compliance baseline
 - `project/legal-controls-matrix.md`: NPA-to-controls compliance tracking matrix
 - `project/evidence-registry.md`: Evidence ownership and verification registry for compliance controls
 - `project/production-legal-evidence-package.md`: Canonical production legal evidence package manifest and sign-off workflow

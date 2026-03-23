@@ -67,7 +67,7 @@
 | ADMIN-05 | done/closed | GitHub issue #87 closed; merged in `main` via PR #135 (`3eca7a1`) with a frontend-first admin observability dashboard on `/admin/observability` that reuses `/health`, audit preview, CV parsing status, and match-score status contracts. |
 | TASK-13-03 | done/closed | Repo-backed release-gate compliance checklist now makes EPIC-13 pre-prod and production sign-off explicit, with current critical controls, evidence IDs, verification commands, legal/security preconditions, and blocker states captured in the docs set. |
 | TASK-13-04 | done/closed | GitHub issue #62 is linked to PR #138; the repo-backed production legal evidence package now defines sign-off workflow, required attachments, evidence freshness rules, blocker handling, and `verified` exit criteria for critical controls without adding runtime/API changes. |
-| COMPLIANCE-01 | in-progress/local-evidence-packs | EPIC-13 umbrella tracking issue for repo normalization; no runtime scope; RU data-residency evidence pack confirms Belarus locality (not RU-compliant); ISPDn checklist/attestation pack is in repo |
+| COMPLIANCE-01 | in-progress/belarus-only | EPIC-13 umbrella tracking issue for repo normalization; no runtime scope; Russia jurisdiction de-scoped via ADR-0059; Belarus controls now define the compliance gate (`CTRL-BY-01` in-progress, `CTRL-BY-02` planned) |
 
 ## 2026-03-12 Delivery Control Notes
 - `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
@@ -157,7 +157,7 @@
   - `TASK-05-01/02`
   - `TASK-11-05/06/07/08/09`
   - `TASK-13-01/02`
-- `COMPLIANCE-01` stays open until RU locality is confirmed for `CTRL-RU-04` (current locality: Belarus); `CTRL-RU-06` evidence is now present in repo.
+- `COMPLIANCE-01` stays open until `CTRL-BY-01` is implemented and `CTRL-BY-02` has a real runbook evidence artifact.
 - P1:
   - `TASK-03-08`
   - `TASK-06-01/02/03/04`
@@ -175,13 +175,11 @@
 
 - P0:
   - `#58` `COMPLIANCE-01`
-  - `#142` `CTRL-RU-04` real RU data-residency evidence pack
-  - `#143` `CTRL-RU-06` ISPDn checklist and attestation pack
 - P1:
   - `#144` `CTRL-BY-02` subject-rights request workflow and owner/SLA
-  - `#145` `CTRL-RU-03` data-subject request workflow and response SLA
   - `#146` final PD retention windows by data class
   - `#147` break-glass procedure and reviewer roster
+  - RU-scope issues `#142`, `#143`, and `#145` should be closed as de-scoped after ADR-0059.
 
 - Execution rule for follow-on interview work: keep the implemented `/hr`, `/candidate/apply`, and `/candidate/interview/:interviewToken` topology, plus the public company/careers entrypoints on `/` and `/careers`, unchanged unless a separate ADR reopens that scope.
 
@@ -193,8 +191,8 @@
 | TASK-01-02 | EPIC-01 | Implement authentication and session/token lifecycle | Phase 1 | P0 | TASK-01-01 |
 | TASK-01-03 | EPIC-01 | Implement access policy middleware for API and background jobs | Phase 1 | P0 | TASK-01-02 |
 | TASK-01-04 | EPIC-01 | Implement audit logging for sensitive data access | Phase 1 | P0 | TASK-01-03 |
-| TASK-01-05 | EPIC-01 | Define and apply Belarus/Russia data storage and retention baseline | Phase 1 | P0 | TASK-01-01 |
-| TASK-13-01 | EPIC-13 | Map article-level Belarus/Russia legal obligations to controls in legal-controls matrix | Phase 1 | P0 | TASK-01-05 |
+| TASK-01-05 | EPIC-01 | Define and apply Belarus data storage and retention baseline | Phase 1 | P0 | TASK-01-01 |
+| TASK-13-01 | EPIC-13 | Map article-level Belarus legal obligations to controls in legal-controls matrix | Phase 1 | P0 | TASK-01-05 |
 | TASK-13-02 | EPIC-13 | Define evidence registry and ownership model for each critical legal control | Phase 1 | P0 | TASK-13-01 |
 | TASK-13-03 | EPIC-13 | Add release-gate compliance checklist for critical controls and legal sign-off preconditions | Phase 1-2 | P1 | TASK-13-02 |
 | TASK-13-04 | EPIC-13 | Prepare production legal evidence package and sign-off workflow | Phase 2 | P1 | TASK-13-03 |

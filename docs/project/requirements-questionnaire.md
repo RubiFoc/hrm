@@ -1,8 +1,8 @@
 # Requirements Questionnaire
 
 ## Last Updated
-- Date: 2026-03-06
-- Updated by: business-analyst
+- Date: 2026-03-23
+- Updated by: coordinator
 
 Use this file to collect baseline project requirements before implementation.
 
@@ -28,7 +28,7 @@ Use this file to collect baseline project requirements before implementation.
   4. Managers + Employees + Accountants + Leaders.
 
 ## 4. Business Rules
-- Must enforce personal data storage and processing laws for Belarus and Russia.
+- Must enforce personal data storage and processing laws for Belarus.
 - Compliance baseline: priority NPAs listed in `docs/project/legal-framework.md`.
 - Candidate data processing must apply least-privilege access and action-level auditing.
 - Article-level legal control mapping is mandatory deliverable (`EPIC-13` / `TASK-13-*`) before production release.

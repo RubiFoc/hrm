@@ -1,8 +1,8 @@
 # Authentication and Session Lifecycle (TASK-01-02, TASK-01-04, staff auth extension)
 
 ## Last Updated
-- Date: 2026-03-05
-- Updated by: backend-engineer + codex
+- Date: 2026-03-23
+- Updated by: coordinator
 
 This document defines the Phase-1 authentication baseline for backend APIs.
 Source of truth package: `apps/backend/src/hrm_backend/auth/`.
@@ -125,4 +125,4 @@ Auth domain follows extraction-ready package decomposition:
   - `infra/security`
 
 ## Next Steps
-- `TASK-01-05`: map auth/session controls to Belarus/Russia legal controls matrix.
+- `TASK-01-05`: map auth/session controls to the Belarus legal controls matrix.
