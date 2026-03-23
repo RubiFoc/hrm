@@ -26,6 +26,8 @@
 | EVID-006 | CTRL-BY-03 | devops-engineer + backend-engineer | `.env.example`, `docker-compose.yml`, `docs/operations/runbook.md` | `./scripts/check-docs-structure.sh`, compose config review, `./scripts/smoke-compose.sh` | Any object-storage, encryption, compose env, or runbook change |
 | EVID-007 | CTRL-RU-01, CTRL-RU-02 | backend-engineer + frontend-engineer | `apps/backend/tests/integration/candidates/test_candidate_api.py`, `apps/backend/tests/integration/scoring/test_match_scoring_api.py`, `apps/frontend/src/pages/HrDashboardPage.test.tsx` | `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/candidates/test_candidate_api.py apps/backend/tests/integration/scoring/test_match_scoring_api.py`, `npm --prefix apps/frontend run test -- --run src/pages/HrDashboardPage.test.tsx` | Any candidate-analysis, scoring contract, shortlist review, or evidence payload change |
 | EVID-008 | CTRL-BY-03, CTRL-RU-02 | frontend-engineer | `apps/frontend/src/pages/LeaderWorkspacePage.tsx`, `apps/frontend/src/api/kpiSnapshots.ts`, `apps/frontend/src/app/router.tsx`, `apps/frontend/src/components/RootLayout.tsx` | `npm --prefix apps/frontend run test -- --run src/pages/LeaderWorkspacePage.test.tsx src/app/router.leader.test.tsx src/app/router.auth.test.tsx src/app/router.observability.test.tsx src/app/auth/session.test.ts` | Any leader/admin KPI workspace UI, export behavior, or route/RBAC gating change |
+| EVID-009 | CTRL-RU-04 | architect + devops | `docs/project/evidence/ru-data-residency-pack.md` | Manual review: confirm locality, backup cadence, and approver in the pack | Any change to hosting location, storage topology, backup cadence, or approver |
+| EVID-010 | CTRL-RU-06 | security + business-analyst | `docs/project/evidence/ru-ispdn-class-checklist.md` | Manual review: confirm class, checklist items, and attestation are current | Any change to ISPDn class, safeguards checklist, or attestation |
 
 ## Coverage Gaps (No Current Evidence Artifact)
 
@@ -33,8 +35,6 @@
 | --- | --- | --- | --- |
 | CTRL-BY-02 | Runbook procedure for access/correction/deletion or stop-processing requests | backend + hr-ops | Before any public subject-rights workflow or production readiness review |
 | CTRL-RU-03 | Runbook/ticket workflow for data-subject requests under 152-ФЗ | backend + hr-ops | Before any production readiness review |
-| CTRL-RU-04 | RU data-residency attachment pack (deployment locality, backup locality, legal/devops confirmation) | architect + devops | Before storing production RU citizen data; blocks EPIC-13 pre-prod and production release until the gap is replaced by real evidence |
-| CTRL-RU-06 | ISPDn class checklist and attestation pack | security + business-analyst | Before first production release; blocks EPIC-13 pre-prod and production release until the pack exists as a real evidence artifact |
 
 ## Production Package Scope (TASK-13-04)
 - Canonical package manifest: `docs/project/production-legal-evidence-package.md`.
@@ -42,11 +42,13 @@
   - `CTRL-BY-03`: `EVID-001`, `EVID-004`, `EVID-006`
   - `CTRL-RU-02`: `EVID-001`, `EVID-005`, `EVID-007`
   - `CTRL-RU-05`: `EVID-001`, `EVID-004`
-- Non-repo approvals and missing-gap attachments must stay outside this registry until they exist as real artifacts; do not create synthetic evidence rows for `CTRL-RU-04` or `CTRL-RU-06`.
+  - `CTRL-RU-04`: `EVID-009`
+  - `CTRL-RU-06`: `EVID-010`
+- Non-repo approvals and missing-gap attachments must stay outside this registry until they exist as real artifacts; do not create synthetic evidence rows for missing artifacts.
 
 ## Usage Rules
 - Use this registry together with `docs/project/legal-controls-matrix.md`; do not treat it as a substitute for legal review.
 - When a verification command changes, update the matching `Evidence ID` row in the same change.
 - When an artifact path is removed or renamed, either replace the evidence with a new real artifact or move the control back to a gap state.
-- The EPIC-13 release checklist must reference the current gap rows for `CTRL-RU-04` and `CTRL-RU-06`; these rows are blockers, not waivers.
+- The EPIC-13 release checklist must reference the current blocker rows for the critical controls; blockers are not waivers.
 - The production evidence package must reference this registry for repo-backed inputs and `docs/project/production-legal-evidence-package.md` for non-repo attachments, freshness rules, and blocker handling.

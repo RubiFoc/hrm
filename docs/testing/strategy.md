@@ -121,7 +121,8 @@ apps/backend/tests/
   - the release checklist names the pre-prod and production gate thresholds;
   - the package manifest separates repo-backed evidence, non-repo attachments, current blockers, and `verified` exit criteria;
   - the checklist names owners, evidence IDs, verification sources, sign-off prerequisites, and release blockers for all critical controls;
-  - `CTRL-RU-04` and `CTRL-RU-06` remain explicit blockers until real evidence artifacts exist;
+  - `CTRL-RU-04` remains a blocker until RU locality is confirmed in `EVID-009`;
+  - `CTRL-RU-06` remains a production blocker until legal/security sign-off moves it to `verified`;
   - evidence freshness and sign-off workflow stay aligned between the package manifest, release checklist, and runbook;
   - no control is upgraded from `planned`/`in-progress` to `implemented` or `verified` without a matching evidence-row update.
 

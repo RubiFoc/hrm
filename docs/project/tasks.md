@@ -1,8 +1,8 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-20
-- Updated by: coordinator + business-analyst + frontend-engineer
+- Date: 2026-03-23
+- Updated by: coordinator
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -67,7 +67,7 @@
 | ADMIN-05 | done/closed | GitHub issue #87 closed; merged in `main` via PR #135 (`3eca7a1`) with a frontend-first admin observability dashboard on `/admin/observability` that reuses `/health`, audit preview, CV parsing status, and match-score status contracts. |
 | TASK-13-03 | done/closed | Repo-backed release-gate compliance checklist now makes EPIC-13 pre-prod and production sign-off explicit, with current critical controls, evidence IDs, verification commands, legal/security preconditions, and blocker states captured in the docs set. |
 | TASK-13-04 | done/closed | GitHub issue #62 is linked to PR #138; the repo-backed production legal evidence package now defines sign-off workflow, required attachments, evidence freshness rules, blocker handling, and `verified` exit criteria for critical controls without adding runtime/API changes. |
-| COMPLIANCE-01 | planned | EPIC-13 umbrella tracking issue for repo normalization; no runtime scope, blocked by external evidence artifacts (`CTRL-RU-04`, `CTRL-RU-06`) |
+| COMPLIANCE-01 | in-progress/local-evidence-packs | EPIC-13 umbrella tracking issue for repo normalization; no runtime scope; RU data-residency evidence pack exists but RU locality is not yet confirmed; ISPDn checklist/attestation pack is in repo |
 
 ## 2026-03-12 Delivery Control Notes
 - `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
@@ -157,7 +157,7 @@
   - `TASK-05-01/02`
   - `TASK-11-05/06/07/08/09`
   - `TASK-13-01/02`
-- `COMPLIANCE-01` stays open until `CTRL-RU-04` and `CTRL-RU-06` have real evidence artifacts.
+- `COMPLIANCE-01` stays open until RU locality is confirmed for `CTRL-RU-04`; `CTRL-RU-06` evidence is now present in repo.
 - P1:
   - `TASK-03-08`
   - `TASK-06-01/02/03/04`
