@@ -34,7 +34,7 @@
 | CTRL-RU-01 | Processing must stay purpose-bound and data-minimized | Frozen contracts and UI/API payload boundaries define the current Phase 1 data set | `EVID-002`, `EVID-003`, `EVID-007` | OpenAPI drift check, frontend tests, targeted backend/frontend scoring tests |
 | CTRL-RU-02 | Operator must implement and confirm adequate security measures | Access control, auditability, explainable AI artifacts, and critical-route observability | `EVID-001`, `EVID-005`, `EVID-007` | backend security tests, frontend observability tests, scoring/candidate test suites |
 | CTRL-RU-03 | Subject rights requests need a repeatable response workflow | Request intake/runbook + actor ownership | No current evidence artifact | To implement under future request-handling slice |
-| CTRL-RU-04 | RU citizens' PD must be stored/localized in the required jurisdiction | Infra placement and backup residency controls | `EVID-009` | Manual review of the RU data-residency pack; confirm locality, backup cadence, and approver |
+| CTRL-RU-04 | RU citizens' PD must be stored/localized in the required jurisdiction | Infra placement and backup residency controls | `EVID-009` | Manual review of the RU data-residency pack; confirm locality is RU (current evidence: Belarus), backup cadence, and approver |
 | CTRL-RU-05 | Restricted information requires legal/organizational/technical protection measures | Access control, audit trail, and repeatable smoke verification of critical routes | `EVID-001`, `EVID-004` | backend security tests + compose/browser smoke |
 | CTRL-RU-06 | ISPDn safeguards must be documented and attested by class | Security checklist and attestation workflow | `EVID-010` | Manual review of the ISPDn class checklist and attestation |
 
@@ -45,7 +45,7 @@
 - Development environment is non-blocking for controls in `planned` or `in-progress` status, but those states remain release blockers for EPIC-13.
 - Current repo-backed critical controls are:
   - `implemented`: `CTRL-BY-03`, `CTRL-RU-02`, `CTRL-RU-05`, `CTRL-RU-06`
-  - `in-progress`: `CTRL-RU-04` (residency location not yet confirmed)
+  - `in-progress`: `CTRL-RU-04` (residency location confirmed as Belarus; not RU-compliant)
 - Pre-prod promotion requires all critical controls to be at least `implemented`, with current evidence rows and verification commands recorded in `docs/project/evidence-registry.md`.
 - Production release additionally requires legal/security sign-off, `verified` status for the implemented critical controls, and explicit closure of the remaining `CTRL-RU-04` residency-location gap.
 - `CTRL-BY-03`, `CTRL-RU-02`, and `CTRL-RU-05` stay `implemented` until the package manifest shows fresh release-candidate evidence plus non-repo legal/security approvals for the same release candidate.

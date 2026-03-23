@@ -24,7 +24,7 @@
 | --- | --- | --- | --- | --- | --- |
 | CTRL-BY-03 | `implemented` | `EVID-001`, `EVID-004`, `EVID-006` | Security sign-off record referencing the current release candidate and refreshed evidence outputs; legal release acknowledgment referencing the same package | Yes. The control is not yet `verified`. | Re-run the listed evidence on the exact production candidate, attach results, record legal/security sign-off, then update the matrix/registry status in repo. |
 | CTRL-RU-02 | `implemented` | `EVID-001`, `EVID-005`, `EVID-007` | Security sign-off record referencing the current release candidate and refreshed evidence outputs; legal release acknowledgment referencing the same package | Yes. The control is not yet `verified`. | Re-run the listed evidence on the exact production candidate, attach results, record legal/security sign-off, then update the matrix/registry status in repo. |
-| CTRL-RU-04 | `in-progress` | `EVID-009` | Legal sign-off record referencing the current release candidate; explicit RU locality confirmation in `EVID-009` if not yet documented | Yes. The control remains a blocker until residency location is confirmed. | Confirm RU locality in the evidence pack, attach legal sign-off for the same release candidate, then update the control status to `verified`. |
+| CTRL-RU-04 | `in-progress` | `EVID-009` | Legal sign-off record referencing the current release candidate; RU locality must be confirmed (current evidence shows Belarus, not RU) | Yes. The control remains a blocker until residency location is RU-compliant. | Migrate to RU-local infrastructure, confirm RU locality in the evidence pack, attach legal sign-off for the same release candidate, then update the control status to `verified`. |
 | CTRL-RU-05 | `implemented` | `EVID-001`, `EVID-004` | Security sign-off record referencing the current release candidate and refreshed evidence outputs; legal release acknowledgment referencing the same package | Yes. The control is not yet `verified`. | Re-run the listed evidence on the exact production candidate, attach results, record legal/security sign-off, then update the matrix/registry status in repo. |
 | CTRL-RU-06 | `implemented` | `EVID-010` | Legal and security sign-off records referencing the current release candidate | Yes. The control is not yet `verified`. | Attach legal/security sign-off for the same release candidate, then update the control status to `verified`. |
 
@@ -50,7 +50,7 @@
 | Security sign-off record | `CTRL-BY-03`, `CTRL-RU-02`, `CTRL-RU-05`, `CTRL-RU-06` | security + architect | Release candidate identifier, reviewed evidence IDs/attachments, approval date, security decision, residual-risk note if any | Missing until first production sign-off |
 
 ## Production Blockers Right Now
-- `CTRL-RU-04` is `in-progress`; the evidence pack exists, but RU locality is not yet confirmed in the pack.
+- `CTRL-RU-04` is `in-progress`; the evidence pack confirms Belarus locality, which is not RU-compliant.
 - `CTRL-RU-06` is `implemented` with an in-repo checklist, but it still needs legal/security sign-off before it can move to `verified`.
 - `CTRL-BY-03`, `CTRL-RU-02`, and `CTRL-RU-05` are only `implemented`; they still need fresh release-candidate evidence attachments plus legal/security sign-off before they can move to `verified`.
 - No blocker may be converted into a waiver by adding a placeholder row or a synthetic attachment reference.

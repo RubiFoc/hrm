@@ -427,7 +427,7 @@ Assumption: release-specific evidence outputs and legal/security approvals are a
   - Backups/snapshots must be encrypted and access-restricted.
 
 - TODO(owner: devops + security, due_trigger: before first production release): attach concrete encryption evidence (KMS/SSE/TLS termination config) to the EPIC-13 release checklist.
-- TODO(owner: architect + devops + legal, due_trigger: before first production release): confirm RU locality in `docs/project/evidence/ru-data-residency-pack.md`, attach it to the EPIC-13 release checklist, and close the remaining `CTRL-RU-04` residency-location gap.
+- TODO(owner: architect + devops + legal, due_trigger: before first production release): migrate to RU-local infrastructure, confirm RU locality in `docs/project/evidence/ru-data-residency-pack.md`, attach it to the EPIC-13 release checklist, and close the remaining `CTRL-RU-04` residency-location gap.
 
 ### Access Policy and Review Cadence (Provisional)
 - Least-privilege access is mandatory for platform, database, object storage, and CI/CD.
@@ -446,7 +446,7 @@ Assumption: release-specific evidence outputs and legal/security approvals are a
 - `docs/project/production-legal-evidence-package.md` is the canonical package manifest for repo-backed evidence, external attachments, freshness rules, and sign-off sequencing.
 - Pre-prod promotion is blocked if any critical control in `docs/project/legal-controls-matrix.md` remains `planned` or `in-progress`.
 - Production release is blocked unless every critical control is `verified` and legal/security sign-off records the refreshed evidence IDs.
-- The current hard blocker is `CTRL-RU-04` because RU locality is not yet confirmed in the evidence pack; production release remains blocked until it is verified and signed off.
+- The current hard blocker is `CTRL-RU-04` because locality is confirmed as Belarus (not RU-compliant); production release remains blocked until RU locality is verified and signed off.
 
 ### Production Sign-Off Handling
 1. Freeze the release candidate commit/tag before collecting approval evidence.

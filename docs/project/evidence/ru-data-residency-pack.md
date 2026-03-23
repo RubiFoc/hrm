@@ -13,6 +13,7 @@
 - Primary storage: local workstation filesystem on the maintainer's machine.
 - Datastores: local Docker volumes for Postgres/Redis/MinIO and local repo files.
 - External storage: none.
+ - Physical location of the workstation: Belarus.
 
 ## Backup Policy
 - Frequency: daily.
@@ -20,9 +21,8 @@
 - Owner: sole maintainer.
 
 ## Residency Confirmation Status
-- Physical location of the workstation is not documented in this pack.
-- Production compliance for RU residency requires explicit confirmation that the host location is in RU
-  or a migration to RU-local infrastructure.
+- The workstation is located in Belarus, which does not satisfy RU data-localization requirements.
+- Production compliance for RU residency requires a host location in RU or a migration to RU-local infrastructure.
 
 ## Evidence Statement
 I confirm the statements above reflect the current storage and backup setup as of 2026-03-23.

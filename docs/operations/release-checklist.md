@@ -17,7 +17,7 @@
   - a control that is still `planned` or `in-progress` blocks release outright.
 
 ## Known Blocking Controls
-- `CTRL-RU-04` remains a blocker because RU locality is not yet confirmed in the evidence pack.
+- `CTRL-RU-04` remains a blocker because locality is confirmed as Belarus (not RU-compliant).
 - `CTRL-BY-03`, `CTRL-RU-02`, `CTRL-RU-05`, and `CTRL-RU-06` are implemented, but production release still requires `verified` status and refreshed evidence plus legal/security sign-off.
 
 ## Required Package Attachments
@@ -43,7 +43,7 @@
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | CTRL-BY-03 | implemented | Pre-prod: `implemented`; production: `verified` | architect + backend + devops | `EVID-001`, `EVID-004`, `EVID-006` | `EVID-001` backend security/auth tests, `EVID-004` compose smoke, `EVID-006` docs/config review | Legal/security sign-off must confirm RBAC, immutable audit events, storage baseline, and smoke evidence are current | Blocks both gates until the control is at least `implemented` with current evidence |
 | CTRL-RU-02 | implemented | Pre-prod: `implemented`; production: `verified` | architect + backend + frontend | `EVID-001`, `EVID-005`, `EVID-007` | `EVID-001` backend security/auth tests, `EVID-005` frontend observability tests, `EVID-007` shortlist/scoring integration checks | Legal/security sign-off must confirm operator measures, observability, and auditability are current | Blocks both gates until the control is at least `implemented` with current evidence |
-| CTRL-RU-04 | in-progress | Pre-prod: `implemented`; production: `verified` | architect + devops | `EVID-009` | Manual review of `docs/project/evidence/ru-data-residency-pack.md` | Legal sign-off requires RU locality confirmation in the evidence pack | Blocks both gates while the control remains `planned` or `in-progress` |
+| CTRL-RU-04 | in-progress | Pre-prod: `implemented`; production: `verified` | architect + devops | `EVID-009` | Manual review of `docs/project/evidence/ru-data-residency-pack.md` | Legal sign-off requires RU locality confirmation in the evidence pack (current locality: Belarus) | Blocks both gates while the control remains `planned` or `in-progress` |
 | CTRL-RU-05 | implemented | Pre-prod: `implemented`; production: `verified` | backend + devops | `EVID-001`, `EVID-004` | `EVID-001` access-policy/audit tests, `EVID-004` compose/browser smoke | Legal/security sign-off must confirm access control and smoke verification are current | Blocks both gates until the control is at least `implemented` with current evidence |
 | CTRL-RU-06 | implemented | Pre-prod: `implemented`; production: `verified` | security + business-analyst | `EVID-010` | Manual review of `docs/project/evidence/ru-ispdn-class-checklist.md` | Legal/security sign-off must confirm the checklist and attestation are current | Blocks both gates until the control is at least `implemented` with current evidence |
 
