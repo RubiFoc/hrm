@@ -464,12 +464,38 @@ Assumption: release-specific evidence outputs and legal/security approvals are a
 - Least-privilege access is mandatory for platform, database, object storage, and CI/CD.
 - No shared human accounts for production administration.
 - Privileged role grants require ticket-based justification and explicit expiration date.
-- Access review cadence:
-  - monthly review for privileged/admin roles;
-  - quarterly review for all operational/service accounts.
+- Access review cadence (privileged/admin roles): monthly.
+- Access review cadence (operational/service accounts): quarterly.
 - Access revocation SLA: same business day for role removal or offboarding events.
+- Break-glass access is allowed only for Sev-1/Sev-2 incidents or legal/regulatory deadlines and must be time-boxed and logged.
 
-- TODO(owner: architect + security, due_trigger: before first production release): finalize break-glass procedure and reviewer roster.
+#### Break-Glass Procedure (Approved)
+Approval: 2026-03-23 (architect + security).
+
+Preconditions: Sev-1/Sev-2 incident or a legally mandated deadline with no safer alternative; existing access paths are insufficient to restore service or meet the deadline.
+
+Required approvals: coordinator (primary) and security (secondary, or architect if security is unavailable). Solo-maintainer mode may self-approve but must document rationale and the time-box.
+
+Execution steps:
+1. Open a break-glass record in the incident/ticket system with the template below.
+2. Define the minimum access scope, systems, and a hard end time (max 24 hours).
+3. Grant temporary access using role/credential mechanisms that support explicit expiry.
+4. Record all actions, timestamps, and any correlation IDs in the break-glass record.
+5. Revoke access immediately after the action is complete and confirm revocation.
+6. Complete a post-incident review within 5 business days and attach evidence.
+
+Break-glass record template (fields): Request ID; incident/legal trigger; requester + approvers; systems/scope; start time + planned end time; actions performed + evidence links; revocation time + verification note; post-incident review link.
+
+#### Access Review Roster (Approved)
+- Approval: 2026-03-23 (architect + security).
+
+| Review Area | Primary Reviewer | Backup Reviewer | Scope |
+| --- | --- | --- | --- |
+| Platform/CI/CD access | devops | architect | Cloud accounts, CI secrets, deployment credentials |
+| Data stores access | backend | devops | PostgreSQL, Redis, object storage, backups |
+| Application/admin access | hr-ops | backend | Staff accounts, admin roles, operational privileges |
+| Security/compliance exceptions | security | business-analyst | Legal holds, policy exceptions, sign-off records |
+| Break-glass approvals | coordinator | security | Emergency access requests and time-boxed overrides |
 
 ### Release Gate Policy
 - Dev and test deployments are allowed with provisional controls, but they do not waive EPIC-13 release gating.
