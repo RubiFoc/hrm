@@ -1,8 +1,8 @@
 # Legal Controls Matrix (Belarus + Russia)
 
 ## Last Updated
-- Date: 2026-03-19
-- Updated by: coordinator + business-analyst + architect
+- Date: 2026-03-23
+- Updated by: coordinator
 
 ## Status Legend
 - `planned`: control not yet represented by a concrete product/process artifact in the repo.
@@ -34,7 +34,7 @@
 | CTRL-RU-01 | Processing must stay purpose-bound and data-minimized | Frozen contracts and UI/API payload boundaries define the current Phase 1 data set | `EVID-002`, `EVID-003`, `EVID-007` | OpenAPI drift check, frontend tests, targeted backend/frontend scoring tests |
 | CTRL-RU-02 | Operator must implement and confirm adequate security measures | Access control, auditability, explainable AI artifacts, and critical-route observability | `EVID-001`, `EVID-005`, `EVID-007` | backend security tests, frontend observability tests, scoring/candidate test suites |
 | CTRL-RU-03 | Subject rights requests need a repeatable response workflow | Request intake/runbook + actor ownership | No current evidence artifact | To implement under future request-handling slice |
-| CTRL-RU-04 | RU citizens' PD must be stored/localized in the required jurisdiction | Infra placement and backup residency controls | No current evidence artifact | Infra/legal sign-off before production |
+| CTRL-RU-04 | RU citizens' PD must be stored/localized in the required jurisdiction | Infra placement and backup residency controls | No current evidence artifact; requires RU data-residency attachment pack (deployment locality, backup locality, legal/devops confirmation) | Infra/legal sign-off before production |
 | CTRL-RU-05 | Restricted information requires legal/organizational/technical protection measures | Access control, audit trail, and repeatable smoke verification of critical routes | `EVID-001`, `EVID-004` | backend security tests + compose/browser smoke |
 | CTRL-RU-06 | ISPDn safeguards must be documented and attested by class | Security checklist and attestation workflow | No current evidence artifact | External/internal security review before production |
 

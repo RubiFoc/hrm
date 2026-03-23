@@ -1,8 +1,8 @@
 # Evidence Registry
 
 ## Last Updated
-- Date: 2026-03-19
-- Updated by: coordinator + business-analyst + architect
+- Date: 2026-03-23
+- Updated by: coordinator
 
 ## Registry Model
 - `Evidence ID`: stable identifier for cross-references from `legal-controls-matrix.md`.
@@ -33,7 +33,7 @@
 | --- | --- | --- | --- |
 | CTRL-BY-02 | Runbook procedure for access/correction/deletion or stop-processing requests | backend + hr-ops | Before any public subject-rights workflow or production readiness review |
 | CTRL-RU-03 | Runbook/ticket workflow for data-subject requests under 152-ФЗ | backend + hr-ops | Before any production readiness review |
-| CTRL-RU-04 | Infra/data-residency ADR and deployment evidence for RU localization | architect + devops | Before storing production RU citizen data; blocks EPIC-13 pre-prod and production release until the gap is replaced by real evidence |
+| CTRL-RU-04 | RU data-residency attachment pack (deployment locality, backup locality, legal/devops confirmation) | architect + devops | Before storing production RU citizen data; blocks EPIC-13 pre-prod and production release until the gap is replaced by real evidence |
 | CTRL-RU-06 | ISPDn class checklist and attestation pack | security + business-analyst | Before first production release; blocks EPIC-13 pre-prod and production release until the pack exists as a real evidence artifact |
 
 ## Production Package Scope (TASK-13-04)

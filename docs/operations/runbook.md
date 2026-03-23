@@ -1,8 +1,8 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-20
-- Updated by: coordinator + devops-engineer + frontend-engineer
+- Date: 2026-03-23
+- Updated by: coordinator
 
 ## Local Environment (Docker Compose)
 ### Prerequisites
@@ -426,7 +426,8 @@ Assumption: release-specific evidence outputs and legal/security approvals are a
   - Object storage buckets with personal data must use server-side encryption.
   - Backups/snapshots must be encrypted and access-restricted.
 
-- TODO(owner: devops + security, due_trigger: before first production release): attach concrete infrastructure evidence (KMS/SSE/TLS termination config) to the EPIC-13 release checklist and close the `CTRL-RU-04` gap with a real artifact.
+- TODO(owner: devops + security, due_trigger: before first production release): attach concrete encryption evidence (KMS/SSE/TLS termination config) to the EPIC-13 release checklist.
+- TODO(owner: architect + devops + legal, due_trigger: before first production release): attach RU data-residency evidence pack (deployment locality, backup locality, legal/devops confirmation) to the EPIC-13 release checklist and close the `CTRL-RU-04` gap with a real artifact.
 
 ### Access Policy and Review Cadence (Provisional)
 - Least-privilege access is mandatory for platform, database, object storage, and CI/CD.
