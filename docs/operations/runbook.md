@@ -503,7 +503,8 @@ Break-glass record template (fields): Request ID; incident/legal trigger; reques
 - `docs/project/production-legal-evidence-package.md` is the canonical package manifest for repo-backed evidence, external attachments, freshness rules, and sign-off sequencing.
 - Pre-prod promotion is blocked if any critical control in `docs/project/legal-controls-matrix.md` remains `planned` or `in-progress`.
 - Production release is blocked unless every critical control is `verified` and legal/security sign-off records the refreshed evidence IDs.
-- The current hard blockers are `CTRL-BY-01` (in-progress) and `CTRL-BY-02` (implemented but unverified); production release also remains blocked until `CTRL-BY-03` is verified and signed off.
+- Current pre-prod blocker: `CTRL-BY-01` (`in-progress`).
+- Current production blockers: `CTRL-BY-01`, `CTRL-BY-02`, and `CTRL-BY-03` are not yet `verified` and still require refreshed evidence plus legal/security sign-off.
 
 ### Production Sign-Off Handling
 1. Freeze the release candidate commit/tag before collecting approval evidence.

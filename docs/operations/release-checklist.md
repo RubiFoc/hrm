@@ -17,9 +17,8 @@
   - a control that is still `planned` or `in-progress` blocks release outright.
 
 ## Known Blocking Controls
-- `CTRL-BY-01` is in-progress and blocks pre-prod/production until it is `verified`.
-- `CTRL-BY-02` is implemented; it no longer blocks pre-prod, but production release still requires `verified` status.
-- `CTRL-BY-03` is implemented, but production release still requires `verified` status and refreshed evidence plus legal/security sign-off.
+- `CTRL-BY-01` is `in-progress`, so it blocks pre-prod until it reaches `implemented`, and it blocks production until it is `verified`.
+- `CTRL-BY-02` and `CTRL-BY-03` are `implemented`, so they do not block pre-prod, but production release remains blocked until each is `verified` with current evidence and required sign-off.
 
 ## Required Package Attachments
 - Repo-backed inputs:
@@ -35,7 +34,7 @@
 - Every attached output and approval must reference the exact production release candidate commit SHA or tag.
 - Attached outputs for repo-backed evidence rows must be refreshed after any matching update trigger fires and no more than `7` calendar days before production approval.
 - External legal/security approvals become stale immediately if the release candidate, referenced evidence IDs, or blocker state changes.
-- `CTRL-BY-01` and `CTRL-BY-02` remain blockers until they are `verified`.
+- For production release, any critical control that is not `verified` remains a blocker (currently `CTRL-BY-01`, `CTRL-BY-02`, `CTRL-BY-03`).
 
 ## Blocking Control Table
 
