@@ -50,6 +50,7 @@
 - Do not promote to production if any critical control is not `verified`.
 - Do not claim legal/security sign-off unless the evidence IDs above are current and the Belarus controls are verified.
 - Keep this document aligned with `docs/project/legal-controls-matrix.md`, `docs/project/evidence-registry.md`, `docs/operations/runbook.md`, and `docs/testing/strategy.md` in the same change set.
+- Data Retention Policy is approved and current; see `docs/operations/runbook.md` (Data Retention Policy).
 
 ## Sign-Off Workflow
 1. Freeze the production release candidate commit/tag.

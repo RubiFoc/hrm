@@ -427,22 +427,27 @@ Runtime auth/browser integration settings:
   5. For register failures with revoked keys, confirm `employee_registration_keys.revoked_at` is not null.
 
 ## Compliance Baseline (Dev Non-Blocking, Prod Blocking)
-This section defines provisional operational controls until final legal/security sign-off.
+This section defines operational controls; the data retention policy below is approved as of 2026-03-23, while remaining controls stay provisional until final legal/security sign-off.
 
 EPIC-13 release gating and sign-off requirements live in `docs/operations/release-checklist.md`.
 The canonical production evidence manifest lives in `docs/project/production-legal-evidence-package.md`.
 Assumption: release-specific evidence outputs and legal/security approvals are attached to the release ticket or PR, while the repo keeps the manifest and blocker logic.
 
-### Data Retention Policy (Provisional)
+### Data Retention Policy (Approved)
+
+- Approval: 2026-03-23 (business-analyst + legal).
 
 | Data Class | Storage | Retention Window | Disposal Strategy | Owner |
 | --- | --- | --- | --- | --- |
 | Auth denylist keys (`jti`, `sid`) | Redis | TTL-bound to token/session validity window | Auto-expire via Redis TTL | backend |
-| Audit events (`audit_events`) | PostgreSQL | 365 days hot storage | Archive then purge by approved retention job | backend + devops |
+| Audit events (`audit_events`) | PostgreSQL | 36 months total (12 months hot + 24 months archive) | Archive then purge by approved retention job | backend + devops |
 | Application logs | Container/log backend | 90 days | Rotation + purge | devops |
-| Candidate CV/documents | Object storage | 24 months after workflow closure (provisional) | Delete object + metadata tombstone | hr-ops + backend |
-
-- TODO(owner: business-analyst + legal, due_trigger: before first production release): approve final retention windows for each PD category.
+| Candidate personal data (profiles, applications, pipeline, parsed CV artifacts) | PostgreSQL | 24 months after workflow closure (non-hire); if hired, follow employee personal data window | Pseudonymize then purge rows after retention expiry | hr-ops + backend |
+| Candidate CV/documents | Object storage | 24 months after workflow closure (non-hire); if hired, follow employee personal data window | Delete object + metadata tombstone | hr-ops + backend |
+| Interview evaluations (`interview_feedback`) | PostgreSQL | 24 months after hiring decision or workflow closure | Purge rows after retention expiry | hr-ops + backend |
+| HR records (vacancies, offers, pipeline transitions, hire conversions) | PostgreSQL | 5 years after vacancy closure or employment termination (whichever is later) | Archive then purge | hr-ops + backend |
+| Employee personal data (employee profiles, onboarding runs/tasks) | PostgreSQL | 7 years after employment termination | Archive then purge | hr-ops + backend |
+| Accounting exports (CSV/XLSX attachments) | Object storage (export attachments) | 10 years after export creation | Delete exported attachments + access logs | finance + devops |
 
 ### Encryption Policy (Provisional)
 - In transit:
