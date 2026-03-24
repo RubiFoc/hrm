@@ -19,10 +19,18 @@ This folder is the single source of truth for project context required for deliv
 - `project/production-legal-evidence-package.md`: Canonical production legal evidence package manifest and sign-off workflow
 - `project/interview-planning-pass.md`: Decision-complete planning baseline for interview scheduling and candidate registration
 - `project/interview-feedback-fairness-pass.md`: Decision-complete planning baseline for structured interviewer feedback and fairness gate before `offer`
+- `project/employee-profile-referral-compensation-pass.md`: BA discovery baseline for employee public profiles/avatars, referral recommendations, and compensation controls
 - `project/rbac-matrix.md`: Phase-1 role and permission matrix baseline
 - `project/auth-session-lifecycle.md`: Authentication/session lifecycle baseline and API contract
 - `architecture/overview.md`: System architecture and boundaries
 - `architecture/diagrams.md`: Canonical architecture and flow diagrams
+- `architecture/drawio/README.md`: Editable `draw.io` source conventions and inventory for canonical diagrams
+- `architecture/drawio/hr-user-workflow-a1-sheet.drawio`: Editable source for the HR user workflow algorithm on an `A1` sheet
+- `architecture/drawio/application-structure-a1-sheet.drawio`: Editable source for the full application structural diagram on an `A1` sheet
+- `architecture/drawio/application-use-cases-a1-sheet.drawio`: Editable source for the full application use case diagram on an `A1` sheet
+- `architecture/drawio/database-structure-a1-sheet.drawio`: Editable source for the full application database structure diagram on an `A1` sheet
+- `architecture/dbml/README.md`: `dbdiagram.io` / DBML source inventory for database diagrams
+- `architecture/dbml/database-structure.dbml`: DBML export of the full application database structure for `dbdiagram.io`
 - `architecture/decomposition.md`: Architecture breakdown by domains, services, and modules
 - `architecture/automation-events.md`: Automation trigger event contracts and template field sets
 - `architecture/decisions.md`: Decision log (ADR-lite)
@@ -37,6 +45,7 @@ This folder is the single source of truth for project context required for deliv
 - `llm/start-here.md`: How LLM should begin work
 - `llm/context-map.md`: Which docs to load per task type
 - `llm/task-template.md`: Prompt template for implementation tasks
+- `llm/diploma-writing-base-prompt.md`: Base ChatGPT prompt for writing thesis sections from the HRM system context
 - `llm/handoff-template.md`: Delivery handoff template
 - `llm/docs-update-checklist.md`: Required documentation updates per change
 - `ownership.md`: Document owners and review cadence

@@ -1,8 +1,8 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-20
-- Updated by: architect + frontend-engineer
+- Date: 2026-03-23
+- Updated by: architect + coordinator
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -1119,3 +1119,96 @@ flowchart LR
 The ADMIN-05 slice stays frontend-first over the existing read-only backend contracts. It reuses
 the shared health probe, audit preview, CV parsing status, and match score status endpoints
 without adding a new backend namespace or destructive behavior.
+
+## Diagram 27: HR User Workflow Algorithm
+
+- Canonical editable source: `docs/architecture/drawio/hr-user-workflow-a1-sheet.drawio`
+- Sheet format: `A1`
+- Diagram language: Russian
+- Diagram style: black-and-white editable `draw.io`
+- Scope: detailed HR staff workflow after authentication, assuming the backlog-complete product
+  scope.
+- Covered work areas:
+  - recruitment: vacancy updates, parsing readiness checks, scoring, interviews, fairness gate,
+    offer handling, hire conversion, and employee bootstrap;
+  - employee operations: onboarding template updates, onboarding-run supervision, task
+    reassignment, and employee profile review;
+  - referral operations: consent checks, duplicate merge, vacancy-fit review, and referral-bonus
+    handoff after hire;
+  - compensation: raise-request review, salary-band maintenance, payroll/bonus validation, and
+    accountant handoff.
+- Decomposition rule: follow-up diagrams should use business-specific child names instead of
+  sheet-size labels so the editable `draw.io` sources stay unambiguous.
+
+## Diagram 28: Full Application Structural Diagram
+
+- Canonical editable source: `docs/architecture/drawio/application-structure-a1-sheet.drawio`
+- Sheet format: `A1`
+- Diagram language: Russian
+- Diagram style: black-and-white editable `draw.io`
+- Scope: structural view of the whole application, including user roles, web client, backend
+  domains, background workers, data stores, and external integrations.
+- Covered layers:
+  - users: candidate, admin, HR, hiring manager, employee, accountant, leader;
+  - web client: public screens, auth/routing, role workspaces, shared client services, client
+    observability;
+  - backend: request gateway, access/session management, admin, recruitment, CV/scoring, employee,
+    automation, notifications, finance, reporting/audit, calendar integration;
+  - async runtime: dedicated background task process with CV parsing, scoring, calendar sync, and
+    automation/reporting workloads;
+  - data and integrations: transactional database, object storage, Redis/task queue, AI model
+    service, calendar system, and frontend monitoring system.
+
+## Diagram 29: Full Application Use Case Diagram
+
+- Canonical editable source: `docs/architecture/drawio/application-use-cases-a1-sheet.drawio`
+- Sheet format: `A1`
+- Diagram language: Russian
+- Diagram style: black-and-white editable `draw.io`, using a more formal UML-like use case
+  notation with directed actor associations and explicit `<<extend>>` links where applicable.
+- Scope: system-wide use case view with the main human actors and the key business capabilities
+  available in the application, preserving readability on a single `A1` sheet.
+- Covered actors:
+  - candidate;
+  - admin;
+  - HR specialist;
+  - hiring manager;
+  - employee;
+  - accountant;
+  - company leader.
+- Covered capability areas:
+  - public candidate journey: vacancies, application, CV parsing-status tracking, interview
+    registration;
+  - administration and access: staff governance, registration keys, audit/observability, KPI
+    rebuild;
+  - recruitment and hiring: vacancy/pipeline work, candidate review, scoring, interview planning,
+    offer handling, hire conversion;
+  - employee and onboarding: onboarding templates, onboarding task supervision, employee portal,
+    employee-directory visibility;
+- finance and reporting: salary-band and bonus controls, accounting exports, reporting, and raise
+  approval.
+
+## Diagram 30: Full Application Database Structure Diagram
+
+- Canonical editable source: `docs/architecture/drawio/database-structure-a1-sheet.drawio`
+- Companion `dbdiagram.io` source: `docs/architecture/dbml/database-structure.dbml`
+- Sheet format: `A1`
+- Diagram language: Russian
+- Diagram style: black-and-white editable `draw.io`, organized as a stricter ERD with grouped
+  tables, field types, `PK/FK/UQ/NN` markers, cardinality labels, and directed foreign-key arrows.
+- Scope: goal-state relational database structure for the full application, assuming the backlog is
+  closed; the diagram keeps the implemented domain tables and adds the planned referral and
+  compensation persistence block needed for the target product scope.
+- Covered data areas:
+  - access and service data: staff accounts, employee registration keys, notifications, audit
+    events;
+  - candidate intake and analysis: candidate profiles, CV documents, parsing jobs, scoring jobs,
+    and explainable score artifacts;
+  - recruitment: vacancies, pipeline transitions, offers, interviews, interviewer feedback, and
+    calendar bindings;
+  - employee lifecycle: hire conversions, employee profiles, onboarding runs, onboarding tasks,
+    onboarding templates, and template items;
+  - referral and compensation target block: employee referrals, referral status history, vacancy
+    salary bands, salary raise requests, approval chain rows, and payroll/bonus entries;
+  - automation and reporting: automation rules, execution runs, action executions, automation
+    metric events, and KPI snapshots.

@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-03-23
-- Updated by: coordinator
+- Updated by: coordinator + business-analyst
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -69,6 +69,19 @@
 | TASK-13-03 | done/closed | Repo-backed release-gate compliance checklist now makes EPIC-13 pre-prod and production sign-off explicit, with current critical controls, evidence IDs, verification commands, legal/security preconditions, and blocker states captured in the docs set. |
 | TASK-13-04 | done/closed | GitHub issue #62 is linked to PR #138; the repo-backed production legal evidence package now defines sign-off workflow, required attachments, evidence freshness rules, blocker handling, and `verified` exit criteria for critical controls without adding runtime/API changes. |
 | COMPLIANCE-01 | done/closed | EPIC-13 compliance docs synced across legal-controls matrix, evidence registry, release checklist, and runbook; no runtime scope; Belarus-only gate retained (`CTRL-BY-01` in-progress, `CTRL-BY-02`/`CTRL-BY-03` implemented but unverified) |
+
+## Requested High-Priority Intake (2026-03-23)
+
+These requests are not closed in the current backlog snapshot and are added as new `P0` items.
+Business-analyst discovery is mandatory before implementation.
+Planning baseline source of truth: `docs/project/employee-profile-referral-compensation-pass.md`.
+BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks are unblocked.
+
+| Request | Backlog Status | New High-Priority Tasks |
+| --- | --- | --- |
+| Employee profiles with avatars in MinIO and cross-employee profile visibility | not found as a closed scope | `TASK-06-05` (BA clarification) -> `TASK-06-06` (implementation) |
+| Employee referral recommendations for vacancies | not found as a closed scope | `TASK-06-07` (BA clarification) -> `TASK-06-08` (implementation) |
+| Manager compensation controls (salary raises, payroll/bonus table, vacancy salary bands, manager/HR visibility) | not found as a closed scope | `TASK-09-05` (BA clarification) -> `TASK-09-06` (implementation) |
 
 ## 2026-03-12 Delivery Control Notes
 - `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
@@ -157,6 +170,8 @@
   - `TASK-05-01/02`
   - `TASK-11-05/06/07/08/09`
   - `TASK-13-01/02`
+  - `TASK-06-05/06/07/08`
+  - `TASK-09-05/06`
 - P1:
   - `TASK-03-08`
   - `TASK-06-01/02/03/04`
@@ -166,13 +181,19 @@
 - P2: none
 
 - Current open backlog by delivery wave:
-  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`
+  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`, `TASK-06-05/06/07/08`, `TASK-09-05/06`
   - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`
   - P2: none
 
 ## GitHub Issue Queue
 
 - P0:
+  - Open/track `TASK-06-05`: BA clarification for employee public profile + avatar storage policy (MinIO bucket, privacy, moderation, limits).
+  - Open/track `TASK-06-06`: employee profile visibility + avatar upload/read implementation on existing employee domain/workspaces.
+  - Open/track `TASK-06-07`: BA clarification for referral workflow (roles, rewards, anti-abuse, statuses, audit/legal constraints).
+  - Open/track `TASK-06-08`: employee referral recommendation flow implementation (UI + API + reporting hooks).
+  - Open/track `TASK-09-05`: BA clarification for compensation management baseline (raise authority, approval chain, payroll/bonus view scope, data sensitivity).
+  - Open/track `TASK-09-06`: manager/HR compensation tooling implementation (raise actions, salary/bonus table, vacancy salary bands, employee-to-band visibility).
 - P1:
   - RU-scope issues `#142`, `#143`, and `#145` should be closed as de-scoped after ADR-0059.
 
@@ -245,6 +266,10 @@
 | TASK-06-02 | EPIC-06 | Implement candidate-to-employee conversion workflow | Phase 2 | P1 | TASK-06-01 |
 | TASK-06-03 | EPIC-06 | Implement initial employee profile creation and validation | Phase 2 | P1 | TASK-06-02 |
 | TASK-06-04 | EPIC-06 | Trigger onboarding workflow on successful conversion | Phase 2 | P1 | TASK-06-03 |
+| TASK-06-05 | EPIC-06 | BA clarification pass for employee public profile: avatar storage in MinIO, profile visibility across employees, privacy/moderation constraints, and acceptance metrics | Phase 2 | P0 | TASK-06-03 |
+| TASK-06-06 | EPIC-06 | Implement employee public profile cards with avatar upload/read in MinIO and cross-employee profile viewing controls | Phase 2 | P0 | TASK-06-05 |
+| TASK-06-07 | EPIC-06 | BA clarification pass for referral workflow: recommendation flow, role permissions, anti-abuse rules, reward/accounting policy, and legal/audit boundaries | Phase 2 | P0 | TASK-06-03 |
+| TASK-06-08 | EPIC-06 | Implement employee referral recommendations for vacancies (recommend friend, lifecycle statuses, manager/HR review visibility) | Phase 2 | P0 | TASK-06-07, TASK-02-01 |
 | TASK-07-01 | EPIC-07 | Implement onboarding checklist template management | Phase 2 | P1 | TASK-06-04 |
 | TASK-07-02 | EPIC-07 | Implement onboarding task assignment and SLA tracking | Phase 2 | P1 | TASK-07-01 |
 | TASK-07-03 | EPIC-07 | Implement employee onboarding task portal | Phase 2 | P1 | TASK-07-02 |
@@ -253,6 +278,8 @@
 | TASK-09-02 | EPIC-09 | Implement leader workspace for KPI and operational overview | Phase 2 | P1 | TASK-10-02 |
 | TASK-09-03 | EPIC-09 | Implement accountant workspace with controlled export access | Phase 2 | P1 | TASK-06-03 |
 | TASK-09-04 | EPIC-09 | Implement role-specific notifications and summary digests | Phase 2 | P2 | TASK-09-01 |
+| TASK-09-05 | EPIC-09 | BA clarification pass for compensation management: raise permissions, approval chain, salary-band governance by vacancy, payroll/bonus table scope, and security controls | Phase 2 | P0 | TASK-09-03 |
+| TASK-09-06 | EPIC-09 | Implement manager/HR compensation controls: raise updates, payroll+bonus table visibility, vacancy salary bands, and employee-to-band display in manager/HR workspace | Phase 2 | P0 | TASK-09-05, TASK-09-03 |
 | TASK-10-01 | EPIC-10 | Implement KPI data model and aggregation pipeline | Phase 1-2 | P0 | TASK-08-04 |
 | TASK-10-02 | EPIC-10 | Expose stored monthly KPI snapshots to leaders (read-only) | Phase 1-2 | P0 | TASK-10-01 |
 | TASK-10-03 | EPIC-10 | Implement audit query API and compliance evidence view | Phase 1-2 | P1 | TASK-01-04 |
@@ -314,6 +341,12 @@ Historical planning queue retained for lineage; implemented items from the execu
 | 47 | TASK-10-04 | Reporting export package |
 | 48 | TASK-09-02 | Leader workspace finalization |
 | 49 | TASK-09-04 | Notification optimization |
+| 50 | TASK-06-05 | BA-first clarification for employee public profiles and avatar governance |
+| 51 | TASK-06-06 | Employee profile avatars in MinIO with cross-employee visibility |
+| 52 | TASK-06-07 | BA-first clarification for referral business rules |
+| 53 | TASK-06-08 | Employee referral recommendation flow rollout |
+| 54 | TASK-09-05 | BA-first clarification for compensation authority and data scope |
+| 55 | TASK-09-06 | Manager/HR compensation controls with salary bands and payroll/bonus table |
 
 ## Parallel Compliance Queue (No Change to Feature Sequence)
 This queue must be executed in parallel while preserving feature rollout order:

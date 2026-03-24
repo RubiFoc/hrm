@@ -1,0 +1,755 @@
+// DBML export for dbdiagram.io
+// Source: Diagram 30 (database structure ERD)
+// Scope: full application goal-state relational model, including the target referral/compensation block.
+
+Project hrm_database_structure {
+  database_type: 'PostgreSQL'
+  Note: '''
+  DBML export of the HRM database structure for dbdiagram.io.
+  Implemented backend tables mirror the current SQLAlchemy model layer.
+  Referral and compensation tables represent the target-state schema under the closed-backlog assumption.
+  Logical references that are not backed by a physical FK in the current implementation are documented as notes,
+  not as Ref definitions, so the export stays honest to the runtime schema.
+  '''
+}
+
+Table staff_accounts {
+  staff_id uuid [pk, not null]
+  login varchar(64) [not null, unique]
+  email varchar(256) [not null, unique]
+  password_hash varchar(512) [not null]
+  role varchar(32) [not null]
+  is_active boolean [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    login [name: 'ix_staff_accounts_login', unique]
+    email [name: 'ix_staff_accounts_email', unique]
+  }
+}
+
+Table employee_registration_keys {
+  key_id uuid [pk, not null]
+  employee_key uuid [not null, unique]
+  target_role varchar(32) [not null]
+  expires_at timestamptz [not null]
+  used_at timestamptz
+  revoked_at timestamptz
+  revoked_by_staff_id uuid
+  created_by_staff_id uuid [not null]
+  created_at timestamptz [not null]
+
+  Indexes {
+    employee_key [name: 'ix_employee_registration_keys_employee_key', unique]
+    expires_at [name: 'ix_employee_registration_keys_expires_at']
+    revoked_at [name: 'ix_employee_registration_keys_revoked_at']
+  }
+}
+
+Table notifications {
+  notification_id uuid [pk, not null]
+  recipient_staff_id uuid [not null]
+  recipient_role varchar(32) [not null]
+  kind varchar(64) [not null]
+  source_type varchar(64) [not null]
+  source_id uuid [not null]
+  dedupe_key varchar(255) [not null]
+  title varchar(256) [not null]
+  body text [not null]
+  payload_json json [not null]
+  created_at timestamptz [not null]
+  read_at timestamptz
+
+  Indexes {
+    (recipient_staff_id, dedupe_key) [name: 'ux_notifications_recipient_dedupe', unique]
+    (recipient_staff_id, created_at) [name: 'ix_notifications_recipient_created_at']
+    (recipient_staff_id, read_at) [name: 'ix_notifications_recipient_read_at']
+  }
+}
+
+Table audit_events {
+  event_id uuid [pk, not null]
+  occurred_at timestamptz [not null]
+  source varchar(16) [not null]
+  actor_sub varchar(128)
+  actor_role varchar(64)
+  action varchar(128) [not null]
+  resource_type varchar(128) [not null]
+  resource_id varchar(128)
+  result varchar(32) [not null]
+  reason text
+  correlation_id varchar(64)
+  ip varchar(64)
+  user_agent varchar(512)
+
+  Indexes {
+    occurred_at [name: 'ix_audit_events_occurred_at']
+    actor_sub [name: 'ix_audit_events_actor_sub']
+    (action, result) [name: 'ix_audit_events_action_result']
+    correlation_id [name: 'ix_audit_events_correlation_id']
+  }
+}
+
+Table candidate_profiles {
+  candidate_id uuid [pk, not null]
+  owner_subject_id varchar(128) [not null]
+  first_name varchar(128) [not null]
+  last_name varchar(128) [not null]
+  email varchar(256) [not null]
+  phone varchar(64)
+  location varchar(256)
+  current_title varchar(256)
+  extra_data json [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    owner_subject_id [name: 'ix_candidate_profiles_owner_subject_id']
+    email [name: 'ix_candidate_profiles_email']
+  }
+}
+
+Table candidate_documents {
+  document_id uuid [pk, not null]
+  candidate_id uuid [not null]
+  object_key varchar(512) [not null, unique]
+  filename varchar(255) [not null]
+  mime_type varchar(128) [not null]
+  size_bytes int [not null]
+  checksum_sha256 char(64) [not null]
+  is_active boolean [not null]
+  parsed_profile_json json
+  evidence_json json
+  detected_language varchar(16) [not null]
+  parsed_at timestamptz
+  created_at timestamptz [not null]
+
+  Indexes {
+    candidate_id [name: 'ix_candidate_documents_candidate_id']
+    object_key [name: 'ix_candidate_documents_object_key', unique]
+    (candidate_id, is_active) [name: 'ix_candidate_documents_candidate_active']
+    parsed_at [name: 'ix_candidate_documents_parsed_at']
+    (candidate_id, parsed_at) [name: 'ix_candidate_documents_candidate_parsed_at']
+  }
+}
+
+Table cv_parsing_jobs {
+  job_id uuid [pk, not null]
+  candidate_id uuid [not null]
+  document_id uuid [not null]
+  status varchar(16) [not null]
+  attempt_count int [not null]
+  last_error text
+  queued_at timestamptz [not null]
+  started_at timestamptz
+  finished_at timestamptz
+  updated_at timestamptz [not null]
+
+  Indexes {
+    status [name: 'ix_cv_parsing_jobs_status']
+    queued_at [name: 'ix_cv_parsing_jobs_queued_at']
+    candidate_id [name: 'ix_cv_parsing_jobs_candidate_id']
+    document_id [name: 'ix_cv_parsing_jobs_document_id']
+  }
+}
+
+Table vacancies {
+  vacancy_id uuid [pk, not null]
+  title varchar(256) [not null]
+  description text [not null]
+  department varchar(128) [not null]
+  status varchar(32) [not null]
+  hiring_manager_staff_id uuid
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    status [name: 'ix_vacancies_status']
+    created_at [name: 'ix_vacancies_created_at']
+    hiring_manager_staff_id [name: 'ix_vacancies_hiring_manager_staff_id']
+  }
+}
+
+Table match_scoring_jobs {
+  job_id uuid [pk, not null]
+  vacancy_id uuid [not null]
+  candidate_id uuid [not null]
+  document_id uuid [not null]
+  status varchar(16) [not null]
+  attempt_count int [not null]
+  last_error text
+  queued_at timestamptz [not null]
+  started_at timestamptz
+  finished_at timestamptz
+  updated_at timestamptz [not null]
+
+  Indexes {
+    status [name: 'ix_match_scoring_jobs_status']
+    queued_at [name: 'ix_match_scoring_jobs_queued_at']
+    vacancy_id [name: 'ix_match_scoring_jobs_vacancy_id']
+    candidate_id [name: 'ix_match_scoring_jobs_candidate_id']
+    document_id [name: 'ix_match_scoring_jobs_document_id']
+    (vacancy_id, candidate_id) [name: 'ix_match_scoring_jobs_vacancy_candidate']
+  }
+}
+
+Table match_score_artifacts {
+  artifact_id uuid [pk, not null]
+  job_id uuid [not null, unique]
+  vacancy_id uuid [not null]
+  candidate_id uuid [not null]
+  document_id uuid [not null]
+  score float [not null]
+  confidence float [not null]
+  summary text [not null]
+  matched_requirements_json json [not null]
+  missing_requirements_json json [not null]
+  evidence_json json [not null]
+  model_name varchar(128) [not null]
+  model_version varchar(128) [not null]
+  scored_at timestamptz [not null]
+  created_at timestamptz [not null]
+
+  Indexes {
+    job_id [name: 'ix_match_score_artifacts_job_id', unique]
+    vacancy_id [name: 'ix_match_score_artifacts_vacancy_id']
+    candidate_id [name: 'ix_match_score_artifacts_candidate_id']
+    document_id [name: 'ix_match_score_artifacts_document_id']
+    (vacancy_id, candidate_id, scored_at) [name: 'ix_match_score_artifacts_vacancy_candidate_scored_at']
+  }
+}
+
+Table pipeline_transitions {
+  transition_id uuid [pk, not null]
+  vacancy_id uuid [not null]
+  candidate_id uuid [not null]
+  from_stage varchar(32)
+  to_stage varchar(32) [not null]
+  reason text
+  changed_by_sub varchar(128) [not null]
+  changed_by_role varchar(64) [not null]
+  transitioned_at timestamptz [not null]
+
+  Indexes {
+    (vacancy_id, candidate_id, transitioned_at) [name: 'ix_pipeline_transitions_vacancy_candidate_time']
+  }
+}
+
+Table offers {
+  offer_id uuid [pk, not null]
+  vacancy_id uuid [not null]
+  candidate_id uuid [not null]
+  status varchar(32) [not null]
+  terms_summary text
+  proposed_start_date date
+  expires_at date
+  note text
+  sent_at timestamptz
+  sent_by_staff_id uuid
+  decision_at timestamptz
+  decision_note text
+  decision_recorded_by_staff_id uuid
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'sent_by_staff_id and decision_recorded_by_staff_id are logical references to staff_accounts, not physical FKs in the current implementation.'
+
+  Indexes {
+    (vacancy_id, candidate_id) [name: 'ux_offers_vacancy_candidate', unique]
+    status [name: 'ix_offers_status']
+  }
+}
+
+Table interviews {
+  interview_id uuid [pk, not null]
+  vacancy_id uuid [not null]
+  candidate_id uuid [not null]
+  status varchar(64) [not null]
+  calendar_sync_status varchar(32) [not null]
+  schedule_version int [not null]
+  scheduled_start_at timestamptz [not null]
+  scheduled_end_at timestamptz [not null]
+  timezone varchar(128) [not null]
+  location_kind varchar(32) [not null]
+  location_details text
+  interviewer_staff_ids_json json [not null]
+  calendar_event_id varchar(512)
+  candidate_token_nonce varchar(128)
+  candidate_token_hash char(64)
+  candidate_token_expires_at timestamptz
+  candidate_response_status varchar(32) [not null]
+  candidate_response_note text
+  cancelled_by varchar(32)
+  cancel_reason_code varchar(128)
+  calendar_sync_reason_code varchar(128)
+  calendar_sync_error_detail text
+  created_by_staff_id uuid [not null]
+  updated_by_staff_id uuid [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  last_synced_at timestamptz
+
+  Note: 'The runtime schema uses a partial unique index to keep one active interview per vacancy/candidate pair where status != cancelled. created_by_staff_id and updated_by_staff_id are logical references to staff_accounts.'
+
+  Indexes {
+    vacancy_id [name: 'ix_interviews_vacancy_id']
+    candidate_id [name: 'ix_interviews_candidate_id']
+    status [name: 'ix_interviews_status']
+    calendar_sync_status [name: 'ix_interviews_calendar_sync_status']
+    candidate_token_hash [name: 'ix_interviews_candidate_token_hash']
+  }
+}
+
+Table interview_feedback {
+  feedback_id uuid [pk, not null]
+  interview_id uuid [not null]
+  schedule_version int [not null]
+  interviewer_staff_id uuid [not null]
+  requirements_match_score int [not null]
+  communication_score int [not null]
+  problem_solving_score int [not null]
+  collaboration_score int [not null]
+  recommendation varchar(32) [not null]
+  strengths_note text [not null]
+  concerns_note text [not null]
+  evidence_note text [not null]
+  submitted_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'interviewer_staff_id is a logical reference to staff_accounts, not a physical FK in the current implementation.'
+
+  Indexes {
+    interview_id [name: 'ix_interview_feedback_interview_id']
+    schedule_version [name: 'ix_interview_feedback_schedule_version']
+    (interview_id, schedule_version, interviewer_staff_id) [name: 'ux_interview_feedback_interviewer_version', unique]
+  }
+}
+
+Table interview_calendar_bindings {
+  binding_id uuid [pk, not null]
+  interview_id uuid [not null]
+  interviewer_staff_id uuid [not null]
+  calendar_id varchar(512) [not null]
+  calendar_event_id varchar(512) [not null]
+  schedule_version int [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'interviewer_staff_id is a logical reference to staff_accounts, not a physical FK in the current implementation.'
+
+  Indexes {
+    interview_id [name: 'ix_interview_calendar_bindings_interview_id']
+    (interview_id, interviewer_staff_id) [name: 'ux_interview_calendar_bindings_interviewer', unique]
+  }
+}
+
+Table hire_conversions {
+  conversion_id uuid [pk, not null]
+  vacancy_id uuid [not null]
+  candidate_id uuid [not null]
+  offer_id uuid [not null]
+  hired_transition_id uuid [not null, unique]
+  status varchar(32) [not null]
+  candidate_snapshot_json json [not null]
+  offer_snapshot_json json [not null]
+  converted_at timestamptz [not null]
+  converted_by_staff_id uuid [not null]
+
+  Note: 'converted_by_staff_id is a logical reference to staff_accounts, not a physical FK in the current implementation.'
+
+  Indexes {
+    (vacancy_id, candidate_id) [name: 'ux_hire_conversions_vacancy_candidate', unique]
+    hired_transition_id [name: 'ux_hire_conversions_hired_transition', unique]
+    status [name: 'ix_hire_conversions_status']
+  }
+}
+
+Table employee_profiles {
+  employee_id uuid [pk, not null]
+  hire_conversion_id uuid [not null, unique]
+  vacancy_id uuid [not null]
+  candidate_id uuid [not null]
+  first_name varchar(128) [not null]
+  last_name varchar(128) [not null]
+  email varchar(256) [not null]
+  phone varchar(64)
+  location varchar(256)
+  current_title varchar(256)
+  extra_data_json json [not null]
+  offer_terms_summary text
+  start_date date
+  staff_account_id uuid [unique]
+  created_by_staff_id uuid [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'created_by_staff_id is a logical reference to staff_accounts, not a physical FK in the current implementation.'
+
+  Indexes {
+    hire_conversion_id [name: 'ux_employee_profiles_hire_conversion', unique]
+    (vacancy_id, candidate_id) [name: 'ux_employee_profiles_vacancy_candidate', unique]
+    staff_account_id [name: 'ux_employee_profiles_staff_account', unique]
+    email [name: 'ix_employee_profiles_email']
+  }
+}
+
+Table onboarding_runs {
+  onboarding_id uuid [pk, not null]
+  employee_id uuid [not null, unique]
+  hire_conversion_id uuid [not null]
+  status varchar(32) [not null]
+  started_at timestamptz [not null]
+  started_by_staff_id uuid [not null]
+
+  Note: 'started_by_staff_id is a logical reference to staff_accounts, not a physical FK in the current implementation.'
+
+  Indexes {
+    employee_id [name: 'ux_onboarding_runs_employee', unique]
+    status [name: 'ix_onboarding_runs_status']
+  }
+}
+
+Table onboarding_tasks {
+  task_id uuid [pk, not null]
+  onboarding_id uuid [not null]
+  template_id uuid [not null]
+  template_item_id uuid [not null]
+  code varchar(64) [not null]
+  title varchar(256) [not null]
+  description text
+  sort_order int [not null]
+  is_required boolean [not null]
+  status varchar(32) [not null]
+  assigned_role varchar(32)
+  assigned_staff_id uuid
+  due_at timestamptz
+  completed_at timestamptz
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'template_id and template_item_id are materialized logical references, not physical FKs, because task rows keep a historical snapshot independent from later template edits. assigned_staff_id is also a logical reference to staff_accounts.'
+
+  Indexes {
+    (onboarding_id, code) [name: 'ux_onboarding_tasks_onboarding_code', unique]
+    onboarding_id [name: 'ix_onboarding_tasks_onboarding']
+    status [name: 'ix_onboarding_tasks_status']
+    due_at [name: 'ix_onboarding_tasks_due_at']
+    assigned_staff_id [name: 'ix_onboarding_tasks_assigned_staff']
+  }
+}
+
+Table onboarding_templates {
+  template_id uuid [pk, not null]
+  name varchar(128) [not null, unique]
+  description text
+  is_active boolean [not null]
+  created_by_staff_id uuid [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'created_by_staff_id is a logical reference to staff_accounts, not a physical FK in the current implementation.'
+
+  Indexes {
+    name [name: 'ux_onboarding_templates_name', unique]
+    is_active [name: 'ix_onboarding_templates_is_active']
+  }
+}
+
+Table onboarding_template_items {
+  template_item_id uuid [pk, not null]
+  template_id uuid [not null]
+  code varchar(64) [not null]
+  title varchar(256) [not null]
+  description text
+  sort_order int [not null]
+  is_required boolean [not null]
+
+  Indexes {
+    (template_id, code) [name: 'ux_onboarding_template_items_code', unique]
+    (template_id, sort_order) [name: 'ux_onboarding_template_items_sort_order', unique]
+  }
+}
+
+Table employee_referrals {
+  referral_id uuid [pk, not null]
+  vacancy_id uuid [not null]
+  referrer_employee_id uuid [not null]
+  candidate_id uuid
+  bonus_owner_employee_id uuid [not null]
+  full_name varchar(256) [not null]
+  phone varchar(64) [not null]
+  email varchar(256) [not null]
+  cv_object_key varchar(512)
+  consent_confirmed_at timestamptz [not null]
+  status varchar(32) [not null]
+  submitted_at timestamptz [not null]
+
+  Note: 'Target-state referral table inferred from the referral/compensation BA pass under the closed-backlog assumption.'
+
+  Indexes {
+    vacancy_id [name: 'ix_employee_referrals_vacancy_id']
+    referrer_employee_id [name: 'ix_employee_referrals_referrer_employee_id']
+    candidate_id [name: 'ix_employee_referrals_candidate_id']
+    status [name: 'ix_employee_referrals_status']
+  }
+}
+
+Table referral_status_history {
+  history_id uuid [pk, not null]
+  referral_id uuid [not null]
+  from_status varchar(32)
+  to_status varchar(32) [not null]
+  reason_code varchar(128)
+  changed_by_staff_id uuid [not null]
+  changed_at timestamptz [not null]
+
+  Note: 'Target-state referral lifecycle history table inferred from the referral/compensation BA pass.'
+
+  Indexes {
+    referral_id [name: 'ix_referral_status_history_referral_id']
+    changed_at [name: 'ix_referral_status_history_changed_at']
+  }
+}
+
+Table vacancy_salary_bands {
+  band_id uuid [pk, not null]
+  vacancy_id uuid [not null]
+  min_amount numeric(12,2) [not null]
+  max_amount numeric(12,2) [not null]
+  currency char(3) [not null]
+  effective_from date [not null]
+  effective_to date
+  created_by_staff_id uuid [not null]
+  created_at timestamptz [not null]
+
+  Note: 'Target-state compensation table inferred from the referral/compensation BA pass.'
+
+  Indexes {
+    (vacancy_id, effective_from) [name: 'ux_vacancy_salary_bands_effective_from', unique]
+    vacancy_id [name: 'ix_vacancy_salary_bands_vacancy_id']
+  }
+}
+
+Table salary_raise_requests {
+  raise_request_id uuid [pk, not null]
+  employee_id uuid [not null]
+  requested_by_staff_id uuid [not null]
+  current_amount numeric(12,2) [not null]
+  proposed_amount numeric(12,2) [not null]
+  effective_date date [not null]
+  status varchar(32) [not null]
+  reason text [not null]
+  created_at timestamptz [not null]
+
+  Note: 'Target-state compensation workflow table inferred from the referral/compensation BA pass.'
+
+  Indexes {
+    employee_id [name: 'ix_salary_raise_requests_employee_id']
+    status [name: 'ix_salary_raise_requests_status']
+    effective_date [name: 'ix_salary_raise_requests_effective_date']
+  }
+}
+
+Table salary_raise_approvals {
+  approval_id uuid [pk, not null]
+  raise_request_id uuid [not null]
+  approver_staff_id uuid [not null]
+  approver_role varchar(32) [not null]
+  decision varchar(32) [not null]
+  decided_at timestamptz [not null]
+  note text
+
+  Note: 'Target-state approval-chain table inferred from the referral/compensation BA pass.'
+
+  Indexes {
+    (raise_request_id, approver_staff_id) [name: 'ux_salary_raise_approvals_request_approver', unique]
+    raise_request_id [name: 'ix_salary_raise_approvals_raise_request_id']
+  }
+}
+
+Table payroll_bonus_entries {
+  entry_id uuid [pk, not null]
+  employee_id uuid [not null]
+  raise_request_id uuid
+  referral_id uuid
+  period_month date [not null]
+  base_salary numeric(12,2) [not null]
+  bonus_amount numeric(12,2) [not null]
+  payout_status varchar(32) [not null]
+  created_at timestamptz [not null]
+
+  Note: 'Target-state payroll/bonus read-model persistence inferred from the referral/compensation BA pass.'
+
+  Indexes {
+    employee_id [name: 'ix_payroll_bonus_entries_employee_id']
+    period_month [name: 'ix_payroll_bonus_entries_period_month']
+    payout_status [name: 'ix_payroll_bonus_entries_payout_status']
+  }
+}
+
+Table automation_rules {
+  rule_id uuid [pk, not null]
+  name varchar(128) [not null]
+  trigger varchar(128) [not null]
+  conditions_json json
+  actions_json json [not null]
+  priority int [not null]
+  is_active boolean [not null]
+  created_by_staff_id uuid [not null]
+  updated_by_staff_id uuid [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'created_by_staff_id and updated_by_staff_id are logical references to staff_accounts, not physical FKs in the current implementation.'
+
+  Indexes {
+    (trigger, is_active, priority) [name: 'ix_automation_rules_trigger_active_priority']
+    updated_at [name: 'ix_automation_rules_updated_at']
+  }
+}
+
+Table automation_execution_runs {
+  run_id uuid [pk, not null]
+  event_type varchar(128) [not null]
+  trigger_event_id uuid [not null]
+  event_time timestamptz [not null]
+  correlation_id varchar(64)
+  trace_id varchar(64) [not null]
+  status varchar(32) [not null]
+  planned_action_count int [not null]
+  succeeded_action_count int [not null]
+  deduped_action_count int [not null]
+  failed_action_count int [not null]
+  error_kind varchar(128)
+  error_text varchar(1024)
+  started_at timestamptz [not null]
+  finished_at timestamptz
+  updated_at timestamptz [not null]
+
+  Indexes {
+    (event_type, trigger_event_id, event_time) [name: 'ix_automation_execution_runs_event_trigger_time']
+    (status, started_at) [name: 'ix_automation_execution_runs_status_started_at']
+    correlation_id [name: 'ix_automation_execution_runs_correlation_id']
+    trace_id [name: 'ix_automation_execution_runs_trace_id']
+  }
+}
+
+Table automation_action_executions {
+  action_execution_id uuid [pk, not null]
+  run_id uuid [not null]
+  action varchar(64) [not null]
+  rule_id uuid [not null]
+  recipient_staff_id uuid [not null]
+  recipient_role varchar(32) [not null]
+  source_type varchar(64) [not null]
+  source_id uuid [not null]
+  dedupe_key varchar(255) [not null]
+  status varchar(32) [not null]
+  attempt_count int [not null]
+  trace_id varchar(64) [not null]
+  result_notification_id uuid
+  error_kind varchar(128)
+  error_text varchar(1024)
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Note: 'rule_id, recipient_staff_id, and result_notification_id are logical references to automation_rules, staff_accounts, and notifications, not physical FKs in the current implementation.'
+
+  Indexes {
+    run_id [name: 'ix_automation_action_executions_run_id']
+    (status, updated_at) [name: 'ix_automation_action_executions_status_updated_at']
+    dedupe_key [name: 'ix_automation_action_executions_dedupe_key']
+  }
+}
+
+Table automation_metric_events {
+  metric_event_id uuid [pk, not null]
+  event_type varchar(128) [not null]
+  trigger_event_id uuid [not null]
+  event_time timestamptz [not null]
+  outcome varchar(32) [not null]
+  total_hr_operations_count int [not null]
+  automated_hr_operations_count int [not null]
+  planned_action_count int [not null]
+  succeeded_action_count int [not null]
+  deduped_action_count int [not null]
+  failed_action_count int [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    (event_type, trigger_event_id) [name: 'ux_automation_metric_events_event_trigger', unique]
+    event_time [name: 'ix_automation_metric_events_event_time']
+    outcome [name: 'ix_automation_metric_events_outcome']
+  }
+}
+
+Table kpi_snapshots {
+  snapshot_id uuid [pk, not null]
+  period_month date [not null]
+  metric_key varchar(64) [not null]
+  metric_value int [not null]
+  generated_at timestamptz [not null]
+
+  Indexes {
+    (period_month, metric_key) [name: 'ux_kpi_snapshots_period_metric', unique]
+    period_month [name: 'ix_kpi_snapshots_period_month']
+  }
+}
+
+Ref: employee_registration_keys.revoked_by_staff_id > staff_accounts.staff_id [delete: set null]
+Ref: employee_registration_keys.created_by_staff_id > staff_accounts.staff_id [delete: cascade]
+Ref: notifications.recipient_staff_id > staff_accounts.staff_id [delete: cascade]
+
+Ref: candidate_documents.candidate_id > candidate_profiles.candidate_id [delete: cascade]
+Ref: cv_parsing_jobs.candidate_id > candidate_profiles.candidate_id [delete: cascade]
+Ref: cv_parsing_jobs.document_id > candidate_documents.document_id [delete: cascade]
+Ref: vacancies.hiring_manager_staff_id > staff_accounts.staff_id [delete: set null]
+Ref: match_scoring_jobs.vacancy_id > vacancies.vacancy_id [delete: cascade]
+Ref: match_scoring_jobs.candidate_id > candidate_profiles.candidate_id [delete: cascade]
+Ref: match_scoring_jobs.document_id > candidate_documents.document_id [delete: cascade]
+Ref: match_score_artifacts.job_id > match_scoring_jobs.job_id [delete: cascade]
+Ref: match_score_artifacts.vacancy_id > vacancies.vacancy_id [delete: cascade]
+Ref: match_score_artifacts.candidate_id > candidate_profiles.candidate_id [delete: cascade]
+Ref: match_score_artifacts.document_id > candidate_documents.document_id [delete: cascade]
+
+Ref: pipeline_transitions.vacancy_id > vacancies.vacancy_id [delete: cascade]
+Ref: pipeline_transitions.candidate_id > candidate_profiles.candidate_id [delete: cascade]
+Ref: offers.vacancy_id > vacancies.vacancy_id [delete: cascade]
+Ref: offers.candidate_id > candidate_profiles.candidate_id [delete: cascade]
+Ref: interviews.vacancy_id > vacancies.vacancy_id [delete: cascade]
+Ref: interviews.candidate_id > candidate_profiles.candidate_id [delete: cascade]
+Ref: interview_feedback.interview_id > interviews.interview_id [delete: cascade]
+Ref: interview_calendar_bindings.interview_id > interviews.interview_id [delete: cascade]
+
+Ref: hire_conversions.vacancy_id > vacancies.vacancy_id [delete: cascade]
+Ref: hire_conversions.candidate_id > candidate_profiles.candidate_id [delete: cascade]
+Ref: hire_conversions.offer_id > offers.offer_id [delete: cascade]
+Ref: hire_conversions.hired_transition_id > pipeline_transitions.transition_id [delete: cascade]
+Ref: employee_profiles.hire_conversion_id > hire_conversions.conversion_id [delete: cascade]
+Ref: employee_profiles.vacancy_id > vacancies.vacancy_id [delete: cascade]
+Ref: employee_profiles.candidate_id > candidate_profiles.candidate_id [delete: cascade]
+Ref: employee_profiles.staff_account_id > staff_accounts.staff_id [delete: set null]
+Ref: onboarding_runs.employee_id > employee_profiles.employee_id [delete: cascade]
+Ref: onboarding_runs.hire_conversion_id > hire_conversions.conversion_id [delete: cascade]
+Ref: onboarding_tasks.onboarding_id > onboarding_runs.onboarding_id [delete: cascade]
+Ref: onboarding_template_items.template_id > onboarding_templates.template_id [delete: cascade]
+
+Ref: employee_referrals.vacancy_id > vacancies.vacancy_id [delete: cascade]
+Ref: employee_referrals.referrer_employee_id > employee_profiles.employee_id [delete: cascade]
+Ref: employee_referrals.candidate_id > candidate_profiles.candidate_id [delete: set null]
+Ref: employee_referrals.bonus_owner_employee_id > employee_profiles.employee_id [delete: cascade]
+Ref: referral_status_history.referral_id > employee_referrals.referral_id [delete: cascade]
+Ref: referral_status_history.changed_by_staff_id > staff_accounts.staff_id [delete: cascade]
+Ref: vacancy_salary_bands.vacancy_id > vacancies.vacancy_id [delete: cascade]
+Ref: vacancy_salary_bands.created_by_staff_id > staff_accounts.staff_id [delete: cascade]
+Ref: salary_raise_requests.employee_id > employee_profiles.employee_id [delete: cascade]
+Ref: salary_raise_requests.requested_by_staff_id > staff_accounts.staff_id [delete: cascade]
+Ref: salary_raise_approvals.raise_request_id > salary_raise_requests.raise_request_id [delete: cascade]
+Ref: salary_raise_approvals.approver_staff_id > staff_accounts.staff_id [delete: cascade]
+Ref: payroll_bonus_entries.employee_id > employee_profiles.employee_id [delete: cascade]
+Ref: payroll_bonus_entries.raise_request_id > salary_raise_requests.raise_request_id [delete: set null]
+Ref: payroll_bonus_entries.referral_id > employee_referrals.referral_id [delete: set null]
+
+Ref: automation_action_executions.run_id > automation_execution_runs.run_id [delete: cascade]
