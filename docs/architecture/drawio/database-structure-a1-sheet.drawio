@@ -1,0 +1,207 @@
+<mxfile host="app.diagrams.net" modified="2026-03-23T00:00:00.000Z" agent="Codex" version="26.0.11">
+  <diagram id="database-structure" name="Database Structure">
+    <mxGraphModel dx="3310" dy="2340" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3310" pageHeight="2340" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <mxCell id="2" value="Структура базы данных приложения (ERD)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontStyle=1;fontSize=24;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="870" y="10" width="1570" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="3" value="Формат листа: A1. Исполнение: черно-белое. Язык: русский. Допущение: целевая реляционная модель при закрытом backlog." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=12;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="760" y="40" width="1790" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="4" value="Легенда: подпись связи показывает кардинальность в формате дочерняя:родительская. Сплошная стрелка = FK. Пунктир = логическая ссылка без жесткого FK. NN = NOT NULL, NULL = nullable, UQ = unique." style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=11;fontColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="430" y="62" width="2450" height="20" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="100" value="Доступ и служебные данные" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontStyle=1;fontSize=16;align=left;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="30" y="110" width="520" height="620" as="geometry"/>
+        </mxCell>
+        <mxCell id="101" value="staff_accounts&#xa;PK staff_id uuid NN&#xa;login varchar(64) UQ NN&#xa;email varchar(256) UQ NN&#xa;password_hash varchar(512) NN&#xa;role varchar(32) NN&#xa;is_active boolean NN&#xa;created_at timestamptz NN&#xa;updated_at timestamptz NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="190" width="220" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="102" value="employee_registration_keys&#xa;PK key_id uuid NN&#xa;employee_key uuid UQ NN&#xa;target_role varchar(32) NN&#xa;expires_at timestamptz NN&#xa;used_at timestamptz NULL&#xa;revoked_at timestamptz NULL&#xa;FK revoked_by_staff_id uuid NULL&#xa;FK created_by_staff_id uuid NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="310" y="190" width="220" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="103" value="notifications&#xa;PK notification_id uuid NN&#xa;FK recipient_staff_id uuid NN&#xa;recipient_role varchar(32) NN&#xa;kind varchar(64) NN&#xa;source_type varchar(64) NN&#xa;source_id uuid NN&#xa;dedupe_key varchar(255) NN&#xa;read_at timestamptz NULL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="70" y="450" width="220" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="104" value="audit_events&#xa;PK event_id uuid NN&#xa;occurred_at timestamptz NN&#xa;source varchar(16) NN&#xa;actor_sub varchar(128) NULL&#xa;actor_role varchar(64) NULL&#xa;action varchar(128) NN&#xa;resource_type varchar(128) NN&#xa;resource_id varchar(128) NULL&#xa;result varchar(32) NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="310" y="450" width="220" height="220" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="200" value="Кандидаты, документы и скоринг" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontStyle=1;fontSize=16;align=left;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="580" y="110" width="640" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="201" value="candidate_profiles&#xa;PK candidate_id uuid NN&#xa;owner_subject_id varchar(128) NN&#xa;first_name varchar(128) NN&#xa;last_name varchar(128) NN&#xa;email varchar(256) NN&#xa;phone varchar(64) NULL&#xa;location varchar(256) NULL&#xa;current_title varchar(256) NULL&#xa;extra_data json NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="610" y="190" width="270" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="202" value="candidate_documents&#xa;PK document_id uuid NN&#xa;FK candidate_id uuid NN&#xa;object_key varchar(512) UQ NN&#xa;filename varchar(255) NN&#xa;mime_type varchar(128) NN&#xa;checksum_sha256 char(64) NN&#xa;is_active boolean NN&#xa;parsed_profile_json json NULL&#xa;evidence_json json NULL&#xa;parsed_at timestamptz NULL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="910" y="190" width="280" height="270" as="geometry"/>
+        </mxCell>
+        <mxCell id="203" value="cv_parsing_jobs&#xa;PK job_id uuid NN&#xa;FK candidate_id uuid NN&#xa;FK document_id uuid NN&#xa;status varchar(16) NN&#xa;attempt_count int NN&#xa;last_error text NULL&#xa;queued_at timestamptz NN&#xa;started_at timestamptz NULL&#xa;finished_at timestamptz NULL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="610" y="500" width="270" height="240" as="geometry"/>
+        </mxCell>
+        <mxCell id="204" value="match_scoring_jobs&#xa;PK job_id uuid NN&#xa;FK vacancy_id uuid NN&#xa;FK candidate_id uuid NN&#xa;FK document_id uuid NN&#xa;status varchar(16) NN&#xa;attempt_count int NN&#xa;queued_at timestamptz NN&#xa;started_at timestamptz NULL&#xa;finished_at timestamptz NULL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="910" y="500" width="280" height="240" as="geometry"/>
+        </mxCell>
+        <mxCell id="205" value="match_score_artifacts&#xa;PK artifact_id uuid NN&#xa;FK job_id uuid UQ NN&#xa;FK vacancy_id uuid NN&#xa;FK candidate_id uuid NN&#xa;FK document_id uuid NN&#xa;score float NN&#xa;confidence float NN&#xa;summary text NN&#xa;model_name varchar(128) NN&#xa;model_version varchar(128) NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="610" y="780" width="580" height="220" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="300" value="Подбор, вакансии и интервью" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontStyle=1;fontSize=16;align=left;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1250" y="110" width="720" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="301" value="vacancies&#xa;PK vacancy_id uuid NN&#xa;title varchar(256) NN&#xa;description text NN&#xa;department varchar(128) NN&#xa;status varchar(32) NN&#xa;FK hiring_manager_staff_id uuid NULL&#xa;created_at timestamptz NN&#xa;updated_at timestamptz NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="190" width="210" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="302" value="pipeline_transitions&#xa;PK transition_id uuid NN&#xa;FK vacancy_id uuid NN&#xa;FK candidate_id uuid NN&#xa;from_stage varchar(32) NULL&#xa;to_stage varchar(32) NN&#xa;reason text NULL&#xa;changed_by_sub varchar(128) NN&#xa;changed_by_role varchar(64) NN&#xa;transitioned_at timestamptz NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1515" y="190" width="220" height="240" as="geometry"/>
+        </mxCell>
+        <mxCell id="303" value="offers&#xa;PK offer_id uuid NN&#xa;FK vacancy_id uuid NN&#xa;FK candidate_id uuid NN&#xa;UQ(vacancy_id, candidate_id)&#xa;status varchar(32) NN&#xa;terms_summary text NULL&#xa;proposed_start_date date NULL&#xa;expires_at date NULL&#xa;sent_at timestamptz NULL&#xa;decision_at timestamptz NULL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1760" y="190" width="180" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="304" value="interviews&#xa;PK interview_id uuid NN&#xa;FK vacancy_id uuid NN&#xa;FK candidate_id uuid NN&#xa;status varchar(64) NN&#xa;schedule_version int NN&#xa;scheduled_start_at timestamptz NN&#xa;scheduled_end_at timestamptz NN&#xa;calendar_sync_status varchar(32) NN&#xa;candidate_token_hash char(64) NULL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="500" width="220" height="240" as="geometry"/>
+        </mxCell>
+        <mxCell id="305" value="interview_feedback&#xa;PK feedback_id uuid NN&#xa;FK interview_id uuid NN&#xa;UQ(interview_id, schedule_version, interviewer_staff_id)&#xa;schedule_version int NN&#xa;interviewer_staff_id uuid ref NN&#xa;recommendation varchar(32) NN&#xa;requirements_match_score int NN&#xa;communication_score int NN&#xa;submitted_at timestamptz NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1530" y="500" width="210" height="240" as="geometry"/>
+        </mxCell>
+        <mxCell id="306" value="interview_calendar_bindings&#xa;PK binding_id uuid NN&#xa;FK interview_id uuid NN&#xa;UQ(interview_id, interviewer_staff_id)&#xa;interviewer_staff_id uuid ref NN&#xa;calendar_id varchar(512) NN&#xa;calendar_event_id varchar(512) NN&#xa;schedule_version int NN&#xa;created_at timestamptz NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1770" y="500" width="170" height="230" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="400" value="Найм, сотрудники и адаптация" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontStyle=1;fontSize=16;align=left;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="30" y="970" width="1160" height="980" as="geometry"/>
+        </mxCell>
+        <mxCell id="401" value="hire_conversions&#xa;PK conversion_id uuid NN&#xa;FK vacancy_id uuid NN&#xa;FK candidate_id uuid NN&#xa;FK offer_id uuid NN&#xa;FK hired_transition_id uuid UQ NN&#xa;UQ(vacancy_id, candidate_id)&#xa;status varchar(32) NN&#xa;candidate_snapshot_json json NN&#xa;offer_snapshot_json json NN&#xa;converted_at timestamptz NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1060" width="260" height="260" as="geometry"/>
+        </mxCell>
+        <mxCell id="402" value="employee_profiles&#xa;PK employee_id uuid NN&#xa;FK hire_conversion_id uuid UQ NN&#xa;FK vacancy_id uuid NN&#xa;FK candidate_id uuid NN&#xa;FK staff_account_id uuid UQ NULL&#xa;first_name varchar(128) NN&#xa;last_name varchar(128) NN&#xa;email varchar(256) NN&#xa;offer_terms_summary text NULL&#xa;start_date date NULL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="350" y="1060" width="260" height="260" as="geometry"/>
+        </mxCell>
+        <mxCell id="403" value="onboarding_runs&#xa;PK onboarding_id uuid NN&#xa;FK employee_id uuid UQ NN&#xa;FK hire_conversion_id uuid NN&#xa;status varchar(32) NN&#xa;started_at timestamptz NN&#xa;started_by_staff_id uuid NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="640" y="1060" width="220" height="190" as="geometry"/>
+        </mxCell>
+        <mxCell id="404" value="onboarding_tasks&#xa;PK task_id uuid NN&#xa;FK onboarding_id uuid NN&#xa;template_id uuid ref NN&#xa;template_item_id uuid ref NN&#xa;UQ(onboarding_id, code)&#xa;code varchar(64) NN&#xa;title varchar(256) NN&#xa;status varchar(32) NN&#xa;assigned_staff_id uuid NULL&#xa;due_at timestamptz NULL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="890" y="1060" width="270" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="405" value="onboarding_templates&#xa;PK template_id uuid NN&#xa;name varchar(128) UQ NN&#xa;description text NULL&#xa;is_active boolean NN&#xa;created_by_staff_id uuid NN&#xa;created_at timestamptz NN&#xa;updated_at timestamptz NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="60" y="1380" width="260" height="210" as="geometry"/>
+        </mxCell>
+        <mxCell id="406" value="onboarding_template_items&#xa;PK template_item_id uuid NN&#xa;FK template_id uuid NN&#xa;UQ(template_id, code)&#xa;UQ(template_id, sort_order)&#xa;code varchar(64) NN&#xa;title varchar(256) NN&#xa;description text NULL&#xa;sort_order int NN&#xa;is_required boolean NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="350" y="1380" width="280" height="240" as="geometry"/>
+        </mxCell>
+        <mxCell id="407" value="Примечание: onboarding_tasks материализует snapshot полей шаблона. Поэтому template_id и template_item_id остаются логическими ссылками, а не жесткими FK, чтобы последующие правки шаблона не ломали исторические задачи." style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="660" y="1380" width="500" height="140" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="500" value="Рефералы и компенсации" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontStyle=1;fontSize=16;align=left;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1220" y="970" width="980" height="980" as="geometry"/>
+        </mxCell>
+        <mxCell id="501" value="employee_referrals&#xa;PK referral_id uuid NN&#xa;FK vacancy_id uuid NN&#xa;FK referrer_employee_id uuid NN&#xa;FK candidate_id uuid NULL&#xa;FK bonus_owner_employee_id uuid NN&#xa;full_name varchar(256) NN&#xa;phone varchar(64) NN&#xa;email varchar(256) NN&#xa;consent_confirmed_at timestamptz NN&#xa;status varchar(32) NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1250" y="1060" width="270" height="270" as="geometry"/>
+        </mxCell>
+        <mxCell id="502" value="referral_status_history&#xa;PK history_id uuid NN&#xa;FK referral_id uuid NN&#xa;from_status varchar(32) NULL&#xa;to_status varchar(32) NN&#xa;reason_code varchar(128) NULL&#xa;FK changed_by_staff_id uuid NN&#xa;changed_at timestamptz NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1550" y="1060" width="220" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="503" value="vacancy_salary_bands&#xa;PK band_id uuid NN&#xa;FK vacancy_id uuid NN&#xa;UQ(vacancy_id, effective_from)&#xa;min_amount numeric(12,2) NN&#xa;max_amount numeric(12,2) NN&#xa;currency char(3) NN&#xa;effective_from date NN&#xa;effective_to date NULL&#xa;FK created_by_staff_id uuid NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1800" y="1060" width="240" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="504" value="salary_raise_requests&#xa;PK raise_request_id uuid NN&#xa;FK employee_id uuid NN&#xa;FK requested_by_staff_id uuid NN&#xa;current_amount numeric(12,2) NN&#xa;proposed_amount numeric(12,2) NN&#xa;effective_date date NN&#xa;status varchar(32) NN&#xa;reason text NN&#xa;created_at timestamptz NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1250" y="1380" width="270" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="505" value="salary_raise_approvals&#xa;PK approval_id uuid NN&#xa;FK raise_request_id uuid NN&#xa;FK approver_staff_id uuid NN&#xa;UQ(raise_request_id, approver_staff_id)&#xa;approver_role varchar(32) NN&#xa;decision varchar(32) NN&#xa;decided_at timestamptz NN&#xa;note text NULL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1550" y="1380" width="220" height="230" as="geometry"/>
+        </mxCell>
+        <mxCell id="506" value="payroll_bonus_entries&#xa;PK entry_id uuid NN&#xa;FK employee_id uuid NN&#xa;FK raise_request_id uuid NULL&#xa;FK referral_id uuid NULL&#xa;period_month date NN&#xa;base_salary numeric(12,2) NN&#xa;bonus_amount numeric(12,2) NN&#xa;payout_status varchar(32) NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1800" y="1380" width="240" height="220" as="geometry"/>
+        </mxCell>
+        <mxCell id="507" value="Примечание: блок рефералов и компенсаций отражает целевую модель при условии закрытого backlog. В него включены история статусов реферала, историзация salary band, raise request и отдельная цепочка approvals." style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="1250" y="1680" width="790" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="600" value="Автоматизация и отчетность" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=2;fontColor=#000000;fontStyle=1;fontSize=16;align=left;verticalAlign=top;spacingTop=8;" vertex="1" parent="1">
+          <mxGeometry x="1990" y="110" width="1290" height="820" as="geometry"/>
+        </mxCell>
+        <mxCell id="601" value="automation_rules&#xa;PK rule_id uuid NN&#xa;name varchar(128) NN&#xa;trigger varchar(128) NN&#xa;conditions_json json NULL&#xa;actions_json json NN&#xa;priority int NN&#xa;is_active boolean NN&#xa;created_by_staff_id uuid NN&#xa;updated_by_staff_id uuid NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="2020" y="190" width="280" height="240" as="geometry"/>
+        </mxCell>
+        <mxCell id="602" value="automation_execution_runs&#xa;PK run_id uuid NN&#xa;event_type varchar(128) NN&#xa;trigger_event_id uuid NN&#xa;correlation_id varchar(64) NULL&#xa;trace_id varchar(64) NN&#xa;status varchar(32) NN&#xa;planned_action_count int NN&#xa;succeeded_action_count int NN&#xa;failed_action_count int NN&#xa;started_at timestamptz NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="2340" y="190" width="300" height="260" as="geometry"/>
+        </mxCell>
+        <mxCell id="603" value="automation_action_executions&#xa;PK action_execution_id uuid NN&#xa;FK run_id uuid NN&#xa;action varchar(64) NN&#xa;rule_id uuid ref NN&#xa;recipient_staff_id uuid ref NN&#xa;result_notification_id uuid ref NULL&#xa;status varchar(32) NN&#xa;attempt_count int NN&#xa;trace_id varchar(64) NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="2680" y="190" width="260" height="250" as="geometry"/>
+        </mxCell>
+        <mxCell id="604" value="automation_metric_events&#xa;PK metric_event_id uuid NN&#xa;UQ(event_type, trigger_event_id)&#xa;event_type varchar(128) NN&#xa;trigger_event_id uuid NN&#xa;event_time timestamptz NN&#xa;outcome varchar(32) NN&#xa;total_hr_operations_count int NN&#xa;automated_hr_operations_count int NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="2020" y="500" width="290" height="230" as="geometry"/>
+        </mxCell>
+        <mxCell id="605" value="kpi_snapshots&#xa;PK snapshot_id uuid NN&#xa;UQ(period_month, metric_key)&#xa;period_month date NN&#xa;metric_key varchar(64) NN&#xa;metric_value int NN&#xa;generated_at timestamptz NN" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="2340" y="520" width="240" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="606" value="Примечание: automation_action_executions хранит логические ссылки на automation_rules, staff_accounts и notifications. KPI snapshots строятся из durable domain tables и automation_metric_events, а не через новые live-агрегации." style="rounded=0;whiteSpace=wrap;html=1;dashed=1;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="2610" y="500" width="630" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="1000" value="created_by N:1; revoked_by 0..N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="102" target="101"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1001" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="103" target="101"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="1002" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="202" target="201"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1003" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="203" target="201"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1004" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="203" target="202"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1005" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="204" target="201"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1006" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="204" target="202"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1007" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="205" target="204"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1008" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="205" target="201"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1009" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="205" target="202"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="1010" value="0..N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="301" target="101"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1011" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="302" target="301"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1012" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="302" target="201"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1013" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="303" target="301"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1014" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="303" target="201"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1015" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="304" target="301"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1016" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="304" target="201"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1017" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="305" target="304"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1018" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="306" target="304"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1019" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="204" target="301"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="1020" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="401" target="301"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1021" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="401" target="201"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1022" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="401" target="303"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1023" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="401" target="302"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1024" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="402" target="401"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1025" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="402" target="301"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1026" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="402" target="201"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1027" value="0..1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="402" target="101"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1028" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="403" target="402"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1029" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="403" target="401"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1030" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="404" target="403"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1031" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="406" target="405"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="1032" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="501" target="301"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1033" value="referrer/bonus_owner N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="501" target="402"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1034" value="nullable N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="501" target="201"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1035" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="502" target="501"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1036" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="503" target="301"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1037" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="504" target="402"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1038" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="504" target="101"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1039" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="505" target="504"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1040" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="505" target="101"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1041" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="506" target="402"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1042" value="nullable N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="506" target="504"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1043" value="nullable N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="506" target="501"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <mxCell id="1044" value="N:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;endArrow=block;endFill=1;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="603" target="602"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1045" value="логич. ref" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#000000;endArrow=open;endFill=0;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="404" target="405"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1046" value="логич. ref" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#000000;endArrow=open;endFill=0;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="404" target="406"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1047" value="логич. ref" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#000000;endArrow=open;endFill=0;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="603" target="601"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1048" value="логич. ref" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#000000;endArrow=open;endFill=0;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="603" target="103"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1049" value="логич. ref" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#000000;endArrow=open;endFill=0;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="603" target="101"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1050" value="логич. ref" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#000000;endArrow=open;endFill=0;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="305" target="101"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="1051" value="логич. ref" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#000000;endArrow=open;endFill=0;fontColor=#000000;fontSize=10;" edge="1" parent="1" source="306" target="101"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
