@@ -84,6 +84,24 @@ class VacancyDAO:
             .all()
         )
 
+    def get_by_ids(self, vacancy_ids: list[str]) -> list[Vacancy]:
+        """Load vacancies by identifier list.
+
+        Args:
+            vacancy_ids: Vacancy identifiers to load.
+
+        Returns:
+            list[Vacancy]: Matched vacancy rows ordered deterministically.
+        """
+        if not vacancy_ids:
+            return []
+        return list(
+            self._session.query(Vacancy)
+            .filter(Vacancy.vacancy_id.in_(vacancy_ids))
+            .order_by(Vacancy.created_at.asc(), Vacancy.vacancy_id.asc())
+            .all()
+        )
+
     def list_by_hiring_manager_staff_id(self, hiring_manager_staff_id: str) -> list[Vacancy]:
         """Load vacancies assigned to one manager.
 

@@ -474,24 +474,26 @@ Table onboarding_template_items {
 Table employee_referrals {
   referral_id uuid [pk, not null]
   vacancy_id uuid [not null]
-  referrer_employee_id uuid [not null]
   candidate_id uuid
+  referrer_employee_id uuid [not null]
   bonus_owner_employee_id uuid [not null]
   full_name varchar(256) [not null]
   phone varchar(64) [not null]
   email varchar(256) [not null]
-  cv_object_key varchar(512)
+  cv_document_id uuid
   consent_confirmed_at timestamptz [not null]
-  status varchar(32) [not null]
   submitted_at timestamptz [not null]
+  updated_at timestamptz [not null]
 
-  Note: 'Target-state referral table inferred from the referral/compensation BA pass under the closed-backlog assumption.'
+  Note: 'Implemented referral linkage table (TASK-06-08) with vacancy+email dedupe.'
 
   Indexes {
+    (vacancy_id, email) [name: 'ux_employee_referrals_vacancy_email', unique]
     vacancy_id [name: 'ix_employee_referrals_vacancy_id']
     referrer_employee_id [name: 'ix_employee_referrals_referrer_employee_id']
     candidate_id [name: 'ix_employee_referrals_candidate_id']
-    status [name: 'ix_employee_referrals_status']
+    bonus_owner_employee_id [name: 'ix_employee_referrals_bonus_owner_employee_id']
+    submitted_at [name: 'ix_employee_referrals_submitted_at']
   }
 }
 
@@ -739,6 +741,7 @@ Ref: onboarding_template_items.template_id > onboarding_templates.template_id [d
 Ref: employee_referrals.vacancy_id > vacancies.vacancy_id [delete: cascade]
 Ref: employee_referrals.referrer_employee_id > employee_profiles.employee_id [delete: cascade]
 Ref: employee_referrals.candidate_id > candidate_profiles.candidate_id [delete: set null]
+Ref: employee_referrals.cv_document_id > candidate_documents.document_id [delete: set null]
 Ref: employee_referrals.bonus_owner_employee_id > employee_profiles.employee_id [delete: cascade]
 Ref: referral_status_history.referral_id > employee_referrals.referral_id [delete: cascade]
 Ref: referral_status_history.changed_by_staff_id > staff_accounts.staff_id [delete: cascade]

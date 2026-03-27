@@ -20,14 +20,17 @@ import { CareersPage } from "../pages/CareersPage";
 import { CareersVacancyPage } from "../pages/CareersVacancyPage";
 import { CompanyHomePage } from "../pages/CompanyHomePage";
 import { EmployeeOnboardingPage } from "../pages/EmployeeOnboardingPage";
+import { EmployeeReferralsPage } from "../pages/employee/EmployeeReferralsPage";
 import { HrDashboardPage } from "../pages/HrDashboardPage";
 import { HrInterviewsPage } from "../pages/hr/HrInterviewsPage";
 import { HrOffersPage } from "../pages/hr/HrOffersPage";
 import { HrOverviewPage } from "../pages/hr/HrOverviewPage";
 import { HrPipelinePage } from "../pages/hr/HrPipelinePage";
+import { HrReferralsPage } from "../pages/hr/HrReferralsPage";
 import { HrVacanciesPage } from "../pages/hr/HrVacanciesPage";
 import { LeaderWorkspacePage } from "../pages/LeaderWorkspacePage";
 import { LoginPage } from "../pages/LoginPage";
+import { ManagerReferralsPage } from "../pages/manager/ManagerReferralsPage";
 import { ManagerWorkspacePage } from "../pages/ManagerWorkspacePage";
 import { CandidateApplyPage } from "../pages/candidate/CandidateApplyPage";
 import { CandidateInterviewRegistrationPage } from "../pages/candidate/CandidateInterviewRegistrationPage";
@@ -86,6 +89,10 @@ export const appRoutes = [
             element: <HrOffersPage />,
           },
           {
+            path: "referrals",
+            element: <HrReferralsPage />,
+          },
+          {
             path: "workbench",
             element: <HrDashboardPage />,
           },
@@ -98,6 +105,10 @@ export const appRoutes = [
           {
             index: true,
             element: <ManagerWorkspacePage />,
+          },
+          {
+            path: "referrals",
+            element: <ManagerReferralsPage />,
           },
         ],
       },
@@ -170,6 +181,10 @@ export const appRoutes = [
           {
             index: true,
             element: <EmployeeOnboardingPage />,
+          },
+          {
+            path: "referrals",
+            element: <EmployeeReferralsPage />,
           },
         ],
       },

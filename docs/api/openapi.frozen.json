@@ -1629,6 +1629,10 @@
             "title": "Checksum Sha256",
             "type": "string"
           },
+          "consent_confirmed": {
+            "title": "Consent Confirmed",
+            "type": "boolean"
+          },
           "current_title": {
             "anyOf": [
               {
@@ -1711,10 +1715,59 @@
           "last_name",
           "email",
           "phone",
+          "consent_confirmed",
           "checksum_sha256",
           "file"
         ],
         "title": "Body_apply_to_vacancy_public_api_v1_vacancies__vacancy_id__applications_post",
+        "type": "object"
+      },
+      "Body_submit_referral_api_v1_referrals_post": {
+        "properties": {
+          "checksum_sha256": {
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Checksum Sha256",
+            "type": "string"
+          },
+          "email": {
+            "maxLength": 256,
+            "minLength": 3,
+            "title": "Email",
+            "type": "string"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "full_name": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Full Name",
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 64,
+            "minLength": 3,
+            "title": "Phone",
+            "type": "string"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vacancy_id",
+          "full_name",
+          "phone",
+          "email",
+          "checksum_sha256",
+          "file"
+        ],
+        "title": "Body_submit_referral_api_v1_referrals_post",
         "type": "object"
       },
       "Body_upload_candidate_cv_api_v1_candidates__candidate_id__cv_post": {
@@ -6738,6 +6791,306 @@
         "title": "PublicVacancyListResponse",
         "type": "object"
       },
+      "ReferralListItemResponse": {
+        "description": "Referral list row enriched with vacancy, candidate, and referrer context.",
+        "properties": {
+          "bonus_owner_employee_id": {
+            "format": "uuid",
+            "title": "Bonus Owner Employee Id",
+            "type": "string"
+          },
+          "candidate_email": {
+            "title": "Candidate Email",
+            "type": "string"
+          },
+          "candidate_full_name": {
+            "title": "Candidate Full Name",
+            "type": "string"
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "candidate_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Phone"
+          },
+          "current_stage": {
+            "anyOf": [
+              {
+                "enum": [
+                  "applied",
+                  "screening",
+                  "shortlist",
+                  "interview",
+                  "offer",
+                  "hired",
+                  "rejected"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stage"
+          },
+          "current_stage_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stage At"
+          },
+          "referral_id": {
+            "format": "uuid",
+            "title": "Referral Id",
+            "type": "string"
+          },
+          "referrer_employee_id": {
+            "format": "uuid",
+            "title": "Referrer Employee Id",
+            "type": "string"
+          },
+          "referrer_full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Referrer Full Name"
+          },
+          "submitted_at": {
+            "format": "date-time",
+            "title": "Submitted At",
+            "type": "string"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          },
+          "vacancy_title": {
+            "title": "Vacancy Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "referral_id",
+          "vacancy_id",
+          "vacancy_title",
+          "candidate_id",
+          "candidate_full_name",
+          "candidate_email",
+          "candidate_phone",
+          "referrer_employee_id",
+          "referrer_full_name",
+          "bonus_owner_employee_id",
+          "submitted_at",
+          "current_stage",
+          "current_stage_at"
+        ],
+        "title": "ReferralListItemResponse",
+        "type": "object"
+      },
+      "ReferralListResponse": {
+        "description": "Paginated referral list response.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReferralListItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ReferralListResponse",
+        "type": "object"
+      },
+      "ReferralReviewRequest": {
+        "additionalProperties": false,
+        "description": "Input payload for HR/manager referral review transitions.",
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "to_stage": {
+            "enum": [
+              "applied",
+              "screening",
+              "shortlist",
+              "interview",
+              "offer",
+              "hired",
+              "rejected"
+            ],
+            "title": "To Stage",
+            "type": "string"
+          }
+        },
+        "required": [
+          "to_stage"
+        ],
+        "title": "ReferralReviewRequest",
+        "type": "object"
+      },
+      "ReferralReviewResponse": {
+        "description": "Response payload for referral review transitions.",
+        "properties": {
+          "referral_id": {
+            "format": "uuid",
+            "title": "Referral Id",
+            "type": "string"
+          },
+          "transition": {
+            "$ref": "#/components/schemas/PipelineTransitionResponse"
+          }
+        },
+        "required": [
+          "referral_id",
+          "transition"
+        ],
+        "title": "ReferralReviewResponse",
+        "type": "object"
+      },
+      "ReferralSubmitResponse": {
+        "description": "Response payload for employee referral submissions.",
+        "properties": {
+          "bonus_owner_employee_id": {
+            "format": "uuid",
+            "title": "Bonus Owner Employee Id",
+            "type": "string"
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "current_stage": {
+            "anyOf": [
+              {
+                "enum": [
+                  "applied",
+                  "screening",
+                  "shortlist",
+                  "interview",
+                  "offer",
+                  "hired",
+                  "rejected"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stage"
+          },
+          "current_stage_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Stage At"
+          },
+          "is_duplicate": {
+            "default": false,
+            "title": "Is Duplicate",
+            "type": "boolean"
+          },
+          "referral_id": {
+            "format": "uuid",
+            "title": "Referral Id",
+            "type": "string"
+          },
+          "submitted_at": {
+            "format": "date-time",
+            "title": "Submitted At",
+            "type": "string"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "referral_id",
+          "vacancy_id",
+          "candidate_id",
+          "bonus_owner_employee_id",
+          "submitted_at",
+          "current_stage",
+          "current_stage_at"
+        ],
+        "title": "ReferralSubmitResponse",
+        "type": "object"
+      },
       "RefreshRequest": {
         "description": "Input payload for access/refresh token rotation.",
         "properties": {
@@ -10749,6 +11102,189 @@
         "summary": "List Public Vacancies",
         "tags": [
           "vacancies"
+        ]
+      }
+    },
+    "/api/v1/referrals": {
+      "get": {
+        "description": "List referrals visible to HR or manager roles.",
+        "operationId": "list_referrals_api_v1_referrals_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "vacancy_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Vacancy Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferralListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Referrals",
+        "tags": [
+          "referrals"
+        ]
+      },
+      "post": {
+        "description": "Submit an employee referral with candidate CV payload.",
+        "operationId": "submit_referral_api_v1_referrals_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_submit_referral_api_v1_referrals_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferralSubmitResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Submit Referral",
+        "tags": [
+          "referrals"
+        ]
+      }
+    },
+    "/api/v1/referrals/{referral_id}/review": {
+      "post": {
+        "description": "Append a referral review transition.",
+        "operationId": "review_referral_api_v1_referrals__referral_id__review_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "referral_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Referral Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReferralReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferralReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Review Referral",
+        "tags": [
+          "referrals"
         ]
       }
     },

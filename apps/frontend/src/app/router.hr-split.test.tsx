@@ -84,6 +84,11 @@ describe("HR workspace split routes", () => {
           }),
         );
       }
+      if (url.includes("/api/v1/referrals")) {
+        return Promise.resolve(
+          jsonResponse({ items: [], total: 0, limit: 50, offset: 0 }),
+        );
+      }
       return Promise.resolve(jsonResponse({}));
     });
   });
@@ -129,6 +134,14 @@ describe("HR workspace split routes", () => {
 
     expect(
       await screen.findByRole("heading", { name: /offer workspace|workspace офферов/i }),
+    ).toBeDefined();
+  });
+
+  it("renders the HR referrals route", async () => {
+    renderWithPath("/hr/referrals");
+
+    expect(
+      await screen.findByRole("heading", { name: /referral workspace|workspace рефералов/i }),
     ).toBeDefined();
   });
 });

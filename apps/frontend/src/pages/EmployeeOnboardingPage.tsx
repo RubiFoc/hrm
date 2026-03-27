@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { Link as RouterLink, useInRouterContext } from "react-router-dom";
 
 import {
   ApiError,
@@ -38,6 +39,7 @@ export function EmployeeOnboardingPage() {
   const queryClient = useQueryClient();
   const session = readAuthSession();
   const accessToken = session.accessToken;
+  const inRouter = useInRouterContext();
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
   const queryKey = ["employee-onboarding-portal", accessToken];
@@ -128,6 +130,25 @@ export function EmployeeOnboardingPage() {
         imageSrc="/images/candidate-portal.jpg"
         imageAlt={t("employeePortal.title")}
       />
+
+      <Paper sx={{ p: 2 }}>
+        <Stack spacing={1.5} direction={{ xs: "column", md: "row" }} alignItems="flex-start">
+          <Stack spacing={0.5}>
+            <Typography variant="h6">{t("referrals.employeeCalloutTitle")}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t("referrals.employeeCalloutSubtitle")}
+            </Typography>
+          </Stack>
+          <Button
+            component={inRouter ? RouterLink : "button"}
+            to={inRouter ? "/employee/referrals" : undefined}
+            variant="contained"
+            sx={{ ml: { md: "auto" } }}
+          >
+            {t("referrals.employeeCalloutCta")}
+          </Button>
+        </Stack>
+      </Paper>
 
       {feedback ? <Alert severity={feedback.type}>{feedback.message}</Alert> : null}
 

@@ -1,8 +1,8 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-23
-- Updated by: coordinator
+- Date: 2026-03-27
+- Updated by: backend-engineer + frontend-engineer
 
 ## System Context
 HRM platform for Belarus that supports candidate selection across professions and
@@ -44,7 +44,7 @@ flowchart LR
 | Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
 | Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
 | Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key lifecycle (issue/list/revoke), audit hooks | platform |
-| Recruitment Domain | Vacancies, candidates, pipeline, interviews, schedule-versioned interviewer feedback, offer lifecycle state, hire-conversion command flow, and manager-scoped hiring read models | Candidate and vacancy data | Vacancy/pipeline state, interview fairness state, offer status, active-document readiness, candidate context, and manager workspace hiring summaries/snapshots | hr-tech |
+| Recruitment Domain | Vacancies, candidates, pipeline, employee referrals, interviews, schedule-versioned interviewer feedback, offer lifecycle state, hire-conversion command flow, and manager-scoped hiring read models | Candidate and vacancy data | Vacancy/pipeline state, referral linkage, interview fairness state, offer status, active-document readiness, candidate context, and manager workspace hiring summaries/snapshots | hr-tech |
 | Match Scoring Domain | Async scoring jobs and explainable score artifacts keyed by vacancy, candidate, and active document | Scoring requests, parsed CV analysis, vacancy snapshot | UI-ready score/status payloads for shortlist review | ai-platform |
 | Employee Domain | Durable hire-conversion handoff, explicit employee profile bootstrap, onboarding workflows, employee self-service onboarding portal, and HR/manager onboarding progress visibility | Hire conversion handoff, profile/bootstrap/template/portal/dashboard requests | Employee handoff rows, employee profiles, onboarding runs/templates/tasks, employee-facing onboarding views, and staff/manager onboarding progress read models | hr-tech |
 | Automation Rule Engine | Deterministic evaluation of trigger events into planned actions (no side effects) | Trigger events + rule CRUD inputs | Planned actions (v1: `notification.emit`) | hr-ops |
@@ -108,33 +108,35 @@ flowchart LR
    rule trigger -> deterministic evaluator -> executor -> notification side effects ->
    durable execution logs + automation metric events -> KPI snapshot rebuild.
 8. Public Candidate Apply Flow:
-   anonymous visitor opens `/careers` -> public open-role board loads from `GET /api/v1/public/vacancies` -> candidate opens a shareable vacancy page on `/careers/{vacancy_id}` or follows a recruiter deep link -> candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> native PDF/DOCX extraction + persisted analysis artifacts -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
-9. Authentication Flow:
+   anonymous visitor opens `/careers` -> public open-role board loads from `GET /api/v1/public/vacancies` -> candidate opens a shareable vacancy page on `/careers/{vacancy_id}` or follows a recruiter deep link -> consent-confirmed candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> native PDF/DOCX extraction + persisted analysis artifacts -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
+9. Employee Referral Flow:
+   employee opens `/employee/referrals` -> submit referral details + CV -> referral dedupe on `(vacancy_id, email)` with bonus ownership preserved for the first referrer -> candidate profile upsert + pipeline transition to `applied` -> HR opens `/hr/referrals` or manager opens `/manager/referrals` -> review moves candidate to `screening` or `shortlist`.
+10. Authentication Flow:
    staff key issuance -> staff register/login (login/email + password) -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
-10. Admin Staff Governance Flow:
+11. Admin Staff Governance Flow:
    admin opens `/admin/staff` -> paginated/filterable staff list -> patch `role`/`is_active` ->
    strict guard (self-protection + last-active-admin protection) -> audit success/failure reason codes.
-11. Admin Employee Key Lifecycle Flow:
+12. Admin Employee Key Lifecycle Flow:
    admin/hr issues key -> list/filter key registry -> revoke active key when needed ->
    registration rejects revoked/expired/used keys -> audit success/failure reason codes.
-12. Frontend Observability Flow:
+13. Frontend Observability Flow:
    user opens a critical frontend route -> Sentry tags `workspace`/`role`/`route` are emitted ->
    shared HTTP client captures request failures with route metadata -> top-level render boundary
    captures React render failures -> Sentry stores tagged events with environment/release/tracing context.
-13. Role-Specific Notification Flow:
+14. Role-Specific Notification Flow:
    HR/admin updates `vacancies.hiring_manager_staff_id` or onboarding task assignment metadata ->
    notification domain resolves only active manager/accountant recipients ->
    deduped `notifications` rows are persisted in the same request transaction ->
    recipient opens `/manager` or `/accountant` -> `GET /api/v1/notifications/digest` computes summary counters on demand ->
    `GET /api/v1/notifications?status=unread` returns recipient-owned unread items ->
    `POST /api/v1/notifications/{notification_id}/read` marks only that recipient row as read.
-14. KPI Snapshot Rebuild Flow:
+15. KPI Snapshot Rebuild Flow:
    admin triggers explicit rebuild -> reporting service reads durable vacancy/pipeline/interview/offer/employee
    tables plus automation metric events for the requested calendar month -> KPI counts and automation share
    are computed server-side ->
    `kpi_snapshots` rows for the month are replaced atomically -> leader/admin read stored snapshot via
    `/api/v1/reporting/kpi-snapshots` (no live aggregation and no scheduler).
-15. Admin Observability Flow:
+16. Admin Observability Flow:
    admin opens `/admin/observability` -> frontend emits canonical admin Sentry tags ->
    read-only dashboard reuses existing health, audit, parsing, and scoring contracts ->
    `GET /health` -> health card,
@@ -241,7 +243,7 @@ flowchart LR
   `vacancies.hiring_manager_staff_id`.
 - Implemented HR workspace boundary:
   the frontend now splits the recruitment entrypoint into `/hr` for overview plus focused nested
-  pages (`/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`) while retaining
+  pages (`/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`, `/hr/referrals`) while retaining
   `/hr/workbench` as the legacy consolidated path for compatibility, targeted testing, and direct
   deep links.
 - Implemented finance adapter boundary:
@@ -273,7 +275,7 @@ flowchart LR
   `cv_parsing`, `match_scoring`, and `interview_sync` queues.
 - Frontend style: React.js + TypeScript SPA with role-based route guards and shared component system.
 - Frontend HR route topology: `/hr` is the staff overview route, the focused work pages live under
-  `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, and `/hr/offers`, and `/hr/workbench`
+  `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`, and `/hr/referrals`, and `/hr/workbench`
   remains the compatibility route for the consolidated recruitment shell.
 - Frontend libraries: MUI, React Router, TanStack Query, React Hook Form, Zod, i18next.
 - Browser support target: Google Chrome.

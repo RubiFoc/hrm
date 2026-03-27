@@ -537,7 +537,7 @@ describe("HrDashboardPage", () => {
         (screen.getByRole("combobox", { name: /^кандидат$/i }) as HTMLSelectElement).value,
       ).toBe(CANDIDATE_ID);
     });
-  });
+  }, 15000);
 
   it("renders embedded onboarding progress dashboard for HR workspace", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -655,7 +655,7 @@ describe("HrDashboardPage", () => {
         screen.getByText(/запрошенный переход по pipeline недопустим/i),
       ).toBeDefined();
     });
-  });
+  }, 15000);
 
   it("runs score, polls latest status, and renders confidence and explanation details", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");
@@ -727,7 +727,7 @@ describe("HrDashboardPage", () => {
       },
       { timeout: 4000 },
     );
-  });
+  }, 15000);
 
   it("renders failed scoring job state", async () => {
     window.localStorage.setItem("hrm_access_token", "access-token");

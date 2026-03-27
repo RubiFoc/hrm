@@ -41,6 +41,13 @@ export function HrOverviewPage() {
       cta: t("hrWorkspacePages.cards.offers.cta"),
       chips: [t("hrDashboard.offers.title"), t("hrDashboard.offers.hints.sent")],
     },
+    {
+      title: t("hrWorkspacePages.cards.referrals.title"),
+      description: t("hrWorkspacePages.cards.referrals.description"),
+      to: "/hr/referrals",
+      cta: t("hrWorkspacePages.cards.referrals.cta"),
+      chips: [t("referrals.title"), t("referrals.actions.shortlist")],
+    },
   ];
 
   return (

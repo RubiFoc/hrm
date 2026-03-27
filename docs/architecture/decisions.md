@@ -64,6 +64,19 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0057 | 2026-03-20 | accepted | Split public careers into board and shareable vacancy detail routes | architect + frontend-engineer | frontend routing, public careers UX, smoke verification, route tags |
 | ADR-0058 | 2026-03-20 | accepted | Split public candidate transport into dedicated apply and interview routes with `/candidate` compatibility redirects | architect + frontend-engineer | frontend routing, public candidate UX, observability, browser smoke, documentation |
 | ADR-0059 | 2026-03-23 | accepted | De-scope Russia jurisdiction and keep Belarus-only compliance scope | coordinator | compliance scope, legal controls, release gate |
+| ADR-0060 | 2026-03-27 | accepted | Add employee referral intake tied to existing pipeline lifecycle | backend-engineer + frontend-engineer | recruitment domain, referrals, frontend routes, audit |
+
+## ADR-0060
+- Context: `TASK-06-08` requires employee referrals without a parallel lifecycle or bonus workflow, while keeping the recruitment pipeline as the only candidate state machine.
+- Decision:
+  - Introduce `employee_referrals` as a minimal linkage table with unique dedupe on `(vacancy_id, email)` to fail closed on duplicates and preserve the original referrer bonus ownership.
+  - Keep referral review as pipeline transitions (`screening`/`shortlist`) through the existing transition graph, rather than a separate referral status machine.
+  - Expose dedicated `/api/v1/referrals` submit/read/review endpoints with RBAC scoping and audit events for submit, read, review, and dedupe merge.
+  - Add employee `/employee/referrals` submission UI plus HR/manager review pages on `/hr/referrals` and `/manager/referrals`.
+- Consequences:
+  - Referral duplicates are merged deterministically, and bonus ownership is preserved by the first referrer without additional compensation tables.
+  - Referral review stays in the canonical pipeline lifecycle, reducing state drift and keeping automation hooks on existing transitions.
+  - Frontend and OpenAPI contracts expand minimally, and docs/diagrams/testing coverage must stay in sync.
 
 ## ADR-0059
 - Context: The project is delivered from a Belarus-local environment and will not operate a dedicated Russia service.

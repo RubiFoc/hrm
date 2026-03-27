@@ -87,6 +87,7 @@ class VacancyApplicationService:
         last_name: str,
         email: str,
         phone: str,
+        consent_confirmed: bool,
         location: str | None,
         current_title: str | None,
         extra_data_raw: str | None,
@@ -119,6 +120,12 @@ class VacancyApplicationService:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                     detail="Vacancy is not open for applications",
+                )
+
+            if not consent_confirmed:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail="consent_required",
                 )
 
             extra_data = self._parse_extra_data(extra_data_raw)

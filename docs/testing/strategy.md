@@ -103,6 +103,15 @@ apps/backend/tests/
   - `./scripts/check-openapi-freeze.sh`
   - `npm --prefix apps/frontend run api:types:check`
 
+## Referral Flow Verification (TASK-06-08)
+- Unit coverage:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/referrals`
+- Integration coverage:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/referrals/test_referral_api.py`
+- When referral or public-apply contracts change, keep the OpenAPI freeze and frontend generated types in sync:
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:check`
+
 ## Change-Based Verification Matrix
 | Change Type | Required Checks |
 | --- | --- |

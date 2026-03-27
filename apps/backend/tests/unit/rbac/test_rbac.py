@@ -168,6 +168,31 @@ def test_employee_can_access_and_update_self_service_portal_permissions() -> Non
     assert update_decision.allowed is True
 
 
+def test_employee_can_create_referral_permission() -> None:
+    """Verify employee role can submit referrals."""
+    decision = evaluate_permission(role="employee", permission="referral:create")
+
+    assert decision.allowed is True
+
+
+def test_hr_can_read_and_review_referrals_permissions() -> None:
+    """Verify HR role can read and review referrals."""
+    read_decision = evaluate_permission(role="hr", permission="referral:read")
+    review_decision = evaluate_permission(role="hr", permission="referral:review")
+
+    assert read_decision.allowed is True
+    assert review_decision.allowed is True
+
+
+def test_manager_can_read_and_review_referrals_permissions() -> None:
+    """Verify manager role can read and review referrals."""
+    read_decision = evaluate_permission(role="manager", permission="referral:read")
+    review_decision = evaluate_permission(role="manager", permission="referral:review")
+
+    assert read_decision.allowed is True
+    assert review_decision.allowed is True
+
+
 def test_leader_can_read_kpi_snapshot_permission() -> None:
     """Verify leader role can read monthly KPI snapshot reports."""
     decision = evaluate_permission(role="leader", permission="kpi_snapshot:read")

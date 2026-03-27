@@ -27,11 +27,16 @@ from hrm_backend.interviews.routers.v1 import (
 )
 from hrm_backend.notifications.routers.v1 import router as notification_router
 from hrm_backend.rbac import ROLE_PERMISSION_MATRIX
+from hrm_backend.referrals.routers.v1 import router as referral_router
 from hrm_backend.reporting.routers.v1 import router as reporting_router
 from hrm_backend.scoring.routers.v1 import router as scoring_router
 from hrm_backend.settings import get_settings
-from hrm_backend.vacancies.routers.v1 import public_router as public_vacancy_router
-from hrm_backend.vacancies.routers.v1 import router as vacancy_router
+from hrm_backend.vacancies.routers.v1 import (
+    public_router as public_vacancy_router,
+)
+from hrm_backend.vacancies.routers.v1 import (
+    router as vacancy_router,
+)
 
 settings = get_settings()
 app = FastAPI(title="HRM Backend", version="0.1.0")
@@ -51,6 +56,7 @@ app.include_router(candidate_public_router)
 app.include_router(employee_router)
 app.include_router(finance_router)
 app.include_router(notification_router)
+app.include_router(referral_router)
 app.include_router(reporting_router)
 app.include_router(public_vacancy_router)
 app.include_router(vacancy_router)

@@ -1002,6 +1002,7 @@ async def test_vacancy_and_pipeline_uuid_boundaries_reject_invalid_ids(
             "last_name": "Case",
             "email": "boundary@example.com",
             "phone": "+375291112233",
+            "consent_confirmed": "true",
             "checksum_sha256": checksum,
         },
         files={"file": ("cv.pdf", content, "application/pdf")},

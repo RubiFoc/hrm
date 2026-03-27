@@ -217,6 +217,7 @@ async def _apply_public(
         "last_name": "Doe",
         "email": email,
         "phone": "+375291112233",
+        "consent_confirmed": "true",
         "checksum_sha256": checksum,
     }
     if website is not None:
