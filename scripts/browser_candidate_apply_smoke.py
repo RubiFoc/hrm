@@ -162,6 +162,13 @@ def build_submit_expression(email: str) -> str:
   if (!(submit instanceof HTMLButtonElement)) {{
     throw new Error("Missing candidate submit button");
   }}
+  const consent = document.querySelector('input[name="consent_confirmed"]');
+  if (!(consent instanceof HTMLInputElement)) {{
+    throw new Error("Missing consent checkbox input");
+  }}
+  if (!consent.checked) {{
+    consent.click();
+  }}
   submit.click();
   return true;
 }})()
@@ -290,6 +297,7 @@ def run_browser_candidate_smoke(args: argparse.Namespace) -> None:
             "Boolean(document.querySelector('input[name=\"email\"]')) && "
             "Boolean(document.querySelector('input[name=\"phone\"]')) && "
             "Boolean(document.querySelector('input[type=\"file\"]')) && "
+            "Boolean(document.querySelector('input[name=\"consent_confirmed\"]')) && "
             "Boolean(document.querySelector('button[type=\"submit\"]'))",
             "candidate application form inputs",
         )
