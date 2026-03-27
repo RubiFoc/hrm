@@ -250,6 +250,7 @@ describe("CandidatePage", () => {
     fireEvent.change(screen.getByLabelText(/телефон/i), {
       target: { value: "+375291112233" },
     });
+    fireEvent.click(screen.getByLabelText(/согласие/i));
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
     expect(fileInput).not.toBeNull();
@@ -319,6 +320,7 @@ describe("CandidatePage", () => {
     fireEvent.change(screen.getByLabelText(/телефон/i), {
       target: { value: "+375291112233" },
     });
+    fireEvent.click(screen.getByLabelText(/согласие/i));
 
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement | null;
     expect(fileInput).not.toBeNull();

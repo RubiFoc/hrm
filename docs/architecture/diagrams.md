@@ -1,8 +1,8 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-23
-- Updated by: architect + coordinator
+- Date: 2026-03-27
+- Updated by: backend-engineer + frontend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -128,6 +128,7 @@ flowchart TB
 ```mermaid
 flowchart LR
   VAC[Vacancy Management]
+  REF[Referral Intake]
   CAND[Candidate Management]
   SCORE[AI Match Scoring]
   INT[Interview Management]
@@ -141,6 +142,8 @@ flowchart LR
   KPI[KPI and Audit]
 
   VAC --> SCORE
+  REF --> CAND
+  REF --> VAC
   CAND --> SCORE
   SCORE --> INT
   INT --> FAIR

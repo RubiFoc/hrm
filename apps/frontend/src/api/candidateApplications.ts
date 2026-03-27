@@ -9,6 +9,7 @@ export type PublicVacancyApplicationRequest = {
   last_name: string;
   email: string;
   phone: string;
+  consent_confirmed: boolean;
   checksum_sha256: string;
   file: File;
   location?: string | null;
@@ -29,6 +30,7 @@ export function applyToVacancyPublic(
   formData.set("last_name", payload.last_name);
   formData.set("email", payload.email);
   formData.set("phone", payload.phone);
+  formData.set("consent_confirmed", String(payload.consent_confirmed));
   formData.set("checksum_sha256", payload.checksum_sha256);
   formData.set("file", payload.file, payload.file.name);
 

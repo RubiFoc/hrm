@@ -2,7 +2,11 @@ import { useState } from "react";
 import {
   Alert,
   Button,
+  Checkbox,
   Divider,
+  FormControl,
+  FormControlLabel,
+  FormHelperText,
   Grid2,
   Paper,
   Stack,
@@ -37,6 +41,7 @@ const CANDIDATE_FORM_SCHEMA = z.object({
   phone: z.string().trim().min(3),
   location: z.string().trim().max(256).optional().or(z.literal("")),
   current_title: z.string().trim().max(256).optional().or(z.literal("")),
+  consent_confirmed: z.boolean().refine((value) => value, { message: "consent_required" }),
 });
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ACCEPT_ATTRIBUTE = ".pdf,.doc,.docx";
@@ -87,6 +92,7 @@ export function CandidateApplyTrackingWorkspace({
       phone: "",
       location: "",
       current_title: "",
+      consent_confirmed: false,
     },
   });
 
@@ -143,7 +149,7 @@ export function CandidateApplyTrackingWorkspace({
     setIsChecksumPending(true);
     try {
       const checksumSha256 = await computeFileChecksumSha256(selectedFile);
-      const response = await applyMutation.mutateAsync({
+          const response = await applyMutation.mutateAsync({
         vacancyId: resolvedVacancyId,
         payload: {
           ...values,
@@ -313,6 +319,16 @@ export function CandidateApplyTrackingWorkspace({
               {submissionSuccessMessage ? (
                 <Alert severity="success">{submissionSuccessMessage}</Alert>
               ) : null}
+
+              <FormControl error={Boolean(errors.consent_confirmed)}>
+                <FormControlLabel
+                  control={<Checkbox {...register("consent_confirmed")} />}
+                  label={t("candidateApply.fields.consent")}
+                />
+                {errors.consent_confirmed ? (
+                  <FormHelperText>{t("candidateApply.errors.consentRequired")}</FormHelperText>
+                ) : null}
+              </FormControl>
 
               <Button
                 type="submit"
@@ -532,6 +548,9 @@ function resolveCandidateApplyError(
     }
     if (detail.includes("bot submission detected")) {
       return t("candidateApply.errors.botSubmission");
+    }
+    if (detail.includes("consent_required")) {
+      return t("candidateApply.errors.consentRequired");
     }
     const statusMessage = t(`candidateApply.errors.http_${error.status}`);
     if (statusMessage !== `candidateApply.errors.http_${error.status}`) {

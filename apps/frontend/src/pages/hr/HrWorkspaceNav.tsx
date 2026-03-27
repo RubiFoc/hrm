@@ -13,6 +13,7 @@ const WORKSPACE_ROUTES: HrWorkspaceRoute[] = [
   { labelKey: "hrWorkspaceNav.pipeline", to: "/hr/pipeline" },
   { labelKey: "hrWorkspaceNav.interviews", to: "/hr/interviews" },
   { labelKey: "hrWorkspaceNav.offers", to: "/hr/offers" },
+  { labelKey: "hrWorkspaceNav.referrals", to: "/hr/referrals" },
   { labelKey: "hrWorkspaceNav.workbench", to: "/hr/workbench" },
 ];
 

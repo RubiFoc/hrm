@@ -990,6 +990,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/referrals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Referrals
+         * @description List referrals visible to HR or manager roles.
+         */
+        get: operations["list_referrals_api_v1_referrals_get"];
+        put?: never;
+        /**
+         * Submit Referral
+         * @description Submit an employee referral with candidate CV payload.
+         */
+        post: operations["submit_referral_api_v1_referrals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/referrals/{referral_id}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Review Referral
+         * @description Append a referral review transition.
+         */
+        post: operations["review_referral_api_v1_referrals__referral_id__review_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/kpi-snapshots": {
         parameters: {
             query?: never;
@@ -2127,6 +2171,8 @@ export interface components {
         Body_apply_to_vacancy_public_api_v1_vacancies__vacancy_id__applications_post: {
             /** Checksum Sha256 */
             checksum_sha256: string;
+            /** Consent Confirmed */
+            consent_confirmed: boolean;
             /** Current Title */
             current_title?: string | null;
             /** Email */
@@ -2145,6 +2191,24 @@ export interface components {
             phone: string;
             /** Website */
             website?: string | null;
+        };
+        /** Body_submit_referral_api_v1_referrals_post */
+        Body_submit_referral_api_v1_referrals_post: {
+            /** Checksum Sha256 */
+            checksum_sha256: string;
+            /** Email */
+            email: string;
+            /** File */
+            file: string;
+            /** Full Name */
+            full_name: string;
+            /** Phone */
+            phone: string;
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
         };
         /** Body_upload_candidate_cv_api_v1_candidates__candidate_id__cv_post */
         Body_upload_candidate_cv_api_v1_candidates__candidate_id__cv_post: {
@@ -4162,6 +4226,129 @@ export interface components {
             items: components["schemas"]["PublicVacancyListItemResponse"][];
         };
         /**
+         * ReferralListItemResponse
+         * @description Referral list row enriched with vacancy, candidate, and referrer context.
+         */
+        ReferralListItemResponse: {
+            /**
+             * Bonus Owner Employee Id
+             * Format: uuid
+             */
+            bonus_owner_employee_id: string;
+            /** Candidate Email */
+            candidate_email: string;
+            /** Candidate Full Name */
+            candidate_full_name: string;
+            /** Candidate Id */
+            candidate_id: string | null;
+            /** Candidate Phone */
+            candidate_phone: string | null;
+            /** Current Stage */
+            current_stage: ("applied" | "screening" | "shortlist" | "interview" | "offer" | "hired" | "rejected") | null;
+            /** Current Stage At */
+            current_stage_at: string | null;
+            /**
+             * Referral Id
+             * Format: uuid
+             */
+            referral_id: string;
+            /**
+             * Referrer Employee Id
+             * Format: uuid
+             */
+            referrer_employee_id: string;
+            /** Referrer Full Name */
+            referrer_full_name: string | null;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+            /** Vacancy Title */
+            vacancy_title: string;
+        };
+        /**
+         * ReferralListResponse
+         * @description Paginated referral list response.
+         */
+        ReferralListResponse: {
+            /** Items */
+            items: components["schemas"]["ReferralListItemResponse"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * ReferralReviewRequest
+         * @description Input payload for HR/manager referral review transitions.
+         */
+        ReferralReviewRequest: {
+            /** Reason */
+            reason?: string | null;
+            /**
+             * To Stage
+             * @enum {string}
+             */
+            to_stage: "applied" | "screening" | "shortlist" | "interview" | "offer" | "hired" | "rejected";
+        };
+        /**
+         * ReferralReviewResponse
+         * @description Response payload for referral review transitions.
+         */
+        ReferralReviewResponse: {
+            /**
+             * Referral Id
+             * Format: uuid
+             */
+            referral_id: string;
+            transition: components["schemas"]["PipelineTransitionResponse"];
+        };
+        /**
+         * ReferralSubmitResponse
+         * @description Response payload for employee referral submissions.
+         */
+        ReferralSubmitResponse: {
+            /**
+             * Bonus Owner Employee Id
+             * Format: uuid
+             */
+            bonus_owner_employee_id: string;
+            /** Candidate Id */
+            candidate_id: string | null;
+            /** Current Stage */
+            current_stage: ("applied" | "screening" | "shortlist" | "interview" | "offer" | "hired" | "rejected") | null;
+            /** Current Stage At */
+            current_stage_at: string | null;
+            /**
+             * Is Duplicate
+             * @default false
+             */
+            is_duplicate: boolean;
+            /**
+             * Referral Id
+             * Format: uuid
+             */
+            referral_id: string;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+        };
+        /**
          * RefreshRequest
          * @description Input payload for access/refresh token rotation.
          */
@@ -6166,6 +6353,107 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicVacancyListResponse"];
+                };
+            };
+        };
+    };
+    list_referrals_api_v1_referrals_get: {
+        parameters: {
+            query?: {
+                vacancy_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferralListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_referral_api_v1_referrals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_submit_referral_api_v1_referrals_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferralSubmitResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    review_referral_api_v1_referrals__referral_id__review_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                referral_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReferralReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReferralReviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

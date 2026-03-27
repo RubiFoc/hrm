@@ -1,8 +1,8 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-23
-- Updated by: coordinator + business-analyst
+- Date: 2026-03-27
+- Updated by: backend-engineer + frontend-engineer
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -69,6 +69,7 @@
 | TASK-13-03 | done/closed | Repo-backed release-gate compliance checklist now makes EPIC-13 pre-prod and production sign-off explicit, with current critical controls, evidence IDs, verification commands, legal/security preconditions, and blocker states captured in the docs set. |
 | TASK-13-04 | done/closed | GitHub issue #62 is linked to PR #138; the repo-backed production legal evidence package now defines sign-off workflow, required attachments, evidence freshness rules, blocker handling, and `verified` exit criteria for critical controls without adding runtime/API changes. |
 | COMPLIANCE-01 | done/closed | EPIC-13 compliance docs synced across legal-controls matrix, evidence registry, release checklist, and runbook; no runtime scope; Belarus-only gate retained (`CTRL-BY-01` in-progress, `CTRL-BY-02`/`CTRL-BY-03` implemented but unverified) |
+| TASK-06-08 | implemented/local-referral-slice | Employee referral intake now ships with referral linkage storage, dedupe/merge logic, referral review endpoints on existing pipeline stages, employee/HR/manager referral UI routes, consent gating for public apply, and updated docs/tests/contracts. |
 
 ## Requested High-Priority Intake (2026-03-23)
 
@@ -80,7 +81,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 | Request | Backlog Status | New High-Priority Tasks |
 | --- | --- | --- |
 | Employee profiles with avatars in MinIO and cross-employee profile visibility | not found as a closed scope | `TASK-06-05` (BA clarification) -> `TASK-06-06` (implementation) |
-| Employee referral recommendations for vacancies | not found as a closed scope | `TASK-06-07` (BA clarification) -> `TASK-06-08` (implementation) |
+| Employee referral recommendations for vacancies | implemented/local-referral-slice | `TASK-06-07` (BA clarification) -> `TASK-06-08` (implementation) |
 | Manager compensation controls (salary raises, payroll/bonus table, vacancy salary bands, manager/HR visibility) | not found as a closed scope | `TASK-09-05` (BA clarification) -> `TASK-09-06` (implementation) |
 
 ## 2026-03-12 Delivery Control Notes
@@ -170,7 +171,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
   - `TASK-05-01/02`
   - `TASK-11-05/06/07/08/09`
   - `TASK-13-01/02`
-  - `TASK-06-05/06/07/08`
+  - `TASK-06-05/06/07`
   - `TASK-09-05/06`
 - P1:
   - `TASK-03-08`
@@ -181,7 +182,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 - P2: none
 
 - Current open backlog by delivery wave:
-  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`, `TASK-06-05/06/07/08`, `TASK-09-05/06`
+  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`, `TASK-06-05/06/07`, `TASK-09-05/06`
   - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`
   - P2: none
 
@@ -191,7 +192,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
   - Open/track `TASK-06-05`: BA clarification for employee public profile + avatar storage policy (MinIO bucket, privacy, moderation, limits).
   - Open/track `TASK-06-06`: employee profile visibility + avatar upload/read implementation on existing employee domain/workspaces.
   - Open/track `TASK-06-07`: BA clarification for referral workflow (roles, rewards, anti-abuse, statuses, audit/legal constraints).
-  - Open/track `TASK-06-08`: employee referral recommendation flow implementation (UI + API + reporting hooks).
+  - Close/track `TASK-06-08`: employee referral recommendation flow implementation (UI + API + reporting hooks) is now in repo; close the issue after merge.
   - Open/track `TASK-09-05`: BA clarification for compensation management baseline (raise authority, approval chain, payroll/bonus view scope, data sensitivity).
   - Open/track `TASK-09-06`: manager/HR compensation tooling implementation (raise actions, salary/bonus table, vacancy salary bands, employee-to-band visibility).
 - P1:
