@@ -152,6 +152,10 @@ export function EmployeeOnboardingPage() {
     return null;
   }
   const noValue = t("employeePortal.noValue");
+  const directoryItems = Array.isArray(directoryQuery.data?.items)
+    ? directoryQuery.data.items
+    : [];
+  const hasDirectoryItems = directoryItems.length > 0;
 
   return (
     <Stack spacing={3}>
@@ -224,12 +228,12 @@ export function EmployeeOnboardingPage() {
           {directoryQuery.isError ? (
             <Alert severity="error">{resolveEmployeePortalError(directoryQuery.error, t)}</Alert>
           ) : null}
-          {directoryQuery.data && directoryQuery.data.items.length === 0 ? (
+          {directoryQuery.data && directoryItems.length === 0 ? (
             <Alert severity="info">{t("employeePortal.directory.empty")}</Alert>
           ) : null}
-          {directoryQuery.data && directoryQuery.data.items.length > 0 ? (
+          {directoryQuery.data && hasDirectoryItems ? (
             <Grid2 container spacing={2}>
-              {directoryQuery.data.items.map((item) => {
+              {directoryItems.map((item) => {
                 const isSelf = item.employee_id === portal.employee_id;
                 return (
                   <Grid2 key={item.employee_id} size={{ xs: 12, md: 6 }}>
