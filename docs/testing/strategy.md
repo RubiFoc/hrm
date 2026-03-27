@@ -103,12 +103,27 @@ apps/backend/tests/
   - `./scripts/check-openapi-freeze.sh`
   - `npm --prefix apps/frontend run api:types:check`
 
-## Referral Flow Verification (TASK-06-08)
+## Referral Flow Verification (`TASK-06-08`, frozen from `TASK-06-07`)
+
+Implementation source of truth:
+- `docs/project/employee-profile-referral-compensation-pass.md` (`TASK-06-07`, `clarified/frozen`)
+- `docs/architecture/decisions.md` (`ADR-0060`)
+
+Current implementation coverage includes at minimum:
 - Unit coverage:
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/referrals`
 - Integration coverage:
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/referrals/test_referral_api.py`
-- When referral or public-apply contracts change, keep the OpenAPI freeze and frontend generated types in sync:
+
+Acceptance rules for the implementation slice:
+- Keep referral submission bound to existing open vacancies and employee self-service scope.
+- Keep candidate consent gating mandatory before referral contact persistence.
+- Keep dedupe on `(vacancy_id, email)` with first-referrer bonus ownership preserved.
+- Keep referral review on the canonical recruitment pipeline; do not introduce a separate referral
+  status machine.
+- Keep bonus payout/accounting side effects outside the referral slice.
+- When referral or public-apply contracts change, keep the OpenAPI freeze and frontend generated
+  types in sync:
   - `./scripts/check-openapi-freeze.sh`
   - `npm --prefix apps/frontend run api:types:check`
 
@@ -467,6 +482,85 @@ Acceptance rules for the implementation slice:
   - `npm --prefix apps/frontend run test -- --run`
 - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
 - `./scripts/smoke-compose.sh`
+
+## Employee Directory and Avatar Verification (`TASK-06-06`, planned from `TASK-06-05`)
+
+Implementation source of truth:
+- `docs/project/employee-profile-referral-compensation-pass.md` (`TASK-06-05`, `clarified/frozen`)
+- `docs/architecture/decisions.md` (`ADR-0061`)
+
+Planned minimum coverage for the implementation slice includes at least:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Directory/profile RBAC is fail-closed for non-authenticated and out-of-scope roles | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/employee/test_employee_directory_api.py` | missing token/role/permission yields `401/403`; denied reads are audited |
+| Active-employee default visibility and dismissed-profile exclusion are deterministic | `apps/backend/tests/unit/employee/test_employee_directory_service.py` | `apps/backend/tests/integration/employee/test_employee_directory_api.py` | directory list returns only active employees by default; dismissed records stay hidden from default employee directory reads |
+| Profile field payload is privacy-aware and server-side redacted | `apps/backend/tests/unit/employee/test_employee_directory_service.py` | `apps/backend/tests/integration/employee/test_employee_directory_api.py` | optional fields (`phone`, `email`, `birthday_day_month`) hide by privacy flags; mandatory fields remain visible |
+| Avatar upload validation and ownership rules are fail-closed | `apps/backend/tests/unit/employee/test_employee_avatar_service.py` | `apps/backend/tests/integration/employee/test_employee_avatar_api.py` | unsupported MIME (`jpeg/png/webp` only), oversize (`>10 MiB`), and cross-user writes fail with stable `403/413/415/422` responses |
+| Avatar storage metadata and active-reference updates are consistent | `apps/backend/tests/unit/employee/test_employee_avatar_service.py` | `apps/backend/tests/integration/employee/test_employee_avatar_api.py` | successful upload persists MinIO object metadata link and updates one active avatar reference |
+| Avatar read path remains protected (no anonymous object-store exposure) | N/A | `apps/backend/tests/integration/employee/test_employee_avatar_api.py` | unauthorized or expired/invalid read token fails closed; authorized reads return protected stream/signed-read response only |
+| Employee-directory/profile/avatar audit events are complete | N/A | `apps/backend/tests/integration/security/test_audit_enforcement.py` + employee integration suites above | audit rows include actor, target, action, result, and reason codes for denied/failure paths |
+| Frontend employee-directory/avatar UX preserves guardrails and localized errors | `apps/frontend/src/pages/EmployeeDirectoryPage.test.tsx` + `apps/frontend/src/pages/EmployeeProfilePage.test.tsx` + `apps/frontend/src/app/router.employee.test.tsx` | N/A | route guard, privacy-redacted rendering, upload validation errors, and protected-avatar read failures are RU/EN localized |
+
+Acceptance rules for the implementation slice:
+- Keep employee directory/profile and avatar transport internal-only; do not add public routes.
+- Keep auth/session topology, candidate/public-apply transport, and manager candidate PII policy unchanged.
+- Keep avatar moderation reactive (admin/hr override only); do not add AI moderation pipeline.
+- Freeze OpenAPI and regenerate frontend typed contracts in the same change because new employee-directory/avatar routes and schemas are expected.
+- Enforce fail-closed behavior for all read/write paths when permission, scope, or object-read token checks fail.
+
+Minimum verification set:
+- `./scripts/generate-openapi-frozen.sh`
+- `./scripts/check-openapi-freeze.sh`
+- `npm --prefix apps/frontend run api:types:generate`
+- `npm --prefix apps/frontend run api:types:check`
+- `npm --prefix apps/frontend run lint`
+- `npm --prefix apps/frontend run test -- --run`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/employee apps/backend/tests/unit/rbac/test_rbac.py`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/employee apps/backend/tests/integration/security/test_audit_enforcement.py`
+- `./scripts/check-docs-structure.sh`
+
+## Compensation Controls Verification (`TASK-09-06`, planned from `TASK-09-05`)
+
+Implementation source of truth:
+- `docs/project/employee-profile-referral-compensation-pass.md` (`TASK-09-05`, `clarified/frozen`)
+- `docs/architecture/decisions.md` (`ADR-0062`)
+
+Planned minimum coverage for the implementation slice includes at least:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Raise request authority is manager-request-only (no direct manager apply) | `apps/backend/tests/unit/compensation/test_raise_request_service.py` | `apps/backend/tests/integration/compensation/test_raise_request_api.py` | manager direct salary-apply path is absent/forbidden; request create path is available only in scoped manager context |
+| Approval chain enforces manager quorum + final leader approval | `apps/backend/tests/unit/compensation/test_raise_request_service.py` | `apps/backend/tests/integration/compensation/test_raise_request_api.py` | request cannot become `approved` without quorum (`>=2`, default `2`) and leader action |
+| Effective date validation blocks backdating | `apps/backend/tests/unit/compensation/test_raise_request_service.py` | `apps/backend/tests/integration/compensation/test_raise_request_api.py` | `effective_date < today` returns stable validation error and salary values remain unchanged |
+| Salary-band writes are HR-only and versioned | `apps/backend/tests/unit/compensation/test_salary_band_service.py` | `apps/backend/tests/integration/compensation/test_salary_band_api.py` | non-HR writes return `403`; HR writes append historical version rows deterministically |
+| Payroll/bonus table read columns are unified for manager/hr/accountant | `apps/backend/tests/unit/compensation/test_compensation_table_service.py` | `apps/backend/tests/integration/compensation/test_compensation_table_api.py` | same column contract for all three roles; deterministic band-alignment status computation |
+| Currency/precision invariants stay fixed (`BYN`, `0.01`) | `apps/backend/tests/unit/compensation/test_money_policy.py` | `apps/backend/tests/integration/compensation/test_compensation_table_api.py` | mixed/missing currency values fail closed; monetary values are rounded deterministically |
+| Compensation read/write actions are fully audited | N/A | `apps/backend/tests/integration/security/test_audit_enforcement.py` + compensation integration suites | audit rows include actor, target, action, result, reason, and before/after snapshot on writes |
+| Frontend compensation workspace UX keeps role guards + localized errors | `apps/frontend/src/pages/CompensationWorkspacePage.test.tsx` + `apps/frontend/src/app/router.auth.test.tsx` | N/A | manager/hr/accountant read states, manager raise request flow, HR salary-band management, and leader approval errors are RU/EN localized |
+
+Acceptance rules for the implementation slice:
+- Keep compensation routes and data internal-only; do not expose compensation fields in employee
+  public directory/profile or public candidate routes.
+- Keep existing auth/session model and dedicated role-route topology unchanged.
+- Keep bonus management manual in this slice; do not add formula engine, external payroll imports,
+  or retroactive payroll recalculation.
+- Freeze OpenAPI and regenerate frontend typed contracts in the same change because new
+  compensation endpoints/schemas are expected.
+- Enforce fail-closed behavior for permission, scope, quorum, and effective-date validation checks.
+
+Minimum verification set:
+- `./scripts/generate-openapi-frozen.sh`
+- `./scripts/check-openapi-freeze.sh`
+- `npm --prefix apps/frontend run api:types:generate`
+- `npm --prefix apps/frontend run api:types:check`
+- `npm --prefix apps/frontend run lint`
+- `npm --prefix apps/frontend run test -- --run`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/compensation`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/compensation apps/backend/tests/integration/security/test_audit_enforcement.py`
+- `./scripts/check-docs-structure.sh`
 
 ## Onboarding Trigger Verification (`TASK-06-04`)
 
