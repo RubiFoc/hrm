@@ -2,14 +2,17 @@
 
 from __future__ import annotations
 
+from io import BytesIO
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
+from fastapi.responses import StreamingResponse
 
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.employee.dependencies.employee import (
+    get_employee_directory_service,
     get_employee_onboarding_portal_service,
     get_employee_profile_service,
     get_onboarding_dashboard_service,
@@ -28,6 +31,9 @@ from hrm_backend.employee.schemas.onboarding import (
     OnboardingTaskUpdateRequest,
 )
 from hrm_backend.employee.schemas.profile import (
+    EmployeeAvatarUploadResponse,
+    EmployeeDirectoryListResponse,
+    EmployeeDirectoryProfileResponse,
     EmployeeProfileCreateRequest,
     EmployeeProfileResponse,
 )
@@ -37,6 +43,7 @@ from hrm_backend.employee.schemas.template import (
     OnboardingChecklistTemplateResponse,
     OnboardingChecklistTemplateUpdateRequest,
 )
+from hrm_backend.employee.services.employee_directory_service import EmployeeDirectoryService
 from hrm_backend.employee.services.employee_onboarding_portal_service import (
     EmployeeOnboardingPortalService,
 )
@@ -63,6 +70,10 @@ EmployeeOnboardingPortalServiceDependency = Annotated[
     EmployeeOnboardingPortalService,
     Depends(get_employee_onboarding_portal_service),
 ]
+EmployeeDirectoryServiceDependency = Annotated[
+    EmployeeDirectoryService,
+    Depends(get_employee_directory_service),
+]
 OnboardingDashboardServiceDependency = Annotated[
     OnboardingDashboardService,
     Depends(get_onboarding_dashboard_service),
@@ -83,6 +94,9 @@ DashboardAssignedStaffQuery = Annotated[UUID | None, Query()]
 DashboardOverdueOnlyQuery = Annotated[bool, Query()]
 DashboardLimitQuery = Annotated[int, Query(ge=1, le=100)]
 DashboardOffsetQuery = Annotated[int, Query(ge=0)]
+DirectorySearchQuery = Annotated[str | None, Query(min_length=1, max_length=256)]
+DirectoryLimitQuery = Annotated[int, Query(ge=1, le=100)]
+DirectoryOffsetQuery = Annotated[int, Query(ge=0)]
 EmployeeProfileCreateRole = Annotated[Role, Depends(require_permission("employee_profile:create"))]
 EmployeeProfileReadRole = Annotated[Role, Depends(require_permission("employee_profile:read"))]
 EmployeePortalReadRole = Annotated[
@@ -137,6 +151,83 @@ def create_employee_profile(
 ) -> EmployeeProfileResponse:
     """Create one employee profile from a persisted hire conversion."""
     return service.create_profile(payload=payload, auth_context=auth_context, request=request)
+
+
+@employee_router.get("/directory", response_model=EmployeeDirectoryListResponse)
+def list_employee_directory(
+    request: Request,
+    _: EmployeePortalReadRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeDirectoryServiceDependency,
+    search: DirectorySearchQuery = None,
+    limit: DirectoryLimitQuery = 20,
+    offset: DirectoryOffsetQuery = 0,
+) -> EmployeeDirectoryListResponse:
+    """List cross-employee profile cards for authenticated employee actors."""
+    return service.list_directory(
+        auth_context=auth_context,
+        request=request,
+        search=search,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@employee_router.get(
+    "/directory/{employee_id}",
+    response_model=EmployeeDirectoryProfileResponse,
+)
+def get_employee_directory_profile(
+    employee_id: UUID,
+    request: Request,
+    _: EmployeePortalReadRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeDirectoryServiceDependency,
+) -> EmployeeDirectoryProfileResponse:
+    """Read one detailed employee profile from directory scope."""
+    return service.get_directory_profile(
+        employee_id=employee_id,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@employee_router.post(
+    "/me/avatar",
+    response_model=EmployeeAvatarUploadResponse,
+)
+async def upload_my_employee_avatar(
+    request: Request,
+    file: Annotated[UploadFile, File(...)],
+    _: EmployeePortalUpdateRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeDirectoryServiceDependency,
+) -> EmployeeAvatarUploadResponse:
+    """Upload or replace avatar binary for authenticated employee profile."""
+    return await service.upload_my_avatar(
+        file=file,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@employee_router.get("/{employee_id}/avatar")
+def download_employee_avatar(
+    employee_id: UUID,
+    request: Request,
+    _: EmployeePortalReadRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeDirectoryServiceDependency,
+):
+    """Download one employee avatar as attachment stream."""
+    payload = service.download_avatar(
+        employee_id=employee_id,
+        auth_context=auth_context,
+        request=request,
+    )
+    response = StreamingResponse(BytesIO(payload.content), media_type=payload.mime_type)
+    response.headers["Content-Disposition"] = f'attachment; filename="{payload.filename}"'
+    return response
 
 
 @employee_router.get(

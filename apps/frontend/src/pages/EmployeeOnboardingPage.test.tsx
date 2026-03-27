@@ -41,6 +41,30 @@ const PORTAL_PAYLOAD = {
   ],
 };
 
+const DIRECTORY_PAYLOAD = {
+  items: [
+    {
+      employee_id: "11111111-1111-4111-8111-111111111111",
+      full_name: "Ada Lovelace",
+      email: "ada@example.com",
+      phone: "+375291234567",
+      location: "Minsk",
+      position_title: "Engineer",
+      department: "R&D",
+      manager: "Grace Hopper",
+      subordinates: 0,
+      birthday_day_month: "10-12",
+      tenure_in_company_months: 12,
+      avatar_url: null,
+      avatar_updated_at: null,
+      is_dismissed: false,
+    },
+  ],
+  total: 1,
+  limit: 20,
+  offset: 0,
+};
+
 function renderEmployeeOnboardingPage() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -82,6 +106,9 @@ describe("EmployeeOnboardingPage", () => {
       if (url.endsWith("/api/v1/employees/me/onboarding")) {
         return jsonResponse(PORTAL_PAYLOAD);
       }
+      if (url.includes("/api/v1/employees/directory")) {
+        return jsonResponse(DIRECTORY_PAYLOAD);
+      }
       if (
         url.endsWith("/api/v1/employees/me/onboarding/tasks/33333333-3333-4333-8333-333333333333")
         && init?.method === "PATCH"
@@ -98,7 +125,7 @@ describe("EmployeeOnboardingPage", () => {
     renderEmployeeOnboardingPage();
 
     expect(await screen.findByRole("heading", { name: /портал онбординга/i })).toBeDefined();
-    expect(await screen.findByText(/ada@example.com/i)).toBeDefined();
+    expect((await screen.findAllByText(/ada@example.com/i)).length).toBeGreaterThan(0);
 
     fireEvent.click(await screen.findByRole("button", { name: /начать задачу/i }));
 
@@ -121,6 +148,9 @@ describe("EmployeeOnboardingPage", () => {
             },
           ],
         });
+      }
+      if (url.includes("/api/v1/employees/directory")) {
+        return jsonResponse(DIRECTORY_PAYLOAD);
       }
       if (
         url.endsWith("/api/v1/employees/me/onboarding/tasks/44444444-4444-4444-8444-444444444444")

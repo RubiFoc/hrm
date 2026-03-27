@@ -539,7 +539,36 @@ Acceptance rules for the implementation slice:
   - `npm --prefix apps/frontend run lint`
   - `npm --prefix apps/frontend run test -- --run`
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check .`
-  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+- `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q`
+- `./scripts/check-docs-structure.sh`
+
+## Employee Directory and Avatar Verification (`TASK-06-06`)
+
+Current implementation coverage includes at minimum:
+
+| Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
+| --- | --- | --- | --- |
+| Directory card mapping keeps additive profile fields deterministic | `apps/backend/tests/unit/employee/test_employee_directory_service.py` | N/A | mapper returns stable `department`, `manager`, `subordinates`, `birthday_day_month`, `tenure_in_company_months`, `avatar_url`, and `is_dismissed` from one `employee_profiles` source row |
+| Avatar payload validation stays fail-closed on MIME and technical size constraints | `apps/backend/tests/unit/employee/test_employee_directory_service.py` | N/A | unsupported MIME returns `422 employee_avatar_invalid_mime_type`; oversized payload returns `422 employee_avatar_too_large`; empty payload remains blocked with `422 employee_avatar_empty` |
+| Employee directory APIs remain employee-scoped and deny non-employee reads | `apps/backend/tests/unit/rbac/test_rbac.py` | `apps/backend/tests/integration/employee/test_employee_directory_api.py` | `GET /api/v1/employees/directory*` succeeds for `employee`, returns paginated cards/details, and returns `403` for `hr` |
+| Employee avatar upload and download round-trip persists metadata + binary payload | N/A | `apps/backend/tests/integration/employee/test_employee_directory_api.py` | `POST /api/v1/employees/me/avatar` stores metadata/object key and `GET /api/v1/employees/{employee_id}/avatar` streams identical bytes with expected MIME |
+| Employee `/employee` page keeps localized directory + avatar UX and task updates | `apps/frontend/src/pages/EmployeeOnboardingPage.test.tsx` | N/A | onboarding page renders directory block, keeps localized errors, and task-status updates continue to succeed after additive directory/avatar UI changes |
+
+Acceptance rules for the implementation slice:
+- Keep the existing employee route tree; do not add a new top-level employee directory route namespace on frontend.
+- Keep avatar binaries in MinIO and metadata in `employee_profiles`; do not duplicate avatar metadata in separate tables.
+- Keep directory visibility fail-closed for active employees only (`is_dismissed=false`) while retaining dismissed profiles in storage.
+- Freeze OpenAPI and update generated frontend types in the same change because employee API contracts expanded.
+- Keep auth, CORS, recruitment/interview route topology, and onboarding task mutation scope unchanged.
+- Minimum verification set:
+  - `./scripts/generate-openapi-frozen.sh`
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:generate`
+  - `npm --prefix apps/frontend run api:types:check`
+  - `npm --prefix apps/frontend run lint`
+  - `npm --prefix apps/frontend run test -- src/pages/EmployeeOnboardingPage.test.tsx --run`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend ruff check apps/backend/src/hrm_backend/employee apps/backend/tests/unit/employee/test_employee_directory_service.py apps/backend/tests/integration/employee/test_employee_directory_api.py`
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/employee/test_employee_directory_service.py apps/backend/tests/integration/employee/test_employee_directory_api.py`
   - `./scripts/check-docs-structure.sh`
 
 ## Employee Self-Service Onboarding Portal Verification (`TASK-07-03`)

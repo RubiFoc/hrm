@@ -558,6 +558,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/employees/directory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Employee Directory
+         * @description List cross-employee profile cards for authenticated employee actors.
+         */
+        get: operations["list_employee_directory_api_v1_employees_directory_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/employees/directory/{employee_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Employee Directory Profile
+         * @description Read one detailed employee profile from directory scope.
+         */
+        get: operations["get_employee_directory_profile_api_v1_employees_directory__employee_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/employees/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload My Employee Avatar
+         * @description Upload or replace avatar binary for authenticated employee profile.
+         */
+        post: operations["upload_my_employee_avatar_api_v1_employees_me_avatar_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/employees/me/onboarding": {
         parameters: {
             query?: never;
@@ -610,6 +670,26 @@ export interface paths {
          * @description Read one employee profile by identifier.
          */
         get: operations["get_employee_profile_api_v1_employees__employee_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/employees/{employee_id}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download Employee Avatar
+         * @description Download one employee avatar as attachment stream.
+         */
+        get: operations["download_employee_avatar_api_v1_employees__employee_id__avatar_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2153,6 +2233,11 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_upload_my_employee_avatar_api_v1_employees_me_avatar_post */
+        Body_upload_my_employee_avatar_api_v1_employees_me_avatar_post: {
+            /** File */
+            file: string;
+        };
         /**
          * CVAnalysisEvidenceItem
          * @description Evidence link from one extracted field to CV source snippet.
@@ -2460,6 +2545,112 @@ export interface components {
             value: string;
         };
         /**
+         * EmployeeAvatarUploadResponse
+         * @description Response payload returned after successful avatar upload/update.
+         */
+        EmployeeAvatarUploadResponse: {
+            /**
+             * Avatar Updated At
+             * Format: date-time
+             */
+            avatar_updated_at: string;
+            /** Avatar Url */
+            avatar_url: string;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+        };
+        /**
+         * EmployeeDirectoryListItemResponse
+         * @description Directory-card representation for one employee profile visible to employees.
+         */
+        EmployeeDirectoryListItemResponse: {
+            /** Avatar Updated At */
+            avatar_updated_at: string | null;
+            /** Avatar Url */
+            avatar_url: string | null;
+            /** Birthday Day Month */
+            birthday_day_month: string | null;
+            /** Department */
+            department: string | null;
+            /** Email */
+            email: string;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+            /** Full Name */
+            full_name: string;
+            /** Is Dismissed */
+            is_dismissed: boolean;
+            /** Location */
+            location: string | null;
+            /** Manager */
+            manager: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Position Title */
+            position_title: string | null;
+            /** Subordinates */
+            subordinates: number | null;
+            /** Tenure In Company Months */
+            tenure_in_company_months?: number | null;
+        };
+        /**
+         * EmployeeDirectoryListResponse
+         * @description Paginated employee-directory payload.
+         */
+        EmployeeDirectoryListResponse: {
+            /** Items */
+            items: components["schemas"]["EmployeeDirectoryListItemResponse"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * EmployeeDirectoryProfileResponse
+         * @description Detailed employee-directory profile payload for cross-employee visibility.
+         */
+        EmployeeDirectoryProfileResponse: {
+            /** Avatar Updated At */
+            avatar_updated_at: string | null;
+            /** Avatar Url */
+            avatar_url: string | null;
+            /** Birthday Day Month */
+            birthday_day_month: string | null;
+            /** Department */
+            department: string | null;
+            /** Email */
+            email: string;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+            /** Full Name */
+            full_name: string;
+            /** Is Dismissed */
+            is_dismissed: boolean;
+            /** Location */
+            location: string | null;
+            /** Manager */
+            manager: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Position Title */
+            position_title: string | null;
+            /** Subordinates */
+            subordinates: number | null;
+            /** Tenure In Company Months */
+            tenure_in_company_months?: number | null;
+        };
+        /**
          * EmployeeOnboardingPortalResponse
          * @description Employee-facing onboarding portal payload scoped to the current user.
          */
@@ -2582,6 +2773,10 @@ export interface components {
          * @description Employee profile API representation.
          */
         EmployeeProfileResponse: {
+            /** Avatar Updated At */
+            avatar_updated_at?: string | null;
+            /** Avatar Url */
+            avatar_url?: string | null;
             /**
              * Candidate Id
              * Format: uuid
@@ -2617,6 +2812,11 @@ export interface components {
              * Format: uuid
              */
             hire_conversion_id: string;
+            /**
+             * Is Dismissed
+             * @default false
+             */
+            is_dismissed: boolean;
             /** Last Name */
             last_name: string;
             /** Location */
@@ -5425,6 +5625,103 @@ export interface operations {
             };
         };
     };
+    list_employee_directory_api_v1_employees_directory_get: {
+        parameters: {
+            query?: {
+                search?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeDirectoryListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_employee_directory_profile_api_v1_employees_directory__employee_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeDirectoryProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_my_employee_avatar_api_v1_employees_me_avatar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_my_employee_avatar_api_v1_employees_me_avatar_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeAvatarUploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_my_onboarding_portal_api_v1_employees_me_onboarding_get: {
         parameters: {
             query?: never;
@@ -5498,6 +5795,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EmployeeProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_employee_avatar_api_v1_employees__employee_id__avatar_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

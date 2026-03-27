@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends
@@ -20,6 +21,11 @@ from hrm_backend.employee.dao.hire_conversion_dao import HireConversionDAO
 from hrm_backend.employee.dao.onboarding_run_dao import OnboardingRunDAO
 from hrm_backend.employee.dao.onboarding_task_dao import OnboardingTaskDAO
 from hrm_backend.employee.dao.onboarding_template_dao import OnboardingTemplateDAO
+from hrm_backend.employee.infra.minio import (
+    EmployeeAvatarStorage,
+    MinioEmployeeAvatarStorage,
+)
+from hrm_backend.employee.services.employee_directory_service import EmployeeDirectoryService
 from hrm_backend.employee.services.employee_onboarding_portal_service import (
     EmployeeOnboardingPortalService,
 )
@@ -36,14 +42,42 @@ from hrm_backend.employee.services.onboarding_template_service import (
 from hrm_backend.notifications.dao.notification_dao import NotificationDAO
 from hrm_backend.notifications.dependencies.notifications import get_notification_service
 from hrm_backend.notifications.services.notification_service import NotificationService
+from hrm_backend.settings import AppSettings, get_settings
 
 SessionDependency = Annotated[Session, Depends(get_db_session)]
+SettingsDependency = Annotated[AppSettings, Depends(get_settings)]
 AuditDependency = Annotated[AuditService, Depends(get_audit_service)]
 StaffAccountDAODependency = Annotated[StaffAccountDAO, Depends(get_staff_account_dao)]
 NotificationServiceDependency = Annotated[
     NotificationService,
     Depends(get_notification_service),
 ]
+
+
+@lru_cache(maxsize=4)
+def _build_avatar_storage(
+    endpoint: str,
+    access_key: str,
+    secret_key: str,
+    bucket_name: str,
+) -> EmployeeAvatarStorage:
+    """Build cached MinIO adapter for employee avatar binaries."""
+    return MinioEmployeeAvatarStorage(
+        endpoint=endpoint,
+        access_key=access_key,
+        secret_key=secret_key,
+        bucket_name=bucket_name,
+    )
+
+
+def get_employee_avatar_storage(settings: SettingsDependency) -> EmployeeAvatarStorage:
+    """Provide object storage adapter for employee avatar upload/download operations."""
+    return _build_avatar_storage(
+        endpoint=settings.object_storage_endpoint,
+        access_key=settings.object_storage_access_key,
+        secret_key=settings.object_storage_secret_key,
+        bucket_name=settings.object_storage_bucket,
+    )
 
 
 def get_hire_conversion_service(session: SessionDependency) -> HireConversionService:
@@ -175,6 +209,34 @@ def get_employee_onboarding_portal_service(
         run_dao=OnboardingRunDAO(session=session),
         task_dao=OnboardingTaskDAO(session=session),
         staff_account_dao=staff_account_dao,
+        audit_service=audit_service,
+    )
+
+
+def get_employee_directory_service(
+    settings: SettingsDependency,
+    session: SessionDependency,
+    audit_service: AuditDependency,
+    staff_account_dao: StaffAccountDAODependency,
+    avatar_storage: Annotated[EmployeeAvatarStorage, Depends(get_employee_avatar_storage)],
+) -> EmployeeDirectoryService:
+    """Build employee-directory service for profile visibility and avatar operations.
+
+    Args:
+        settings: Application settings for upload encryption policy.
+        session: SQLAlchemy session bound to current request scope.
+        audit_service: Audit service dependency for success/failure traces.
+        staff_account_dao: DAO for authenticated staff-account lookups.
+        avatar_storage: Object storage adapter for avatar binaries.
+
+    Returns:
+        EmployeeDirectoryService: Employee directory and avatar service.
+    """
+    return EmployeeDirectoryService(
+        settings=settings,
+        profile_dao=EmployeeProfileDAO(session=session),
+        staff_account_dao=staff_account_dao,
+        avatar_storage=avatar_storage,
         audit_service=audit_service,
     )
 

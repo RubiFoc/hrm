@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Avatar,
   Button,
   Chip,
   CircularProgress,
@@ -15,8 +16,12 @@ import { useTranslation } from "react-i18next";
 
 import {
   ApiError,
+  getEmployeeAvatarBlob,
+  listEmployeeDirectory,
   getMyEmployeeOnboardingPortal,
+  uploadMyEmployeeAvatar,
   updateMyEmployeeOnboardingTask,
+  type EmployeeDirectoryListResponse,
   type EmployeeOnboardingPortalResponse,
   type EmployeeOnboardingTaskStatus,
 } from "../api";
@@ -29,6 +34,8 @@ type FeedbackState = {
   message: string;
 };
 
+type EmployeeDirectoryItem = EmployeeDirectoryListResponse["items"][number];
+
 /**
  * Employee self-service onboarding workspace.
  */
@@ -40,11 +47,19 @@ export function EmployeeOnboardingPage() {
   const accessToken = session.accessToken;
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [pendingTaskId, setPendingTaskId] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const queryKey = ["employee-onboarding-portal", accessToken];
+  const directoryQueryKey = ["employee-directory", accessToken];
 
   const portalQuery = useQuery({
     queryKey,
     queryFn: () => getMyEmployeeOnboardingPortal(accessToken!),
+    enabled: Boolean(accessToken),
+    retry: false,
+  });
+  const directoryQuery = useQuery({
+    queryKey: directoryQueryKey,
+    queryFn: () => listEmployeeDirectory(accessToken!, { limit: 20, offset: 0 }),
     enabled: Boolean(accessToken),
     retry: false,
   });
@@ -74,6 +89,24 @@ export function EmployeeOnboardingPage() {
     },
     onSettled: () => {
       setPendingTaskId(null);
+    },
+  });
+  const updateAvatarMutation = useMutation({
+    mutationFn: (file: File) => uploadMyEmployeeAvatar(accessToken!, file),
+    onMutate: () => {
+      setFeedback(null);
+      setAvatarUploading(true);
+    },
+    onSuccess: () => {
+      setFeedback({ type: "success", message: t("employeePortal.directory.avatarUpdated") });
+      void queryClient.invalidateQueries({ queryKey: directoryQueryKey });
+      void queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (error: unknown) => {
+      setFeedback({ type: "error", message: resolveEmployeePortalError(error, t) });
+    },
+    onSettled: () => {
+      setAvatarUploading(false);
     },
   });
 
@@ -175,6 +208,109 @@ export function EmployeeOnboardingPage() {
               <Divider />
               <Typography variant="body2">{portal.offer_terms_summary}</Typography>
             </>
+          ) : null}
+        </Stack>
+      </Paper>
+
+      <Paper sx={{ p: 3 }}>
+        <Stack spacing={2}>
+          <Typography variant="h6">{t("employeePortal.directory.title")}</Typography>
+          {directoryQuery.isLoading ? (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <CircularProgress size={20} />
+              <Typography variant="body2">{t("employeePortal.directory.loading")}</Typography>
+            </Stack>
+          ) : null}
+          {directoryQuery.isError ? (
+            <Alert severity="error">{resolveEmployeePortalError(directoryQuery.error, t)}</Alert>
+          ) : null}
+          {directoryQuery.data && directoryQuery.data.items.length === 0 ? (
+            <Alert severity="info">{t("employeePortal.directory.empty")}</Alert>
+          ) : null}
+          {directoryQuery.data && directoryQuery.data.items.length > 0 ? (
+            <Grid2 container spacing={2}>
+              {directoryQuery.data.items.map((item) => {
+                const isSelf = item.employee_id === portal.employee_id;
+                return (
+                  <Grid2 key={item.employee_id} size={{ xs: 12, md: 6 }}>
+                    <Paper variant="outlined" sx={{ p: 2, height: "100%" }}>
+                      <Stack spacing={1.5} sx={{ height: "100%" }}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <DirectoryAvatar
+                            accessToken={accessToken}
+                            profile={item}
+                          />
+                          <Stack spacing={0.25}>
+                            <Typography variant="subtitle1">{item.full_name}</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {item.position_title || t("employeePortal.noValue")}
+                            </Typography>
+                          </Stack>
+                        </Stack>
+                        <Typography variant="body2" color="text.secondary">
+                          {item.email}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {item.phone || t("employeePortal.noValue")}
+                        </Typography>
+                        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={t("employeePortal.directory.department", {
+                              value: item.department || t("employeePortal.noValue"),
+                            })}
+                          />
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={t("employeePortal.directory.location", {
+                              value: item.location || t("employeePortal.noValue"),
+                            })}
+                          />
+                          <Chip
+                            size="small"
+                            variant="outlined"
+                            label={t("employeePortal.directory.tenureMonths", {
+                              value:
+                                item.tenure_in_company_months != null
+                                  ? String(item.tenure_in_company_months)
+                                  : t("employeePortal.noValue"),
+                            })}
+                          />
+                        </Stack>
+                        {isSelf ? (
+                          <Button
+                            component="label"
+                            variant="outlined"
+                            size="small"
+                            disabled={avatarUploading}
+                            sx={{ mt: "auto", alignSelf: "flex-start" }}
+                          >
+                            {avatarUploading
+                              ? t("employeePortal.directory.uploadingAvatar")
+                              : t("employeePortal.directory.updateAvatar")}
+                            <input
+                              hidden
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp"
+                              onChange={(event) => {
+                                const file = event.currentTarget.files?.[0];
+                                event.currentTarget.value = "";
+                                if (!file) {
+                                  return;
+                                }
+                                updateAvatarMutation.mutate(file);
+                              }}
+                            />
+                          </Button>
+                        ) : null}
+                      </Stack>
+                    </Paper>
+                  </Grid2>
+                );
+              })}
+            </Grid2>
           ) : null}
         </Stack>
       </Paper>
@@ -283,6 +419,10 @@ function resolveEmployeePortalError(
       || error.detail === "employee_onboarding_not_found"
       || error.detail === "onboarding_task_not_found"
       || error.detail === "onboarding_task_not_actionable_by_employee"
+      || error.detail === "employee_avatar_not_found"
+      || error.detail === "employee_avatar_empty"
+      || error.detail === "employee_avatar_invalid_mime_type"
+      || error.detail === "employee_avatar_too_large"
     ) {
       return t(`employeePortal.errors.${error.detail}`);
     }
@@ -295,8 +435,50 @@ function resolveEmployeePortalError(
     if (error.status === 409) {
       return t("employeePortal.errors.http_409");
     }
+    if (error.status === 422) {
+      return t("employeePortal.errors.http_422");
+    }
   }
   return t("employeePortal.errors.generic");
+}
+
+type DirectoryAvatarProps = {
+  accessToken: string;
+  profile: EmployeeDirectoryItem;
+};
+
+function DirectoryAvatar({ accessToken, profile }: DirectoryAvatarProps) {
+  const avatarQuery = useQuery({
+    queryKey: [
+      "employee-directory-avatar",
+      accessToken,
+      profile.employee_id,
+      profile.avatar_updated_at,
+    ],
+    queryFn: () => getEmployeeAvatarBlob(accessToken, profile.employee_id),
+    enabled: Boolean(profile.avatar_url),
+    retry: false,
+  });
+
+  const objectUrl = useMemo(
+    () => (avatarQuery.data ? URL.createObjectURL(avatarQuery.data) : null),
+    [avatarQuery.data],
+  );
+
+  useEffect(
+    () => () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    },
+    [objectUrl],
+  );
+
+  return (
+    <Avatar src={objectUrl || undefined} alt={profile.full_name} sx={{ width: 40, height: 40 }}>
+      {buildInitials(profile.full_name)}
+    </Avatar>
+  );
 }
 
 function resolveNextTaskStatus(status: EmployeeOnboardingTaskStatus): EmployeeOnboardingTaskStatus {
@@ -333,4 +515,18 @@ function formatDateTimeValue(value: string | null, fallback: string): string {
     return fallback;
   }
   return new Date(value).toLocaleString();
+}
+
+function buildInitials(value: string): string {
+  const parts = value
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (parts.length === 0) {
+    return "?";
+  }
+  return parts
+    .slice(0, 2)
+    .map((item) => item[0]?.toUpperCase() ?? "")
+    .join("");
 }

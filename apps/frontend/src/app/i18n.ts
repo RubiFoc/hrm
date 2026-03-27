@@ -954,6 +954,17 @@ const resources = {
           dueAt: "Due: {{value}}",
           lastUpdated: "Last updated: {{value}}",
         },
+        directory: {
+          title: "Employee directory",
+          loading: "Loading employee profiles...",
+          empty: "No employee profiles are currently visible.",
+          updateAvatar: "Update avatar",
+          uploadingAvatar: "Uploading avatar...",
+          avatarUpdated: "Avatar updated.",
+          department: "Department: {{value}}",
+          location: "Location: {{value}}",
+          tenureMonths: "Tenure (months): {{value}}",
+        },
         errors: {
           employee_profile_not_found:
             "Your employee profile is not available for onboarding yet.",
@@ -964,9 +975,16 @@ const resources = {
           onboarding_task_not_found: "The requested onboarding task was not found.",
           onboarding_task_not_actionable_by_employee:
             "This onboarding task is currently managed by HR or another assignee.",
+          employee_avatar_not_found: "Employee avatar is not available yet.",
+          employee_avatar_empty: "Avatar file is empty.",
+          employee_avatar_invalid_mime_type:
+            "Only PNG, JPEG, and WEBP avatar files are supported.",
+          employee_avatar_too_large:
+            "Avatar file is too large. Use a smaller image.",
           http_403: "You do not have access to the employee onboarding portal.",
           http_404: "Your onboarding data was not found.",
           http_409: "The onboarding task could not be updated in its current state.",
+          http_422: "Onboarding request validation failed.",
           generic: "Failed to load or update the onboarding portal.",
         },
       },
@@ -2648,6 +2666,17 @@ const resources = {
           dueAt: "Срок: {{value}}",
           lastUpdated: "Обновлено: {{value}}",
         },
+        directory: {
+          title: "Справочник сотрудников",
+          loading: "Загрузка профилей сотрудников...",
+          empty: "Сейчас нет видимых профилей сотрудников.",
+          updateAvatar: "Обновить аватар",
+          uploadingAvatar: "Загрузка аватара...",
+          avatarUpdated: "Аватар обновлён.",
+          department: "Отдел: {{value}}",
+          location: "Локация: {{value}}",
+          tenureMonths: "Стаж (месяцы): {{value}}",
+        },
         errors: {
           employee_profile_not_found:
             "Ваш employee profile пока недоступен для онбординга.",
@@ -2658,9 +2687,16 @@ const resources = {
           onboarding_task_not_found: "Запрошенная onboarding-задача не найдена.",
           onboarding_task_not_actionable_by_employee:
             "Эта onboarding-задача сейчас управляется HR или другим исполнителем.",
+          employee_avatar_not_found: "Аватар сотрудника пока недоступен.",
+          employee_avatar_empty: "Файл аватара пустой.",
+          employee_avatar_invalid_mime_type:
+            "Для аватара поддерживаются только PNG, JPEG и WEBP.",
+          employee_avatar_too_large:
+            "Файл аватара слишком большой. Выберите изображение меньшего размера.",
           http_403: "У вас нет доступа к employee onboarding portal.",
           http_404: "Ваши onboarding-данные не найдены.",
           http_409: "Onboarding-задачу нельзя обновить в её текущем состоянии.",
+          http_422: "Ошибка валидации onboarding-запроса.",
           generic: "Не удалось загрузить или обновить портал онбординга.",
         },
       },

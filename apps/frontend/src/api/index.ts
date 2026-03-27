@@ -13,6 +13,12 @@ export {
   updateMyEmployeeOnboardingTask,
 } from "./employeeOnboarding";
 export {
+  getEmployeeAvatarBlob,
+  getEmployeeDirectoryProfile,
+  listEmployeeDirectory,
+  uploadMyEmployeeAvatar,
+} from "./employeeDirectory";
+export {
   getManagerWorkspaceCandidateSnapshot,
   getManagerWorkspaceOverview,
 } from "./managerWorkspace";
@@ -102,6 +108,12 @@ export type {
   EmployeeKeyStatus,
   EmployeeRegistrationKeyResponse,
 } from "./adminEmployeeKeys";
+export type {
+  EmployeeAvatarUploadResponse,
+  EmployeeDirectoryListQuery,
+  EmployeeDirectoryListResponse,
+  EmployeeDirectoryProfileResponse,
+} from "./employeeDirectory";
 export type {
   EmployeeOnboardingPortalResponse,
   EmployeeOnboardingTaskResponse,

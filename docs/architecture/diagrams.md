@@ -1,8 +1,8 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-23
-- Updated by: architect + coordinator
+- Date: 2026-03-27
+- Updated by: architect + backend-engineer + frontend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -384,6 +384,50 @@ sequenceDiagram
     EMP-->>API: updated task payload
     API-->>UI: Refresh task card state
   end
+```
+
+## Diagram 8A: Employee Directory and Avatar Sequence (`TASK-06-06`)
+
+```mermaid
+sequenceDiagram
+  participant EMPU as Employee
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant EMP as Employee Domain
+  participant DB as PostgreSQL
+  participant OBJ as MinIO Avatar Bucket
+
+  EMPU->>UI: Open `/employee` and directory block
+  UI->>API: GET /api/v1/employees/directory?search&limit&offset
+  API->>EMP: Validate `employee_portal:read`
+  EMP->>DB: Load only active profiles (`is_dismissed=false`) with pagination
+  EMP-->>API: directory cards + pagination metadata
+  API-->>UI: Render employee cards
+  EMPU->>UI: Open colleague profile card
+  UI->>API: GET /api/v1/employees/directory/{employee_id}
+  API->>EMP: Validate `employee_portal:read`
+  EMP->>DB: Load profile row + avatar metadata
+  EMP-->>API: profile payload | 404 employee_profile_not_found
+  API-->>UI: Render profile detail with allowed fields
+  EMPU->>UI: Upload own avatar
+  UI->>API: POST /api/v1/employees/me/avatar (multipart/form-data)
+  API->>EMP: Validate `employee_portal:update` + actor profile resolution
+  EMP->>EMP: Validate MIME (`image/jpeg|png|webp`) and max size (5 MB)
+  alt Validation failed
+    EMP-->>API: 422 employee_avatar_invalid_mime_type | employee_avatar_empty | employee_avatar_too_large
+    API-->>UI: Localized validation error
+  else Validation passed
+    EMP->>OBJ: Put object `employees/{employee_id}/avatars/{uuid}.{ext}`
+    EMP->>DB: Persist `avatar_object_key`, `avatar_mime_type`, `avatar_updated_at`
+    EMP-->>API: avatar URL metadata
+    API-->>UI: Refresh card/avatar preview
+  end
+  UI->>API: GET /api/v1/employees/{employee_id}/avatar
+  API->>EMP: Validate `employee_portal:read`
+  EMP->>DB: Resolve avatar metadata
+  EMP->>OBJ: Read binary payload by object key
+  EMP-->>API: streamed avatar bytes | 404 employee_avatar_not_found
+  API-->>UI: Display avatar image
 ```
 
 ## Diagram 9: Onboarding Progress Dashboard Sequence

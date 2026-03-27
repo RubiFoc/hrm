@@ -1,8 +1,8 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-23
-- Updated by: coordinator + business-analyst
+- Date: 2026-03-27
+- Updated by: coordinator + business-analyst + codex
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -53,6 +53,8 @@
 | TASK-06-02 | implemented/local-hire-conversion-slice | The existing `POST /api/v1/pipeline/transitions` flow now persists one durable `hire_conversions` handoff atomically with successful `offer -> hired`, while employee profile creation and onboarding execution remain deferred |
 | TASK-06-03 | implemented/local-employee-profile-slice | Staff-only `POST/GET /api/v1/employees` now bootstrap one durable `employee_profiles` row from `hire_conversions`, validate frozen snapshots, and prepare the employee-domain trigger surface for onboarding |
 | TASK-06-04 | implemented/local-onboarding-trigger-slice | Successful `POST /api/v1/employees` now atomically creates both `employee_profiles` and one durable `onboarding_runs` artifact, and employee read responses expose additive onboarding metadata |
+| TASK-06-06 | implemented/local-employee-directory-avatar-slice | Employee directory/profile APIs plus self-avatar upload/read are implemented on `/api/v1/employees/directory*`, `/api/v1/employees/me/avatar`, and `/api/v1/employees/{employee_id}/avatar` with MinIO-backed binaries, additive `employee_profiles` avatar/dismissal metadata, RBAC/audit coverage, and `/employee` directory UI integration |
+| TASK-06-05/07 + TASK-09-05 | done/closed | BA discovery and stakeholder decision freeze were completed in `docs/project/employee-profile-referral-compensation-pass.md` on 2026-03-23; implementation tasks are unblocked. |
 | TASK-07-01 | implemented/local-onboarding-template-slice | Staff-only `POST/GET/PUT /api/v1/onboarding/templates` now manage durable checklist templates and items, including one active default template for later onboarding-task generation |
 | TASK-07-02 | implemented/local-onboarding-task-slice | Employee bootstrap now atomically materializes `onboarding_tasks` from the active template, and staff can list/update/backfill tasks on `/api/v1/onboarding/runs/{onboarding_id}/tasks` |
 | TASK-07-03 | implemented/local-employee-portal-slice | Employee-only `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*` now expose self-service onboarding tasks with durable employee-profile identity linking and localized frontend coverage |
@@ -79,9 +81,9 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 
 | Request | Backlog Status | New High-Priority Tasks |
 | --- | --- | --- |
-| Employee profiles with avatars in MinIO and cross-employee profile visibility | not found as a closed scope | `TASK-06-05` (BA clarification) -> `TASK-06-06` (implementation) |
-| Employee referral recommendations for vacancies | not found as a closed scope | `TASK-06-07` (BA clarification) -> `TASK-06-08` (implementation) |
-| Manager compensation controls (salary raises, payroll/bonus table, vacancy salary bands, manager/HR visibility) | not found as a closed scope | `TASK-09-05` (BA clarification) -> `TASK-09-06` (implementation) |
+| Employee profiles with avatars in MinIO and cross-employee profile visibility | implementation done (local slice), closeout pending merge | `TASK-06-05` done/closed + `TASK-06-06` implemented/local |
+| Employee referral recommendations for vacancies | BA clarification closed; implementation open | `TASK-06-07` done/closed -> `TASK-06-08` (implementation) |
+| Manager compensation controls (salary raises, payroll/bonus table, vacancy salary bands, manager/HR visibility) | BA clarification closed; implementation open | `TASK-09-05` done/closed -> `TASK-09-06` (implementation) |
 
 ## 2026-03-12 Delivery Control Notes
 - `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
@@ -140,6 +142,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 - `TASK-06-02` is no longer active queue work; the implemented source of truth is the repo-backed atomic `offer -> hired` conversion handoff on the existing transition endpoint.
 - `TASK-06-03` is no longer active queue work; the implemented source of truth is the repo-backed staff employee bootstrap flow on `/api/v1/employees`.
 - `TASK-06-04` is no longer active queue work; the implemented source of truth is the repo-backed atomic onboarding trigger on the same employee bootstrap endpoint.
+- `TASK-06-06` is no longer active queue work; the implemented source of truth is the repo-backed employee directory + avatar slice on `/api/v1/employees/directory*`, `/api/v1/employees/me/avatar`, and `/api/v1/employees/{employee_id}/avatar` plus `/employee` workspace integration.
 - `TASK-07-01` is no longer active queue work; the implemented source of truth is the repo-backed onboarding checklist template API on `/api/v1/onboarding/templates`.
 - `TASK-07-02` is no longer active queue work; the implemented source of truth is the repo-backed onboarding task generation/backfill/update API on `/api/v1/onboarding/runs/{onboarding_id}/tasks`.
 - `TASK-07-03` is no longer active queue work; the implemented source of truth is the repo-backed employee self-service onboarding portal on `/employee` plus `/api/v1/employees/me/onboarding*`.
@@ -160,41 +163,27 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 
 ## Remaining Backlog Snapshot
 
-- Remaining backlog items are repopulated below so the repo reflects both still-open work and repo-implemented slices that have not been formally closed yet.
+- Remaining backlog items below reflect currently open implementation work only.
 - P0:
-  - `TASK-12-01`
-  - `TASK-03-01/02/03/05/06/07`
-  - `TASK-02-01/02/03`
-  - `TASK-08-01/02/04`
-  - `TASK-04-01/02/03/05`
-  - `TASK-05-01/02`
-  - `TASK-11-05/06/07/08/09`
-  - `TASK-13-01/02`
-  - `TASK-06-05/06/07/08`
-  - `TASK-09-05/06`
+  - `TASK-06-08`
+  - `TASK-09-06`
 - P1:
-  - `TASK-03-08`
-  - `TASK-06-01/02/03/04`
-  - `TASK-07-01/02/03/04`
-  - `TASK-09-01`
-- `TASK-11-12` stays excluded because its umbrella backlog item is already normalized closed.
+  - none
 - P2: none
 
 - Current open backlog by delivery wave:
-  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`, `TASK-06-05/06/07/08`, `TASK-09-05/06`
-  - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`
+  - P0: `TASK-06-08`, `TASK-09-06`
+  - P1: none
   - P2: none
 
 ## GitHub Issue Queue
 
 - P0:
-  - Open/track `TASK-06-05`: BA clarification for employee public profile + avatar storage policy (MinIO bucket, privacy, moderation, limits).
-  - Open/track `TASK-06-06`: employee profile visibility + avatar upload/read implementation on existing employee domain/workspaces.
-  - Open/track `TASK-06-07`: BA clarification for referral workflow (roles, rewards, anti-abuse, statuses, audit/legal constraints).
+  - `TASK-06-06` implementation is complete in local repo; issue closeout should follow merge evidence for this slice.
   - Open/track `TASK-06-08`: employee referral recommendation flow implementation (UI + API + reporting hooks).
-  - Open/track `TASK-09-05`: BA clarification for compensation management baseline (raise authority, approval chain, payroll/bonus view scope, data sensitivity).
   - Open/track `TASK-09-06`: manager/HR compensation tooling implementation (raise actions, salary/bonus table, vacancy salary bands, employee-to-band visibility).
 - P1:
+  - `TASK-06-05`, `TASK-06-07`, and `TASK-09-05` are closed from BA perspective (`docs/project/employee-profile-referral-compensation-pass.md`).
   - RU-scope issues `#142`, `#143`, and `#145` should be closed as de-scoped after ADR-0059.
 
 - Execution rule for follow-on interview work: keep the implemented `/hr`, `/candidate/apply`, and `/candidate/interview/:interviewToken` topology, plus the public company/careers entrypoints on `/` and `/careers`, unchanged unless a separate ADR reopens that scope.
@@ -267,7 +256,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 | TASK-06-03 | EPIC-06 | Implement initial employee profile creation and validation | Phase 2 | P1 | TASK-06-02 |
 | TASK-06-04 | EPIC-06 | Trigger onboarding workflow on successful conversion | Phase 2 | P1 | TASK-06-03 |
 | TASK-06-05 | EPIC-06 | BA clarification pass for employee public profile: avatar storage in MinIO, profile visibility across employees, privacy/moderation constraints, and acceptance metrics | Phase 2 | P0 | TASK-06-03 |
-| TASK-06-06 | EPIC-06 | Implement employee public profile cards with avatar upload/read in MinIO and cross-employee profile viewing controls | Phase 2 | P0 | TASK-06-05 |
+| TASK-06-06 | EPIC-06 | Implement employee public profile cards with avatar upload/read in MinIO and cross-employee profile viewing controls | Phase 2 | implemented/local-employee-directory-avatar-slice | TASK-06-05 |
 | TASK-06-07 | EPIC-06 | BA clarification pass for referral workflow: recommendation flow, role permissions, anti-abuse rules, reward/accounting policy, and legal/audit boundaries | Phase 2 | P0 | TASK-06-03 |
 | TASK-06-08 | EPIC-06 | Implement employee referral recommendations for vacancies (recommend friend, lifecycle statuses, manager/HR review visibility) | Phase 2 | P0 | TASK-06-07, TASK-02-01 |
 | TASK-07-01 | EPIC-07 | Implement onboarding checklist template management | Phase 2 | P1 | TASK-06-04 |

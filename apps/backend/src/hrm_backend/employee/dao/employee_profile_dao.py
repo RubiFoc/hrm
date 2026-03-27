@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from hrm_backend.employee.models.profile import EmployeeProfile
@@ -92,6 +92,72 @@ class EmployeeProfileDAO:
                 EmployeeProfile.created_at.asc(),
                 EmployeeProfile.employee_id.asc(),
             )
+            .all()
+        )
+
+    def count_directory(self, *, search: str | None = None) -> int:
+        """Count employee profiles visible in directory reads.
+
+        Args:
+            search: Optional free-text query applied case-insensitively.
+
+        Returns:
+            int: Number of matched employee profiles.
+        """
+        query = self._session.query(func.count(EmployeeProfile.employee_id)).filter(
+            EmployeeProfile.is_dismissed.is_(False)
+        )
+        if search:
+            normalized = f"%{search.strip().lower()}%"
+            query = query.filter(
+                or_(
+                    func.lower(EmployeeProfile.first_name).like(normalized),
+                    func.lower(EmployeeProfile.last_name).like(normalized),
+                    func.lower(EmployeeProfile.email).like(normalized),
+                    func.lower(func.coalesce(EmployeeProfile.current_title, "")).like(normalized),
+                    func.lower(func.coalesce(EmployeeProfile.location, "")).like(normalized),
+                )
+            )
+        value = query.scalar()
+        return int(value or 0)
+
+    def list_directory(
+        self,
+        *,
+        search: str | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> list[EmployeeProfile]:
+        """List employee profiles for the employee-visible directory.
+
+        Args:
+            search: Optional free-text query applied case-insensitively.
+            limit: Maximum number of returned rows.
+            offset: Number of skipped rows.
+
+        Returns:
+            list[EmployeeProfile]: Matched employee rows in deterministic order.
+        """
+        query = self._session.query(EmployeeProfile).filter(EmployeeProfile.is_dismissed.is_(False))
+        if search:
+            normalized = f"%{search.strip().lower()}%"
+            query = query.filter(
+                or_(
+                    func.lower(EmployeeProfile.first_name).like(normalized),
+                    func.lower(EmployeeProfile.last_name).like(normalized),
+                    func.lower(EmployeeProfile.email).like(normalized),
+                    func.lower(func.coalesce(EmployeeProfile.current_title, "")).like(normalized),
+                    func.lower(func.coalesce(EmployeeProfile.location, "")).like(normalized),
+                )
+            )
+        return list(
+            query.order_by(
+                EmployeeProfile.first_name.asc(),
+                EmployeeProfile.last_name.asc(),
+                EmployeeProfile.employee_id.asc(),
+            )
+            .offset(offset)
+            .limit(limit)
             .all()
         )
 

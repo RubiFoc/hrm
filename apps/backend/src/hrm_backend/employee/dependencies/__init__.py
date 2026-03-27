@@ -1,6 +1,8 @@
 """Dependency providers for employee-domain services."""
 
 from hrm_backend.employee.dependencies.employee import (
+    get_employee_avatar_storage,
+    get_employee_directory_service,
     get_employee_onboarding_portal_service,
     get_employee_profile_service,
     get_hire_conversion_service,
@@ -10,6 +12,8 @@ from hrm_backend.employee.dependencies.employee import (
 
 __all__ = [
     "get_hire_conversion_service",
+    "get_employee_avatar_storage",
+    "get_employee_directory_service",
     "get_employee_profile_service",
     "get_employee_onboarding_portal_service",
     "get_onboarding_dashboard_service",

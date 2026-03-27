@@ -64,6 +64,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0057 | 2026-03-20 | accepted | Split public careers into board and shareable vacancy detail routes | architect + frontend-engineer | frontend routing, public careers UX, smoke verification, route tags |
 | ADR-0058 | 2026-03-20 | accepted | Split public candidate transport into dedicated apply and interview routes with `/candidate` compatibility redirects | architect + frontend-engineer | frontend routing, public candidate UX, observability, browser smoke, documentation |
 | ADR-0059 | 2026-03-23 | accepted | De-scope Russia jurisdiction and keep Belarus-only compliance scope | coordinator | compliance scope, legal controls, release gate |
+| ADR-0060 | 2026-03-27 | accepted | Add employee directory visibility and self-avatar upload/read on existing employee domain routes | architect + backend-engineer + frontend-engineer | employee profile schema, object storage adapter, RBAC/audit contracts, `/employee` workspace UX, OpenAPI/frontend typed clients |
 
 ## ADR-0059
 - Context: The project is delivered from a Belarus-local environment and will not operate a dedicated Russia service.
@@ -72,6 +73,29 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Russia-specific controls, evidence, and release-gate blockers are removed from the compliance docs.
   - Belarus controls remain the only compliance scope and continue to govern release gating.
   - If Russia scope is reintroduced later, a new ADR and refreshed legal controls matrix will be required.
+
+## ADR-0060
+- Context: `TASK-06-05` froze business requirements for cross-employee profile visibility and MinIO-backed avatars. Existing employee APIs covered bootstrap and onboarding only, without directory reads or avatar storage semantics.
+- Decision:
+  - Keep the implementation additive inside `hrm_backend/employee` and reuse existing role workspaces (`/employee`) without introducing a new top-level route tree.
+  - Extend `employee_profiles` with avatar metadata (`avatar_object_key`, `avatar_mime_type`,
+    `avatar_updated_at`) and dismissal visibility marker (`is_dismissed`) while retaining one
+    profile row as the source of truth.
+  - Store avatar binaries in MinIO through an explicit employee-domain storage adapter; keep only
+    object reference metadata in PostgreSQL.
+  - Expose directory/profile/avatar APIs on the existing employee namespace:
+    `GET /api/v1/employees/directory`,
+    `GET /api/v1/employees/directory/{employee_id}`,
+    `POST /api/v1/employees/me/avatar`,
+    `GET /api/v1/employees/{employee_id}/avatar`.
+  - Keep fail-closed RBAC and audit coverage with `employee_portal:read` for directory/avatar reads
+    and `employee_portal:update` for avatar writes.
+  - Enforce technical avatar validation limits for reliability and security:
+    MIME `image/jpeg|image/png|image/webp`, non-empty payload, max size 5 MB.
+- Consequences:
+  - Employee directory and avatar UX become available without reopening auth, CORS, or the route topology.
+  - Dismissed profiles stay retained in storage but are excluded from directory listings by default.
+  - OpenAPI and generated frontend types must be regenerated whenever employee directory/avatar contracts evolve.
 ## ADR-0001
 - Context: Project is at bootstrap stage and lacks durable knowledge artifacts.
 - Decision: Standardize docs structure under `docs/`, enforce updates per task, and keep agent workflow under `.ai/`.

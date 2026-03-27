@@ -1,8 +1,8 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-23
-- Updated by: coordinator
+- Date: 2026-03-27
+- Updated by: architect + backend-engineer + frontend-engineer
 
 ## System Context
 HRM platform for Belarus that supports candidate selection across professions and
@@ -46,7 +46,7 @@ flowchart LR
 | Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key lifecycle (issue/list/revoke), audit hooks | platform |
 | Recruitment Domain | Vacancies, candidates, pipeline, interviews, schedule-versioned interviewer feedback, offer lifecycle state, hire-conversion command flow, and manager-scoped hiring read models | Candidate and vacancy data | Vacancy/pipeline state, interview fairness state, offer status, active-document readiness, candidate context, and manager workspace hiring summaries/snapshots | hr-tech |
 | Match Scoring Domain | Async scoring jobs and explainable score artifacts keyed by vacancy, candidate, and active document | Scoring requests, parsed CV analysis, vacancy snapshot | UI-ready score/status payloads for shortlist review | ai-platform |
-| Employee Domain | Durable hire-conversion handoff, explicit employee profile bootstrap, onboarding workflows, employee self-service onboarding portal, and HR/manager onboarding progress visibility | Hire conversion handoff, profile/bootstrap/template/portal/dashboard requests | Employee handoff rows, employee profiles, onboarding runs/templates/tasks, employee-facing onboarding views, and staff/manager onboarding progress read models | hr-tech |
+| Employee Domain | Durable hire-conversion handoff, explicit employee profile bootstrap, onboarding workflows, employee self-service onboarding portal, employee directory visibility, avatar upload/read, and HR/manager onboarding progress visibility | Hire conversion handoff, profile/bootstrap/template/portal/directory/avatar/dashboard requests | Employee handoff rows, employee profiles, avatar object metadata, onboarding runs/templates/tasks, employee-facing onboarding views, and staff/manager onboarding progress read models | hr-tech |
 | Automation Rule Engine | Deterministic evaluation of trigger events into planned actions (no side effects) | Trigger events + rule CRUD inputs | Planned actions (v1: `notification.emit`) | hr-ops |
 | HR Operations Domain | HR process automation, workflow execution, and durable KPI event capture (v1: best-effort `notification.emit`) | Rules, triggers, planned actions, and handled events | Automated notifications, execution logs, KPI metric events, and future workflow actions | hr-ops |
 | Finance Domain Adapter | Accounting-facing data exchange | Payroll/accounting requests | Exported records and statuses | finance-tech |
@@ -89,6 +89,15 @@ flowchart LR
    HR/admin open `/hr` for an embedded onboarding progress panel or manager opens `/manager` for the full manager workspace ->
    `GET /api/v1/onboarding/runs` + `GET /api/v1/onboarding/runs/{onboarding_id}` return summary/detail views
    that stay limited to runs with manager-assigned tasks when the actor is a manager.
+4A. Employee Directory and Avatar Flow:
+   authenticated employee opens `/employee` -> frontend calls `GET /api/v1/employees/directory` for
+   cross-employee profile cards and optional `GET /api/v1/employees/directory/{employee_id}` detail ->
+   employee domain returns only active (`is_dismissed=false`) profiles with permitted fields ->
+   authenticated employee updates own avatar via `POST /api/v1/employees/me/avatar` ->
+   employee domain validates MIME (`image/jpeg|png|webp`) and technical size limit (5 MB), writes
+   binary payload to MinIO, and persists avatar metadata on `employee_profiles` ->
+   avatar reads use `GET /api/v1/employees/{employee_id}/avatar`, stream binary payload from object
+   storage, and keep fail-closed RBAC/audit semantics.
 5. Manager Workspace Flow:
    manager opens `/manager` -> frontend resolves `ManagerWorkspacePage` ->
    `GET /api/v1/vacancies/manager-workspace` validates `manager_workspace:read` ->
@@ -174,7 +183,14 @@ flowchart LR
   `employee_profiles` rows keyed by `hire_conversion_id`, including source `vacancy_id +
   candidate_id`, frozen core identity fields, candidate `extra_data`, accepted-offer terms summary,
   `start_date`, optional `staff_account_id` identity link for employee self-service, and
-  `created_by_staff_id`.
+  `created_by_staff_id`; directory/avatar follow-on fields store `avatar_object_key`,
+  `avatar_mime_type`, `avatar_updated_at`, and `is_dismissed` while preserving the same profile row
+  as the single source of truth.
+- Employee avatar storage artifacts:
+  avatar binaries are stored in MinIO under employee-scoped object keys
+  (`employees/{employee_id}/avatars/{uuid}.{ext}`), while relational metadata remains on
+  `employee_profiles`; avatar moderation is out of scope and replaced avatars are managed by latest
+  metadata pointer semantics.
 - Onboarding-start artifacts:
   `onboarding_runs` rows keyed by `employee_id`, including copied `hire_conversion_id`,
   `status=started`, `started_at`, and `started_by_staff_id` as the durable input for later
@@ -232,7 +248,10 @@ flowchart LR
   task status updates live on `/api/v1/employees/me/onboarding*` with a durable
   `employee_profiles.staff_account_id` identity link; read-only onboarding progress list/detail
   routes now live on `/api/v1/onboarding/runs*`, where HR/admin see all runs and managers see only
-  manager-scoped assignments.
+  manager-scoped assignments; the same package now also owns employee directory reads on
+  `/api/v1/employees/directory*` and avatar upload/read APIs on
+  `/api/v1/employees/me/avatar` + `/api/v1/employees/{employee_id}/avatar`, with MinIO as the
+  binary storage adapter and profile metadata persisted in `employee_profiles`.
 - Implemented manager workspace boundary:
   `hrm_backend/vacancies` now also owns read-only manager workspace endpoints on the existing
   vacancy namespace (`/api/v1/vacancies/manager-workspace`,

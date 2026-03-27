@@ -337,9 +337,19 @@ def _to_employee_profile_response(
         extra_data=dict(entity.extra_data_json or {}),
         offer_terms_summary=entity.offer_terms_summary,
         start_date=entity.start_date,
+        avatar_url=_to_avatar_url(entity),
+        avatar_updated_at=entity.avatar_updated_at,
+        is_dismissed=entity.is_dismissed,
         onboarding_id=onboarding.onboarding_id if onboarding is not None else None,
         onboarding_status=onboarding.status if onboarding is not None else None,
         created_by_staff_id=entity.created_by_staff_id,
         created_at=entity.created_at,
         updated_at=entity.updated_at,
     )
+
+
+def _to_avatar_url(entity: EmployeeProfile) -> str | None:
+    """Build canonical employee-avatar API route for profile payloads."""
+    if not entity.avatar_object_key:
+        return None
+    return f"/api/v1/employees/{entity.employee_id}/avatar"

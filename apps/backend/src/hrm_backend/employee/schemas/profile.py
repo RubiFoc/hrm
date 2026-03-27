@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any
 from uuid import UUID
@@ -61,8 +62,75 @@ class EmployeeProfileResponse(BaseModel):
     extra_data: dict[str, Any]
     offer_terms_summary: str | None
     start_date: date | None
+    avatar_url: str | None = None
+    avatar_updated_at: datetime | None = None
+    is_dismissed: bool = False
     onboarding_id: UUID | None = None
     onboarding_status: OnboardingRunStatus | None = None
     created_by_staff_id: UUID
     created_at: datetime
     updated_at: datetime
+
+
+class EmployeeDirectoryListItemResponse(BaseModel):
+    """Directory-card representation for one employee profile visible to employees."""
+
+    employee_id: UUID
+    full_name: str
+    email: str
+    phone: str | None
+    location: str | None
+    position_title: str | None
+    department: str | None
+    manager: str | None
+    subordinates: int | None
+    birthday_day_month: str | None
+    tenure_in_company_months: int | None = Field(default=None, ge=0)
+    avatar_url: str | None
+    avatar_updated_at: datetime | None
+    is_dismissed: bool
+
+
+class EmployeeDirectoryListResponse(BaseModel):
+    """Paginated employee-directory payload."""
+
+    items: list[EmployeeDirectoryListItemResponse]
+    total: int = Field(ge=0)
+    limit: int = Field(ge=1)
+    offset: int = Field(ge=0)
+
+
+class EmployeeDirectoryProfileResponse(BaseModel):
+    """Detailed employee-directory profile payload for cross-employee visibility."""
+
+    employee_id: UUID
+    full_name: str
+    email: str
+    phone: str | None
+    location: str | None
+    position_title: str | None
+    department: str | None
+    manager: str | None
+    subordinates: int | None
+    birthday_day_month: str | None
+    tenure_in_company_months: int | None = Field(default=None, ge=0)
+    avatar_url: str | None
+    avatar_updated_at: datetime | None
+    is_dismissed: bool
+
+
+class EmployeeAvatarUploadResponse(BaseModel):
+    """Response payload returned after successful avatar upload/update."""
+
+    employee_id: UUID
+    avatar_url: str
+    avatar_updated_at: datetime
+
+
+@dataclass(frozen=True)
+class EmployeeAvatarDownloadPayload:
+    """Internal service payload for employee avatar streaming."""
+
+    filename: str
+    mime_type: str
+    content: bytes

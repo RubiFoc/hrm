@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, date, datetime
 from uuid import uuid4
 
-from sqlalchemy import JSON, Date, DateTime, ForeignKey, Index, String, Text, Uuid
+from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Index, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from hrm_backend.core.models.base import Base
@@ -30,6 +30,10 @@ class EmployeeProfile(Base):
         start_date: Proposed employment start date from accepted offer.
         staff_account_id: Optional authenticated staff account linked to this employee profile
             for self-service portal access.
+        avatar_object_key: Optional object-storage key for the latest employee avatar binary.
+        avatar_mime_type: Optional MIME type for the latest employee avatar.
+        avatar_updated_at: Last avatar-update timestamp.
+        is_dismissed: Whether employee profile is retained as dismissed.
         created_by_staff_id: Staff subject that created the employee profile.
         created_at: Creation timestamp.
         updated_at: Last update timestamp.
@@ -54,6 +58,7 @@ class EmployeeProfile(Base):
             unique=True,
         ),
         Index("ix_employee_profiles_email", "email"),
+        Index("ix_employee_profiles_is_dismissed", "is_dismissed"),
     )
 
     employee_id: Mapped[str] = mapped_column(
@@ -90,6 +95,13 @@ class EmployeeProfile(Base):
         ForeignKey("staff_accounts.staff_id", ondelete="SET NULL"),
         nullable=True,
     )
+    avatar_object_key: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    avatar_mime_type: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    avatar_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    is_dismissed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_by_staff_id: Mapped[str] = mapped_column(String(36), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
