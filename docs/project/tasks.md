@@ -192,7 +192,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
   - Open/track `TASK-06-05`: BA clarification for employee public profile + avatar storage policy (MinIO bucket, privacy, moderation, limits).
   - Open/track `TASK-06-06`: employee profile visibility + avatar upload/read implementation on existing employee domain/workspaces.
   - Open/track `TASK-06-07`: BA clarification for referral workflow (roles, rewards, anti-abuse, statuses, audit/legal constraints).
-  - Close/track `TASK-06-08`: employee referral recommendation flow implementation (UI + API + reporting hooks) is now in repo; close the issue after merge.
+  - Closed `TASK-06-08`: employee referral recommendation flow implementation is in repo and the GitHub issue is closed post-merge.
   - Open/track `TASK-09-05`: BA clarification for compensation management baseline (raise authority, approval chain, payroll/bonus view scope, data sensitivity).
   - Open/track `TASK-09-06`: manager/HR compensation tooling implementation (raise actions, salary/bonus table, vacancy salary bands, employee-to-band visibility).
 - P1:
