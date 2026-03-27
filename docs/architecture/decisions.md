@@ -65,6 +65,80 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0058 | 2026-03-20 | accepted | Split public candidate transport into dedicated apply and interview routes with `/candidate` compatibility redirects | architect + frontend-engineer | frontend routing, public candidate UX, observability, browser smoke, documentation |
 | ADR-0059 | 2026-03-23 | accepted | De-scope Russia jurisdiction and keep Belarus-only compliance scope | coordinator | compliance scope, legal controls, release gate |
 | ADR-0060 | 2026-03-27 | accepted | Add employee referral intake tied to existing pipeline lifecycle | backend-engineer + frontend-engineer | recruitment domain, referrals, frontend routes, audit |
+| ADR-0061 | 2026-03-27 | accepted | Freeze employee directory + avatar policy with fail-closed RBAC and protected MinIO read model | business-analyst + architect + coordinator | employee domain, RBAC/PII policy, object-storage access, audit/legal controls |
+| ADR-0062 | 2026-03-27 | accepted | Freeze compensation controls baseline (raise approval chain, salary-band governance, payroll/bonus visibility) | business-analyst + architect + coordinator | compensation policy, RBAC/PII boundaries, audit/legal controls, implementation scope |
+
+## ADR-0062
+- Context: `TASK-09-05` must be finalized before `TASK-09-06` implementation so compensation
+  behavior does not drift across manager, HR, leader, and accountant workflows.
+- Decision:
+  - Keep manager authority request-only for raises; direct manager salary apply remains forbidden.
+  - Freeze raise approval chain:
+    manager confirmation quorum is configurable with lower bound `>=2` (default `2`) and final
+    approval role is `leader`.
+  - Freeze effective-date behavior:
+    raises are future/now effective only; backdating is forbidden.
+  - Freeze salary-band governance:
+    HR-only salary-band write operations with historical versioning.
+  - Freeze payroll/bonus visibility:
+    manager, HR, and accountant share one compensation read column set.
+  - Freeze bonus management:
+    manual input/updates only (no formula engine/import integration in this slice).
+  - Freeze money semantics:
+    currency `BYN` only and deterministic precision `0.01`.
+  - Require immutable audit events for compensation reads and all raise/band/bonus write actions.
+  - Keep compensation data internal-only and separated from employee public profile and public
+    candidate routes.
+- Consequences:
+  - `TASK-09-06` is unblocked with implementation-ready constraints and explicit fail-closed
+    behavior.
+  - Implementation must add/update compensation permissions, reason codes, and audit hooks without
+    reopening auth/session topology.
+  - External payroll integrations, retroactive recalculation, and multi-currency support remain
+    deferred.
+- Architecture self-review record (solo-maintainer mode):
+  - Review date: 2026-03-27.
+  - Reviewer: coordinator (acting architect role).
+  - Result: accepted; the baseline is additive, keeps compliance and least-privilege posture, and
+    does not require runtime topology changes.
+
+## ADR-0061
+- Context: `TASK-06-05` must finalize employee-profile and avatar policy before `TASK-06-06`
+  implementation. Existing employee-domain persistence is staff-oriented, but the product now needs
+  an internal employee directory/profile read model with clear privacy boundaries and fail-closed
+  media access rules.
+- Decision:
+  - Keep employee profile source-of-truth in the existing employee domain and introduce
+    implementation-scoped employee-directory read contracts only for authenticated internal staff
+    roles (`admin`, `hr`, `manager`, `employee`, `leader`, `accountant`); public/candidate access
+    remains forbidden.
+  - Freeze directory scope to active employees by default; keep dismissed profiles retained for
+    legal/audit history but hidden from default directory visibility.
+  - Freeze profile payload field set and privacy behavior:
+    optional hideable fields are `phone`, `email`, `birthday_day_month`; mandatory visible fields
+    stay fixed for organizational discoverability.
+  - Freeze avatar technical policy:
+    MinIO-backed storage with relational metadata link, allowed MIME `jpeg/png/webp`, max size
+    `10 MiB`, one active avatar per employee, and protected read access via backend-controlled
+    stream/signed-read semantics (no anonymous bucket/object listing).
+  - Keep moderation reactive (admin/hr override) without adding pre-moderation pipelines in this
+    slice.
+  - Require immutable audit events for employee-directory/profile reads and all avatar/privacy write
+    operations with actor/target/result/reason metadata.
+- Consequences:
+  - `TASK-06-06` is unblocked with implementation-ready constraints and explicit fail-closed
+    acceptance expectations.
+  - RBAC matrix and API contracts will need additive permission/endpoint updates in `TASK-06-06`
+    without reopening auth/session topology.
+  - Public candidate transport, manager candidate PII-redacted snapshot policy, and compensation
+    boundaries remain unchanged.
+  - Department/legal-entity segmentation is explicitly deferred and requires a new BA pass + ADR if
+    requested later.
+- Architecture self-review record (solo-maintainer mode):
+  - Review date: 2026-03-27.
+  - Reviewer: coordinator (acting architect role).
+  - Result: accepted; decision is additive, keeps existing domain boundaries, preserves fail-closed
+    RBAC/PII policy, and does not introduce runtime topology changes.
 
 ## ADR-0060
 - Context: `TASK-06-08` requires employee referrals without a parallel lifecycle or bonus workflow, while keeping the recruitment pipeline as the only candidate state machine.
@@ -77,6 +151,7 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Referral duplicates are merged deterministically, and bonus ownership is preserved by the first referrer without additional compensation tables.
   - Referral review stays in the canonical pipeline lifecycle, reducing state drift and keeping automation hooks on existing transitions.
   - Frontend and OpenAPI contracts expand minimally, and docs/diagrams/testing coverage must stay in sync.
+  - This ADR is the architecture source of truth for the frozen BA baseline captured in `TASK-06-07`.
 
 ## ADR-0059
 - Context: The project is delivered from a Belarus-local environment and will not operate a dedicated Russia service.
