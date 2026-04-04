@@ -168,6 +168,28 @@ def test_employee_can_access_and_update_self_service_portal_permissions() -> Non
     assert update_decision.allowed is True
 
 
+def test_employee_can_read_employee_directory_permission() -> None:
+    """Verify employee role can access employee directory reads."""
+    decision = evaluate_permission(role="employee", permission="employee_directory:read")
+
+    assert decision.allowed is True
+
+
+def test_accountant_can_update_own_avatar_permission() -> None:
+    """Verify accountant role can update own avatar."""
+    decision = evaluate_permission(role="accountant", permission="employee_avatar:write")
+
+    assert decision.allowed is True
+
+
+def test_manager_is_denied_for_admin_avatar_permission() -> None:
+    """Verify manager role cannot use admin avatar override permission."""
+    decision = evaluate_permission(role="manager", permission="employee_avatar:admin")
+
+    assert decision.allowed is False
+    assert decision.reason is not None
+
+
 def test_employee_can_create_referral_permission() -> None:
     """Verify employee role can submit referrals."""
     decision = evaluate_permission(role="employee", permission="referral:create")

@@ -19,6 +19,7 @@ from hrm_backend.candidates.models.document import CandidateDocument  # noqa: F4
 from hrm_backend.candidates.models.parsing_job import CVParsingJob  # noqa: F401
 from hrm_backend.candidates.models.profile import CandidateProfile  # noqa: F401
 from hrm_backend.core.models.base import Base
+from hrm_backend.employee.models.avatar import EmployeeProfileAvatar  # noqa: F401
 from hrm_backend.employee.models.hire_conversion import HireConversion  # noqa: F401
 from hrm_backend.employee.models.onboarding import OnboardingRun, OnboardingTask  # noqa: F401
 from hrm_backend.employee.models.profile import EmployeeProfile  # noqa: F401

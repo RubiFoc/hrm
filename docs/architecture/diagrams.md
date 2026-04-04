@@ -1,8 +1,8 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-03-27
-- Updated by: business-analyst + architect + coordinator
+- Date: 2026-04-04
+- Updated by: backend-engineer + coordinator
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -59,7 +59,7 @@ flowchart TB
 
   subgraph Infra[Infrastructure]
     DB[(PostgreSQL)]
-    OBJ[(Object Storage)]
+    OBJ[(Object Storage: CV + Avatars)]
     QUEUE[(Queue/Event Bus)]
     REDISDNL[(Redis Denylist: jti/sid)]
   end
@@ -104,6 +104,7 @@ flowchart TB
   AUDIT --> DB
 
   REC --> OBJ
+  EMPDOM --> OBJ
   REC --> QUEUE
   SCOREDOM --> QUEUE
   HROPS --> QUEUE

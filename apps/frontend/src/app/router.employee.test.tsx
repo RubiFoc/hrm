@@ -74,4 +74,26 @@ describe("employee route guard", () => {
     renderWithPath("/employee");
     expect(await screen.findByRole("heading", { name: /портал онбординга/i })).toBeDefined();
   });
+
+  it("allows manager user into employee directory", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "manager");
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          items: [],
+          total: 0,
+          limit: 20,
+          offset: 0,
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    renderWithPath("/employee/directory");
+    expect(await screen.findByRole("heading", { name: /каталог сотрудников/i })).toBeDefined();
+  });
 });

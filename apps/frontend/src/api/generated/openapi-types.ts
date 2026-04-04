@@ -558,6 +558,106 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/employees/directory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Employee Directory
+         * @description List employee directory cards visible to the current staff actor.
+         *
+         *     Args:
+         *         request: Active HTTP request.
+         *         auth_context: Authenticated actor context.
+         *         service: Employee directory service dependency.
+         *         limit: Pagination limit for directory rows.
+         *         offset: Pagination offset for directory rows.
+         *
+         *     Returns:
+         *         EmployeeDirectoryListResponse: Directory list payload.
+         */
+        get: operations["list_employee_directory_api_v1_employees_directory_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/employees/directory/{employee_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Employee Directory Profile
+         * @description Read one employee directory profile by identifier.
+         *
+         *     Args:
+         *         employee_id: Employee profile identifier.
+         *         request: Active HTTP request.
+         *         auth_context: Authenticated actor context.
+         *         service: Employee directory service dependency.
+         *
+         *     Returns:
+         *         EmployeeDirectoryProfileResponse: Directory profile payload.
+         */
+        get: operations["get_employee_directory_profile_api_v1_employees_directory__employee_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/employees/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload My Employee Avatar
+         * @description Upload avatar for the authenticated employee profile.
+         *
+         *     Args:
+         *         request: Active HTTP request.
+         *         file: Multipart avatar file.
+         *         auth_context: Authenticated actor context.
+         *         service: Employee avatar service dependency.
+         *
+         *     Returns:
+         *         EmployeeAvatarUploadResponse: Uploaded avatar metadata.
+         */
+        post: operations["upload_my_employee_avatar_api_v1_employees_me_avatar_post"];
+        /**
+         * Delete My Employee Avatar
+         * @description Delete avatar for the authenticated employee profile.
+         *
+         *     Args:
+         *         request: Active HTTP request.
+         *         auth_context: Authenticated actor context.
+         *         service: Employee avatar service dependency.
+         *
+         *     Returns:
+         *         EmployeeAvatarDeleteResponse: Deletion metadata payload.
+         */
+        delete: operations["delete_my_employee_avatar_api_v1_employees_me_avatar_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/employees/me/onboarding": {
         parameters: {
             query?: never;
@@ -598,6 +698,47 @@ export interface paths {
         patch: operations["update_my_onboarding_task_api_v1_employees_me_onboarding_tasks__task_id__patch"];
         trace?: never;
     };
+    "/api/v1/employees/me/privacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get My Employee Privacy Settings
+         * @description Read privacy settings for the authenticated employee profile.
+         *
+         *     Args:
+         *         request: Active HTTP request.
+         *         auth_context: Authenticated actor context.
+         *         service: Employee directory service dependency.
+         *
+         *     Returns:
+         *         EmployeeProfilePrivacySettingsResponse: Current privacy configuration.
+         */
+        get: operations["get_my_employee_privacy_settings_api_v1_employees_me_privacy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update My Employee Privacy Settings
+         * @description Update privacy settings for the authenticated employee profile.
+         *
+         *     Args:
+         *         request: Active HTTP request.
+         *         payload: Privacy update payload.
+         *         auth_context: Authenticated actor context.
+         *         service: Employee directory service dependency.
+         *
+         *     Returns:
+         *         EmployeeProfilePrivacySettingsResponse: Updated privacy configuration.
+         */
+        patch: operations["update_my_employee_privacy_settings_api_v1_employees_me_privacy_patch"];
+        trace?: never;
+    };
     "/api/v1/employees/{employee_id}": {
         parameters: {
             query?: never;
@@ -613,6 +754,62 @@ export interface paths {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/employees/{employee_id}/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Employee Avatar
+         * @description Download active employee avatar as an inline stream.
+         *
+         *     Args:
+         *         employee_id: Employee profile identifier.
+         *         request: Active HTTP request.
+         *         auth_context: Authenticated actor context.
+         *         service: Employee avatar service dependency.
+         *
+         *     Returns:
+         *         StreamingResponse: Inline avatar stream response.
+         */
+        get: operations["read_employee_avatar_api_v1_employees__employee_id__avatar_get"];
+        put?: never;
+        /**
+         * Upload Employee Avatar Admin
+         * @description Upload avatar for a target employee profile (admin/HR override).
+         *
+         *     Args:
+         *         employee_id: Employee profile identifier.
+         *         request: Active HTTP request.
+         *         file: Multipart avatar file.
+         *         auth_context: Authenticated actor context.
+         *         service: Employee avatar service dependency.
+         *
+         *     Returns:
+         *         EmployeeAvatarUploadResponse: Uploaded avatar metadata.
+         */
+        post: operations["upload_employee_avatar_admin_api_v1_employees__employee_id__avatar_post"];
+        /**
+         * Delete Employee Avatar Admin
+         * @description Delete avatar for a target employee profile (admin/HR override).
+         *
+         *     Args:
+         *         employee_id: Employee profile identifier.
+         *         request: Active HTTP request.
+         *         auth_context: Authenticated actor context.
+         *         service: Employee avatar service dependency.
+         *
+         *     Returns:
+         *         EmployeeAvatarDeleteResponse: Deletion metadata payload.
+         */
+        delete: operations["delete_employee_avatar_admin_api_v1_employees__employee_id__avatar_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2217,6 +2414,16 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_upload_employee_avatar_admin_api_v1_employees__employee_id__avatar_post */
+        Body_upload_employee_avatar_admin_api_v1_employees__employee_id__avatar_post: {
+            /** File */
+            file: string;
+        };
+        /** Body_upload_my_employee_avatar_api_v1_employees_me_avatar_post */
+        Body_upload_my_employee_avatar_api_v1_employees_me_avatar_post: {
+            /** File */
+            file: string;
+        };
         /**
          * CVAnalysisEvidenceItem
          * @description Evidence link from one extracted field to CV source snippet.
@@ -2524,6 +2731,145 @@ export interface components {
             value: string;
         };
         /**
+         * EmployeeAvatarDeleteResponse
+         * @description Metadata payload returned after successful avatar deletion.
+         */
+        EmployeeAvatarDeleteResponse: {
+            /**
+             * Deleted At
+             * Format: date-time
+             */
+            deleted_at: string;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+        };
+        /**
+         * EmployeeAvatarUploadResponse
+         * @description Metadata payload returned after successful avatar upload.
+         */
+        EmployeeAvatarUploadResponse: {
+            /**
+             * Avatar Id
+             * Format: uuid
+             */
+            avatar_id: string;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+            /** Mime Type */
+            mime_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * EmployeeDirectoryAvatarResponse
+         * @description Employee avatar metadata exposed in the directory view.
+         */
+        EmployeeDirectoryAvatarResponse: {
+            /**
+             * Avatar Id
+             * Format: uuid
+             */
+            avatar_id: string;
+            /** Mime Type */
+            mime_type: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * EmployeeDirectoryListItemResponse
+         * @description Employee directory list row payload.
+         */
+        EmployeeDirectoryListItemResponse: {
+            avatar: components["schemas"]["EmployeeDirectoryAvatarResponse"] | null;
+            /** Birthday Day Month */
+            birthday_day_month: string | null;
+            /** Department */
+            department: string | null;
+            /** Email */
+            email: string | null;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+            /** Full Name */
+            full_name: string;
+            /** Location */
+            location: string | null;
+            /** Manager */
+            manager: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Position Title */
+            position_title: string | null;
+            /** Subordinates */
+            subordinates: number | null;
+            /** Tenure In Company */
+            tenure_in_company: number | null;
+        };
+        /**
+         * EmployeeDirectoryListResponse
+         * @description Paginated employee directory list payload.
+         */
+        EmployeeDirectoryListResponse: {
+            /** Items */
+            items: components["schemas"]["EmployeeDirectoryListItemResponse"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * EmployeeDirectoryProfileResponse
+         * @description Employee directory profile payload.
+         */
+        EmployeeDirectoryProfileResponse: {
+            avatar: components["schemas"]["EmployeeDirectoryAvatarResponse"] | null;
+            /** Birthday Day Month */
+            birthday_day_month: string | null;
+            /** Department */
+            department: string | null;
+            /** Email */
+            email: string | null;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+            /** Full Name */
+            full_name: string;
+            /** Location */
+            location: string | null;
+            /** Manager */
+            manager: string | null;
+            /** Phone */
+            phone: string | null;
+            /** Position Title */
+            position_title: string | null;
+            /** Subordinates */
+            subordinates: number | null;
+            /** Tenure In Company */
+            tenure_in_company: number | null;
+        };
+        /**
          * EmployeeOnboardingPortalResponse
          * @description Employee-facing onboarding portal payload scoped to the current user.
          */
@@ -2640,6 +2986,30 @@ export interface components {
              * Format: uuid
              */
             vacancy_id: string;
+        };
+        /**
+         * EmployeeProfilePrivacySettingsResponse
+         * @description Employee-facing privacy flag payload.
+         */
+        EmployeeProfilePrivacySettingsResponse: {
+            /** Is Birthday Visible */
+            is_birthday_visible: boolean;
+            /** Is Email Visible */
+            is_email_visible: boolean;
+            /** Is Phone Visible */
+            is_phone_visible: boolean;
+        };
+        /**
+         * EmployeeProfilePrivacyUpdateRequest
+         * @description Employee-facing privacy flag update request.
+         */
+        EmployeeProfilePrivacyUpdateRequest: {
+            /** Is Birthday Visible */
+            is_birthday_visible?: boolean | null;
+            /** Is Email Visible */
+            is_email_visible?: boolean | null;
+            /** Is Phone Visible */
+            is_phone_visible?: boolean | null;
         };
         /**
          * EmployeeProfileResponse
@@ -5612,6 +5982,122 @@ export interface operations {
             };
         };
     };
+    list_employee_directory_api_v1_employees_directory_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeDirectoryListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_employee_directory_profile_api_v1_employees_directory__employee_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeDirectoryProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_my_employee_avatar_api_v1_employees_me_avatar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_my_employee_avatar_api_v1_employees_me_avatar_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeAvatarUploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_my_employee_avatar_api_v1_employees_me_avatar_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeAvatarDeleteResponse"];
+                };
+            };
+        };
+    };
     get_my_onboarding_portal_api_v1_employees_me_onboarding_get: {
         parameters: {
             query?: never;
@@ -5667,6 +6153,59 @@ export interface operations {
             };
         };
     };
+    get_my_employee_privacy_settings_api_v1_employees_me_privacy_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeProfilePrivacySettingsResponse"];
+                };
+            };
+        };
+    };
+    update_my_employee_privacy_settings_api_v1_employees_me_privacy_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmployeeProfilePrivacyUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeProfilePrivacySettingsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_employee_profile_api_v1_employees__employee_id__get: {
         parameters: {
             query?: never;
@@ -5685,6 +6224,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EmployeeProfileResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_employee_avatar_api_v1_employees__employee_id__avatar_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_employee_avatar_admin_api_v1_employees__employee_id__avatar_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_employee_avatar_admin_api_v1_employees__employee_id__avatar_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeAvatarUploadResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_employee_avatar_admin_api_v1_employees__employee_id__avatar_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmployeeAvatarDeleteResponse"];
                 };
             };
             /** @description Validation Error */

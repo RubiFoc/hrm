@@ -1,5 +1,10 @@
 """Internal schemas for employee-domain workflows."""
 
+from hrm_backend.employee.schemas.avatar import (
+    EmployeeAvatarDeleteResponse,
+    EmployeeAvatarDownloadPayload,
+    EmployeeAvatarUploadResponse,
+)
 from hrm_backend.employee.schemas.conversion import (
     HireConversionCandidateSnapshot,
     HireConversionCreate,
@@ -24,8 +29,14 @@ from hrm_backend.employee.schemas.onboarding import (
     OnboardingTaskUpdateRequest,
 )
 from hrm_backend.employee.schemas.profile import (
+    EmployeeDirectoryAvatarResponse,
+    EmployeeDirectoryListItemResponse,
+    EmployeeDirectoryListResponse,
+    EmployeeDirectoryProfileResponse,
     EmployeeProfileCreate,
     EmployeeProfileCreateRequest,
+    EmployeeProfilePrivacySettingsResponse,
+    EmployeeProfilePrivacyUpdateRequest,
     EmployeeProfileResponse,
 )
 from hrm_backend.employee.schemas.template import (
@@ -61,7 +72,16 @@ __all__ = [
     "OnboardingTaskListResponse",
     "EmployeeProfileCreateRequest",
     "EmployeeProfileCreate",
+    "EmployeeDirectoryAvatarResponse",
+    "EmployeeDirectoryListItemResponse",
+    "EmployeeDirectoryListResponse",
+    "EmployeeDirectoryProfileResponse",
     "EmployeeProfileResponse",
+    "EmployeeProfilePrivacySettingsResponse",
+    "EmployeeProfilePrivacyUpdateRequest",
+    "EmployeeAvatarUploadResponse",
+    "EmployeeAvatarDeleteResponse",
+    "EmployeeAvatarDownloadPayload",
     "OnboardingChecklistTemplateItemWrite",
     "OnboardingChecklistTemplateCreateRequest",
     "OnboardingChecklistTemplateUpdateRequest",

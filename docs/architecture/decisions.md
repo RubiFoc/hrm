@@ -65,8 +65,24 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0058 | 2026-03-20 | accepted | Split public candidate transport into dedicated apply and interview routes with `/candidate` compatibility redirects | architect + frontend-engineer | frontend routing, public candidate UX, observability, browser smoke, documentation |
 | ADR-0059 | 2026-03-23 | accepted | De-scope Russia jurisdiction and keep Belarus-only compliance scope | coordinator | compliance scope, legal controls, release gate |
 | ADR-0060 | 2026-03-27 | accepted | Add employee referral intake tied to existing pipeline lifecycle | backend-engineer + frontend-engineer | recruitment domain, referrals, frontend routes, audit |
-| ADR-0061 | 2026-03-27 | accepted | Freeze employee directory + avatar policy with fail-closed RBAC and protected MinIO read model | business-analyst + architect + coordinator | employee domain, RBAC/PII policy, object-storage access, audit/legal controls |
+| ADR-0061 | 2026-03-27 | accepted | Add employee directory privacy controls and avatar storage | backend-engineer + frontend-engineer | employee domain, object storage, RBAC, frontend directory |
 | ADR-0062 | 2026-03-27 | accepted | Freeze compensation controls baseline (raise approval chain, salary-band governance, payroll/bonus visibility) | business-analyst + architect + coordinator | compensation policy, RBAC/PII boundaries, audit/legal controls, implementation scope |
+
+## ADR-0061
+- Context: `TASK-06-06` requires employee directory visibility with privacy redaction plus avatar upload/read
+  backed by MinIO while keeping employee profiles as the source of truth.
+- Decision:
+  - Extend `employee_profiles` with directory-facing fields and privacy flags, and mark dismissed
+    profiles for default directory exclusion.
+  - Store avatar binaries in object storage and persist metadata in `employee_profile_avatars` with
+    one active avatar per profile.
+  - Expose authenticated directory/profile reads with server-side redaction and protected avatar
+    read/write endpoints, with audit events on success and failure.
+- Consequences:
+  - The employee domain now depends on object storage availability for avatar operations and fails
+    closed when storage is unavailable.
+  - Directory/profile reads require privacy-aware redaction and additional audit traces.
+  - OpenAPI contracts, frontend types, and tests must stay synchronized with the new endpoints.
 
 ## ADR-0062
 - Context: `TASK-09-05` must be finalized before `TASK-09-06` implementation so compensation
@@ -101,44 +117,6 @@ Use this log for decisions that change interfaces, data models, deployment topol
   - Reviewer: coordinator (acting architect role).
   - Result: accepted; the baseline is additive, keeps compliance and least-privilege posture, and
     does not require runtime topology changes.
-
-## ADR-0061
-- Context: `TASK-06-05` must finalize employee-profile and avatar policy before `TASK-06-06`
-  implementation. Existing employee-domain persistence is staff-oriented, but the product now needs
-  an internal employee directory/profile read model with clear privacy boundaries and fail-closed
-  media access rules.
-- Decision:
-  - Keep employee profile source-of-truth in the existing employee domain and introduce
-    implementation-scoped employee-directory read contracts only for authenticated internal staff
-    roles (`admin`, `hr`, `manager`, `employee`, `leader`, `accountant`); public/candidate access
-    remains forbidden.
-  - Freeze directory scope to active employees by default; keep dismissed profiles retained for
-    legal/audit history but hidden from default directory visibility.
-  - Freeze profile payload field set and privacy behavior:
-    optional hideable fields are `phone`, `email`, `birthday_day_month`; mandatory visible fields
-    stay fixed for organizational discoverability.
-  - Freeze avatar technical policy:
-    MinIO-backed storage with relational metadata link, allowed MIME `jpeg/png/webp`, max size
-    `10 MiB`, one active avatar per employee, and protected read access via backend-controlled
-    stream/signed-read semantics (no anonymous bucket/object listing).
-  - Keep moderation reactive (admin/hr override) without adding pre-moderation pipelines in this
-    slice.
-  - Require immutable audit events for employee-directory/profile reads and all avatar/privacy write
-    operations with actor/target/result/reason metadata.
-- Consequences:
-  - `TASK-06-06` is unblocked with implementation-ready constraints and explicit fail-closed
-    acceptance expectations.
-  - RBAC matrix and API contracts will need additive permission/endpoint updates in `TASK-06-06`
-    without reopening auth/session topology.
-  - Public candidate transport, manager candidate PII-redacted snapshot policy, and compensation
-    boundaries remain unchanged.
-  - Department/legal-entity segmentation is explicitly deferred and requires a new BA pass + ADR if
-    requested later.
-- Architecture self-review record (solo-maintainer mode):
-  - Review date: 2026-03-27.
-  - Reviewer: coordinator (acting architect role).
-  - Result: accepted; decision is additive, keeps existing domain boundaries, preserves fail-closed
-    RBAC/PII policy, and does not introduce runtime topology changes.
 
 ## ADR-0060
 - Context: `TASK-06-08` requires employee referrals without a parallel lifecycle or bonus workflow, while keeping the recruitment pipeline as the only candidate state machine.

@@ -95,6 +95,52 @@ class EmployeeProfileDAO:
             .all()
         )
 
+    def list_directory(
+        self,
+        *,
+        limit: int,
+        offset: int,
+        include_dismissed: bool = False,
+    ) -> list[EmployeeProfile]:
+        """List employee profiles for the directory view.
+
+        Args:
+            limit: Maximum number of rows.
+            offset: Number of skipped rows.
+            include_dismissed: Whether dismissed profiles are included.
+
+        Returns:
+            list[EmployeeProfile]: Ordered directory rows.
+        """
+        query = self._session.query(EmployeeProfile)
+        if not include_dismissed:
+            query = query.filter(EmployeeProfile.is_dismissed.is_(False))
+        return list(
+            query.order_by(
+                EmployeeProfile.last_name.asc(),
+                EmployeeProfile.first_name.asc(),
+                EmployeeProfile.employee_id.asc(),
+            )
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+
+    def count_directory(self, *, include_dismissed: bool = False) -> int:
+        """Count employee profiles in the directory scope.
+
+        Args:
+            include_dismissed: Whether dismissed profiles are included.
+
+        Returns:
+            int: Total rows.
+        """
+        query = self._session.query(func.count(EmployeeProfile.employee_id))
+        if not include_dismissed:
+            query = query.filter(EmployeeProfile.is_dismissed.is_(False))
+        total = query.scalar()
+        return int(total or 0)
+
     def create_profile(
         self,
         *,

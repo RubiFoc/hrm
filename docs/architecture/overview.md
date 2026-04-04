@@ -1,8 +1,8 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-03-27
-- Updated by: business-analyst + architect + coordinator
+- Date: 2026-04-04
+- Updated by: backend-engineer + coordinator
 
 ## System Context
 HRM platform for Belarus that supports candidate selection across professions and
@@ -18,7 +18,7 @@ flowchart LR
   W --> S[Sentry]
   A --> C[Core Domain Services]
   C --> D[(PostgreSQL)]
-  C --> O[(Object Storage: CV/Documents)]
+  C --> O[(Object Storage: CV/Documents/Avatars)]
   C --> Q[(Queue/Event Bus)]
   C --> I[Integration Layer]
   I --> G[Google Calendar]
@@ -46,7 +46,7 @@ flowchart LR
 | Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key lifecycle (issue/list/revoke), audit hooks | platform |
 | Recruitment Domain | Vacancies, candidates, pipeline, employee referrals, interviews, schedule-versioned interviewer feedback, offer lifecycle state, hire-conversion command flow, and manager-scoped hiring read models | Candidate and vacancy data | Vacancy/pipeline state, referral linkage, interview fairness state, offer status, active-document readiness, candidate context, and manager workspace hiring summaries/snapshots | hr-tech |
 | Match Scoring Domain | Async scoring jobs and explainable score artifacts keyed by vacancy, candidate, and active document | Scoring requests, parsed CV analysis, vacancy snapshot | UI-ready score/status payloads for shortlist review | ai-platform |
-| Employee Domain | Durable hire-conversion handoff, explicit employee profile bootstrap, onboarding workflows, employee self-service onboarding portal, and HR/manager onboarding progress visibility | Hire conversion handoff, profile/bootstrap/template/portal/dashboard requests | Employee handoff rows, employee profiles, onboarding runs/templates/tasks, employee-facing onboarding views, and staff/manager onboarding progress read models | hr-tech |
+| Employee Domain | Durable hire-conversion handoff, explicit employee profile bootstrap, onboarding workflows, employee self-service onboarding portal, employee directory visibility and avatar management, and HR/manager onboarding progress visibility | Hire conversion handoff, profile/bootstrap/template/portal/dashboard requests | Employee handoff rows, employee profiles, onboarding runs/templates/tasks, employee-facing onboarding views, directory views, and staff/manager onboarding progress read models | hr-tech |
 | Automation Rule Engine | Deterministic evaluation of trigger events into planned actions (no side effects) | Trigger events + rule CRUD inputs | Planned actions (v1: `notification.emit`) | hr-ops |
 | HR Operations Domain | HR process automation, workflow execution, and durable KPI event capture (v1: best-effort `notification.emit`) | Rules, triggers, planned actions, and handled events | Automated notifications, execution logs, KPI metric events, and future workflow actions | hr-ops |
 | Finance Domain Adapter | Accounting-facing data exchange | Payroll/accounting requests | Exported records and statuses | finance-tech |
@@ -149,12 +149,13 @@ flowchart LR
    `GET /api/v1/candidates/{candidate_id}/cv/parsing-status` -> CV parsing status lookup,
    `GET /api/v1/vacancies/{vacancy_id}/match-scores/{candidate_id}` -> match score status lookup ->
    localized UI renders operational support diagnostics without introducing a new backend namespace.
-17. Employee Directory + Avatar Flow (planned baseline from `TASK-06-05` for `TASK-06-06`):
-   authenticated internal user opens employee directory/profile surface -> fail-closed RBAC checks
-   for internal roles only -> server enforces privacy-field redaction -> avatar upload validates
-   owner scope + MIME/size guardrails -> MinIO object + relational metadata link persist atomically
-   -> avatar read stays protected (stream/signed read, no anonymous bucket listing) -> all
-   directory/profile/avatar actions are auditable with actor/target/result/reason.
+17. Employee Directory Flow:
+   staff opens `/employee/directory` -> `GET /api/v1/employees/directory` validates directory access and
+   redacts optional fields by privacy flags -> staff opens `/employee/directory/{employee_id}` ->
+   `GET /api/v1/employees/directory/{employee_id}` returns the profile card -> avatar reads are served
+   via `GET /api/v1/employees/{employee_id}/avatar` streaming from object storage -> employees update
+   visibility flags on `PATCH /api/v1/employees/me/privacy` and manage avatars on
+   `POST/DELETE /api/v1/employees/me/avatar` with audit events on read/write paths.
 18. Compensation Control Flow (planned baseline from `TASK-09-05` for `TASK-09-06`):
    manager creates raise request -> manager confirmation quorum check (`>=2`, default `2`) ->
    leader final approval -> salary update applies from non-backdated `effective_date` only ->
@@ -191,12 +192,14 @@ flowchart LR
 - Employee profile artifacts:
   `employee_profiles` rows keyed by `hire_conversion_id`, including source `vacancy_id +
   candidate_id`, frozen core identity fields, candidate `extra_data`, accepted-offer terms summary,
-  `start_date`, optional `staff_account_id` identity link for employee self-service, and
-  `created_by_staff_id`.
-- Employee directory/avatar artifacts (planned for `TASK-06-06` from frozen `TASK-06-05`):
-  privacy visibility flags on selected fields (`phone`, `email`, `birthday_day_month`), avatar
-  metadata (`object_key`, `mime_type`, `size_bytes`, `updated_at`), and one active-avatar
-  reference per employee profile with protected read semantics.
+  `start_date`, directory-facing fields (`department`, `position_title`, `manager`,
+  `birthday_day_month`), privacy flags (`is_phone_visible`, `is_email_visible`,
+  `is_birthday_visible`), dismissal lifecycle flag (`is_dismissed`), optional `staff_account_id`
+  identity link for employee self-service, and `created_by_staff_id`.
+- Employee avatar artifacts:
+  `employee_profile_avatars` rows keyed by `avatar_id`, including `employee_id`, `object_key`,
+  `mime_type`, `size_bytes`, `is_active`, and `updated_at`; avatar binaries are stored in object
+  storage with access gated through authenticated API reads.
 - Compensation artifacts (planned for `TASK-09-06` from frozen `TASK-09-05`):
   salary raise requests with confirmation/approval history, historical vacancy salary-band
   versions, manual bonus entries, and unified compensation read model fields constrained to

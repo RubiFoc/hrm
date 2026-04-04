@@ -13,6 +13,15 @@ export {
   updateMyEmployeeOnboardingTask,
 } from "./employeeOnboarding";
 export {
+  deleteMyEmployeeAvatar,
+  fetchEmployeeAvatarBlob,
+  getEmployeeDirectoryProfile,
+  getMyEmployeePrivacySettings,
+  listEmployeeDirectory,
+  updateMyEmployeePrivacySettings,
+  uploadMyEmployeeAvatar,
+} from "./employeeDirectory";
+export {
   getManagerWorkspaceCandidateSnapshot,
   getManagerWorkspaceOverview,
 } from "./managerWorkspace";
@@ -109,6 +118,15 @@ export type {
   EmployeeOnboardingTaskStatus,
   EmployeeOnboardingTaskUpdateRequest,
 } from "./employeeOnboarding";
+export type {
+  EmployeeAvatarDeleteResponse,
+  EmployeeAvatarUploadResponse,
+  EmployeeDirectoryListResponse,
+  EmployeeDirectoryProfileResponse,
+  EmployeeDirectoryListQuery,
+  EmployeeProfilePrivacySettingsResponse,
+  EmployeeProfilePrivacyUpdateRequest,
+} from "./employeeDirectory";
 export type {
   ManagerWorkspaceCandidateSnapshotItemResponse,
   ManagerWorkspaceCandidateSnapshotResponse,

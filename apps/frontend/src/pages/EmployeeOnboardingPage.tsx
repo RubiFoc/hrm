@@ -150,6 +150,25 @@ export function EmployeeOnboardingPage() {
         </Stack>
       </Paper>
 
+      <Paper sx={{ p: 2 }}>
+        <Stack spacing={1.5} direction={{ xs: "column", md: "row" }} alignItems="flex-start">
+          <Stack spacing={0.5}>
+            <Typography variant="h6">{t("employeeDirectory.calloutTitle")}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t("employeeDirectory.calloutSubtitle")}
+            </Typography>
+          </Stack>
+          <Button
+            component={inRouter ? RouterLink : "button"}
+            to={inRouter ? "/employee/directory" : undefined}
+            variant="outlined"
+            sx={{ ml: { md: "auto" } }}
+          >
+            {t("employeeDirectory.calloutCta")}
+          </Button>
+        </Stack>
+      </Paper>
+
       {feedback ? <Alert severity={feedback.type}>{feedback.message}</Alert> : null}
 
       <Paper sx={{ p: 3 }}>

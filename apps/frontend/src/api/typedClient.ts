@@ -41,6 +41,12 @@ export function createTypedApiClient(baseUrl = "") {
         body,
       });
     },
+    delete<TResponse>(path: string, init?: RequestInit) {
+      return apiRequest<TResponse>(`${baseUrl}${path}`, {
+        ...init,
+        method: "DELETE",
+      });
+    },
   };
 }
 
