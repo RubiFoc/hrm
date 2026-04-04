@@ -6,7 +6,7 @@ from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from hrm_backend.employee.schemas.onboarding import OnboardingRunStatus
 
@@ -66,3 +66,68 @@ class EmployeeProfileResponse(BaseModel):
     created_by_staff_id: UUID
     created_at: datetime
     updated_at: datetime
+
+
+class EmployeeDirectoryAvatarResponse(BaseModel):
+    """Employee avatar metadata exposed in the directory view."""
+
+    avatar_id: UUID
+    mime_type: str
+    size_bytes: int
+    updated_at: datetime
+
+
+class EmployeeDirectoryListItemResponse(BaseModel):
+    """Employee directory list row payload."""
+
+    employee_id: UUID
+    full_name: str
+    department: str | None
+    position_title: str | None
+    manager: str | None
+    location: str | None
+    tenure_in_company: int | None
+    subordinates: int | None
+    phone: str | None
+    email: str | None
+    birthday_day_month: str | None
+    avatar: EmployeeDirectoryAvatarResponse | None
+
+
+class EmployeeDirectoryListResponse(BaseModel):
+    """Paginated employee directory list payload."""
+
+    items: list[EmployeeDirectoryListItemResponse]
+    total: int = Field(ge=0)
+    limit: int = Field(ge=1)
+    offset: int = Field(ge=0)
+
+
+class EmployeeDirectoryProfileResponse(EmployeeDirectoryListItemResponse):
+    """Employee directory profile payload."""
+
+
+class EmployeeProfilePrivacyUpdateRequest(BaseModel):
+    """Employee-facing privacy flag update request."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    is_phone_visible: bool | None = None
+    is_email_visible: bool | None = None
+    is_birthday_visible: bool | None = None
+
+    @model_validator(mode="after")
+    def validate_non_nullable(self) -> EmployeeProfilePrivacyUpdateRequest:
+        """Reject explicit `null` values for privacy flags."""
+        for field_name in ("is_phone_visible", "is_email_visible", "is_birthday_visible"):
+            if field_name in self.model_fields_set and getattr(self, field_name) is None:
+                raise ValueError(f"{field_name} cannot be null")
+        return self
+
+
+class EmployeeProfilePrivacySettingsResponse(BaseModel):
+    """Employee-facing privacy flag payload."""
+
+    is_phone_visible: bool
+    is_email_visible: bool
+    is_birthday_visible: bool

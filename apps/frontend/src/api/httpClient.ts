@@ -24,6 +24,11 @@ export type DownloadResult = {
   filename: string;
 };
 
+export type BlobResult = {
+  blob: Blob;
+  contentType: string;
+};
+
 export async function apiRequest<TResponse>(
   input: RequestInfo | URL,
   init?: RequestInit,
@@ -61,6 +66,45 @@ export async function apiRequest<TResponse>(
     return payload as TResponse;
   }
   return rawBody as TResponse;
+}
+
+/**
+ * Download one binary payload as a Blob without triggering save flow.
+ */
+export async function apiRequestBlob(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<BlobResult> {
+  let response: Response;
+  try {
+    response = await fetch(input, init);
+  } catch (error) {
+    captureFrontendHttpFailure(error, {
+      input,
+      method: init?.method,
+    });
+    throw error;
+  }
+
+  if (!response.ok) {
+    const rawBody = await response.text();
+    const payload = parseJsonBody(rawBody);
+    const detail = resolveErrorDetail(payload, response.status);
+    const apiError = new ApiError(response.status, detail);
+    captureFrontendHttpFailure(apiError, {
+      input,
+      method: init?.method,
+      status: response.status,
+      detail,
+    });
+    throw apiError;
+  }
+
+  const blob = await response.blob();
+  return {
+    blob,
+    contentType: response.headers.get("Content-Type") ?? "application/octet-stream",
+  };
 }
 
 /**

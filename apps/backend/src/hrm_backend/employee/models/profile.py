@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, date, datetime
 from uuid import uuid4
 
-from sqlalchemy import JSON, Date, DateTime, ForeignKey, Index, String, Text, Uuid
+from sqlalchemy import JSON, Boolean, Date, DateTime, ForeignKey, Index, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from hrm_backend.core.models.base import Base
@@ -25,6 +25,14 @@ class EmployeeProfile(Base):
         phone: Optional phone number frozen from candidate snapshot.
         location: Optional location frozen from candidate snapshot.
         current_title: Optional pre-hire title frozen from candidate snapshot.
+        department: Optional department label for directory visibility.
+        position_title: Optional position title used in the employee directory.
+        manager: Optional manager label displayed in the employee directory.
+        birthday_day_month: Optional birthday day/month value without the year.
+        is_phone_visible: Whether the phone value is visible in the employee directory.
+        is_email_visible: Whether the email value is visible in the employee directory.
+        is_birthday_visible: Whether the birthday value is visible in the employee directory.
+        is_dismissed: Whether the employee has been dismissed (hidden from default directory).
         extra_data_json: Extensible profile data frozen from candidate snapshot.
         offer_terms_summary: Accepted-offer summary used for bootstrap visibility.
         start_date: Proposed employment start date from accepted offer.
@@ -82,6 +90,14 @@ class EmployeeProfile(Base):
     phone: Mapped[str | None] = mapped_column(String(64), nullable=True)
     location: Mapped[str | None] = mapped_column(String(256), nullable=True)
     current_title: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    department: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    position_title: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    manager: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    birthday_day_month: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    is_phone_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_email_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_birthday_visible: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_dismissed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     extra_data_json: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False, default=dict)
     offer_terms_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)

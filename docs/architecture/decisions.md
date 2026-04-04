@@ -65,6 +65,23 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0058 | 2026-03-20 | accepted | Split public candidate transport into dedicated apply and interview routes with `/candidate` compatibility redirects | architect + frontend-engineer | frontend routing, public candidate UX, observability, browser smoke, documentation |
 | ADR-0059 | 2026-03-23 | accepted | De-scope Russia jurisdiction and keep Belarus-only compliance scope | coordinator | compliance scope, legal controls, release gate |
 | ADR-0060 | 2026-03-27 | accepted | Add employee referral intake tied to existing pipeline lifecycle | backend-engineer + frontend-engineer | recruitment domain, referrals, frontend routes, audit |
+| ADR-0061 | 2026-03-27 | accepted | Add employee directory privacy controls and avatar storage | backend-engineer + frontend-engineer | employee domain, object storage, RBAC, frontend directory |
+
+## ADR-0061
+- Context: `TASK-06-06` requires employee directory visibility with privacy redaction plus avatar upload/read
+  backed by MinIO while keeping employee profiles as the source of truth.
+- Decision:
+  - Extend `employee_profiles` with directory-facing fields and privacy flags, and mark dismissed
+    profiles for default directory exclusion.
+  - Store avatar binaries in object storage and persist metadata in `employee_profile_avatars` with
+    one active avatar per profile.
+  - Expose authenticated directory/profile reads with server-side redaction and protected avatar
+    read/write endpoints, with audit events on success and failure.
+- Consequences:
+  - The employee domain now depends on object storage availability for avatar operations and fails
+    closed when storage is unavailable.
+  - Directory/profile reads require privacy-aware redaction and additional audit traces.
+  - OpenAPI contracts, frontend types, and tests must stay synchronized with the new endpoints.
 
 ## ADR-0060
 - Context: `TASK-06-08` requires employee referrals without a parallel lifecycle or bonus workflow, while keeping the recruitment pipeline as the only candidate state machine.
