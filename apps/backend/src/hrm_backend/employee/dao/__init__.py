@@ -1,5 +1,6 @@
 """Data-access helpers for employee-domain persistence."""
 
+from hrm_backend.employee.dao.employee_avatar_dao import EmployeeAvatarDAO
 from hrm_backend.employee.dao.employee_profile_dao import EmployeeProfileDAO
 from hrm_backend.employee.dao.hire_conversion_dao import HireConversionDAO
 from hrm_backend.employee.dao.onboarding_run_dao import OnboardingRunDAO
@@ -8,6 +9,7 @@ from hrm_backend.employee.dao.onboarding_template_dao import OnboardingTemplateD
 
 __all__ = [
     "HireConversionDAO",
+    "EmployeeAvatarDAO",
     "EmployeeProfileDAO",
     "OnboardingRunDAO",
     "OnboardingTaskDAO",

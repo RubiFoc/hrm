@@ -1,8 +1,8 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-03-27
-- Updated by: backend-engineer + frontend-engineer
+- Date: 2026-04-04
+- Updated by: backend-engineer
 
 ## Priority Model
 - `P0`: critical for Phase 1 core delivery.
@@ -70,6 +70,7 @@
 | TASK-13-04 | done/closed | GitHub issue #62 is linked to PR #138; the repo-backed production legal evidence package now defines sign-off workflow, required attachments, evidence freshness rules, blocker handling, and `verified` exit criteria for critical controls without adding runtime/API changes. |
 | COMPLIANCE-01 | done/closed | EPIC-13 compliance docs synced across legal-controls matrix, evidence registry, release checklist, and runbook; no runtime scope; Belarus-only gate retained (`CTRL-BY-01` in-progress, `CTRL-BY-02`/`CTRL-BY-03` implemented but unverified) |
 | TASK-06-08 | implemented/local-referral-slice | Employee referral intake now ships with referral linkage storage, dedupe/merge logic, referral review endpoints on existing pipeline stages, employee/HR/manager referral UI routes, consent gating for public apply, and updated docs/tests/contracts. |
+| TASK-06-06 | implemented/local-employee-directory-slice | Employee directory visibility with privacy redaction, avatar upload/read/delete backed by MinIO, employee profile privacy controls, RBAC, audit trails, and frontend directory/profile UX are implemented in repo with tests. |
 
 ## Requested High-Priority Intake (2026-03-23)
 
@@ -80,7 +81,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 
 | Request | Backlog Status | New High-Priority Tasks |
 | --- | --- | --- |
-| Employee profiles with avatars in MinIO and cross-employee profile visibility | not found as a closed scope | `TASK-06-05` (BA clarification) -> `TASK-06-06` (implementation) |
+| Employee profiles with avatars in MinIO and cross-employee profile visibility | implemented/local-employee-directory-slice | `TASK-06-05` (BA clarification) -> `TASK-06-06` (implementation complete in repo; issue #174 closed post-merge) |
 | Employee referral recommendations for vacancies | implemented/local-referral-slice | `TASK-06-07` (BA clarification) -> `TASK-06-08` (implementation) |
 | Manager compensation controls (salary raises, payroll/bonus table, vacancy salary bands, manager/HR visibility) | not found as a closed scope | `TASK-09-05` (BA clarification) -> `TASK-09-06` (implementation) |
 
@@ -156,6 +157,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 - `TASK-10-04` is no longer active queue work; the implemented source of truth is the bounded export attachments on `GET /api/v1/audit/events/export` and `GET /api/v1/reporting/kpi-snapshots/export`.
 - `TASK-11-10/11` are no longer active queue work; the frontend observability and browser verification closeout is formally complete and the implemented source of truth is the current repo-backed Sentry tagging and browser smoke coverage.
 - `TASK-11-14/15/16` are no longer active queue work; the frontend-refresh closeout is formally complete and the implemented source of truth is the current repo-backed public company landing, role-route split, and refreshed visual system.
+- `TASK-06-06` is no longer active queue work; the implemented source of truth is the repo-backed employee directory and avatar slice with privacy redaction, MinIO storage, and frontend UX.
 - The remaining candidate-domain follow-on work after `TASK-03-08` and `TASK-04-06` is limited to
   later ops/reporting slices, not baseline parsed-profile structure or scoring-quality tooling.
 
@@ -171,7 +173,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
   - `TASK-05-01/02`
   - `TASK-11-05/06/07/08/09`
   - `TASK-13-01/02`
-  - `TASK-06-05/06/07`
+  - `TASK-06-05/07`
   - `TASK-09-05/06`
 - P1:
   - `TASK-03-08`
@@ -182,7 +184,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 - P2: none
 
 - Current open backlog by delivery wave:
-  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`, `TASK-06-05/06/07`, `TASK-09-05/06`
+  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`, `TASK-06-05/07`, `TASK-09-05/06`
   - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`
   - P2: none
 
@@ -190,7 +192,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 
 - P0:
   - Open/track `TASK-06-05`: BA clarification for employee public profile + avatar storage policy (MinIO bucket, privacy, moderation, limits).
-  - Open/track `TASK-06-06`: employee profile visibility + avatar upload/read implementation on existing employee domain/workspaces.
+  - Closed `TASK-06-06`: implementation is in repo; GitHub issue #174 is closed post-merge and backlog is synced.
   - Open/track `TASK-06-07`: BA clarification for referral workflow (roles, rewards, anti-abuse, statuses, audit/legal constraints).
   - Closed `TASK-06-08`: employee referral recommendation flow implementation is in repo and the GitHub issue is closed post-merge.
   - Open/track `TASK-09-05`: BA clarification for compensation management baseline (raise authority, approval chain, payroll/bonus view scope, data sensitivity).
@@ -343,7 +345,7 @@ Historical planning queue retained for lineage; implemented items from the execu
 | 48 | TASK-09-02 | Leader workspace finalization |
 | 49 | TASK-09-04 | Notification optimization |
 | 50 | TASK-06-05 | BA-first clarification for employee public profiles and avatar governance |
-| 51 | TASK-06-06 | Employee profile avatars in MinIO with cross-employee visibility |
+| 51 | TASK-06-06 | Delivered in repo; retained as historical sequencing reference for employee directory and avatar slice |
 | 52 | TASK-06-07 | BA-first clarification for referral business rules |
 | 53 | TASK-06-08 | Employee referral recommendation flow rollout |
 | 54 | TASK-09-05 | BA-first clarification for compensation authority and data scope |

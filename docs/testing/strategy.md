@@ -112,6 +112,17 @@ apps/backend/tests/
   - `./scripts/check-openapi-freeze.sh`
   - `npm --prefix apps/frontend run api:types:check`
 
+## Employee Directory + Avatars Verification (TASK-06-06)
+- Unit coverage:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/employee apps/backend/tests/unit/rbac/test_rbac.py`
+- Integration coverage:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/employee apps/backend/tests/integration/security/test_audit_enforcement.py`
+- Frontend coverage:
+  - `npm --prefix apps/frontend run test -- --run src/pages/employee/EmployeeDirectoryPage.test.tsx src/pages/employee/EmployeeDirectoryProfilePage.test.tsx src/app/router.employee.test.tsx`
+- Contract sync:
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:check`
+
 ## Change-Based Verification Matrix
 | Change Type | Required Checks |
 | --- | --- |

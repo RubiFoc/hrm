@@ -2,19 +2,27 @@
 
 from __future__ import annotations
 
+from io import BytesIO
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, File, Query, Request, UploadFile
+from fastapi.responses import StreamingResponse
 
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.employee.dependencies.employee import (
+    get_employee_avatar_service,
+    get_employee_directory_service,
     get_employee_onboarding_portal_service,
     get_employee_profile_service,
     get_onboarding_dashboard_service,
     get_onboarding_task_service,
     get_onboarding_template_service,
+)
+from hrm_backend.employee.schemas.avatar import (
+    EmployeeAvatarDeleteResponse,
+    EmployeeAvatarUploadResponse,
 )
 from hrm_backend.employee.schemas.onboarding import (
     EmployeeOnboardingPortalResponse,
@@ -28,7 +36,11 @@ from hrm_backend.employee.schemas.onboarding import (
     OnboardingTaskUpdateRequest,
 )
 from hrm_backend.employee.schemas.profile import (
+    EmployeeDirectoryListResponse,
+    EmployeeDirectoryProfileResponse,
     EmployeeProfileCreateRequest,
+    EmployeeProfilePrivacySettingsResponse,
+    EmployeeProfilePrivacyUpdateRequest,
     EmployeeProfileResponse,
 )
 from hrm_backend.employee.schemas.template import (
@@ -37,6 +49,8 @@ from hrm_backend.employee.schemas.template import (
     OnboardingChecklistTemplateResponse,
     OnboardingChecklistTemplateUpdateRequest,
 )
+from hrm_backend.employee.services.employee_avatar_service import EmployeeAvatarService
+from hrm_backend.employee.services.employee_directory_service import EmployeeDirectoryService
 from hrm_backend.employee.services.employee_onboarding_portal_service import (
     EmployeeOnboardingPortalService,
 )
@@ -58,6 +72,14 @@ onboarding_template_router = APIRouter(
 EmployeeProfileServiceDependency = Annotated[
     EmployeeProfileService,
     Depends(get_employee_profile_service),
+]
+EmployeeDirectoryServiceDependency = Annotated[
+    EmployeeDirectoryService,
+    Depends(get_employee_directory_service),
+]
+EmployeeAvatarServiceDependency = Annotated[
+    EmployeeAvatarService,
+    Depends(get_employee_avatar_service),
 ]
 EmployeeOnboardingPortalServiceDependency = Annotated[
     EmployeeOnboardingPortalService,
@@ -83,8 +105,18 @@ DashboardAssignedStaffQuery = Annotated[UUID | None, Query()]
 DashboardOverdueOnlyQuery = Annotated[bool, Query()]
 DashboardLimitQuery = Annotated[int, Query(ge=1, le=100)]
 DashboardOffsetQuery = Annotated[int, Query(ge=0)]
+DirectoryLimitQuery = Annotated[int, Query(ge=1, le=100)]
+DirectoryOffsetQuery = Annotated[int, Query(ge=0)]
 EmployeeProfileCreateRole = Annotated[Role, Depends(require_permission("employee_profile:create"))]
 EmployeeProfileReadRole = Annotated[Role, Depends(require_permission("employee_profile:read"))]
+EmployeeProfilePrivacyRole = Annotated[
+    Role,
+    Depends(require_permission("employee_profile:privacy_update")),
+]
+EmployeeDirectoryReadRole = Annotated[Role, Depends(require_permission("employee_directory:read"))]
+EmployeeAvatarReadRole = Annotated[Role, Depends(require_permission("employee_avatar:read"))]
+EmployeeAvatarWriteRole = Annotated[Role, Depends(require_permission("employee_avatar:write"))]
+EmployeeAvatarAdminRole = Annotated[Role, Depends(require_permission("employee_avatar:admin"))]
 EmployeePortalReadRole = Annotated[
     Role,
     Depends(require_permission("employee_portal:read")),
@@ -137,6 +169,264 @@ def create_employee_profile(
 ) -> EmployeeProfileResponse:
     """Create one employee profile from a persisted hire conversion."""
     return service.create_profile(payload=payload, auth_context=auth_context, request=request)
+
+
+@employee_router.get(
+    "/directory",
+    response_model=EmployeeDirectoryListResponse,
+)
+def list_employee_directory(
+    request: Request,
+    _: EmployeeDirectoryReadRole,
+    __: EmployeeAvatarReadRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeDirectoryServiceDependency,
+    limit: DirectoryLimitQuery = 20,
+    offset: DirectoryOffsetQuery = 0,
+) -> EmployeeDirectoryListResponse:
+    """List employee directory cards visible to the current staff actor.
+
+    Args:
+        request: Active HTTP request.
+        auth_context: Authenticated actor context.
+        service: Employee directory service dependency.
+        limit: Pagination limit for directory rows.
+        offset: Pagination offset for directory rows.
+
+    Returns:
+        EmployeeDirectoryListResponse: Directory list payload.
+    """
+    return service.list_directory(
+        auth_context=auth_context,
+        request=request,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@employee_router.get(
+    "/directory/{employee_id}",
+    response_model=EmployeeDirectoryProfileResponse,
+)
+def get_employee_directory_profile(
+    employee_id: UUID,
+    request: Request,
+    _: EmployeeDirectoryReadRole,
+    __: EmployeeAvatarReadRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeDirectoryServiceDependency,
+) -> EmployeeDirectoryProfileResponse:
+    """Read one employee directory profile by identifier.
+
+    Args:
+        employee_id: Employee profile identifier.
+        request: Active HTTP request.
+        auth_context: Authenticated actor context.
+        service: Employee directory service dependency.
+
+    Returns:
+        EmployeeDirectoryProfileResponse: Directory profile payload.
+    """
+    return service.get_profile(
+        employee_id=str(employee_id),
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@employee_router.get(
+    "/me/privacy",
+    response_model=EmployeeProfilePrivacySettingsResponse,
+)
+def get_my_employee_privacy_settings(
+    request: Request,
+    _: EmployeeProfilePrivacyRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeDirectoryServiceDependency,
+) -> EmployeeProfilePrivacySettingsResponse:
+    """Read privacy settings for the authenticated employee profile.
+
+    Args:
+        request: Active HTTP request.
+        auth_context: Authenticated actor context.
+        service: Employee directory service dependency.
+
+    Returns:
+        EmployeeProfilePrivacySettingsResponse: Current privacy configuration.
+    """
+    return service.get_privacy_settings(auth_context=auth_context, request=request)
+
+
+@employee_router.patch(
+    "/me/privacy",
+    response_model=EmployeeProfilePrivacySettingsResponse,
+)
+def update_my_employee_privacy_settings(
+    request: Request,
+    payload: EmployeeProfilePrivacyUpdateRequest,
+    _: EmployeeProfilePrivacyRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeDirectoryServiceDependency,
+) -> EmployeeProfilePrivacySettingsResponse:
+    """Update privacy settings for the authenticated employee profile.
+
+    Args:
+        request: Active HTTP request.
+        payload: Privacy update payload.
+        auth_context: Authenticated actor context.
+        service: Employee directory service dependency.
+
+    Returns:
+        EmployeeProfilePrivacySettingsResponse: Updated privacy configuration.
+    """
+    return service.update_privacy_settings(
+        payload=payload,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@employee_router.post(
+    "/me/avatar",
+    response_model=EmployeeAvatarUploadResponse,
+)
+async def upload_my_employee_avatar(
+    request: Request,
+    file: Annotated[UploadFile, File(...)],
+    _: EmployeeAvatarWriteRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeAvatarServiceDependency,
+) -> EmployeeAvatarUploadResponse:
+    """Upload avatar for the authenticated employee profile.
+
+    Args:
+        request: Active HTTP request.
+        file: Multipart avatar file.
+        auth_context: Authenticated actor context.
+        service: Employee avatar service dependency.
+
+    Returns:
+        EmployeeAvatarUploadResponse: Uploaded avatar metadata.
+    """
+    return await service.upload_my_avatar(
+        file=file,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@employee_router.delete(
+    "/me/avatar",
+    response_model=EmployeeAvatarDeleteResponse,
+)
+def delete_my_employee_avatar(
+    request: Request,
+    _: EmployeeAvatarWriteRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeAvatarServiceDependency,
+) -> EmployeeAvatarDeleteResponse:
+    """Delete avatar for the authenticated employee profile.
+
+    Args:
+        request: Active HTTP request.
+        auth_context: Authenticated actor context.
+        service: Employee avatar service dependency.
+
+    Returns:
+        EmployeeAvatarDeleteResponse: Deletion metadata payload.
+    """
+    return service.delete_my_avatar(
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@employee_router.post(
+    "/{employee_id}/avatar",
+    response_model=EmployeeAvatarUploadResponse,
+)
+async def upload_employee_avatar_admin(
+    employee_id: UUID,
+    request: Request,
+    file: Annotated[UploadFile, File(...)],
+    _: EmployeeAvatarAdminRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeAvatarServiceDependency,
+) -> EmployeeAvatarUploadResponse:
+    """Upload avatar for a target employee profile (admin/HR override).
+
+    Args:
+        employee_id: Employee profile identifier.
+        request: Active HTTP request.
+        file: Multipart avatar file.
+        auth_context: Authenticated actor context.
+        service: Employee avatar service dependency.
+
+    Returns:
+        EmployeeAvatarUploadResponse: Uploaded avatar metadata.
+    """
+    return await service.upload_employee_avatar_admin(
+        employee_id=str(employee_id),
+        file=file,
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@employee_router.delete(
+    "/{employee_id}/avatar",
+    response_model=EmployeeAvatarDeleteResponse,
+)
+def delete_employee_avatar_admin(
+    employee_id: UUID,
+    request: Request,
+    _: EmployeeAvatarAdminRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeAvatarServiceDependency,
+) -> EmployeeAvatarDeleteResponse:
+    """Delete avatar for a target employee profile (admin/HR override).
+
+    Args:
+        employee_id: Employee profile identifier.
+        request: Active HTTP request.
+        auth_context: Authenticated actor context.
+        service: Employee avatar service dependency.
+
+    Returns:
+        EmployeeAvatarDeleteResponse: Deletion metadata payload.
+    """
+    return service.delete_employee_avatar_admin(
+        employee_id=str(employee_id),
+        auth_context=auth_context,
+        request=request,
+    )
+
+
+@employee_router.get("/{employee_id}/avatar")
+def read_employee_avatar(
+    employee_id: UUID,
+    request: Request,
+    _: EmployeeAvatarReadRole,
+    auth_context: CurrentAuthContext,
+    service: EmployeeAvatarServiceDependency,
+):
+    """Download active employee avatar as an inline stream.
+
+    Args:
+        employee_id: Employee profile identifier.
+        request: Active HTTP request.
+        auth_context: Authenticated actor context.
+        service: Employee avatar service dependency.
+
+    Returns:
+        StreamingResponse: Inline avatar stream response.
+    """
+    payload = service.read_avatar(
+        employee_id=str(employee_id),
+        auth_context=auth_context,
+        request=request,
+    )
+    return StreamingResponse(BytesIO(payload.content), media_type=payload.mime_type)
 
 
 @employee_router.get(

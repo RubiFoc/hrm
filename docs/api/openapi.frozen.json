@@ -1791,6 +1791,34 @@
         "title": "Body_upload_candidate_cv_api_v1_candidates__candidate_id__cv_post",
         "type": "object"
       },
+      "Body_upload_employee_avatar_admin_api_v1_employees__employee_id__avatar_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_employee_avatar_admin_api_v1_employees__employee_id__avatar_post",
+        "type": "object"
+      },
+      "Body_upload_my_employee_avatar_api_v1_employees_me_avatar_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_my_employee_avatar_api_v1_employees_me_avatar_post",
+        "type": "object"
+      },
       "CVAnalysisEvidenceItem": {
         "description": "Evidence link from one extracted field to CV source snippet.",
         "properties": {
@@ -2531,6 +2559,408 @@
         "title": "ContainsCondition",
         "type": "object"
       },
+      "EmployeeAvatarDeleteResponse": {
+        "description": "Metadata payload returned after successful avatar deletion.",
+        "properties": {
+          "deleted_at": {
+            "format": "date-time",
+            "title": "Deleted At",
+            "type": "string"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "employee_id",
+          "deleted_at"
+        ],
+        "title": "EmployeeAvatarDeleteResponse",
+        "type": "object"
+      },
+      "EmployeeAvatarUploadResponse": {
+        "description": "Metadata payload returned after successful avatar upload.",
+        "properties": {
+          "avatar_id": {
+            "format": "uuid",
+            "title": "Avatar Id",
+            "type": "string"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "mime_type": {
+            "title": "Mime Type",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "avatar_id",
+          "employee_id",
+          "mime_type",
+          "size_bytes",
+          "updated_at"
+        ],
+        "title": "EmployeeAvatarUploadResponse",
+        "type": "object"
+      },
+      "EmployeeDirectoryAvatarResponse": {
+        "description": "Employee avatar metadata exposed in the directory view.",
+        "properties": {
+          "avatar_id": {
+            "format": "uuid",
+            "title": "Avatar Id",
+            "type": "string"
+          },
+          "mime_type": {
+            "title": "Mime Type",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "avatar_id",
+          "mime_type",
+          "size_bytes",
+          "updated_at"
+        ],
+        "title": "EmployeeDirectoryAvatarResponse",
+        "type": "object"
+      },
+      "EmployeeDirectoryListItemResponse": {
+        "description": "Employee directory list row payload.",
+        "properties": {
+          "avatar": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmployeeDirectoryAvatarResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "birthday_day_month": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birthday Day Month"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "manager": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "position_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Title"
+          },
+          "subordinates": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subordinates"
+          },
+          "tenure_in_company": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenure In Company"
+          }
+        },
+        "required": [
+          "employee_id",
+          "full_name",
+          "department",
+          "position_title",
+          "manager",
+          "location",
+          "tenure_in_company",
+          "subordinates",
+          "phone",
+          "email",
+          "birthday_day_month",
+          "avatar"
+        ],
+        "title": "EmployeeDirectoryListItemResponse",
+        "type": "object"
+      },
+      "EmployeeDirectoryListResponse": {
+        "description": "Paginated employee directory list payload.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EmployeeDirectoryListItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "EmployeeDirectoryListResponse",
+        "type": "object"
+      },
+      "EmployeeDirectoryProfileResponse": {
+        "description": "Employee directory profile payload.",
+        "properties": {
+          "avatar": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmployeeDirectoryAvatarResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "birthday_day_month": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Birthday Day Month"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "manager": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manager"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "position_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Title"
+          },
+          "subordinates": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subordinates"
+          },
+          "tenure_in_company": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tenure In Company"
+          }
+        },
+        "required": [
+          "employee_id",
+          "full_name",
+          "department",
+          "position_title",
+          "manager",
+          "location",
+          "tenure_in_company",
+          "subordinates",
+          "phone",
+          "email",
+          "birthday_day_month",
+          "avatar"
+        ],
+        "title": "EmployeeDirectoryProfileResponse",
+        "type": "object"
+      },
       "EmployeeOnboardingPortalResponse": {
         "description": "Employee-facing onboarding portal payload scoped to the current user.",
         "properties": {
@@ -2836,6 +3266,71 @@
           "candidate_id"
         ],
         "title": "EmployeeProfileCreateRequest",
+        "type": "object"
+      },
+      "EmployeeProfilePrivacySettingsResponse": {
+        "description": "Employee-facing privacy flag payload.",
+        "properties": {
+          "is_birthday_visible": {
+            "title": "Is Birthday Visible",
+            "type": "boolean"
+          },
+          "is_email_visible": {
+            "title": "Is Email Visible",
+            "type": "boolean"
+          },
+          "is_phone_visible": {
+            "title": "Is Phone Visible",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_phone_visible",
+          "is_email_visible",
+          "is_birthday_visible"
+        ],
+        "title": "EmployeeProfilePrivacySettingsResponse",
+        "type": "object"
+      },
+      "EmployeeProfilePrivacyUpdateRequest": {
+        "additionalProperties": false,
+        "description": "Employee-facing privacy flag update request.",
+        "properties": {
+          "is_birthday_visible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Birthday Visible"
+          },
+          "is_email_visible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Email Visible"
+          },
+          "is_phone_visible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Phone Visible"
+          }
+        },
+        "title": "EmployeeProfilePrivacyUpdateRequest",
         "type": "object"
       },
       "EmployeeProfileResponse": {
@@ -9844,6 +10339,189 @@
         ]
       }
     },
+    "/api/v1/employees/directory": {
+      "get": {
+        "description": "List employee directory cards visible to the current staff actor.\n\nArgs:\n    request: Active HTTP request.\n    auth_context: Authenticated actor context.\n    service: Employee directory service dependency.\n    limit: Pagination limit for directory rows.\n    offset: Pagination offset for directory rows.\n\nReturns:\n    EmployeeDirectoryListResponse: Directory list payload.",
+        "operationId": "list_employee_directory_api_v1_employees_directory_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeDirectoryListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Employee Directory",
+        "tags": [
+          "employees"
+        ]
+      }
+    },
+    "/api/v1/employees/directory/{employee_id}": {
+      "get": {
+        "description": "Read one employee directory profile by identifier.\n\nArgs:\n    employee_id: Employee profile identifier.\n    request: Active HTTP request.\n    auth_context: Authenticated actor context.\n    service: Employee directory service dependency.\n\nReturns:\n    EmployeeDirectoryProfileResponse: Directory profile payload.",
+        "operationId": "get_employee_directory_profile_api_v1_employees_directory__employee_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "employee_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Employee Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeDirectoryProfileResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get Employee Directory Profile",
+        "tags": [
+          "employees"
+        ]
+      }
+    },
+    "/api/v1/employees/me/avatar": {
+      "delete": {
+        "description": "Delete avatar for the authenticated employee profile.\n\nArgs:\n    request: Active HTTP request.\n    auth_context: Authenticated actor context.\n    service: Employee avatar service dependency.\n\nReturns:\n    EmployeeAvatarDeleteResponse: Deletion metadata payload.",
+        "operationId": "delete_my_employee_avatar_api_v1_employees_me_avatar_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeAvatarDeleteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete My Employee Avatar",
+        "tags": [
+          "employees"
+        ]
+      },
+      "post": {
+        "description": "Upload avatar for the authenticated employee profile.\n\nArgs:\n    request: Active HTTP request.\n    file: Multipart avatar file.\n    auth_context: Authenticated actor context.\n    service: Employee avatar service dependency.\n\nReturns:\n    EmployeeAvatarUploadResponse: Uploaded avatar metadata.",
+        "operationId": "upload_my_employee_avatar_api_v1_employees_me_avatar_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_my_employee_avatar_api_v1_employees_me_avatar_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeAvatarUploadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload My Employee Avatar",
+        "tags": [
+          "employees"
+        ]
+      }
+    },
     "/api/v1/employees/me/onboarding": {
       "get": {
         "description": "Read onboarding portal payload for the authenticated employee.",
@@ -9930,6 +10608,78 @@
         ]
       }
     },
+    "/api/v1/employees/me/privacy": {
+      "get": {
+        "description": "Read privacy settings for the authenticated employee profile.\n\nArgs:\n    request: Active HTTP request.\n    auth_context: Authenticated actor context.\n    service: Employee directory service dependency.\n\nReturns:\n    EmployeeProfilePrivacySettingsResponse: Current privacy configuration.",
+        "operationId": "get_my_employee_privacy_settings_api_v1_employees_me_privacy_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeProfilePrivacySettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Get My Employee Privacy Settings",
+        "tags": [
+          "employees"
+        ]
+      },
+      "patch": {
+        "description": "Update privacy settings for the authenticated employee profile.\n\nArgs:\n    request: Active HTTP request.\n    payload: Privacy update payload.\n    auth_context: Authenticated actor context.\n    service: Employee directory service dependency.\n\nReturns:\n    EmployeeProfilePrivacySettingsResponse: Updated privacy configuration.",
+        "operationId": "update_my_employee_privacy_settings_api_v1_employees_me_privacy_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmployeeProfilePrivacyUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeProfilePrivacySettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Update My Employee Privacy Settings",
+        "tags": [
+          "employees"
+        ]
+      }
+    },
     "/api/v1/employees/{employee_id}": {
       "get": {
         "description": "Read one employee profile by identifier.",
@@ -9974,6 +10724,157 @@
           }
         ],
         "summary": "Get Employee Profile",
+        "tags": [
+          "employees"
+        ]
+      }
+    },
+    "/api/v1/employees/{employee_id}/avatar": {
+      "delete": {
+        "description": "Delete avatar for a target employee profile (admin/HR override).\n\nArgs:\n    employee_id: Employee profile identifier.\n    request: Active HTTP request.\n    auth_context: Authenticated actor context.\n    service: Employee avatar service dependency.\n\nReturns:\n    EmployeeAvatarDeleteResponse: Deletion metadata payload.",
+        "operationId": "delete_employee_avatar_admin_api_v1_employees__employee_id__avatar_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "employee_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Employee Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeAvatarDeleteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Delete Employee Avatar Admin",
+        "tags": [
+          "employees"
+        ]
+      },
+      "get": {
+        "description": "Download active employee avatar as an inline stream.\n\nArgs:\n    employee_id: Employee profile identifier.\n    request: Active HTTP request.\n    auth_context: Authenticated actor context.\n    service: Employee avatar service dependency.\n\nReturns:\n    StreamingResponse: Inline avatar stream response.",
+        "operationId": "read_employee_avatar_api_v1_employees__employee_id__avatar_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "employee_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Employee Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Employee Avatar",
+        "tags": [
+          "employees"
+        ]
+      },
+      "post": {
+        "description": "Upload avatar for a target employee profile (admin/HR override).\n\nArgs:\n    employee_id: Employee profile identifier.\n    request: Active HTTP request.\n    file: Multipart avatar file.\n    auth_context: Authenticated actor context.\n    service: Employee avatar service dependency.\n\nReturns:\n    EmployeeAvatarUploadResponse: Uploaded avatar metadata.",
+        "operationId": "upload_employee_avatar_admin_api_v1_employees__employee_id__avatar_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "employee_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Employee Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_employee_avatar_admin_api_v1_employees__employee_id__avatar_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeAvatarUploadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upload Employee Avatar Admin",
         "tags": [
           "employees"
         ]

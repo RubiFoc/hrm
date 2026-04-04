@@ -1,5 +1,7 @@
 """Business services for employee-domain workflows."""
 
+from hrm_backend.employee.services.employee_avatar_service import EmployeeAvatarService
+from hrm_backend.employee.services.employee_directory_service import EmployeeDirectoryService
 from hrm_backend.employee.services.employee_onboarding_portal_service import (
     EmployeeOnboardingPortalService,
 )
@@ -17,6 +19,8 @@ from hrm_backend.employee.services.onboarding_template_service import (
 __all__ = [
     "HireConversionService",
     "EmployeeProfileService",
+    "EmployeeDirectoryService",
+    "EmployeeAvatarService",
     "EmployeeOnboardingPortalService",
     "OnboardingDashboardService",
     "OnboardingRunService",

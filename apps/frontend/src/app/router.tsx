@@ -20,6 +20,8 @@ import { CareersPage } from "../pages/CareersPage";
 import { CareersVacancyPage } from "../pages/CareersVacancyPage";
 import { CompanyHomePage } from "../pages/CompanyHomePage";
 import { EmployeeOnboardingPage } from "../pages/EmployeeOnboardingPage";
+import { EmployeeDirectoryPage } from "../pages/employee/EmployeeDirectoryPage";
+import { EmployeeDirectoryProfilePage } from "../pages/employee/EmployeeDirectoryProfilePage";
 import { EmployeeReferralsPage } from "../pages/employee/EmployeeReferralsPage";
 import { HrDashboardPage } from "../pages/HrDashboardPage";
 import { HrInterviewsPage } from "../pages/hr/HrInterviewsPage";
@@ -176,15 +178,32 @@ export const appRoutes = [
       },
       {
         path: "employee",
-        element: <EmployeeGuard />,
+        element: (
+          <RoleGuard
+            allowedRoles={["admin", "hr", "manager", "employee", "leader", "accountant"]}
+          />
+        ),
         children: [
           {
-            index: true,
-            element: <EmployeeOnboardingPage />,
+            element: <EmployeeGuard />,
+            children: [
+              {
+                index: true,
+                element: <EmployeeOnboardingPage />,
+              },
+              {
+                path: "referrals",
+                element: <EmployeeReferralsPage />,
+              },
+            ],
           },
           {
-            path: "referrals",
-            element: <EmployeeReferralsPage />,
+            path: "directory",
+            element: <EmployeeDirectoryPage />,
+          },
+          {
+            path: "directory/:employeeId",
+            element: <EmployeeDirectoryProfilePage />,
           },
         ],
       },
