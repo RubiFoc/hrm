@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-04-04
-- Updated by: backend-engineer
+- Updated by: backend-engineer + coordinator
 
 ## System Context
 HRM platform for Belarus that supports candidate selection across professions and
@@ -110,7 +110,12 @@ flowchart LR
 8. Public Candidate Apply Flow:
    anonymous visitor opens `/careers` -> public open-role board loads from `GET /api/v1/public/vacancies` -> candidate opens a shareable vacancy page on `/careers/{vacancy_id}` or follows a recruiter deep link -> consent-confirmed candidate upsert + CV upload -> pipeline transition to `applied` -> async parsing enqueue -> native PDF/DOCX extraction + persisted analysis artifacts -> browser stores `{vacancyId, candidateId, parsingJobId}` -> public tracking/analysis polling by `parsing_job_id`.
 9. Employee Referral Flow:
-   employee opens `/employee/referrals` -> submit referral details + CV -> referral dedupe on `(vacancy_id, email)` with bonus ownership preserved for the first referrer -> candidate profile upsert + pipeline transition to `applied` -> HR opens `/hr/referrals` or manager opens `/manager/referrals` -> review moves candidate to `screening` or `shortlist`.
+   employee opens `/employee/referrals` -> submit referral details + CV with consent confirmation ->
+   referral dedupe on `(vacancy_id, email)` with bonus ownership preserved for the first referrer ->
+   candidate profile upsert + pipeline transition to `applied` -> HR opens `/hr/referrals` or
+   manager opens `/manager/referrals` -> review moves candidate to `screening` or `shortlist`,
+   while the flow keeps the canonical pipeline as the only state machine (no separate referral
+   status model).
 10. Authentication Flow:
    staff key issuance -> staff register/login (login/email + password) -> access/refresh JWT issuance -> bearer validation + denylist checks -> refresh rotation -> logout revoke.
 11. Admin Staff Governance Flow:
@@ -151,6 +156,11 @@ flowchart LR
    via `GET /api/v1/employees/{employee_id}/avatar` streaming from object storage -> employees update
    visibility flags on `PATCH /api/v1/employees/me/privacy` and manage avatars on
    `POST/DELETE /api/v1/employees/me/avatar` with audit events on read/write paths.
+18. Compensation Control Flow (planned baseline from `TASK-09-05` for `TASK-09-06`):
+   manager creates raise request -> manager confirmation quorum check (`>=2`, default `2`) ->
+   leader final approval -> salary update applies from non-backdated `effective_date` only ->
+   HR maintains vacancy salary-band history -> manager/HR/accountant read unified payroll/bonus
+   table with band alignment -> all compensation reads/writes are audited with fail-closed RBAC.
 
 ## Data Boundaries
 - Source of truth entities:
@@ -190,6 +200,10 @@ flowchart LR
   `employee_profile_avatars` rows keyed by `avatar_id`, including `employee_id`, `object_key`,
   `mime_type`, `size_bytes`, `is_active`, and `updated_at`; avatar binaries are stored in object
   storage with access gated through authenticated API reads.
+- Compensation artifacts (planned for `TASK-09-06` from frozen `TASK-09-05`):
+  salary raise requests with confirmation/approval history, historical vacancy salary-band
+  versions, manual bonus entries, and unified compensation read model fields constrained to
+  internal staff scopes with currency `BYN` and precision `0.01`.
 - Onboarding-start artifacts:
   `onboarding_runs` rows keyed by `employee_id`, including copied `hire_conversion_id`,
   `status=started`, `started_at`, and `started_by_staff_id` as the durable input for later
@@ -248,6 +262,14 @@ flowchart LR
   `employee_profiles.staff_account_id` identity link; read-only onboarding progress list/detail
   routes now live on `/api/v1/onboarding/runs*`, where HR/admin see all runs and managers see only
   manager-scoped assignments.
+- Planned employee boundary extension (`TASK-06-06`):
+  employee directory/profile read contracts and avatar upload/read operations remain inside
+  `hrm_backend/employee`, with fail-closed RBAC, privacy redaction, protected MinIO media access,
+  and immutable audit hooks.
+- Planned compensation boundary extension (`TASK-09-06`):
+  compensation controls (raise requests, approval chain, salary-band history, payroll/bonus read
+  model) stay internal/staff-scoped, enforce fail-closed RBAC and immutable audit events, and do
+  not reopen public route topology or auth/session behavior.
 - Implemented manager workspace boundary:
   `hrm_backend/vacancies` now also owns read-only manager workspace endpoints on the existing
   vacancy namespace (`/api/v1/vacancies/manager-workspace`,

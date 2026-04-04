@@ -2,7 +2,7 @@
 
 ## Last Updated
 - Date: 2026-04-04
-- Updated by: backend-engineer
+- Updated by: backend-engineer + coordinator
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -1144,6 +1144,10 @@ without adding a new backend namespace or destructive behavior.
 - Decomposition rule: follow-up diagrams should use business-specific child names instead of
   sheet-size labels so the editable `draw.io` sources stay unambiguous.
 
+Referral baseline for the target workflow is frozen from `TASK-06-07`: employee-only submission,
+mandatory consent confirmation, dedupe on `(vacancy_id, email)`, first-referrer bonus ownership,
+and no parallel referral state machine outside the canonical recruitment pipeline.
+
 ## Diagram 28: Full Application Structural Diagram
 
 - Canonical editable source: `docs/architecture/drawio/application-structure-a1-sheet.drawio`
@@ -1216,3 +1220,126 @@ without adding a new backend namespace or destructive behavior.
     salary bands, salary raise requests, approval chain rows, and payroll/bonus entries;
   - automation and reporting: automation rules, execution runs, action executions, automation
     metric events, and KPI snapshots.
+
+## Diagram 31: Employee Directory and Avatar Access Flow (`TASK-06-05` -> `TASK-06-06`)
+
+```mermaid
+sequenceDiagram
+  participant U as Internal Staff User
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant RBAC as Access Policy Evaluator
+  participant EMP as Employee Domain
+  participant DB as PostgreSQL
+  participant OBJ as MinIO
+  participant AUD as Audit Service
+
+  U->>UI: Open employee directory
+  UI->>API: GET /api/v1/employee-directory
+  API->>RBAC: Evaluate `employee_directory:read`
+  alt Denied (401/403)
+    API->>AUD: Persist denied audit event
+    API-->>UI: Localized access error
+  else Allowed
+    API->>EMP: Resolve active employees + privacy-filtered fields
+    EMP->>DB: Read employee profile + privacy metadata
+    EMP-->>API: Redacted directory payload
+    API->>AUD: Persist allowed read audit event
+    API-->>UI: Employee directory cards
+  end
+
+  U->>UI: Upload own avatar
+  UI->>API: PUT /api/v1/employees/me/avatar (multipart)
+  API->>RBAC: Evaluate self-write permission
+  alt Denied or invalid file (`403/413/415/422`)
+    API->>AUD: Persist denied/failure audit event
+    API-->>UI: Localized validation/access error
+  else Allowed and valid (`jpeg/png/webp`, <=10 MiB)
+    API->>OBJ: Store avatar object
+    API->>DB: Upsert avatar metadata + active reference
+    API->>AUD: Persist success audit event
+    API-->>UI: Updated avatar metadata
+  end
+
+  U->>UI: Read avatar
+  UI->>API: GET /api/v1/employees/{employee_id}/avatar
+  API->>RBAC: Evaluate `employee_directory:read`
+  alt Denied or expired/invalid token
+    API->>AUD: Persist denied/failure audit event
+    API-->>UI: `401/403/410`
+  else Allowed
+    API->>OBJ: Stream object or issue short-lived signed read
+    API-->>UI: Protected avatar response
+  end
+```
+
+Frozen baseline from `TASK-06-05`:
+- only authenticated internal staff roles can read employee directory/profile data;
+- dismissed employees are excluded from default directory visibility;
+- avatar reads are protected (no anonymous bucket/object listing);
+- all directory/profile/avatar reads and writes are auditable.
+
+## Diagram 32: Compensation Raise and Salary-Band Flow (`TASK-09-05` -> `TASK-09-06`)
+
+```mermaid
+sequenceDiagram
+  participant MGR as Manager
+  participant HR as HR
+  participant LEAD as Leader
+  participant UI as React.js + TypeScript UI
+  participant API as API Gateway
+  participant RBAC as Access Policy Evaluator
+  participant COMP as Compensation Service
+  participant DB as PostgreSQL
+  participant AUD as Audit Service
+
+  MGR->>UI: Create raise request
+  UI->>API: POST /api/v1/compensation/raise-requests
+  API->>RBAC: Evaluate manager request permission
+  alt Denied
+    API->>AUD: Persist denied audit event
+    API-->>UI: `403`
+  else Allowed
+    API->>COMP: Validate scope + effective_date (no backdating)
+    COMP->>DB: Insert request(status=pending_manager_confirmations)
+    API->>AUD: Persist success audit event
+    API-->>UI: Request created
+  end
+
+  MGR->>UI: Confirm request (distinct manager)
+  UI->>API: POST /api/v1/compensation/raise-requests/{id}/confirm
+  API->>COMP: Enforce quorum >= configured minimum (`>=2`, default `2`)
+  COMP->>DB: Persist confirmations + status progression
+
+  LEAD->>UI: Approve request after quorum
+  UI->>API: POST /api/v1/compensation/raise-requests/{id}/approve
+  API->>RBAC: Evaluate leader approval permission
+  alt Quorum missing or role invalid
+    API->>AUD: Persist denied/failure audit event
+    API-->>UI: `409/403`
+  else Approved
+    API->>COMP: Apply salary change from effective_date
+    COMP->>DB: Persist final status + salary snapshot
+    API->>AUD: Persist success audit event
+    API-->>UI: Approved
+  end
+
+  HR->>UI: Update vacancy salary band
+  UI->>API: PUT /api/v1/compensation/vacancies/{vacancy_id}/salary-band
+  API->>RBAC: Evaluate HR-only band-write permission
+  API->>COMP: Append historical salary-band version
+  API->>AUD: Persist success/failure audit event
+
+  UI->>API: GET /api/v1/compensation/table
+  API->>RBAC: Evaluate manager/hr/accountant read permission
+  API->>COMP: Build unified read columns + band alignment
+  API->>AUD: Persist compensation-read audit event
+  API-->>UI: Payroll/bonus table (`BYN`, precision `0.01`)
+```
+
+Frozen baseline from `TASK-09-05`:
+- manager raise authority is request-only, with leader as final approver;
+- manager confirmation quorum is configurable (`>=2`, default `2`);
+- salary bands are HR-managed with historical versioning;
+- payroll/bonus reads are internal-only and audited;
+- compensation fields remain excluded from public candidate and employee public-profile routes.
