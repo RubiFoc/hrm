@@ -81,7 +81,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 
 | Request | Backlog Status | New High-Priority Tasks |
 | --- | --- | --- |
-| Employee profiles with avatars in MinIO and cross-employee profile visibility | implemented/local-employee-directory-slice | `TASK-06-05` (BA clarification) -> `TASK-06-06` (implementation complete in repo; issue #174 active until merge) |
+| Employee profiles with avatars in MinIO and cross-employee profile visibility | implemented/local-employee-directory-slice | `TASK-06-05` (BA clarification) -> `TASK-06-06` (implementation complete in repo; issue #174 closed post-merge) |
 | Employee referral recommendations for vacancies | implemented/local-referral-slice | `TASK-06-07` (BA clarification) -> `TASK-06-08` (implementation) |
 | Manager compensation controls (salary raises, payroll/bonus table, vacancy salary bands, manager/HR visibility) | not found as a closed scope | `TASK-09-05` (BA clarification) -> `TASK-09-06` (implementation) |
 
@@ -192,7 +192,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; implementation tasks a
 
 - P0:
   - Open/track `TASK-06-05`: BA clarification for employee public profile + avatar storage policy (MinIO bucket, privacy, moderation, limits).
-  - Open/track `TASK-06-06`: implementation is in repo; close GitHub issue #174 after merge and backlog sync.
+  - Closed `TASK-06-06`: implementation is in repo; GitHub issue #174 is closed post-merge and backlog is synced.
   - Open/track `TASK-06-07`: BA clarification for referral workflow (roles, rewards, anti-abuse, statuses, audit/legal constraints).
   - Closed `TASK-06-08`: employee referral recommendation flow implementation is in repo and the GitHub issue is closed post-merge.
   - Open/track `TASK-09-05`: BA clarification for compensation management baseline (raise authority, approval chain, payroll/bonus view scope, data sensitivity).
