@@ -66,7 +66,10 @@ class AutomationEvaluator:
 
         The evaluator has no side effects. Failures are treated as fail-closed: no planned actions.
         """
-        rules = self._rule_dao.list_active_by_trigger(event.event_type)
+        rules = sorted(
+            self._rule_dao.list_active_by_trigger(event.event_type),
+            key=_rule_order_key,
+        )
 
         plan: list[PlannedNotificationEmitAction] = []
         payload_for_conditions = event.payload.model_dump(mode="json")
@@ -76,7 +79,9 @@ class AutomationEvaluator:
             return []
 
         for rule in rules:
-            conditions = _parse_conditions(rule.conditions_json)
+            conditions, is_valid = _parse_conditions(rule.conditions_json)
+            if not is_valid:
+                continue
             if conditions is not None and not evaluate_condition(
                 conditions,
                 payload_for_conditions,
@@ -227,14 +232,16 @@ def _resolve_source_type(event: AutomationEvent) -> str:
     return "automation"
 
 
-def _parse_conditions(raw: dict[str, object] | None) -> AutomationCondition | None:
+def _parse_conditions(
+    raw: dict[str, object] | None,
+) -> tuple[AutomationCondition | None, bool]:
     """Parse stored condition JSON into typed schema (fail-closed)."""
     if raw is None:
-        return None
+        return None, True
     try:
-        return _CONDITION_ADAPTER.validate_python(raw)
+        return _CONDITION_ADAPTER.validate_python(raw), True
     except Exception:
-        return None
+        return None, False
 
 
 def _parse_notification_actions(raw: list[dict[str, object]]) -> list[NotificationEmitAction]:
@@ -258,3 +265,8 @@ def _is_recruitment_payload_allowed(payload: NotificationPayload) -> bool:
         if key not in _RECRUITMENT_PAYLOAD_FIELDS:
             return False
     return True
+
+
+def _rule_order_key(rule) -> tuple[int, str]:
+    """Return deterministic ordering for automation rules."""
+    return (-int(rule.priority), str(rule.rule_id))
