@@ -21,6 +21,7 @@ coverage/
 
 # Local agent artifacts
 /.serena/
+/.codex
 
 # Local secrets
 /secrets/
