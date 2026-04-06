@@ -1,7 +1,7 @@
 # Epic Task Backlog
 
 ## Last Updated
-- Date: 2026-04-04
+- Date: 2026-04-06
 - Updated by: backend-engineer + coordinator
 
 ## Priority Model
@@ -71,7 +71,7 @@
 | COMPLIANCE-01 | done/closed | EPIC-13 compliance docs synced across legal-controls matrix, evidence registry, release checklist, and runbook; no runtime scope; Belarus-only gate retained (`CTRL-BY-01` in-progress, `CTRL-BY-02`/`CTRL-BY-03` implemented but unverified) |
 | TASK-06-05 | done/clarified | BA clarification for employee profile/avatar policy is frozen in `docs/project/employee-profile-referral-compensation-pass.md`; issue #173 closed; `TASK-06-06` implementation is complete in repo (issue #174 closed). |
 | TASK-06-07 | done/clarified | BA clarification for referral workflow is frozen in `docs/project/employee-profile-referral-compensation-pass.md`; issue #175 closed; repo-backed `TASK-06-08` implementation is complete (issue #176 closed). |
-| TASK-09-05 | done/clarified | BA clarification for compensation controls is frozen in `docs/project/employee-profile-referral-compensation-pass.md`; issue #181 closed; `TASK-09-06` implemented in repo and ready to close post-merge. |
+| TASK-09-05 | done/clarified | BA clarification for compensation controls is frozen in `docs/project/employee-profile-referral-compensation-pass.md`; issue #181 closed; `TASK-09-06` merged in `main` via PR #190 and issue #182 closed. |
 | TASK-06-08 | implemented/local-referral-slice | Employee referral intake now ships with referral linkage storage, dedupe/merge logic, referral review endpoints on existing pipeline stages, employee/HR/manager referral UI routes, consent gating for public apply, and updated docs/tests/contracts. |
 | TASK-06-06 | implemented/local-employee-directory-slice | Employee directory visibility with privacy redaction, avatar upload/read/delete backed by MinIO, employee profile privacy controls, RBAC, audit trails, and frontend directory/profile UX are implemented in repo with tests. |
 
@@ -88,7 +88,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; `TASK-06-05` was final
 | --- | --- | --- |
 | Employee profiles with avatars in MinIO and cross-employee profile visibility | implemented/local-employee-directory-slice | `TASK-06-05` (done/frozen, issue #173 closed) -> `TASK-06-06` (implementation complete in repo; issue #174 closed post-merge) |
 | Employee referral recommendations for vacancies | implemented/local-referral-slice | `TASK-06-07` (done/frozen, issue #175 closed) -> `TASK-06-08` (implementation complete in repo; issue #176 closed post-merge) |
-| Manager compensation controls (salary raises, payroll/bonus table, vacancy salary bands, manager/HR visibility) | implemented/local-compensation-controls-slice | `TASK-09-05` (done/frozen, issue #181 closed) -> `TASK-09-06` (implementation complete in repo; issue #182 close after merge) |
+| Manager compensation controls (salary raises, payroll/bonus table, vacancy salary bands, manager/HR visibility) | implemented/local-compensation-controls-slice | `TASK-09-05` (done/frozen, issue #181 closed) -> `TASK-09-06` (implementation complete in repo; issue #182 closed post-merge, PR #190) |
 
 ## 2026-03-12 Delivery Control Notes
 - `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
@@ -199,7 +199,7 @@ BA decisions were confirmed by stakeholder on 2026-03-23; `TASK-06-05` was final
   - Closed `TASK-06-07` (issue #175): BA clarification for referral workflow is frozen in docs.
   - Closed `TASK-06-08` (issue #176): employee referral recommendation flow implementation is in repo.
   - Closed `TASK-09-05` (issue #181): BA clarification for compensation management baseline is frozen in docs.
-  - Ready to close `TASK-09-06` (issue #182): manager/HR compensation tooling implementation is complete in repo; close after merge.
+  - Closed `TASK-09-06` (issue #182): manager/HR compensation tooling merged in `main` via PR #190.
 - P1:
   - RU-scope issues `#142`, `#143`, and `#145` should be closed as de-scoped after ADR-0059.
 
