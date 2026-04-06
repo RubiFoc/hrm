@@ -1,7 +1,15 @@
-"""Finance adapter model exports.
+"""Finance domain persistence models."""
 
-The current accountant workspace slice reuses employee-domain persistence models directly and does
-not introduce finance-specific tables.
-"""
+from hrm_backend.finance.models.bonus_entry import BonusEntry
+from hrm_backend.finance.models.compensation_raise_confirmation import (
+    CompensationRaiseConfirmation,
+)
+from hrm_backend.finance.models.compensation_raise_request import CompensationRaiseRequest
+from hrm_backend.finance.models.salary_band import SalaryBand
 
-__all__: list[str] = []
+__all__ = [
+    "BonusEntry",
+    "CompensationRaiseConfirmation",
+    "CompensationRaiseRequest",
+    "SalaryBand",
+]

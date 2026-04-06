@@ -18,6 +18,7 @@ from hrm_backend.candidates.routers.v1 import (
     router as candidate_router,
 )
 from hrm_backend.employee.routers.v1 import router as employee_router
+from hrm_backend.finance.routers.compensation_v1 import router as compensation_router
 from hrm_backend.finance.routers.v1 import router as finance_router
 from hrm_backend.interviews.routers.v1 import (
     public_router as interview_public_router,
@@ -55,6 +56,7 @@ app.include_router(candidate_router)
 app.include_router(candidate_public_router)
 app.include_router(employee_router)
 app.include_router(finance_router)
+app.include_router(compensation_router)
 app.include_router(notification_router)
 app.include_router(referral_router)
 app.include_router(reporting_router)

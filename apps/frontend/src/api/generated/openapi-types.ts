@@ -538,6 +538,154 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/compensation/bonuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upsert Bonus Entry
+         * @description Create or update a manual bonus entry.
+         */
+        post: operations["upsert_bonus_entry_api_v1_compensation_bonuses_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/compensation/raises": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Raise Requests
+         * @description List raise requests for manager or leader workflows.
+         */
+        get: operations["list_raise_requests_api_v1_compensation_raises_get"];
+        put?: never;
+        /**
+         * Create Raise Request
+         * @description Create a manager-initiated raise request.
+         */
+        post: operations["create_raise_request_api_v1_compensation_raises_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/compensation/raises/{raise_request_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Raise Request
+         * @description Approve a raise request after quorum is reached.
+         */
+        post: operations["approve_raise_request_api_v1_compensation_raises__raise_request_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/compensation/raises/{raise_request_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Raise Request
+         * @description Confirm a raise request as manager.
+         */
+        post: operations["confirm_raise_request_api_v1_compensation_raises__raise_request_id__confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/compensation/raises/{raise_request_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject Raise Request
+         * @description Reject a raise request after quorum is reached.
+         */
+        post: operations["reject_raise_request_api_v1_compensation_raises__raise_request_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/compensation/salary-bands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Salary Bands
+         * @description List salary-band history for one vacancy.
+         */
+        get: operations["list_salary_bands_api_v1_compensation_salary_bands_get"];
+        put?: never;
+        /**
+         * Create Salary Band
+         * @description Create a new vacancy salary band entry.
+         */
+        post: operations["create_salary_band_api_v1_compensation_salary_bands_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/compensation/table": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Compensation Table
+         * @description List compensation table rows visible to the current actor.
+         */
+        get: operations["list_compensation_table_api_v1_compensation_table_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/employees": {
         parameters: {
             query?: never;
@@ -1958,6 +2106,14 @@ export interface components {
             actor_role?: string | null;
             /** Actor Sub */
             actor_sub?: string | null;
+            /** After Snapshot */
+            after_snapshot?: {
+                [key: string]: unknown;
+            } | null;
+            /** Before Snapshot */
+            before_snapshot?: {
+                [key: string]: unknown;
+            } | null;
             /** Correlation Id */
             correlation_id?: string | null;
             /**
@@ -2425,6 +2581,70 @@ export interface components {
             file: string;
         };
         /**
+         * BonusEntryResponse
+         * @description Response payload for manual bonus entries.
+         */
+        BonusEntryResponse: {
+            /** Amount */
+            amount: number;
+            /**
+             * Bonus Id
+             * Format: uuid
+             */
+            bonus_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Created By Staff Id
+             * Format: uuid
+             */
+            created_by_staff_id: string;
+            /** Currency */
+            currency: string;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+            /** Note */
+            note: string | null;
+            /**
+             * Period Month
+             * Format: date
+             */
+            period_month: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Updated By Staff Id */
+            updated_by_staff_id: string | null;
+        };
+        /**
+         * BonusUpsertRequest
+         * @description Input payload for manual bonus upsert.
+         */
+        BonusUpsertRequest: {
+            /** Amount */
+            amount: number;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+            /** Note */
+            note?: string | null;
+            /**
+             * Period Month
+             * Format: date
+             */
+            period_month: string;
+        };
+        /**
          * CVAnalysisEvidenceItem
          * @description Evidence link from one extracted field to CV source snippet.
          */
@@ -2714,6 +2934,145 @@ export interface components {
             location?: string | null;
             /** Phone */
             phone?: string | null;
+        };
+        /**
+         * CompensationRaiseCreateRequest
+         * @description Input payload for manager-initiated raise request creation.
+         */
+        CompensationRaiseCreateRequest: {
+            /**
+             * Effective Date
+             * Format: date
+             */
+            effective_date: string;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+            /** Proposed Base Salary */
+            proposed_base_salary: number;
+        };
+        /**
+         * CompensationRaiseDecisionRequest
+         * @description Input payload for leader approval or rejection decisions.
+         */
+        CompensationRaiseDecisionRequest: {
+            /** Note */
+            note?: string | null;
+        };
+        /**
+         * CompensationRaiseListResponse
+         * @description Paginated raise request list response.
+         */
+        CompensationRaiseListResponse: {
+            /** Items */
+            items: components["schemas"]["CompensationRaiseResponse"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * CompensationRaiseResponse
+         * @description Response payload for raise request state.
+         */
+        CompensationRaiseResponse: {
+            /** Confirmation Count */
+            confirmation_count: number;
+            /** Confirmation Quorum */
+            confirmation_quorum: number;
+            /** Currency */
+            currency: string;
+            /**
+             * Effective Date
+             * Format: date
+             */
+            effective_date: string;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+            /** Leader Decision At */
+            leader_decision_at: string | null;
+            /** Leader Decision By Staff Id */
+            leader_decision_by_staff_id: string | null;
+            /** Leader Decision Note */
+            leader_decision_note: string | null;
+            /** Proposed Base Salary */
+            proposed_base_salary: number;
+            /**
+             * Request Id
+             * Format: uuid
+             */
+            request_id: string;
+            /**
+             * Requested At
+             * Format: date-time
+             */
+            requested_at: string;
+            /**
+             * Requested By Staff Id
+             * Format: uuid
+             */
+            requested_by_staff_id: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending_confirmations" | "awaiting_leader" | "approved" | "rejected";
+        };
+        /**
+         * CompensationTableListResponse
+         * @description Paginated compensation table response.
+         */
+        CompensationTableListResponse: {
+            /** Items */
+            items: components["schemas"]["CompensationTableRowResponse"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * CompensationTableRowResponse
+         * @description Unified compensation table row returned to manager/HR/accountant roles.
+         */
+        CompensationTableRowResponse: {
+            /** Band Alignment Status */
+            band_alignment_status: ("below_band" | "within_band" | "above_band") | null;
+            /** Base Salary */
+            base_salary: number | null;
+            /** Bonus Amount */
+            bonus_amount: number | null;
+            /** Bonus Period Month */
+            bonus_period_month: string | null;
+            /** Currency */
+            currency: string;
+            /** Department */
+            department: string | null;
+            /**
+             * Employee Id
+             * Format: uuid
+             */
+            employee_id: string;
+            /** Full Name */
+            full_name: string;
+            /** Last Raise Effective Date */
+            last_raise_effective_date: string | null;
+            /** Last Raise Status */
+            last_raise_status: ("pending_confirmations" | "awaiting_leader" | "approved" | "rejected") | null;
+            /** Position Title */
+            position_title: string | null;
+            /** Salary Band Max */
+            salary_band_max: number | null;
+            /** Salary Band Min */
+            salary_band_min: number | null;
         };
         /**
          * ContainsCondition
@@ -4744,6 +5103,63 @@ export interface components {
             password: string;
         };
         /**
+         * SalaryBandCreateRequest
+         * @description Input payload for HR salary-band creation.
+         */
+        SalaryBandCreateRequest: {
+            /** Max Amount */
+            max_amount: number;
+            /** Min Amount */
+            min_amount: number;
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+        };
+        /**
+         * SalaryBandListResponse
+         * @description Salary-band list payload.
+         */
+        SalaryBandListResponse: {
+            /** Items */
+            items: components["schemas"]["SalaryBandResponse"][];
+        };
+        /**
+         * SalaryBandResponse
+         * @description Salary-band history item response.
+         */
+        SalaryBandResponse: {
+            /**
+             * Band Id
+             * Format: uuid
+             */
+            band_id: string;
+            /** Band Version */
+            band_version: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Created By Staff Id
+             * Format: uuid
+             */
+            created_by_staff_id: string;
+            /** Currency */
+            currency: string;
+            /** Max Amount */
+            max_amount: number;
+            /** Min Amount */
+            min_amount: number;
+            /**
+             * Vacancy Id
+             * Format: uuid
+             */
+            vacancy_id: string;
+        };
+        /**
          * StaffResponse
          * @description Staff account payload for admin APIs.
          */
@@ -5937,6 +6353,420 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["CVParsingStatusResponse"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upsert_bonus_entry_api_v1_compensation_bonuses_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BonusUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BonusEntryResponse"];
+                };
+            };
+            /** @description RBAC denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Employee not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failure */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_raise_requests_api_v1_compensation_raises_get: {
+        parameters: {
+            query?: {
+                status?: ("pending_confirmations" | "awaiting_leader" | "approved" | "rejected") | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationRaiseListResponse"];
+                };
+            };
+            /** @description RBAC denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_raise_request_api_v1_compensation_raises_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompensationRaiseCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationRaiseResponse"];
+                };
+            };
+            /** @description RBAC denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Employee not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failure */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approve_raise_request_api_v1_compensation_raises__raise_request_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                raise_request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompensationRaiseDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationRaiseResponse"];
+                };
+            };
+            /** @description RBAC denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Raise request not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Approval conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failure */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    confirm_raise_request_api_v1_compensation_raises__raise_request_id__confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                raise_request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationRaiseResponse"];
+                };
+            };
+            /** @description RBAC denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Raise request not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Confirmation conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_raise_request_api_v1_compensation_raises__raise_request_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                raise_request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompensationRaiseDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationRaiseResponse"];
+                };
+            };
+            /** @description RBAC denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Raise request not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Decision conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_salary_bands_api_v1_compensation_salary_bands_get: {
+        parameters: {
+            query: {
+                vacancy_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalaryBandListResponse"];
+                };
+            };
+            /** @description RBAC denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_salary_band_api_v1_compensation_salary_bands_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SalaryBandCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SalaryBandResponse"];
+                };
+            };
+            /** @description RBAC denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Vacancy not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation failure */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    list_compensation_table_api_v1_compensation_table_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompensationTableListResponse"];
+                };
+            };
+            /** @description RBAC denied */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

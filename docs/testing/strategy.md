@@ -532,24 +532,24 @@ Minimum verification set:
 - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/employee apps/backend/tests/integration/security/test_audit_enforcement.py`
 - `./scripts/check-docs-structure.sh`
 
-## Compensation Controls Verification (`TASK-09-06`, planned from `TASK-09-05`)
+## Compensation Controls Verification (`TASK-09-06`, implemented from `TASK-09-05`)
 
 Implementation source of truth:
 - `docs/project/employee-profile-referral-compensation-pass.md` (`TASK-09-05`, `clarified/frozen`)
 - `docs/architecture/decisions.md` (`ADR-0062`)
 
-Planned minimum coverage for the implementation slice includes at least:
+Implemented minimum coverage for the implementation slice includes at least:
 
 | Capability | Unit Coverage | Integration/Smoke Coverage | Required Evidence |
 | --- | --- | --- | --- |
-| Raise request authority is manager-request-only (no direct manager apply) | `apps/backend/tests/unit/compensation/test_raise_request_service.py` | `apps/backend/tests/integration/compensation/test_raise_request_api.py` | manager direct salary-apply path is absent/forbidden; request create path is available only in scoped manager context |
-| Approval chain enforces manager quorum + final leader approval | `apps/backend/tests/unit/compensation/test_raise_request_service.py` | `apps/backend/tests/integration/compensation/test_raise_request_api.py` | request cannot become `approved` without quorum (`>=2`, default `2`) and leader action |
-| Effective date validation blocks backdating | `apps/backend/tests/unit/compensation/test_raise_request_service.py` | `apps/backend/tests/integration/compensation/test_raise_request_api.py` | `effective_date < today` returns stable validation error and salary values remain unchanged |
-| Salary-band writes are HR-only and versioned | `apps/backend/tests/unit/compensation/test_salary_band_service.py` | `apps/backend/tests/integration/compensation/test_salary_band_api.py` | non-HR writes return `403`; HR writes append historical version rows deterministically |
-| Payroll/bonus table read columns are unified for manager/hr/accountant | `apps/backend/tests/unit/compensation/test_compensation_table_service.py` | `apps/backend/tests/integration/compensation/test_compensation_table_api.py` | same column contract for all three roles; deterministic band-alignment status computation |
-| Currency/precision invariants stay fixed (`BYN`, `0.01`) | `apps/backend/tests/unit/compensation/test_money_policy.py` | `apps/backend/tests/integration/compensation/test_compensation_table_api.py` | mixed/missing currency values fail closed; monetary values are rounded deterministically |
-| Compensation read/write actions are fully audited | N/A | `apps/backend/tests/integration/security/test_audit_enforcement.py` + compensation integration suites | audit rows include actor, target, action, result, reason, and before/after snapshot on writes |
-| Frontend compensation workspace UX keeps role guards + localized errors | `apps/frontend/src/pages/CompensationWorkspacePage.test.tsx` + `apps/frontend/src/app/router.auth.test.tsx` | N/A | manager/hr/accountant read states, manager raise request flow, HR salary-band management, and leader approval errors are RU/EN localized |
+| Raise request authority is manager-request-only (no direct manager apply) | `apps/backend/tests/unit/finance/test_compensation_service.py` | `apps/backend/tests/integration/finance/test_compensation_api.py` | manager direct salary-apply path is absent/forbidden; request create path is available only in scoped manager context |
+| Approval chain enforces manager quorum + final leader approval | `apps/backend/tests/unit/finance/test_compensation_service.py` | `apps/backend/tests/integration/finance/test_compensation_api.py` | request cannot become `approved` without quorum (`>=2`, default `2`) and leader action |
+| Effective date validation blocks backdating | `apps/backend/tests/unit/finance/test_compensation_service.py` | `apps/backend/tests/integration/finance/test_compensation_api.py` | `effective_date < today` returns stable validation error and salary values remain unchanged |
+| Salary-band writes are HR-only and versioned | `apps/backend/tests/unit/finance/test_compensation_service.py` | `apps/backend/tests/integration/finance/test_compensation_api.py` | non-HR writes return `403`; HR writes append historical version rows deterministically |
+| Payroll/bonus table read columns are unified for manager/hr/accountant | `apps/backend/tests/unit/finance/test_compensation_service.py` | `apps/backend/tests/integration/finance/test_compensation_api.py` | same column contract for all three roles; deterministic band-alignment status computation |
+| Currency/precision invariants stay fixed (`BYN`, `0.01`) | `apps/backend/tests/unit/finance/test_money_utils.py` | `apps/backend/tests/integration/finance/test_compensation_api.py` | mixed/missing currency values fail closed; monetary values are rounded deterministically |
+| Compensation read/write actions are fully audited | N/A | `apps/backend/tests/integration/finance/test_compensation_api.py` + `apps/backend/tests/integration/security/test_audit_enforcement.py` | audit rows include actor, target, action, result, reason, and before/after snapshot on writes |
+| Frontend compensation workspace UX keeps role guards + localized errors | `apps/frontend/src/components/CompensationTablePanel.test.tsx` + `apps/frontend/src/pages/ManagerWorkspacePage.test.tsx` + `apps/frontend/src/pages/LeaderWorkspacePage.test.tsx` + `apps/frontend/src/pages/hr/HrVacanciesPage.test.tsx` + `apps/frontend/src/app/router.auth.test.tsx` | N/A | manager/hr/accountant read states, manager raise request flow, HR salary-band management, bonus updates, and leader approval errors are RU/EN localized |
 
 Acceptance rules for the implementation slice:
 - Keep compensation routes and data internal-only; do not expose compensation fields in employee

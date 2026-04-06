@@ -65,6 +65,8 @@ class AppSettings(BaseSettings):
         public_apply_email_cooldown_seconds: Cooldown between submissions by one email per vacancy.
         public_apply_blocked_alert_threshold_per_minute:
             Anomaly threshold for blocked submissions per minute.
+        compensation_raise_manager_quorum:
+            Manager confirmation quorum required for raise approvals.
         celery_broker_url: Celery broker URL.
         celery_result_backend: Celery result backend URL.
         celery_task_default_queue: Default Celery queue name.
@@ -212,6 +214,11 @@ class AppSettings(BaseSettings):
         default=30,
         env="PUBLIC_APPLY_BLOCKED_ALERT_THRESHOLD_PER_MINUTE",
         gt=0,
+    )
+    compensation_raise_manager_quorum: int = Field(
+        default=2,
+        env="COMPENSATION_RAISE_MANAGER_QUORUM",
+        ge=2,
     )
     celery_broker_url: str = Field(default="redis://redis:6379/0", env="CELERY_BROKER_URL")
     celery_result_backend: str = Field(default="redis://redis:6379/0", env="CELERY_RESULT_BACKEND")

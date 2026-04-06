@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import "../app/i18n";
@@ -297,5 +297,176 @@ describe("ManagerWorkspacePage", () => {
     expect(await screen.findByText(/кандидат #bbbbbbbb/i)).toBeDefined();
     expect(screen.queryByText(/grace@example.com/i)).toBeNull();
     expect(await screen.findByText(/manager intro/i)).toBeDefined();
+  });
+
+  it("confirms a raise request from the manager compensation list", async () => {
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/api/v1/vacancies/manager-workspace")) {
+        return jsonResponse({
+          summary: {
+            vacancy_count: 1,
+            open_vacancy_count: 1,
+            candidate_count: 0,
+            active_interview_count: 0,
+            upcoming_interview_count: 0,
+          },
+          items: [
+            {
+              vacancy_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              title: "Platform Engineer",
+              department: "Engineering",
+              status: "open",
+              hiring_manager_staff_id: "11111111-1111-4111-8111-111111111111",
+              hiring_manager_login: "manager-alpha",
+              candidate_count: 0,
+              active_interview_count: 0,
+              latest_activity_at: "2026-03-12T09:30:00Z",
+              created_at: "2026-03-10T08:00:00Z",
+              updated_at: "2026-03-12T08:30:00Z",
+            },
+          ],
+        });
+      }
+      if (
+        url.endsWith(
+          "/api/v1/vacancies/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/manager-workspace/candidates",
+        )
+      ) {
+        return jsonResponse({
+          vacancy: {
+            vacancy_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+            title: "Platform Engineer",
+            department: "Engineering",
+            status: "open",
+            hiring_manager_staff_id: "11111111-1111-4111-8111-111111111111",
+            hiring_manager_login: "manager-alpha",
+            candidate_count: 0,
+            active_interview_count: 0,
+            latest_activity_at: "2026-03-12T09:30:00Z",
+            created_at: "2026-03-10T08:00:00Z",
+            updated_at: "2026-03-12T08:30:00Z",
+          },
+          summary: {
+            candidate_count: 0,
+            active_interview_count: 0,
+            upcoming_interview_count: 0,
+            stage_counts: {
+              applied: 0,
+              screening: 0,
+              shortlist: 0,
+              interview: 0,
+              offer: 0,
+              hired: 0,
+              rejected: 0,
+            },
+          },
+          items: [],
+        });
+      }
+      if (url.includes("/api/v1/onboarding/runs?")) {
+        return jsonResponse({
+          items: [],
+          total: 0,
+          limit: 20,
+          offset: 0,
+          summary: {
+            run_count: 0,
+            total_tasks: 0,
+            pending_tasks: 0,
+            in_progress_tasks: 0,
+            completed_tasks: 0,
+            overdue_tasks: 0,
+          },
+        });
+      }
+      if (url.includes("/api/v1/compensation/table")) {
+        return jsonResponse({
+          items: [
+            {
+              employee_id: "22222222-2222-4222-8222-222222222222",
+              full_name: "Ada Lovelace",
+              department: "Engineering",
+              position_title: "Engineer",
+              currency: "BYN",
+              base_salary: 2000,
+              bonus_amount: null,
+              bonus_period_month: null,
+              salary_band_min: 1800,
+              salary_band_max: 2600,
+              band_alignment_status: "within_band",
+              last_raise_effective_date: null,
+              last_raise_status: null,
+            },
+          ],
+          total: 1,
+          limit: 100,
+          offset: 0,
+        });
+      }
+      if (url.includes("/api/v1/compensation/raises?")) {
+        return jsonResponse({
+          items: [
+            {
+              request_id: "rrrrrrrr-rrrr-4rrr-8rrr-rrrrrrrrrrrr",
+              employee_id: "22222222-2222-4222-8222-222222222222",
+              requested_by_staff_id: "11111111-1111-4111-8111-111111111111",
+              requested_at: "2026-04-01T10:00:00Z",
+              effective_date: "2026-05-01",
+              proposed_base_salary: 2500,
+              currency: "BYN",
+              status: "pending_confirmations",
+              confirmation_count: 1,
+              confirmation_quorum: 2,
+              leader_decision_by_staff_id: null,
+              leader_decision_at: null,
+              leader_decision_note: null,
+            },
+          ],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        });
+      }
+      if (
+        url.includes(
+          "/api/v1/compensation/raises/rrrrrrrr-rrrr-4rrr-8rrr-rrrrrrrrrrrr/confirm",
+        )
+      ) {
+        return jsonResponse({
+          request_id: "rrrrrrrr-rrrr-4rrr-8rrr-rrrrrrrrrrrr",
+          employee_id: "22222222-2222-4222-8222-222222222222",
+          requested_by_staff_id: "11111111-1111-4111-8111-111111111111",
+          requested_at: "2026-04-01T10:00:00Z",
+          effective_date: "2026-05-01",
+          proposed_base_salary: 2500,
+          currency: "BYN",
+          status: "awaiting_leader",
+          confirmation_count: 2,
+          confirmation_quorum: 2,
+          leader_decision_by_staff_id: null,
+          leader_decision_at: null,
+          leader_decision_note: null,
+        });
+      }
+      return jsonResponse({});
+    });
+
+    renderManagerWorkspacePage();
+
+    const confirmButton = await screen.findByRole("button", {
+      name: /подтвердить|confirm/i,
+    });
+    fireEvent.click(confirmButton);
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some((call) =>
+          String(call[0]).includes(
+            "/api/v1/compensation/raises/rrrrrrrr-rrrr-4rrr-8rrr-rrrrrrrrrrrr/confirm",
+          ),
+        ),
+      ).toBe(true);
+    });
   });
 });

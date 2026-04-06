@@ -156,11 +156,12 @@ flowchart LR
    via `GET /api/v1/employees/{employee_id}/avatar` streaming from object storage -> employees update
    visibility flags on `PATCH /api/v1/employees/me/privacy` and manage avatars on
    `POST/DELETE /api/v1/employees/me/avatar` with audit events on read/write paths.
-18. Compensation Control Flow (planned baseline from `TASK-09-05` for `TASK-09-06`):
+18. Compensation Control Flow:
    manager creates raise request -> manager confirmation quorum check (`>=2`, default `2`) ->
-   leader final approval -> salary update applies from non-backdated `effective_date` only ->
-   HR maintains vacancy salary-band history -> manager/HR/accountant read unified payroll/bonus
-   table with band alignment -> all compensation reads/writes are audited with fail-closed RBAC.
+   leader final approval -> base salary becomes effective from non-backdated `effective_date` only ->
+   HR maintains vacancy salary-band history -> HR/accountant maintain manual bonus entries ->
+   manager/HR/accountant read unified payroll/bonus table with band alignment ->
+   all compensation reads/writes are audited with fail-closed RBAC.
 
 ## Data Boundaries
 - Source of truth entities:

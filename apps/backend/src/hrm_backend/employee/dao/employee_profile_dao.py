@@ -95,6 +95,60 @@ class EmployeeProfileDAO:
             .all()
         )
 
+    def list_by_vacancy_ids(
+        self,
+        *,
+        vacancy_ids: list[str],
+        limit: int,
+        offset: int,
+        include_dismissed: bool = False,
+    ) -> list[EmployeeProfile]:
+        """List employee profiles scoped to vacancy identifiers.
+
+        Args:
+            vacancy_ids: Vacancy identifiers to filter by.
+            limit: Maximum number of rows to return.
+            offset: Number of rows to skip.
+            include_dismissed: Whether dismissed employees are included.
+
+        Returns:
+            list[EmployeeProfile]: Ordered employee profile rows.
+        """
+        if not vacancy_ids:
+            return []
+        query = self._session.query(EmployeeProfile).filter(
+            EmployeeProfile.vacancy_id.in_(vacancy_ids)
+        )
+        if not include_dismissed:
+            query = query.filter(EmployeeProfile.is_dismissed.is_(False))
+        return list(
+            query.order_by(
+                EmployeeProfile.last_name.asc(),
+                EmployeeProfile.first_name.asc(),
+                EmployeeProfile.employee_id.asc(),
+            )
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+
+    def count_by_vacancy_ids(
+        self,
+        *,
+        vacancy_ids: list[str],
+        include_dismissed: bool = False,
+    ) -> int:
+        """Count employee profiles scoped to vacancy identifiers."""
+        if not vacancy_ids:
+            return 0
+        query = self._session.query(func.count(EmployeeProfile.employee_id)).filter(
+            EmployeeProfile.vacancy_id.in_(vacancy_ids)
+        )
+        if not include_dismissed:
+            query = query.filter(EmployeeProfile.is_dismissed.is_(False))
+        total = query.scalar()
+        return int(total or 0)
+
     def list_directory(
         self,
         *,

@@ -14,13 +14,16 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import {
   ApiError,
+  approveRaiseRequest,
   downloadKpiSnapshotExport,
+  listRaiseRequests,
   readKpiSnapshot,
+  rejectRaiseRequest,
   type KpiSnapshotExportFormat,
   type KpiSnapshotMetric,
   type KpiSnapshotReadResponse,
@@ -28,6 +31,7 @@ import {
 import { readAuthSession } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
 import { PageHero } from "../components/PageHero";
+import { resolveCompensationApiError } from "../pages/compensation/compensationErrors";
 
 type MetricKey = KpiSnapshotMetric["metric_key"];
 type SnapshotLookupResult = {
@@ -35,6 +39,10 @@ type SnapshotLookupResult = {
   requestedMonth: string;
   resolvedMonth: string;
   response: KpiSnapshotReadResponse;
+};
+type FeedbackState = {
+  type: "success" | "error";
+  message: string;
 };
 
 const DEFAULT_MONTH = resolveCurrentMonthValue();
@@ -72,6 +80,8 @@ export function LeaderWorkspacePage() {
   const [exportError, setExportError] = useState<string | null>(null);
   const [pendingExportFormat, setPendingExportFormat] =
     useState<KpiSnapshotExportFormat | null>(null);
+  const [decisionNotes, setDecisionNotes] = useState<Record<string, string>>({});
+  const [decisionFeedback, setDecisionFeedback] = useState<FeedbackState | null>(null);
 
   const periodMonth = useMemo(() => toPeriodMonth(requestedMonth), [requestedMonth]);
 
@@ -82,6 +92,44 @@ export function LeaderWorkspacePage() {
     retry: false,
     refetchOnWindowFocus: false,
     staleTime: 60_000,
+  });
+
+  const raiseQuery = useQuery({
+    queryKey: ["compensation-approvals", accessToken],
+    queryFn: () =>
+      listRaiseRequests(accessToken!, {
+        status: "awaiting_leader",
+        limit: 50,
+        offset: 0,
+      }),
+    enabled: Boolean(accessToken),
+    retry: false,
+  });
+
+  const approveRaiseMutation = useMutation({
+    mutationFn: ({ requestId, note }: { requestId: string; note: string }) =>
+      approveRaiseRequest(accessToken!, requestId, { note: note || undefined }),
+    onSuccess: (_, variables) => {
+      setDecisionFeedback({ type: "success", message: t("compensationRaise.leader.approveSuccess") });
+      setDecisionNotes((prev) => ({ ...prev, [variables.requestId]: "" }));
+      void queryClient.invalidateQueries({ queryKey: ["compensation-approvals", accessToken] });
+    },
+    onError: (error: unknown) => {
+      setDecisionFeedback({ type: "error", message: resolveCompensationApiError(error, t) });
+    },
+  });
+
+  const rejectRaiseMutation = useMutation({
+    mutationFn: ({ requestId, note }: { requestId: string; note: string }) =>
+      rejectRaiseRequest(accessToken!, requestId, { note: note || undefined }),
+    onSuccess: (_, variables) => {
+      setDecisionFeedback({ type: "success", message: t("compensationRaise.leader.rejectSuccess") });
+      setDecisionNotes((prev) => ({ ...prev, [variables.requestId]: "" }));
+      void queryClient.invalidateQueries({ queryKey: ["compensation-approvals", accessToken] });
+    },
+    onError: (error: unknown) => {
+      setDecisionFeedback({ type: "error", message: resolveCompensationApiError(error, t) });
+    },
   });
 
   useEffect(() => {
@@ -142,6 +190,11 @@ export function LeaderWorkspacePage() {
     [sortedMetrics],
   );
   const locale = i18n.language?.startsWith("ru") ? "ru-RU" : "en-US";
+  const raiseItems = raiseQuery.data?.items ?? [];
+
+  const handleDecisionNoteChange = (requestId: string, value: string) => {
+    setDecisionNotes((prev) => ({ ...prev, [requestId]: value }));
+  };
 
   if (!accessToken) {
     return <Alert severity="warning">{t("leaderDashboard.authRequired")}</Alert>;
@@ -317,6 +370,131 @@ export function LeaderWorkspacePage() {
           )}
         </Stack>
       </Paper>
+
+      <Paper sx={{ p: 3 }}>
+        <Stack spacing={2}>
+          <Stack spacing={0.5}>
+            <Typography variant="h6">{t("compensationRaise.leader.title")}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {t("compensationRaise.leader.subtitle")}
+            </Typography>
+          </Stack>
+
+          {decisionFeedback ? (
+            <Alert severity={decisionFeedback.type}>{decisionFeedback.message}</Alert>
+          ) : null}
+
+          {raiseQuery.isLoading ? (
+            <Stack spacing={2} alignItems="center" sx={{ py: 4 }}>
+              <CircularProgress size={24} />
+              <Typography variant="body2">{t("compensationRaise.leader.loading")}</Typography>
+            </Stack>
+          ) : raiseQuery.isError ? (
+            <Alert severity="error" sx={{ borderRadius: 0 }}>
+              {resolveCompensationApiError(raiseQuery.error, t)}
+            </Alert>
+          ) : raiseItems.length === 0 ? (
+            <Alert severity="info" sx={{ borderRadius: 0 }}>
+              {t("compensationRaise.leader.empty")}
+            </Alert>
+          ) : (
+            <Paper variant="outlined" sx={{ overflowX: "auto" }}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t("compensationRaise.leader.columns.employee")}</TableCell>
+                    <TableCell>{t("compensationRaise.leader.columns.salary")}</TableCell>
+                    <TableCell>{t("compensationRaise.leader.columns.effectiveDate")}</TableCell>
+                    <TableCell>{t("compensationRaise.leader.columns.confirmations")}</TableCell>
+                    <TableCell>{t("compensationRaise.leader.columns.note")}</TableCell>
+                    <TableCell align="right">{t("compensationRaise.leader.columns.actions")}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {raiseItems.map((item) => (
+                    <TableRow key={item.request_id}>
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          <Typography variant="body2" fontWeight={600}>
+                            {formatShortUuid(item.employee_id)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {item.employee_id}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>
+                        {formatMoneyValue(item.proposed_base_salary, item.currency, t)}
+                      </TableCell>
+                      <TableCell>{formatDateValue(item.effective_date, locale)}</TableCell>
+                      <TableCell>
+                        {t("compensationRaise.confirmations", {
+                          count: item.confirmation_count,
+                          quorum: item.confirmation_quorum,
+                        })}
+                      </TableCell>
+                      <TableCell sx={{ minWidth: 220 }}>
+                        <TextField
+                          size="small"
+                          fullWidth
+                          placeholder={t("compensationRaise.leader.notePlaceholder")}
+                          value={decisionNotes[item.request_id] ?? ""}
+                          onChange={(event) =>
+                            handleDecisionNoteChange(item.request_id, event.target.value)
+                          }
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Stack direction="row" spacing={1} justifyContent="flex-end">
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() =>
+                              approveRaiseMutation.mutate({
+                                requestId: item.request_id,
+                                note: decisionNotes[item.request_id] ?? "",
+                              })
+                            }
+                            disabled={
+                              approveRaiseMutation.isPending
+                              && approveRaiseMutation.variables?.requestId === item.request_id
+                            }
+                          >
+                            {approveRaiseMutation.isPending
+                            && approveRaiseMutation.variables?.requestId === item.request_id
+                              ? t("compensationRaise.leader.approvePending")
+                              : t("compensationRaise.leader.approveAction")}
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="error"
+                            onClick={() =>
+                              rejectRaiseMutation.mutate({
+                                requestId: item.request_id,
+                                note: decisionNotes[item.request_id] ?? "",
+                              })
+                            }
+                            disabled={
+                              rejectRaiseMutation.isPending
+                              && rejectRaiseMutation.variables?.requestId === item.request_id
+                            }
+                          >
+                            {rejectRaiseMutation.isPending
+                            && rejectRaiseMutation.variables?.requestId === item.request_id
+                              ? t("compensationRaise.leader.rejectPending")
+                              : t("compensationRaise.leader.rejectAction")}
+                          </Button>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+          )}
+        </Stack>
+      </Paper>
     </Stack>
   );
 }
@@ -418,6 +596,29 @@ function formatDateTimeValue(value: string, locale: string): string {
     return value;
   }
   return parsed.toLocaleString(locale);
+}
+
+function formatDateValue(value: string, locale: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+  return parsed.toLocaleDateString(locale);
+}
+
+function formatMoneyValue(
+  value: number | null | undefined,
+  currency: string,
+  t: (key: string) => string,
+): string {
+  if (value === null || value === undefined) {
+    return t("compensationTable.notAvailable");
+  }
+  return `${value.toFixed(2)} ${currency}`;
+}
+
+function formatShortUuid(value: string): string {
+  return value.slice(0, 8);
 }
 
 function resolveLeaderWorkspaceError(error: unknown, t: (key: string) => string): string {
