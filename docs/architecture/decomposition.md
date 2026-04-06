@@ -1,8 +1,8 @@
 # Architecture Decomposition
 
 ## Last Updated
-- Date: 2026-03-13
-- Updated by: architect + backend-engineer
+- Date: 2026-04-06
+- Updated by: backend-engineer + frontend-engineer
 
 This document breaks the system architecture from high-level domains into smaller technical units.
 The recruitment and CV-analysis scope is profession-agnostic and must support workers across
@@ -16,7 +16,7 @@ industries rather than only IT roles.
 | Recruitment | Candidate-to-vacancy lifecycle, interviews, hiring decisions | HR, candidates, managers | Phase 1 |
 | Employee | Employee profile and onboarding lifecycle | HR, employees, managers | Phase 2 |
 | HR Operations | Process automation and operational workflows | HR, leaders | Phase 1-2 |
-| Finance Adapter | Accounting-aligned exports and statuses | Accountants, leaders | Phase 2 |
+| Finance Adapter | Compensation controls, payroll/bonus visibility, and accounting-aligned exports | Accountants, HR, managers, leaders | Phase 2 |
 | Platform | Identity, access, audit, notifications, integrations | All roles | Phase 1 |
 | Core Foundation | Shared technical primitives reused by all backend domains | Backend teams | Phase 1-2 |
 | Intelligence | CV analysis and recommendation support | HR, managers | Phase 1 |
@@ -43,6 +43,7 @@ industries rather than only IT roles.
 | Notification Service | Platform | Recipient-scoped in-app notifications and on-demand digests in v1; outbound templates/channels later | REST |
 | Audit Service | Platform | Immutable security and business audit logs + admin-only evidence query API | Event ingestion + admin read APIs |
 | Reporting Service | Analytics | Monthly KPI snapshots (admin rebuild, leader/admin read) and dashboards | Read/maintenance APIs |
+| Compensation Controls Service | Finance Adapter | Raise approvals, salary-band governance, manual bonuses, unified compensation table read model | REST |
 | Accounting Export Service | Finance Adapter | Controlled export for accounting workflows | File/API adapter |
 
 ## Level 3: Internal Module Decomposition (Priority Services)
@@ -123,6 +124,9 @@ industries rather than only IT roles.
 | Automation executions | Workflow Automation Service | PostgreSQL | Used for KPI and incident analysis |
 | Audit events | Audit Service | Append-only storage | Compliance evidence |
 | Auth denylist markers (`jti`/`sid`) | Auth and Access Service | Redis | Valid tokens are not persisted server-side |
+| Compensation raises/confirmations | Compensation Controls Service | PostgreSQL | Manager quorum + leader decision trail |
+| Salary band history | Compensation Controls Service | PostgreSQL | Append-only, HR-only governance |
+| Manual bonus entries | Compensation Controls Service | PostgreSQL | Manual updates with audit evidence |
 
 ## Integration Decomposition
 
@@ -153,6 +157,7 @@ industries rather than only IT roles.
 - Onboarding Service
 - Workflow Automation Service (expanded rules)
 - Reporting Service (leader/manager dashboards and expanded KPI scope)
+- Compensation Controls Service (raises, salary bands, bonuses, unified compensation table)
 - Accounting Export Service
 - Notification Service (in-app + digest baseline, outbound/template coverage later)
 
@@ -164,4 +169,5 @@ industries rather than only IT roles.
 | Intelligence Slice | CV Processing, Match Scoring |
 | Platform Slice | Auth and Access, Calendar Sync, Notification, Audit |
 | People Ops Slice | Employee Profile, Onboarding, Workflow Automation |
+| Finance Slice | Compensation Controls, Accounting Export |
 | Data Slice | Reporting, KPI datasets |

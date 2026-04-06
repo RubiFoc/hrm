@@ -1,7 +1,9 @@
-import { Button, Chip, Grid2, Paper, Stack, Typography } from "@mui/material";
+import { Alert, Button, Chip, Grid2, Paper, Stack, Typography } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
+import { readAuthSession } from "../../app/auth/session";
+import { CompensationTablePanel } from "../../components/CompensationTablePanel";
 import { OnboardingDashboardPanel } from "../../components/OnboardingDashboardPanel";
 import { PageHero } from "../../components/PageHero";
 import { HrWorkspaceNav } from "./HrWorkspaceNav";
@@ -11,6 +13,8 @@ import { HrWorkspaceNav } from "./HrWorkspaceNav";
  */
 export function HrOverviewPage() {
   const { t } = useTranslation();
+  const session = readAuthSession();
+  const accessToken = session.accessToken;
 
   const cards = [
     {
@@ -116,6 +120,17 @@ export function HrOverviewPage() {
         </Stack>
         <OnboardingDashboardPanel mode="embedded" />
       </Paper>
+
+      {accessToken ? (
+        <CompensationTablePanel
+          accessToken={accessToken}
+          title={t("compensationTable.hrTitle")}
+          subtitle={t("compensationTable.hrSubtitle")}
+          showBonusForm
+        />
+      ) : (
+        <Alert severity="info">{t("hrDashboard.authRequired")}</Alert>
+      )}
     </Stack>
   );
 }

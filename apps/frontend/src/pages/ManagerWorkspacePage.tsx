@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Button,
   Chip,
   CircularProgress,
   Grid2,
+  MenuItem,
   Paper,
   Stack,
   Table,
@@ -12,23 +13,30 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TextField,
   Typography,
 } from "@mui/material";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import {
   ApiError,
+  confirmRaiseRequest,
+  createRaiseRequest,
   getManagerWorkspaceCandidateSnapshot,
   getManagerWorkspaceOverview,
+  listRaiseRequests,
+  type CompensationTableRowResponse,
   type ManagerWorkspaceCandidateSnapshotResponse,
   type ManagerWorkspaceOverviewResponse,
 } from "../api";
 import { readAuthSession } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
+import { CompensationTablePanel } from "../components/CompensationTablePanel";
 import { NotificationsPanel } from "../components/NotificationsPanel";
 import { OnboardingDashboardPanel } from "../components/OnboardingDashboardPanel";
 import { PageHero } from "../components/PageHero";
+import { resolveCompensationApiError } from "../pages/compensation/compensationErrors";
 
 const EMPTY_OVERVIEW: ManagerWorkspaceOverviewResponse = {
   summary: {
@@ -41,15 +49,35 @@ const EMPTY_OVERVIEW: ManagerWorkspaceOverviewResponse = {
   items: [],
 };
 
+type FeedbackState = {
+  type: "success" | "error";
+  message: string;
+};
+
 /**
  * Manager-facing workspace that combines hiring visibility with embedded onboarding progress.
  */
 export function ManagerWorkspacePage() {
   const { t } = useTranslation();
   useSentryRouteTags("/manager");
+  const queryClient = useQueryClient();
   const session = readAuthSession();
   const accessToken = session.accessToken;
   const [selectedVacancyId, setSelectedVacancyId] = useState<string | null>(null);
+  const [compensationRows, setCompensationRows] = useState<CompensationTableRowResponse[]>([]);
+  const [raiseEmployeeId, setRaiseEmployeeId] = useState("");
+  const [raiseSalary, setRaiseSalary] = useState("");
+  const [raiseEffectiveDate, setRaiseEffectiveDate] = useState("");
+  const [raiseFeedback, setRaiseFeedback] = useState<FeedbackState | null>(null);
+
+  const employeeOptions = useMemo(
+    () =>
+      compensationRows.map((row) => ({
+        id: row.employee_id,
+        label: `${row.full_name} (${formatShortUuid(row.employee_id)})`,
+      })),
+    [compensationRows],
+  );
 
   const overviewQuery = useQuery({
     queryKey: ["manager-workspace-overview", accessToken],
@@ -79,6 +107,90 @@ export function ManagerWorkspacePage() {
     enabled: Boolean(accessToken && selectedVacancyId),
     retry: false,
   });
+
+  const raiseQuery = useQuery({
+    queryKey: ["compensation-raises", accessToken],
+    queryFn: () =>
+      listRaiseRequests(accessToken!, {
+        limit: 50,
+        offset: 0,
+      }),
+    enabled: Boolean(accessToken),
+    retry: false,
+  });
+
+  const createRaiseMutation = useMutation({
+    mutationFn: ({
+      employeeId,
+      proposedBaseSalary,
+      effectiveDate,
+    }: {
+      employeeId: string;
+      proposedBaseSalary: number;
+      effectiveDate: string;
+    }) =>
+      createRaiseRequest(accessToken!, {
+        employee_id: employeeId,
+        proposed_base_salary: proposedBaseSalary,
+        effective_date: effectiveDate,
+      }),
+    onSuccess: () => {
+      setRaiseFeedback({ type: "success", message: t("compensationRaise.manager.createSuccess") });
+      setRaiseSalary("");
+      setRaiseEffectiveDate("");
+      void queryClient.invalidateQueries({ queryKey: ["compensation-raises", accessToken] });
+      void queryClient.invalidateQueries({ queryKey: ["compensation-table", accessToken] });
+    },
+    onError: (error: unknown) => {
+      setRaiseFeedback({ type: "error", message: resolveCompensationApiError(error, t) });
+    },
+  });
+
+  const confirmRaiseMutation = useMutation({
+    mutationFn: (requestId: string) => confirmRaiseRequest(accessToken!, requestId),
+    onSuccess: () => {
+      setRaiseFeedback({ type: "success", message: t("compensationRaise.manager.confirmSuccess") });
+      void queryClient.invalidateQueries({ queryKey: ["compensation-raises", accessToken] });
+      void queryClient.invalidateQueries({ queryKey: ["compensation-table", accessToken] });
+    },
+    onError: (error: unknown) => {
+      setRaiseFeedback({ type: "error", message: resolveCompensationApiError(error, t) });
+    },
+  });
+
+  const raiseItems = raiseQuery.data?.items ?? [];
+  const employeeLookup = useMemo(
+    () =>
+      new Map(
+        compensationRows.map((row) => [
+          row.employee_id,
+          row.full_name,
+        ]),
+      ),
+    [compensationRows],
+  );
+
+  const handleCreateRaise = () => {
+    setRaiseFeedback(null);
+    if (!raiseEmployeeId) {
+      setRaiseFeedback({ type: "error", message: t("compensationRaise.manager.errors.employeeRequired") });
+      return;
+    }
+    if (!raiseEffectiveDate) {
+      setRaiseFeedback({ type: "error", message: t("compensationRaise.manager.errors.effectiveDateRequired") });
+      return;
+    }
+    const proposedSalary = Number.parseFloat(raiseSalary);
+    if (!Number.isFinite(proposedSalary) || proposedSalary <= 0) {
+      setRaiseFeedback({ type: "error", message: t("compensationRaise.manager.errors.salaryRequired") });
+      return;
+    }
+    createRaiseMutation.mutate({
+      employeeId: raiseEmployeeId,
+      proposedBaseSalary: proposedSalary,
+      effectiveDate: raiseEffectiveDate,
+    });
+  };
 
   if (!accessToken) {
     return <Alert severity="warning">{t("managerDashboard.authRequired")}</Alert>;
@@ -232,6 +344,161 @@ export function ManagerWorkspacePage() {
           </Grid2>
         </Grid2>
       )}
+
+      <Grid2 container spacing={2}>
+        <Grid2 size={{ xs: 12, lg: 5 }}>
+          <Paper sx={{ p: 2 }}>
+            <Stack spacing={2}>
+              <Stack spacing={0.5}>
+                <Typography variant="h6">{t("compensationRaise.manager.title")}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {t("compensationRaise.manager.subtitle")}
+                </Typography>
+              </Stack>
+
+              {raiseFeedback ? <Alert severity={raiseFeedback.type}>{raiseFeedback.message}</Alert> : null}
+
+              {employeeOptions.length === 0 ? (
+                <Alert severity="info">{t("compensationRaise.manager.emptyEmployees")}</Alert>
+              ) : (
+                <>
+                  <TextField
+                    select
+                    label={t("compensationRaise.fields.employee")}
+                    value={raiseEmployeeId}
+                    onChange={(event) => setRaiseEmployeeId(event.target.value)}
+                    fullWidth
+                  >
+                    {employeeOptions.map((option) => (
+                      <MenuItem key={option.id} value={option.id}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <Stack direction={{ xs: "column", md: "row" }} spacing={1.5}>
+                    <TextField
+                      label={t("compensationRaise.fields.proposedSalary")}
+                      type="number"
+                      value={raiseSalary}
+                      onChange={(event) => setRaiseSalary(event.target.value)}
+                      fullWidth
+                    />
+                    <TextField
+                      label={t("compensationRaise.fields.effectiveDate")}
+                      type="date"
+                      value={raiseEffectiveDate}
+                      onChange={(event) => setRaiseEffectiveDate(event.target.value)}
+                      fullWidth
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Stack>
+                  <Button
+                    variant="contained"
+                    onClick={handleCreateRaise}
+                    disabled={createRaiseMutation.isPending}
+                  >
+                    {createRaiseMutation.isPending
+                      ? t("compensationRaise.manager.createPending")
+                      : t("compensationRaise.manager.createAction")}
+                  </Button>
+                </>
+              )}
+            </Stack>
+          </Paper>
+        </Grid2>
+
+        <Grid2 size={{ xs: 12, lg: 7 }}>
+          <Paper sx={{ p: 2, overflowX: "auto" }}>
+            <Stack spacing={1.5}>
+              <Typography variant="h6">{t("compensationRaise.list.title")}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("compensationRaise.list.subtitle")}
+              </Typography>
+            </Stack>
+            {raiseQuery.isLoading ? (
+              <Stack spacing={2} alignItems="center" sx={{ py: 4 }}>
+                <CircularProgress size={24} />
+                <Typography variant="body2">{t("compensationRaise.list.loading")}</Typography>
+              </Stack>
+            ) : raiseQuery.isError ? (
+              <Alert severity="error" sx={{ borderRadius: 0, mt: 2 }}>
+                {resolveCompensationApiError(raiseQuery.error, t)}
+              </Alert>
+            ) : raiseItems.length === 0 ? (
+              <Alert severity="info" sx={{ borderRadius: 0, mt: 2 }}>
+                {t("compensationRaise.list.empty")}
+              </Alert>
+            ) : (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>{t("compensationRaise.list.columns.employee")}</TableCell>
+                    <TableCell>{t("compensationRaise.list.columns.salary")}</TableCell>
+                    <TableCell>{t("compensationRaise.list.columns.effectiveDate")}</TableCell>
+                    <TableCell>{t("compensationRaise.list.columns.status")}</TableCell>
+                    <TableCell>{t("compensationRaise.list.columns.confirmations")}</TableCell>
+                    <TableCell align="right">{t("compensationRaise.list.columns.actions")}</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {raiseItems.map((item) => (
+                    <TableRow key={item.request_id}>
+                      <TableCell>
+                        <Stack spacing={0.5}>
+                          <Typography variant="body2" fontWeight={600}>
+                            {employeeLookup.get(item.employee_id) ?? formatShortUuid(item.employee_id)}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatShortUuid(item.employee_id)}
+                          </Typography>
+                        </Stack>
+                      </TableCell>
+                      <TableCell>{formatMoneyValue(item.proposed_base_salary, item.currency, t)}</TableCell>
+                      <TableCell>{formatDateValue(item.effective_date)}</TableCell>
+                      <TableCell>{t(`compensationRaise.status.${item.status}`)}</TableCell>
+                      <TableCell>
+                        {t("compensationRaise.confirmations", {
+                          count: item.confirmation_count,
+                          quorum: item.confirmation_quorum,
+                        })}
+                      </TableCell>
+                      <TableCell align="right">
+                        {item.status === "pending_confirmations" ? (
+                          <Button
+                            size="small"
+                            onClick={() => confirmRaiseMutation.mutate(item.request_id)}
+                            disabled={
+                              confirmRaiseMutation.isPending
+                              && confirmRaiseMutation.variables === item.request_id
+                            }
+                          >
+                            {confirmRaiseMutation.isPending
+                            && confirmRaiseMutation.variables === item.request_id
+                              ? t("compensationRaise.list.confirmPending")
+                              : t("compensationRaise.list.confirmAction")}
+                          </Button>
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            {t("compensationRaise.list.noActions")}
+                          </Typography>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Paper>
+        </Grid2>
+      </Grid2>
+
+      <CompensationTablePanel
+        accessToken={accessToken}
+        title={t("compensationTable.managerTitle")}
+        subtitle={t("compensationTable.managerSubtitle")}
+        showBonusForm={false}
+        onRowsLoaded={setCompensationRows}
+      />
 
       <OnboardingDashboardPanel mode="embedded" />
     </Stack>
@@ -399,6 +666,17 @@ function resolveManagerWorkspaceError(
   return t("managerDashboard.errors.generic");
 }
 
+function formatMoneyValue(
+  value: number | null | undefined,
+  currency: string,
+  t: ReturnType<typeof useTranslation>["t"],
+) {
+  if (value === null || value === undefined) {
+    return t("compensationTable.notAvailable");
+  }
+  return `${value.toFixed(2)} ${currency}`;
+}
+
 function resolveStageChipColor(stage: ManagerWorkspaceCandidateSnapshotResponse["items"][number]["stage"]) {
   if (stage === "hired") {
     return "success" as const;
@@ -439,6 +717,13 @@ function formatDateTimeValue(value: string | null) {
     return "n/a";
   }
   return new Date(value).toLocaleString();
+}
+
+function formatDateValue(value: string | null) {
+  if (!value) {
+    return "n/a";
+  }
+  return new Date(value).toLocaleDateString();
 }
 
 function formatShortUuid(value: string) {

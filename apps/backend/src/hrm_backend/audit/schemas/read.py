@@ -27,6 +27,8 @@ class AuditEventListItem(BaseModel):
     resource_id: str | None = Field(default=None, max_length=128)
     result: AuditResult
     reason: str | None = Field(default=None, max_length=2048)
+    before_snapshot: dict[str, object] | None = None
+    after_snapshot: dict[str, object] | None = None
     correlation_id: str | None = Field(default=None, max_length=64)
     ip: str | None = Field(default=None, max_length=64)
     user_agent: str | None = Field(default=None, max_length=512)

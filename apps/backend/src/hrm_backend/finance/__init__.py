@@ -1,2 +1,1 @@
-"""Finance adapter package for accountant workspace reads and exports."""
-
+"""Finance domain package for accountant workflows and compensation controls."""

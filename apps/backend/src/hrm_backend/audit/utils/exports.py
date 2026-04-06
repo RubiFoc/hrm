@@ -19,6 +19,8 @@ AUDIT_EVENT_EXPORT_COLUMNS: tuple[str, ...] = (
     "resource_id",
     "result",
     "reason",
+    "before_snapshot",
+    "after_snapshot",
     "correlation_id",
     "ip",
     "user_agent",

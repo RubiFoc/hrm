@@ -178,6 +178,8 @@ def _to_list_item(entity) -> AuditEventListItem:  # noqa: ANN001
         resource_id=entity.resource_id,
         result=entity.result,  # type: ignore[arg-type]
         reason=entity.reason,
+        before_snapshot=entity.before_snapshot_json,
+        after_snapshot=entity.after_snapshot_json,
         correlation_id=entity.correlation_id,
         ip=entity.ip,
         user_agent=entity.user_agent,

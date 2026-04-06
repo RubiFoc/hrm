@@ -3,6 +3,17 @@ export {
   downloadAccountingWorkspaceExport,
   listAccountingWorkspace,
 } from "./accountingWorkspace";
+export {
+  approveRaiseRequest,
+  confirmRaiseRequest,
+  createRaiseRequest,
+  createSalaryBand,
+  listCompensationTable,
+  listRaiseRequests,
+  listSalaryBands,
+  rejectRaiseRequest,
+  upsertBonusEntry,
+} from "./compensation";
 export { downloadAuditEventsExport, listAuditEvents } from "./audit";
 export { getBackendHealth } from "./platform";
 export { downloadKpiSnapshotExport, readKpiSnapshot } from "./kpiSnapshots";
@@ -85,6 +96,22 @@ export type {
   AccountingWorkspaceListResponse,
   AccountingWorkspaceRowResponse,
 } from "./accountingWorkspace";
+export type {
+  BonusEntryResponse,
+  BonusUpsertRequest,
+  CompensationRaiseCreateRequest,
+  CompensationRaiseDecisionRequest,
+  CompensationRaiseListResponse,
+  CompensationRaiseResponse,
+  CompensationRaiseStatus,
+  CompensationTableListQuery,
+  CompensationTableListResponse,
+  CompensationTableRowResponse,
+  RaiseListQuery,
+  SalaryBandCreateRequest,
+  SalaryBandListResponse,
+  SalaryBandResponse,
+} from "./compensation";
 export type {
   AuditEventExportFormat,
   AuditEventListQuery,

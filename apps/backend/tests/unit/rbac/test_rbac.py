@@ -197,6 +197,49 @@ def test_employee_can_create_referral_permission() -> None:
     assert decision.allowed is True
 
 
+def test_manager_can_request_and_confirm_raise_permissions() -> None:
+    """Verify manager role can create, confirm, and read raise requests."""
+    create_decision = evaluate_permission(role="manager", permission="compensation_raise:create")
+    confirm_decision = evaluate_permission(role="manager", permission="compensation_raise:confirm")
+    read_decision = evaluate_permission(role="manager", permission="compensation_raise:read")
+
+    assert create_decision.allowed is True
+    assert confirm_decision.allowed is True
+    assert read_decision.allowed is True
+
+
+def test_leader_can_approve_and_reject_raise_permissions() -> None:
+    """Verify leader role can approve and reject raise requests."""
+    approve_decision = evaluate_permission(role="leader", permission="compensation_raise:approve")
+    reject_decision = evaluate_permission(role="leader", permission="compensation_raise:reject")
+    read_decision = evaluate_permission(role="leader", permission="compensation_raise:read")
+
+    assert approve_decision.allowed is True
+    assert reject_decision.allowed is True
+    assert read_decision.allowed is True
+
+
+def test_hr_can_manage_salary_bands_permission() -> None:
+    """Verify HR role can write salary bands."""
+    decision = evaluate_permission(role="hr", permission="salary_band:write")
+
+    assert decision.allowed is True
+
+
+def test_accountant_can_write_bonus_permission() -> None:
+    """Verify accountant role can write bonus entries."""
+    decision = evaluate_permission(role="accountant", permission="bonus:write")
+
+    assert decision.allowed is True
+
+
+def test_manager_can_read_compensation_table_permission() -> None:
+    """Verify manager role can read compensation table."""
+    decision = evaluate_permission(role="manager", permission="compensation:read")
+
+    assert decision.allowed is True
+
+
 def test_hr_can_read_and_review_referrals_permissions() -> None:
     """Verify HR role can read and review referrals."""
     read_decision = evaluate_permission(role="hr", permission="referral:read")

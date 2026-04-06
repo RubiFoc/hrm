@@ -47,6 +47,8 @@ class AuditService:
         actor_role: str | None = None,
         resource_id: str | None = None,
         reason: str | None = None,
+        before_snapshot: dict[str, object] | None = None,
+        after_snapshot: dict[str, object] | None = None,
     ) -> None:
         """Record API-originated audit event.
 
@@ -59,6 +61,8 @@ class AuditService:
             actor_role: Actor role claim if available.
             resource_id: Optional resource identifier.
             reason: Optional deny/failure reason.
+            before_snapshot: Optional structured snapshot before a write operation.
+            after_snapshot: Optional structured snapshot after a write operation.
         """
         self.record(
             AuditEventCreate(
@@ -70,6 +74,8 @@ class AuditService:
                 resource_id=resource_id,
                 result=result,
                 reason=reason,
+                before_snapshot=before_snapshot,
+                after_snapshot=after_snapshot,
                 correlation_id=get_request_id(request),
                 ip=get_client_ip(request),
                 user_agent=request.headers.get("user-agent"),
@@ -87,6 +93,8 @@ class AuditService:
         actor_role: str | None = None,
         resource_id: str | None = None,
         reason: str | None = None,
+        before_snapshot: dict[str, object] | None = None,
+        after_snapshot: dict[str, object] | None = None,
     ) -> None:
         """Record background-job audit event.
 
@@ -99,6 +107,8 @@ class AuditService:
             actor_role: Actor role claim if available.
             resource_id: Optional resource identifier.
             reason: Optional deny/failure reason.
+            before_snapshot: Optional structured snapshot before a write operation.
+            after_snapshot: Optional structured snapshot after a write operation.
         """
         self.record(
             AuditEventCreate(
@@ -110,6 +120,8 @@ class AuditService:
                 resource_id=resource_id,
                 result=result,
                 reason=reason,
+                before_snapshot=before_snapshot,
+                after_snapshot=after_snapshot,
                 correlation_id=correlation_id,
             )
         )

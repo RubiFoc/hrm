@@ -377,4 +377,85 @@ describe("LeaderWorkspacePage", () => {
       ),
     ).toBeDefined();
   });
+
+  it("approves a raise request from the leader compensation queue", async () => {
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/v1/reporting/kpi-snapshots?period_month=")) {
+        return jsonResponse({
+          period_month: "2026-03-01",
+          metrics: [
+            {
+              metric_key: "vacancies_created_count",
+              metric_value: 1,
+              generated_at: "2026-03-14T10:00:00Z",
+            },
+          ],
+        });
+      }
+      if (url.includes("/api/v1/compensation/raises?status=awaiting_leader")) {
+        return jsonResponse({
+          items: [
+            {
+              request_id: "rrrrrrrr-rrrr-4rrr-8rrr-rrrrrrrrrrrr",
+              employee_id: "22222222-2222-4222-8222-222222222222",
+              requested_by_staff_id: "11111111-1111-4111-8111-111111111111",
+              requested_at: "2026-04-01T10:00:00Z",
+              effective_date: "2026-05-01",
+              proposed_base_salary: 2500,
+              currency: "BYN",
+              status: "awaiting_leader",
+              confirmation_count: 2,
+              confirmation_quorum: 2,
+              leader_decision_by_staff_id: null,
+              leader_decision_at: null,
+              leader_decision_note: null,
+            },
+          ],
+          total: 1,
+          limit: 50,
+          offset: 0,
+        });
+      }
+      if (
+        url.includes(
+          "/api/v1/compensation/raises/rrrrrrrr-rrrr-4rrr-8rrr-rrrrrrrrrrrr/approve",
+        )
+      ) {
+        return jsonResponse({
+          request_id: "rrrrrrrr-rrrr-4rrr-8rrr-rrrrrrrrrrrr",
+          employee_id: "22222222-2222-4222-8222-222222222222",
+          requested_by_staff_id: "11111111-1111-4111-8111-111111111111",
+          requested_at: "2026-04-01T10:00:00Z",
+          effective_date: "2026-05-01",
+          proposed_base_salary: 2500,
+          currency: "BYN",
+          status: "approved",
+          confirmation_count: 2,
+          confirmation_quorum: 2,
+          leader_decision_by_staff_id: "33333333-3333-4333-8333-333333333333",
+          leader_decision_at: "2026-04-01T11:00:00Z",
+          leader_decision_note: "Approved",
+        });
+      }
+      return jsonResponse({});
+    });
+
+    renderLeaderWorkspacePage();
+
+    const approveButton = await screen.findByRole("button", {
+      name: /одобрить|approve/i,
+    });
+    fireEvent.click(approveButton);
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some((call) =>
+          String(call[0]).includes(
+            "/api/v1/compensation/raises/rrrrrrrr-rrrr-4rrr-8rrr-rrrrrrrrrrrr/approve",
+          ),
+        ),
+      ).toBe(true);
+    });
+  });
 });

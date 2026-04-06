@@ -137,6 +137,7 @@ flowchart LR
   OFFER[Offer Lifecycle]
   HIRE[Hiring Decision]
   EMP[Employee Profile]
+  COMP[Compensation Controls]
   ONB[Onboarding]
   AUTO[HR Automation]
   NOTIFY[Notification Service]
@@ -151,6 +152,8 @@ flowchart LR
   FAIR --> OFFER
   OFFER --> HIRE
   HIRE --> EMP
+  VAC --> COMP
+  EMP --> COMP
   EMP --> ONB
   VAC --> AUTO
   INT --> AUTO
@@ -164,6 +167,7 @@ flowchart LR
   INT --> KPI
   HIRE --> KPI
   EMP --> KPI
+  COMP --> KPI
   ONB --> KPI
   AUTO --> KPI
 ```

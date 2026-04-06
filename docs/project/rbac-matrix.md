@@ -1,7 +1,7 @@
 # RBAC Role Matrix (Phase 1 Baseline)
 
 ## Last Updated
-- Date: 2026-03-16
+- Date: 2026-04-04
 - Updated by: backend-engineer
 
 This matrix is the access baseline for `TASK-01-01`, `TASK-01-02`, `TASK-01-03`,
@@ -67,6 +67,14 @@ Enforcement source of truth:
 | `analytics:read` | yes | yes | yes | yes | yes | yes |
 | `audit:read` | yes | no | no | no | no | no |
 | `accounting:read` | yes | no | no | no | no | yes |
+| `compensation:read` | no | yes | yes | no | no | yes |
+| `compensation_raise:create` | no | no | yes | no | no | no |
+| `compensation_raise:confirm` | no | no | yes | no | no | no |
+| `compensation_raise:read` | no | no | yes | no | yes | no |
+| `compensation_raise:approve` | no | no | no | no | yes | no |
+| `compensation_raise:reject` | no | no | no | no | yes | no |
+| `salary_band:write` | no | yes | no | no | no | no |
+| `bonus:write` | no | yes | no | no | no | yes |
 | `kpi_snapshot:read` | yes | no | no | no | yes | no |
 | `kpi_snapshot:rebuild` | yes | no | no | no | no | no |
 | `automation_rule:create` | yes | yes | no | no | no | no |

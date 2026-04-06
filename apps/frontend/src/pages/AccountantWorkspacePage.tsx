@@ -26,6 +26,7 @@ import {
 } from "../api";
 import { readAuthSession } from "../app/auth/session";
 import { useSentryRouteTags } from "../app/observability/sentry";
+import { CompensationTablePanel } from "../components/CompensationTablePanel";
 import { NotificationsPanel } from "../components/NotificationsPanel";
 import { PageHero } from "../components/PageHero";
 
@@ -219,6 +220,13 @@ export function AccountantWorkspacePage() {
           </>
         )}
       </Paper>
+
+      <CompensationTablePanel
+        accessToken={accessToken}
+        title={t("compensationTable.accountantTitle")}
+        subtitle={t("compensationTable.accountantSubtitle")}
+        showBonusForm
+      />
     </Stack>
   );
 }

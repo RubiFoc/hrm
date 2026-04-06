@@ -587,6 +587,30 @@
             ],
             "title": "Actor Sub"
           },
+          "after_snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After Snapshot"
+          },
+          "before_snapshot": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before Snapshot"
+          },
           "correlation_id": {
             "anyOf": [
               {
@@ -1819,6 +1843,126 @@
         "title": "Body_upload_my_employee_avatar_api_v1_employees_me_avatar_post",
         "type": "object"
       },
+      "BonusEntryResponse": {
+        "description": "Response payload for manual bonus entries.",
+        "properties": {
+          "amount": {
+            "title": "Amount",
+            "type": "number"
+          },
+          "bonus_id": {
+            "format": "uuid",
+            "title": "Bonus Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_staff_id": {
+            "format": "uuid",
+            "title": "Created By Staff Id",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "period_month": {
+            "format": "date",
+            "title": "Period Month",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "updated_by_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated By Staff Id"
+          }
+        },
+        "required": [
+          "bonus_id",
+          "employee_id",
+          "period_month",
+          "amount",
+          "currency",
+          "note",
+          "created_by_staff_id",
+          "updated_by_staff_id",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "BonusEntryResponse",
+        "type": "object"
+      },
+      "BonusUpsertRequest": {
+        "additionalProperties": false,
+        "description": "Input payload for manual bonus upsert.",
+        "properties": {
+          "amount": {
+            "exclusiveMinimum": 0.0,
+            "title": "Amount",
+            "type": "number"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "period_month": {
+            "format": "date",
+            "title": "Period Month",
+            "type": "string"
+          }
+        },
+        "required": [
+          "employee_id",
+          "period_month",
+          "amount"
+        ],
+        "title": "BonusUpsertRequest",
+        "type": "object"
+      },
       "CVAnalysisEvidenceItem": {
         "description": "Evidence link from one extracted field to CV source snippet.",
         "properties": {
@@ -2527,6 +2671,390 @@
           }
         },
         "title": "CandidateUpdateRequest",
+        "type": "object"
+      },
+      "CompensationRaiseCreateRequest": {
+        "additionalProperties": false,
+        "description": "Input payload for manager-initiated raise request creation.",
+        "properties": {
+          "effective_date": {
+            "format": "date",
+            "title": "Effective Date",
+            "type": "string"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "proposed_base_salary": {
+            "exclusiveMinimum": 0.0,
+            "title": "Proposed Base Salary",
+            "type": "number"
+          }
+        },
+        "required": [
+          "employee_id",
+          "proposed_base_salary",
+          "effective_date"
+        ],
+        "title": "CompensationRaiseCreateRequest",
+        "type": "object"
+      },
+      "CompensationRaiseDecisionRequest": {
+        "additionalProperties": false,
+        "description": "Input payload for leader approval or rejection decisions.",
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "title": "CompensationRaiseDecisionRequest",
+        "type": "object"
+      },
+      "CompensationRaiseListResponse": {
+        "description": "Paginated raise request list response.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CompensationRaiseResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "CompensationRaiseListResponse",
+        "type": "object"
+      },
+      "CompensationRaiseResponse": {
+        "description": "Response payload for raise request state.",
+        "properties": {
+          "confirmation_count": {
+            "title": "Confirmation Count",
+            "type": "integer"
+          },
+          "confirmation_quorum": {
+            "title": "Confirmation Quorum",
+            "type": "integer"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "effective_date": {
+            "format": "date",
+            "title": "Effective Date",
+            "type": "string"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "leader_decision_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leader Decision At"
+          },
+          "leader_decision_by_staff_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leader Decision By Staff Id"
+          },
+          "leader_decision_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leader Decision Note"
+          },
+          "proposed_base_salary": {
+            "title": "Proposed Base Salary",
+            "type": "number"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "requested_by_staff_id": {
+            "format": "uuid",
+            "title": "Requested By Staff Id",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending_confirmations",
+              "awaiting_leader",
+              "approved",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "employee_id",
+          "requested_by_staff_id",
+          "requested_at",
+          "effective_date",
+          "proposed_base_salary",
+          "currency",
+          "status",
+          "confirmation_count",
+          "confirmation_quorum",
+          "leader_decision_by_staff_id",
+          "leader_decision_at",
+          "leader_decision_note"
+        ],
+        "title": "CompensationRaiseResponse",
+        "type": "object"
+      },
+      "CompensationTableListResponse": {
+        "description": "Paginated compensation table response.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CompensationTableRowResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "CompensationTableListResponse",
+        "type": "object"
+      },
+      "CompensationTableRowResponse": {
+        "description": "Unified compensation table row returned to manager/HR/accountant roles.",
+        "properties": {
+          "band_alignment_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "below_band",
+                  "within_band",
+                  "above_band"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Band Alignment Status"
+          },
+          "base_salary": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Salary"
+          },
+          "bonus_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bonus Amount"
+          },
+          "bonus_period_month": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bonus Period Month"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "employee_id": {
+            "format": "uuid",
+            "title": "Employee Id",
+            "type": "string"
+          },
+          "full_name": {
+            "title": "Full Name",
+            "type": "string"
+          },
+          "last_raise_effective_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Raise Effective Date"
+          },
+          "last_raise_status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending_confirmations",
+                  "awaiting_leader",
+                  "approved",
+                  "rejected"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Raise Status"
+          },
+          "position_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position Title"
+          },
+          "salary_band_max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Band Max"
+          },
+          "salary_band_min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Salary Band Min"
+          }
+        },
+        "required": [
+          "employee_id",
+          "full_name",
+          "department",
+          "position_title",
+          "currency",
+          "base_salary",
+          "bonus_amount",
+          "bonus_period_month",
+          "salary_band_min",
+          "salary_band_max",
+          "band_alignment_status",
+          "last_raise_effective_date",
+          "last_raise_status"
+        ],
+        "title": "CompensationTableRowResponse",
         "type": "object"
       },
       "ContainsCondition": {
@@ -7639,6 +8167,104 @@
         "title": "RegisterRequest",
         "type": "object"
       },
+      "SalaryBandCreateRequest": {
+        "additionalProperties": false,
+        "description": "Input payload for HR salary-band creation.",
+        "properties": {
+          "max_amount": {
+            "exclusiveMinimum": 0.0,
+            "title": "Max Amount",
+            "type": "number"
+          },
+          "min_amount": {
+            "exclusiveMinimum": 0.0,
+            "title": "Min Amount",
+            "type": "number"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "vacancy_id",
+          "min_amount",
+          "max_amount"
+        ],
+        "title": "SalaryBandCreateRequest",
+        "type": "object"
+      },
+      "SalaryBandListResponse": {
+        "description": "Salary-band list payload.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SalaryBandResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SalaryBandListResponse",
+        "type": "object"
+      },
+      "SalaryBandResponse": {
+        "description": "Salary-band history item response.",
+        "properties": {
+          "band_id": {
+            "format": "uuid",
+            "title": "Band Id",
+            "type": "string"
+          },
+          "band_version": {
+            "title": "Band Version",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "created_by_staff_id": {
+            "format": "uuid",
+            "title": "Created By Staff Id",
+            "type": "string"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "max_amount": {
+            "title": "Max Amount",
+            "type": "number"
+          },
+          "min_amount": {
+            "title": "Min Amount",
+            "type": "number"
+          },
+          "vacancy_id": {
+            "format": "uuid",
+            "title": "Vacancy Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "band_id",
+          "vacancy_id",
+          "band_version",
+          "min_amount",
+          "max_amount",
+          "currency",
+          "created_by_staff_id",
+          "created_at"
+        ],
+        "title": "SalaryBandResponse",
+        "type": "object"
+      },
       "StaffResponse": {
         "description": "Staff account payload for admin APIs.",
         "properties": {
@@ -10289,6 +10915,531 @@
         "summary": "Get Candidate Cv Parsing Status",
         "tags": [
           "candidates"
+        ]
+      }
+    },
+    "/api/v1/compensation/bonuses": {
+      "post": {
+        "description": "Create or update a manual bonus entry.",
+        "operationId": "upsert_bonus_entry_api_v1_compensation_bonuses_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BonusUpsertRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BonusEntryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "RBAC denied"
+          },
+          "404": {
+            "description": "Employee not found"
+          },
+          "422": {
+            "description": "Validation failure"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Upsert Bonus Entry",
+        "tags": [
+          "compensation"
+        ]
+      }
+    },
+    "/api/v1/compensation/raises": {
+      "get": {
+        "description": "List raise requests for manager or leader workflows.",
+        "operationId": "list_raise_requests_api_v1_compensation_raises_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "pending_confirmations",
+                    "awaiting_leader",
+                    "approved",
+                    "rejected"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationRaiseListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "RBAC denied"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Raise Requests",
+        "tags": [
+          "compensation"
+        ]
+      },
+      "post": {
+        "description": "Create a manager-initiated raise request.",
+        "operationId": "create_raise_request_api_v1_compensation_raises_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompensationRaiseCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationRaiseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "RBAC denied"
+          },
+          "404": {
+            "description": "Employee not found"
+          },
+          "422": {
+            "description": "Validation failure"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Raise Request",
+        "tags": [
+          "compensation"
+        ]
+      }
+    },
+    "/api/v1/compensation/raises/{raise_request_id}/approve": {
+      "post": {
+        "description": "Approve a raise request after quorum is reached.",
+        "operationId": "approve_raise_request_api_v1_compensation_raises__raise_request_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "raise_request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Raise Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompensationRaiseDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationRaiseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "RBAC denied"
+          },
+          "404": {
+            "description": "Raise request not found"
+          },
+          "409": {
+            "description": "Approval conflict"
+          },
+          "422": {
+            "description": "Validation failure"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Approve Raise Request",
+        "tags": [
+          "compensation"
+        ]
+      }
+    },
+    "/api/v1/compensation/raises/{raise_request_id}/confirm": {
+      "post": {
+        "description": "Confirm a raise request as manager.",
+        "operationId": "confirm_raise_request_api_v1_compensation_raises__raise_request_id__confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "raise_request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Raise Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationRaiseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "RBAC denied"
+          },
+          "404": {
+            "description": "Raise request not found"
+          },
+          "409": {
+            "description": "Confirmation conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Confirm Raise Request",
+        "tags": [
+          "compensation"
+        ]
+      }
+    },
+    "/api/v1/compensation/raises/{raise_request_id}/reject": {
+      "post": {
+        "description": "Reject a raise request after quorum is reached.",
+        "operationId": "reject_raise_request_api_v1_compensation_raises__raise_request_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "raise_request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Raise Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompensationRaiseDecisionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationRaiseResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "RBAC denied"
+          },
+          "404": {
+            "description": "Raise request not found"
+          },
+          "409": {
+            "description": "Decision conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reject Raise Request",
+        "tags": [
+          "compensation"
+        ]
+      }
+    },
+    "/api/v1/compensation/salary-bands": {
+      "get": {
+        "description": "List salary-band history for one vacancy.",
+        "operationId": "list_salary_bands_api_v1_compensation_salary_bands_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "vacancy_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Vacancy Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalaryBandListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "RBAC denied"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Salary Bands",
+        "tags": [
+          "compensation"
+        ]
+      },
+      "post": {
+        "description": "Create a new vacancy salary band entry.",
+        "operationId": "create_salary_band_api_v1_compensation_salary_bands_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SalaryBandCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SalaryBandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "RBAC denied"
+          },
+          "404": {
+            "description": "Vacancy not found"
+          },
+          "422": {
+            "description": "Validation failure"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Salary Band",
+        "tags": [
+          "compensation"
+        ]
+      }
+    },
+    "/api/v1/compensation/table": {
+      "get": {
+        "description": "List compensation table rows visible to the current actor.",
+        "operationId": "list_compensation_table_api_v1_compensation_table_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompensationTableListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "RBAC denied"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Compensation Table",
+        "tags": [
+          "compensation"
         ]
       }
     },

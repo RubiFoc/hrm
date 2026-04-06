@@ -28,7 +28,10 @@ class AuditEventDAO:
         Returns:
             AuditEvent: Persisted model instance.
         """
-        entity = AuditEvent(**payload.model_dump())
+        payload_data = payload.model_dump()
+        payload_data["before_snapshot_json"] = payload_data.pop("before_snapshot")
+        payload_data["after_snapshot_json"] = payload_data.pop("after_snapshot")
+        entity = AuditEvent(**payload_data)
         self._session.add(entity)
         self._session.commit()
         self._session.refresh(entity)

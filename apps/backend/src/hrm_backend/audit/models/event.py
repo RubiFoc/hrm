@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import uuid4
 
-from sqlalchemy import DateTime, Index, String, Text
+from sqlalchemy import JSON, DateTime, Index, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from hrm_backend.core.models.base import Base
@@ -25,6 +25,8 @@ class AuditEvent(Base):
         resource_id: Optional concrete resource identifier.
         result: Action result (`allowed`, `denied`, `success`, `failure`).
         reason: Optional human-readable reason for failures/denials.
+        before_snapshot_json: Optional structured snapshot before a write operation.
+        after_snapshot_json: Optional structured snapshot after a write operation.
         correlation_id: Trace identifier linked to request/job execution.
         ip: Caller IP for API-originated actions.
         user_agent: Caller user-agent for API-originated actions.
@@ -56,6 +58,14 @@ class AuditEvent(Base):
     resource_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     result: Mapped[str] = mapped_column(String(32), nullable=False)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    before_snapshot_json: Mapped[dict[str, object] | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+    after_snapshot_json: Mapped[dict[str, object] | None] = mapped_column(
+        JSON,
+        nullable=True,
+    )
     correlation_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
     user_agent: Mapped[str | None] = mapped_column(String(512), nullable=True)
