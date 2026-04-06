@@ -29,6 +29,7 @@
 | TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
 | TASK-02-04 | done/closed | GitHub issue #88 closed; merged in `main` via PR #128 (`3ad1c9e`) with manager-scoped vacancy overview + PII-redacted candidate snapshot visibility and offer status enrichment |
 | TASK-08-01 | done/closed | Merged in `main` via PR #192 (`bf84b82`) with deterministic automation evaluator ordering and fail-closed invalid condition handling |
+| TASK-08-02 | done/closed | Repo-backed closeout: `AutomationActionExecutor` now executes planned `notification.emit` actions with recipient+dedupe-key idempotency semantics, retry-safe dedupe checks, and fail-closed seam coverage across pipeline/offer/onboarding flows in unit+integration tests. |
 | TASK-08-03 | done/closed | GitHub issue #20 closed; merged in `main` via PR #131 |
 | TASK-08-04 | implemented/local-automation-kpi-slice | Durable automation KPI metric events, monthly snapshot aggregation, leader labels, and docs/tests are implemented in repo |
 | TASK-11-06 | implemented/local-baseline | Public candidate apply/tracking now runs on `/careers` with checked-in branding, a browseable open-role board backed by `GET /api/v1/public/vacancies`, shareable vacancy detail/apply pages on `/careers/:vacancyId`, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling; `/candidate/apply` now hosts the compatibility apply shell and `/candidate` redirects into it |

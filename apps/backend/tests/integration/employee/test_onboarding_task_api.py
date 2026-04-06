@@ -14,6 +14,7 @@ from hrm_backend.audit.models.event import AuditEvent
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.automation.models.metric_event import AutomationMetricEvent
+from hrm_backend.automation.services.executor import AutomationActionExecutor
 from hrm_backend.core.models.base import Base
 from hrm_backend.employee.models.onboarding import OnboardingRun, OnboardingTask
 from hrm_backend.employee.models.template import OnboardingTemplate, OnboardingTemplateItem
@@ -290,6 +291,42 @@ async def test_onboarding_task_api_backfills_lists_and_updates_tasks(
     assert ("onboarding_task:backfill", "success") in success_actions
     assert ("onboarding_task:list", "success") in success_actions
     assert ("onboarding_task:update", "success") in success_actions
+
+
+async def test_onboarding_task_update_is_fail_closed_when_automation_executor_raises(
+    configured_app,
+    api_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify task updates stay committed when automation executor fails post-commit."""
+    _, _, database_url, seeded = configured_app
+    onboarding_id = seeded["legacy_run_id"]
+
+    backfill_response = await api_client.post(
+        f"/api/v1/onboarding/runs/{onboarding_id}/tasks/backfill"
+    )
+    assert backfill_response.status_code == 200
+    first_task_id = backfill_response.json()["items"][0]["task_id"]
+
+    def _raise_handle_event(self, **_kwargs):  # noqa: ANN001
+        raise RuntimeError("deterministic automation failure")
+
+    monkeypatch.setattr(
+        AutomationActionExecutor,
+        "handle_event",
+        _raise_handle_event,
+    )
+
+    update_response = await api_client.patch(
+        f"/api/v1/onboarding/runs/{onboarding_id}/tasks/{first_task_id}",
+        json={"assigned_role": "accountant"},
+    )
+    assert update_response.status_code == 200
+    assert update_response.json()["assigned_role"] == "accountant"
+
+    persisted_tasks = _load_tasks(database_url, onboarding_id=onboarding_id)
+    updated = next(task for task in persisted_tasks if task.task_id == first_task_id)
+    assert updated.assigned_role == "accountant"
 
 
 async def test_onboarding_task_api_reports_conflicts_missing_template_and_rbac_denials(

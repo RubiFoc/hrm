@@ -98,10 +98,14 @@ apps/backend/tests/
   - invalid condition trees are fail-closed and do not block valid rules
 - Rule CRUD + RBAC integration coverage:
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/automation/test_automation_rule_api.py`
+  - includes API-driven pipeline trigger execution for active rules and retry replay of the same
+    trigger event to validate dedupe-safe idempotency (`created=0` on retry).
 - Execution log read APIs + RBAC integration coverage:
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/automation/test_automation_execution_log_api.py`
 - KPI event stream coverage from the existing automation triggers:
   - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py apps/backend/tests/integration/employee/test_onboarding_task_api.py`
+  - includes fail-closed seam checks where forced automation executor failures do not roll back
+    core domain writes for pipeline/offer and onboarding task assignment flows.
 - When automation execution, metric stream, or notification payload fields change, keep OpenAPI freeze and generated frontend types in sync:
   - `./scripts/check-openapi-freeze.sh`
   - `npm --prefix apps/frontend run api:types:check`
