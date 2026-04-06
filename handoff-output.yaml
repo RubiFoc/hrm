@@ -1,0 +1,45 @@
+summary:
+  request_id: "TASK-08-01"
+  status: "done"
+  scope_delivered:
+    - "Automation evaluator fail-closed handling for invalid condition trees."
+    - "Deterministic rule ordering by priority desc with stable tie-breakers."
+    - "Unit coverage for invalid conditions and priority ordering."
+    - "Automation verification expectations documented."
+
+changes:
+  files_modified:
+    - "apps/backend/src/hrm_backend/automation/services/evaluator.py"
+    - "apps/backend/tests/unit/automation/test_evaluator.py"
+    - "docs/testing/strategy.md"
+  key_decisions:
+    - "Skip rules with invalid condition JSON to preserve fail-closed behavior."
+    - "Sort rules in evaluator to enforce deterministic action planning."
+
+validation:
+  commands_run:
+    - "UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/automation/test_evaluator.py"
+    - "UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/automation"
+    - "UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/automation/test_automation_rule_api.py"
+    - "./scripts/check-openapi-freeze.sh"
+  results:
+    - "All tests passed; passlib crypt deprecation warning observed."
+    - "OpenAPI frozen spec check passed."
+  best_practices_checks:
+    - "Updated docs alongside behavior changes."
+    - "Kept evaluator deterministic and fail-closed."
+
+risks:
+  remaining_risks:
+    - "Frontend API types check not run because OpenAPI did not change."
+  assumptions:
+    - "OpenAPI contract unchanged by evaluator changes."
+  open_questions: []
+
+documentation:
+  updated_docs:
+    - "docs/testing/strategy.md"
+  updated_diagrams: []
+  missing_docs: []
+
+operator_note: "Evaluator now skips invalid conditions and orders rules by priority; use automation unit + integration test commands listed above to verify locally."

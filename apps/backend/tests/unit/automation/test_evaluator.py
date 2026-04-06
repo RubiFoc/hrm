@@ -20,6 +20,7 @@ class _RuleRow:
     rule_id: str
     conditions_json: dict[str, object] | None
     actions_json: list[dict[str, object]]
+    priority: int = 0
 
 
 @dataclass(frozen=True)
@@ -161,6 +162,175 @@ def test_pipeline_transition_fail_closed_without_hiring_manager() -> None:
     )
 
     assert evaluator.evaluate(event=event) == []
+
+
+def test_invalid_condition_skips_rule_and_preserves_valid_rules() -> None:
+    """Verify invalid condition trees are ignored without blocking other rules."""
+    rule_id_invalid = uuid4()
+    rule_id_valid = uuid4()
+    transition_id = uuid4()
+    vacancy_id = uuid4()
+    candidate_id = uuid4()
+    hiring_manager_staff_id = uuid4()
+    event_time = datetime(2026, 3, 16, 10, 0, 0, tzinfo=UTC)
+    event = PipelineTransitionAppendedEvent(
+        event_type="pipeline.transition_appended",
+        event_time=event_time,
+        trigger_event_id=transition_id,
+        payload=PipelineTransitionAppendedPayload(
+            transition_id=transition_id,
+            vacancy_id=vacancy_id,
+            vacancy_title="QA Engineer",
+            candidate_id=candidate_id,
+            candidate_id_short="cafe1234",
+            from_stage="applied",
+            to_stage="screening",
+            stage="screening",
+            hiring_manager_staff_id=hiring_manager_staff_id,
+            changed_by_staff_id=str(uuid4()),
+            changed_by_role="hr",
+        ),
+    )
+
+    rules = [
+        _RuleRow(
+            rule_id=str(rule_id_invalid),
+            conditions_json={"op": "eq", "value": "screening"},
+            actions_json=[
+                {
+                    "action": "notification.emit",
+                    "notification_kind": "pipeline_stage_changed",
+                    "title_template": "Stage: {{stage}}",
+                    "body_template": "{{vacancy_title}}",
+                    "payload_template": {
+                        "vacancy_title": "{{vacancy_title}}",
+                        "stage": "{{stage}}",
+                        "candidate_id_short": "{{candidate_id_short}}",
+                    },
+                }
+            ],
+        ),
+        _RuleRow(
+            rule_id=str(rule_id_valid),
+            conditions_json=None,
+            actions_json=[
+                {
+                    "action": "notification.emit",
+                    "notification_kind": "pipeline_stage_changed",
+                    "title_template": "Stage: {{stage}}",
+                    "body_template": "{{vacancy_title}}",
+                    "payload_template": {
+                        "vacancy_title": "{{vacancy_title}}",
+                        "stage": "{{stage}}",
+                        "candidate_id_short": "{{candidate_id_short}}",
+                    },
+                }
+            ],
+        ),
+    ]
+    staff_accounts = {
+        str(hiring_manager_staff_id): _AccountRow(
+            staff_id=str(hiring_manager_staff_id),
+            role="manager",
+            login="manager-1",
+            is_active=True,
+        )
+    }
+    evaluator = AutomationEvaluator(
+        rule_dao=_RuleDAO(rules),  # type: ignore[arg-type]
+        staff_account_dao=_StaffAccountDAO(by_id=staff_accounts),  # type: ignore[arg-type]
+    )
+
+    plan = evaluator.evaluate(event=event)
+
+    assert len(plan) == 1
+    assert plan[0].rule_id == rule_id_valid
+
+
+def test_rule_priority_orders_planned_actions() -> None:
+    """Verify evaluator orders planned actions by rule priority desc, then rule id."""
+    higher_priority_rule = uuid4()
+    lower_priority_rule = uuid4()
+    transition_id = uuid4()
+    vacancy_id = uuid4()
+    candidate_id = uuid4()
+    hiring_manager_staff_id = uuid4()
+    event_time = datetime(2026, 3, 16, 10, 0, 0, tzinfo=UTC)
+    event = PipelineTransitionAppendedEvent(
+        event_type="pipeline.transition_appended",
+        event_time=event_time,
+        trigger_event_id=transition_id,
+        payload=PipelineTransitionAppendedPayload(
+            transition_id=transition_id,
+            vacancy_id=vacancy_id,
+            vacancy_title="QA Engineer",
+            candidate_id=candidate_id,
+            candidate_id_short="cafe1234",
+            from_stage="applied",
+            to_stage="screening",
+            stage="screening",
+            hiring_manager_staff_id=hiring_manager_staff_id,
+            changed_by_staff_id=str(uuid4()),
+            changed_by_role="hr",
+        ),
+    )
+
+    rules = [
+        _RuleRow(
+            rule_id=str(lower_priority_rule),
+            conditions_json=None,
+            actions_json=[
+                {
+                    "action": "notification.emit",
+                    "notification_kind": "pipeline_stage_changed",
+                    "title_template": "Low priority {{stage}}",
+                    "body_template": "{{vacancy_title}}",
+                    "payload_template": {
+                        "vacancy_title": "{{vacancy_title}}",
+                        "stage": "{{stage}}",
+                        "candidate_id_short": "{{candidate_id_short}}",
+                    },
+                }
+            ],
+            priority=1,
+        ),
+        _RuleRow(
+            rule_id=str(higher_priority_rule),
+            conditions_json=None,
+            actions_json=[
+                {
+                    "action": "notification.emit",
+                    "notification_kind": "pipeline_stage_changed",
+                    "title_template": "High priority {{stage}}",
+                    "body_template": "{{vacancy_title}}",
+                    "payload_template": {
+                        "vacancy_title": "{{vacancy_title}}",
+                        "stage": "{{stage}}",
+                        "candidate_id_short": "{{candidate_id_short}}",
+                    },
+                }
+            ],
+            priority=10,
+        ),
+    ]
+    staff_accounts = {
+        str(hiring_manager_staff_id): _AccountRow(
+            staff_id=str(hiring_manager_staff_id),
+            role="manager",
+            login="manager-1",
+            is_active=True,
+        )
+    }
+    evaluator = AutomationEvaluator(
+        rule_dao=_RuleDAO(rules),  # type: ignore[arg-type]
+        staff_account_dao=_StaffAccountDAO(by_id=staff_accounts),  # type: ignore[arg-type]
+    )
+
+    plan = evaluator.evaluate(event=event)
+
+    assert len(plan) == 2
+    assert plan[0].rule_id == higher_priority_rule
+    assert plan[1].rule_id == lower_priority_rule
 
 
 def test_recruitment_payload_rejects_non_whitelisted_fields() -> None:
