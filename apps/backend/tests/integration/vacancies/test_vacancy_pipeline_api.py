@@ -16,6 +16,7 @@ from hrm_backend.audit.models.event import AuditEvent
 from hrm_backend.auth.dependencies.auth import get_current_auth_context
 from hrm_backend.auth.schemas.token_claims import AuthContext
 from hrm_backend.automation.models.metric_event import AutomationMetricEvent
+from hrm_backend.automation.services.executor import AutomationActionExecutor
 from hrm_backend.candidates.models.profile import CandidateProfile
 from hrm_backend.core.models.base import Base
 from hrm_backend.employee.models.hire_conversion import HireConversion
@@ -410,6 +411,104 @@ async def test_vacancy_crud_and_pipeline_transitions(
     )
     assert invalid_transition.status_code == 422
     assert "not allowed" in invalid_transition.json()["detail"]
+
+
+async def test_pipeline_and_offer_flows_are_fail_closed_when_automation_executor_raises(
+    configured_app,
+    api_client: AsyncClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verify pipeline/offer writes stay successful when automation executor fails."""
+    _, _, database_url, candidate_1_id, _ = configured_app
+    interviewer_a = "11111111-1111-4111-8111-111111111111"
+
+    def _raise_handle_event(self, **_kwargs):  # noqa: ANN001
+        raise RuntimeError("deterministic automation failure")
+
+    monkeypatch.setattr(
+        AutomationActionExecutor,
+        "handle_event",
+        _raise_handle_event,
+    )
+
+    create_response = await api_client.post(
+        "/api/v1/vacancies",
+        json={
+            "title": "Fail-closed automation",
+            "description": "Automation failures must not break domain writes.",
+            "department": "Engineering",
+            "status": "open",
+        },
+    )
+    assert create_response.status_code == 200
+    vacancy_id = create_response.json()["vacancy_id"]
+
+    for stage in ["applied", "screening", "shortlist", "interview"]:
+        transition = await api_client.post(
+            "/api/v1/pipeline/transitions",
+            json={
+                "vacancy_id": vacancy_id,
+                "candidate_id": candidate_1_id,
+                "to_stage": stage,
+                "reason": f"move_to_{stage}",
+            },
+        )
+        assert transition.status_code == 200
+
+    interview_id = _insert_interview(
+        database_url,
+        vacancy_id=vacancy_id,
+        candidate_id=candidate_1_id,
+        schedule_version=1,
+        scheduled_start_at=datetime(2026, 3, 8, 10, 0, tzinfo=UTC),
+        scheduled_end_at=datetime(2026, 3, 8, 11, 0, tzinfo=UTC),
+        interviewer_staff_ids=[interviewer_a],
+    )
+    _insert_feedback(
+        database_url,
+        interview_id=interview_id,
+        schedule_version=1,
+        interviewer_staff_id=interviewer_a,
+        requirements_match_score=5,
+        communication_score=4,
+        problem_solving_score=5,
+        collaboration_score=4,
+        recommendation="yes",
+        strengths_note="Strong technical depth.",
+        concerns_note="No major concerns.",
+        evidence_note="Consistent evidence-based answers.",
+    )
+
+    offer_transition = await api_client.post(
+        "/api/v1/pipeline/transitions",
+        json={
+            "vacancy_id": vacancy_id,
+            "candidate_id": candidate_1_id,
+            "to_stage": "offer",
+            "reason": "ready_for_offer",
+        },
+    )
+    assert offer_transition.status_code == 200
+    assert offer_transition.json()["to_stage"] == "offer"
+
+    update_offer_response = await api_client.put(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_1_id}",
+        json={"terms_summary": "Fail-closed automation offer terms."},
+    )
+    assert update_offer_response.status_code == 200
+
+    send_offer_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_1_id}/send"
+    )
+    assert send_offer_response.status_code == 200
+    assert send_offer_response.json()["status"] == "sent"
+
+    accept_offer_response = await api_client.post(
+        f"/api/v1/vacancies/{vacancy_id}/offers/{candidate_1_id}/accept",
+        json={"note": "Accepted despite automation failure."},
+    )
+    assert accept_offer_response.status_code == 200
+    assert accept_offer_response.json()["status"] == "accepted"
 
 
 async def test_interview_to_offer_feedback_gate_blocks_and_passes_by_reason_code(

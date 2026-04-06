@@ -170,6 +170,129 @@ def test_executor_creates_notification_and_is_idempotent() -> None:
         engine.dispose()
 
 
+def test_executor_dedupes_duplicate_planned_actions_per_recipient() -> None:
+    """Verify duplicate planned actions in one run are deduped by recipient + dedupe key."""
+    engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
+    Base.metadata.create_all(engine)
+
+    try:
+        with Session(engine) as session:
+            hiring_manager_staff_id = uuid4()
+            session.add(
+                StaffAccount(
+                    staff_id=str(hiring_manager_staff_id),
+                    login="manager-dup",
+                    email="manager-dup@example.com",
+                    password_hash="hash",
+                    role="manager",
+                    is_active=True,
+                )
+            )
+            session.commit()
+
+            rule_dao = AutomationRuleDAO(session=session)
+            rule = rule_dao.create_rule(
+                name="Duplicate notification actions",
+                trigger="pipeline.transition_appended",
+                conditions_json={"op": "eq", "field": "stage", "value": "screening"},
+                actions_json=[
+                    {
+                        "action": "notification.emit",
+                        "notification_kind": "pipeline_stage_changed",
+                        "title_template": "Stage: {{stage}}",
+                        "body_template": "{{vacancy_title}} / {{candidate_id_short}}",
+                        "payload_template": {
+                            "vacancy_title": "{{vacancy_title}}",
+                            "stage": "{{stage}}",
+                            "candidate_id_short": "{{candidate_id_short}}",
+                        },
+                    },
+                    {
+                        "action": "notification.emit",
+                        "notification_kind": "pipeline_stage_changed",
+                        "title_template": "Stage duplicate: {{stage}}",
+                        "body_template": "{{vacancy_title}} / {{candidate_id_short}}",
+                        "payload_template": {
+                            "vacancy_title": "{{vacancy_title}}",
+                            "stage": "{{stage}}",
+                            "candidate_id_short": "{{candidate_id_short}}",
+                        },
+                    },
+                ],
+                priority=10,
+                created_by_staff_id=str(hiring_manager_staff_id),
+            )
+            rule = rule_dao.set_active(
+                entity=rule,
+                is_active=True,
+                updated_by_staff_id=str(hiring_manager_staff_id),
+            )
+
+            evaluator = AutomationEvaluator(
+                rule_dao=rule_dao,
+                staff_account_dao=StaffAccountDAO(session=session),
+            )
+            executor = AutomationActionExecutor(
+                evaluator=evaluator,
+                notification_dao=NotificationDAO(session=session),
+            )
+
+            transition_id = uuid4()
+            vacancy_id = uuid4()
+            candidate_id = uuid4()
+            event_time = datetime(2026, 3, 16, 11, 0, tzinfo=UTC)
+            event = PipelineTransitionAppendedEvent(
+                event_type="pipeline.transition_appended",
+                event_time=event_time,
+                trigger_event_id=transition_id,
+                payload=PipelineTransitionAppendedPayload(
+                    transition_id=transition_id,
+                    vacancy_id=vacancy_id,
+                    vacancy_title="QA Engineer",
+                    candidate_id=candidate_id,
+                    candidate_id_short="beef5678",
+                    from_stage="applied",
+                    to_stage="screening",
+                    stage="screening",
+                    hiring_manager_staff_id=hiring_manager_staff_id,
+                    changed_by_staff_id=str(uuid4()),
+                    changed_by_role="hr",
+                ),
+            )
+
+            created = executor.handle_event(event=event, correlation_id="req-dup")
+            assert created == 1
+            assert session.query(Notification).count() == 1
+
+            run = session.query(AutomationExecutionRun).first()
+            assert run is not None
+            assert run.status == "succeeded"
+            assert run.planned_action_count == 2
+            assert run.succeeded_action_count == 1
+            assert run.deduped_action_count == 1
+            assert run.failed_action_count == 0
+
+            actions = (
+                session.query(AutomationActionExecution)
+                .order_by(AutomationActionExecution.created_at.asc())
+                .all()
+            )
+            assert len(actions) == 2
+            assert actions[0].status == "succeeded"
+            assert actions[1].status == "deduped"
+
+            metric_rows = session.query(AutomationMetricEvent).all()
+            assert len(metric_rows) == 1
+            assert metric_rows[0].outcome == "success"
+            assert metric_rows[0].planned_action_count == 2
+            assert metric_rows[0].succeeded_action_count == 1
+            assert metric_rows[0].deduped_action_count == 1
+            assert metric_rows[0].failed_action_count == 0
+            assert metric_rows[0].automated_hr_operations_count == 1
+    finally:
+        engine.dispose()
+
+
 def test_executor_records_failed_action_and_sanitizes_error_text() -> None:
     """Verify executor captures failed status and redacts basic PII from error strings."""
     engine = create_engine("sqlite+pysqlite:///:memory:", future=True)

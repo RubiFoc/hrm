@@ -262,8 +262,7 @@ class AutomationActionExecutor:
                 - execution error when the plan failed.
         """
         payloads: list[NotificationCreate] = []
-        planned_by_pair: dict[tuple[str, str], PlannedNotificationEmitAction] = {}
-        ordered_pairs: list[tuple[str, str]] = []
+        ordered_items: list[tuple[tuple[str, str], PlannedNotificationEmitAction]] = []
         for item in plan:
             if item.action != "notification.emit":
                 continue
@@ -281,8 +280,7 @@ class AutomationActionExecutor:
                 )
             )
             pair = (str(item.recipient_staff_id), item.dedupe_key)
-            planned_by_pair[pair] = item
-            ordered_pairs.append(pair)
+            ordered_items.append((pair, item))
 
         if not payloads:
             return 0, [], None
@@ -310,25 +308,27 @@ class AutomationActionExecutor:
             error_text = sanitize_error_text(str(exc))
             results = [
                 ActionExecutionResult(
-                    planned_action=planned_by_pair[pair],
+                    planned_action=planned,
                     status="failed",
                     attempt_count=1,
                     trace_id=trace_id,
                     error_kind=error_kind,
                     error_text=error_text,
                 )
-                for pair in ordered_pairs
+                for _, planned in ordered_items
             ]
             return 0, results, exc
 
-        created_by_pair: dict[tuple[str, str], str] = {
+        created_ids_by_pair: dict[tuple[str, str], str] = {
             (row.recipient_staff_id, row.dedupe_key): row.notification_id for row in created
         }
+        created_pairs: set[tuple[str, str]] = set(created_ids_by_pair)
         results: list[ActionExecutionResult] = []
-        for pair in ordered_pairs:
-            planned = planned_by_pair[pair]
-            created_notification_id = created_by_pair.get(pair)
-            if created_notification_id is None:
+        succeeded_pairs: set[tuple[str, str]] = set()
+        for pair, planned in ordered_items:
+            # A pair can appear multiple times in one plan; only the first created occurrence
+            # is treated as succeeded while the rest are deduped.
+            if pair not in created_pairs or pair in succeeded_pairs:
                 results.append(
                     ActionExecutionResult(
                         planned_action=planned,
@@ -338,13 +338,14 @@ class AutomationActionExecutor:
                     )
                 )
                 continue
+            succeeded_pairs.add(pair)
             results.append(
                 ActionExecutionResult(
                     planned_action=planned,
                     status="succeeded",
                     attempt_count=1,
                     trace_id=trace_id,
-                    result_notification_id=created_notification_id,
+                    result_notification_id=created_ids_by_pair[pair],
                 )
             )
 

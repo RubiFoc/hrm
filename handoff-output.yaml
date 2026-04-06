@@ -1,45 +1,54 @@
 summary:
-  request_id: "TASK-08-01"
+  request_id: "TASK-08-02"
   status: "done"
   scope_delivered:
-    - "Automation evaluator fail-closed handling for invalid condition trees."
-    - "Deterministic rule ordering by priority desc with stable tie-breakers."
-    - "Unit coverage for invalid conditions and priority ordering."
-    - "Automation verification expectations documented."
+    - "Executor dedupes duplicate planned actions per recipient + dedupe key in a single run."
+    - "Retry replay of the same trigger event is idempotent (created=0, no duplicate notifications)."
+    - "Fail-closed automation execution validated for pipeline/offer/onboarding seams."
+    - "Automation verification expectations updated in docs and task marked closed."
 
 changes:
   files_modified:
-    - "apps/backend/src/hrm_backend/automation/services/evaluator.py"
-    - "apps/backend/tests/unit/automation/test_evaluator.py"
+    - "apps/backend/src/hrm_backend/automation/services/executor.py"
+    - "apps/backend/tests/unit/automation/test_executor.py"
+    - "apps/backend/tests/integration/automation/test_automation_rule_api.py"
+    - "apps/backend/tests/integration/employee/test_onboarding_task_api.py"
+    - "apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py"
     - "docs/testing/strategy.md"
+    - "docs/project/tasks.md"
   key_decisions:
-    - "Skip rules with invalid condition JSON to preserve fail-closed behavior."
-    - "Sort rules in evaluator to enforce deterministic action planning."
+    - "Treat repeated recipient+dedupe pairs within one plan as deduped, not succeeded."
+    - "Validate fail-closed automation behavior in integration tests without impacting domain writes."
 
 validation:
   commands_run:
-    - "UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/automation/test_evaluator.py"
     - "UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/automation"
     - "UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/automation/test_automation_rule_api.py"
+    - "UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/notifications/test_notification_api.py"
+    - "UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/employee/test_onboarding_task_api.py"
+    - "UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/vacancies/test_vacancy_pipeline_api.py"
+    - "UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/automation/test_automation_execution_log_api.py"
     - "./scripts/check-openapi-freeze.sh"
+    - "npm --prefix apps/frontend run api:types:check"
   results:
-    - "All tests passed; passlib crypt deprecation warning observed."
-    - "OpenAPI frozen spec check passed."
+    - "All listed tests passed; passlib crypt deprecation warning observed."
+    - "OpenAPI frozen spec check passed; OpenAPI types generation succeeded."
   best_practices_checks:
     - "Updated docs alongside behavior changes."
-    - "Kept evaluator deterministic and fail-closed."
+    - "Kept evaluator pure and moved all side effects into executor."
 
 risks:
   remaining_risks:
-    - "Frontend API types check not run because OpenAPI did not change."
+    - "Notification dedupe remains read-before-write; high concurrency could surface unique constraint failures as failed attempts." 
   assumptions:
-    - "OpenAPI contract unchanged by evaluator changes."
+    - "No OpenAPI contract changes required for executor behavior updates."
   open_questions: []
 
 documentation:
   updated_docs:
     - "docs/testing/strategy.md"
+    - "docs/project/tasks.md"
   updated_diagrams: []
   missing_docs: []
 
-operator_note: "Evaluator now skips invalid conditions and orders rules by priority; use automation unit + integration test commands listed above to verify locally."
+operator_note: "Automation executor is idempotent per recipient+dedupe key with fail-closed behavior; verify using the automation unit/integration commands listed above."
