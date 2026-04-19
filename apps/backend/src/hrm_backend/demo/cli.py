@@ -185,7 +185,11 @@ def reset_database(database_url: str) -> list[str]:
 
     engine = create_engine(database_url, future=True)
     inspector = inspect(engine)
-    tables = [table for table in inspector.get_table_names(schema="public") if table != "alembic_version"]
+    tables = [
+        table
+        for table in inspector.get_table_names(schema="public")
+        if table != "alembic_version"
+    ]
     if not tables:
         raise RuntimeError("No tables found to truncate in the target database")
     quoted = ", ".join(_quote_identifier(table) for table in tables)
@@ -408,7 +412,10 @@ def seed_demo_data(database_url: str) -> DemoSeedResult:
                     "skills": ["operations"],
                     "experience": {"years_total": 2},
                     "workplaces": {"entries": []},
-                    "titles": {"current": {"raw": "Assistant", "normalized": "assistant"}, "past": []},
+                    "titles": {
+                        "current": {"raw": "Assistant", "normalized": "assistant"},
+                        "past": [],
+                    },
                 },
                 evidence_json=[{"field": "skills", "snippet": "operations"}],
                 detected_language="en",
@@ -705,7 +712,8 @@ def create_demo_vacancy_with_cv(database_url: str) -> DemoVacancyCvResult:
         RuntimeError: If no staff accounts exist to own the records.
 
     Side Effects:
-        Inserts a vacancy, salary band, candidate profile, candidate document, and pipeline transition.
+        Inserts a vacancy, salary band, candidate profile, candidate document, and pipeline
+        transition.
     """
 
     engine = create_engine(database_url, future=True)
@@ -717,7 +725,9 @@ def create_demo_vacancy_with_cv(database_url: str) -> DemoVacancyCvResult:
         fallback_account = hr_account or manager_account or session.query(StaffAccount).first()
 
         if fallback_account is None:
-            raise RuntimeError("No staff accounts found; seed demo accounts before creating vacancy")
+            raise RuntimeError(
+                "No staff accounts found; seed demo accounts before creating vacancy"
+            )
 
         created_by_staff_id = (hr_account or fallback_account).staff_id
         hiring_manager_staff_id = (manager_account or fallback_account).staff_id
@@ -777,8 +787,20 @@ def create_demo_vacancy_with_cv(database_url: str) -> DemoVacancyCvResult:
                 "summary": "Demo CV for warehouse coordination.",
                 "skills": ["inventory", "shift_planning", "excel"],
                 "experience": {"years_total": 4},
-                "workplaces": {"entries": [{"employer": "Demo Warehouse", "position": {"raw": "Specialist"}}]},
-                "titles": {"current": {"raw": "Warehouse Specialist", "normalized": "warehouse specialist"}},
+                "workplaces": {
+                    "entries": [
+                        {
+                            "employer": "Demo Warehouse",
+                            "position": {"raw": "Specialist"},
+                        }
+                    ]
+                },
+                "titles": {
+                    "current": {
+                        "raw": "Warehouse Specialist",
+                        "normalized": "warehouse specialist",
+                    }
+                },
             },
             evidence_json=[{"field": "skills", "snippet": "Inventory, shift planning, Excel"}],
             detected_language="en",
@@ -838,7 +860,8 @@ def write_credentials_file(result: DemoSeedResult, output_path: Path) -> None:
     ]
     for account in result.accounts:
         lines.append(
-            f"- role={account.role} login={account.login} email={account.email} password={account.password}"
+            f"- role={account.role} login={account.login} email={account.email} "
+            f"password={account.password}"
         )
     lines.extend(
         [
@@ -848,7 +871,8 @@ def write_credentials_file(result: DemoSeedResult, output_path: Path) -> None:
     )
     for key in result.employee_keys:
         lines.append(
-            f"- target_role={key.target_role} key={key.employee_key} expires_at={key.expires_at.isoformat()}"
+            f"- target_role={key.target_role} key={key.employee_key} "
+            f"expires_at={key.expires_at.isoformat()}"
         )
     lines.extend(
         [
