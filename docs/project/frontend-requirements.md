@@ -1,7 +1,7 @@
 # Frontend Requirements (React.js)
 
 ## Last Updated
-- Date: 2026-03-20
+- Date: 2026-04-06
 - Updated by: architect + backend-engineer + frontend-engineer
 
 ## Fixed Technical Requirement
@@ -11,6 +11,7 @@
 - Role-based UI for: HR, Candidate, Manager, Employee, Leader, Accountant.
 - Public company landing page on `/` with a visible careers entry, public job-board link, and checked-in image assets.
 - Secure authentication flow with protected routes and session handling.
+- Departments directory on `/departments` with read access for all staff roles and edit access limited to `admin`/`leader`.
 - Staff login window (`/login`) must be available for local verification and daily staff workspace entry without manual `localStorage` edits.
 - Integration with backend APIs via typed/stable API client.
 - Current stage target: frontend must run stably in local environment on the current device.
@@ -173,6 +174,7 @@
   - `/accountant`
   - `/leader`
   - `/employee`
+  - `/departments`
   - `/candidate`
   - `/candidate/apply`
   - `/candidate/interview/:interviewToken`
@@ -199,6 +201,7 @@
   - `/accountant` -> `workspace=accountant`, `route=/accountant`
   - `/leader` -> `workspace=leader`, `route=/leader` for `leader` and `admin`
   - `/employee` -> `workspace=employee`, `route=/employee`
+  - `/departments` -> `workspace=departments`, `route=/departments`
   - `/candidate/apply` -> `workspace=candidate`, `route=/candidate/apply`
   - `/candidate/interview/:interviewToken` -> `workspace=candidate`, `route=/candidate/interview`
   - `/candidate` -> `workspace=candidate`, `route=/candidate`

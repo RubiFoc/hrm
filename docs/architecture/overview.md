@@ -1,8 +1,8 @@
 # Architecture Overview
 
 ## Last Updated
-- Date: 2026-04-04
-- Updated by: backend-engineer + coordinator
+- Date: 2026-04-06
+- Updated by: backend-engineer + frontend-engineer
 
 ## System Context
 HRM platform for Belarus that supports candidate selection across professions and
@@ -44,6 +44,7 @@ flowchart LR
 | Core Shared Package | Cross-domain backend primitives (`Base`, env utils, HTTP errors, time helpers) | Domain package imports | Reusable technical foundation | platform |
 | Auth and Access Service | JWT token lifecycle (PyJWT), Redis denylist checks, role claim propagation | Auth requests and bearer tokens | Auth claims, denylist decisions | platform |
 | Admin Governance Domain | Admin-only staff and registration-key governance flows | Admin API requests + auth context | Staff list/update decisions, key lifecycle (issue/list/revoke), audit hooks | platform |
+| Reference Data Domain | Department reference directory with shared reads and leader/admin edits | Department list/read/create/update calls | Canonical department rows, read-only list payloads | platform |
 | Recruitment Domain | Vacancies, candidates, pipeline, employee referrals, interviews, schedule-versioned interviewer feedback, offer lifecycle state, hire-conversion command flow, and manager-scoped hiring read models | Candidate and vacancy data | Vacancy/pipeline state, referral linkage, interview fairness state, offer status, active-document readiness, candidate context, and manager workspace hiring summaries/snapshots | hr-tech |
 | Match Scoring Domain | Async scoring jobs and explainable score artifacts keyed by vacancy, candidate, and active document | Scoring requests, parsed CV analysis, vacancy snapshot | UI-ready score/status payloads for shortlist review | ai-platform |
 | Employee Domain | Durable hire-conversion handoff, explicit employee profile bootstrap, onboarding workflows, employee self-service onboarding portal, employee directory visibility and avatar management, and HR/manager onboarding progress visibility | Hire conversion handoff, profile/bootstrap/template/portal/dashboard requests | Employee handoff rows, employee profiles, onboarding runs/templates/tasks, employee-facing onboarding views, directory views, and staff/manager onboarding progress read models | hr-tech |
@@ -162,10 +163,14 @@ flowchart LR
    HR maintains vacancy salary-band history -> HR/accountant maintain manual bonus entries ->
    manager/HR/accountant read unified payroll/bonus table with band alignment ->
    all compensation reads/writes are audited with fail-closed RBAC.
+19. Department Directory Flow:
+   admin/leader opens `/departments` -> `POST /api/v1/departments` creates canonical reference row ->
+   admin/leader `PATCH /api/v1/departments/{department_id}` updates the name ->
+   all authenticated staff read the directory via `GET /api/v1/departments` and `GET /api/v1/departments/{department_id}`.
 
 ## Data Boundaries
 - Source of truth entities:
-  vacancies, candidates, CV metadata, interview records, employee profiles, onboarding runs/templates/tasks, HR operations, audit events.
+  vacancies, candidates, CV metadata, interview records, employee profiles, onboarding runs/templates/tasks, HR operations, audit events, departments.
 - Manager hiring ownership artifact:
   `vacancies.hiring_manager_staff_id` is the one additive vacancy-level ownership signal for
   manager hiring visibility; manager workspace hiring reads fail closed when this assignment is

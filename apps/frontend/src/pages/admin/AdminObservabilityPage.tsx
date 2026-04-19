@@ -28,6 +28,7 @@ import {
   type CandidateCvParsingStatusResponse,
   type MatchScoreResponse,
 } from "../../api";
+import { readAuthSession } from "../../app/auth/session";
 import { formatDateTime, normalizeFilterValue, type TranslationFn } from "./adminUtils";
 
 const AUDIT_PREVIEW_LIMIT = 5;
@@ -62,6 +63,8 @@ type ScoringQueryState = {
  */
 export function AdminObservabilityPage() {
   const { t } = useTranslation();
+  const session = readAuthSession();
+  const accessToken = session.accessToken;
   const [parsingCandidateInput, setParsingCandidateInput] = useState("");
   const [parsingQueryState, setParsingQueryState] = useState<ParsingQueryState>({
     candidateId: "",
@@ -108,8 +111,8 @@ export function AdminObservabilityPage() {
       scoringQueryState.requestNonce,
     ],
     queryFn: () =>
-      getMatchScore(scoringQueryState.vacancyId, scoringQueryState.candidateId),
-    enabled: Boolean(scoringQueryState.vacancyId && scoringQueryState.candidateId),
+      getMatchScore(accessToken!, scoringQueryState.vacancyId, scoringQueryState.candidateId),
+    enabled: Boolean(accessToken && scoringQueryState.vacancyId && scoringQueryState.candidateId),
     retry: false,
   });
 

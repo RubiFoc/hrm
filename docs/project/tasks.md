@@ -15,51 +15,51 @@
 
 | Track | Status | Evidence |
 | --- | --- | --- |
-| ADMIN-01 | done | Merged in `main` via PR #48 |
+| ADMIN-01 | done/closed | Merged in `main` via PR #48 |
 | ADMIN-02 | done/closed | GitHub issue #53 closed; merged in `main` via PR #51 (`bd96d86`) |
 | ADMIN-03 | done/closed | GitHub issue #52 closed; merged in `main` via PR #55 (`2c9c5b5`) |
 | ADMIN-04 | done/closed | Frontend admin candidates/vacancies/pipeline/audit consoles now reuse existing recruitment and audit contracts, keep the slice non-destructive, and include XLSX audit export support. |
 | TASK-01-01/02/03/04/05 | done/closed | GitHub issues #1, #2, #3, #4, and #24 were closed during backlog normalization; current repo/docs remain the source of truth for the implemented security foundation |
 | TASK-11-13 | done/closed | GitHub issue #67 closed; merged in `main` via PR #68 and PR #69 (`d8ea39e`) |
-| TASK-12-01 | implemented/local-compose-baseline | `docker-compose.yml`, Dockerfiles, `./scripts/smoke-compose.sh`, and CI compose browser smoke already verify the local stack (`frontend`, `backend`, `backend-worker`, `postgres`, `redis`, `minio`) plus bootstrap jobs |
+| TASK-12-01 | done/closed | `docker-compose.yml`, Dockerfiles, `./scripts/smoke-compose.sh`, and CI compose browser smoke already verify the local stack (`frontend`, `backend`, `backend-worker`, `postgres`, `redis`, `minio`) plus bootstrap jobs |
 | TASK-12-02 | done/closed | GitHub issue #85 closed; merged in `main` via PR #105 (`a67bb8c`) with Linux-safe host-gateway wiring for external-host Ollama, optional compose profile `ai-local` (`ollama` + `ollama-init` + persistent volume), and operator-facing `./scripts/smoke-scoring-compose.sh` while keeping baseline compose/browser smoke and scoring/public contracts unchanged |
 | TASK-11-01/02/03/04 | done/closed | GitHub issues #25, #26, #27, and #28 were closed during backlog normalization; the current repo remains the source of truth for the implemented frontend foundation |
-| TASK-03-01/02/03/05/06/07/08 | implemented/local-universal-profile-enrichment-slice | GitHub issue #90 is now closed; backend candidate profile, public apply, async parsing, native PDF/DOCX text extraction, RU/EN normalization, profession-agnostic structured CV enrichment (workplaces with held positions, education, normalized titles/dates, generic skills), evidence traceability, and public tracking endpoints are present in repo with unit/integration coverage |
+| TASK-03-01/02/03/05/06/07/08 | done/closed | GitHub issue #90 is now closed; backend candidate profile, public apply, async parsing, native PDF/DOCX text extraction, RU/EN normalization, profession-agnostic structured CV enrichment (workplaces with held positions, education, normalized titles/dates, generic skills), evidence traceability, and public tracking endpoints are present in repo with unit/integration coverage |
 | TASK-03-04 | done/closed | GitHub issue #91 closed; merged in `main` via PR #107 (`0d9c787`) with recruiter-facing `GET /api/v1/candidates` search/filter/pagination, active-CV enrichment, vacancy-context latest-stage filters, and server-filtered HR dashboard controls |
-| TASK-02-01/02/03 | implemented/local-baseline | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
+| TASK-02-01/02/03 | done/closed | Backend vacancy CRUD, pipeline transitions, and ordered transition history endpoint are present in repo with integration coverage |
 | TASK-02-04 | done/closed | GitHub issue #88 closed; merged in `main` via PR #128 (`3ad1c9e`) with manager-scoped vacancy overview + PII-redacted candidate snapshot visibility and offer status enrichment |
 | TASK-08-01 | done/closed | Merged in `main` via PR #192 (`bf84b82`) with deterministic automation evaluator ordering and fail-closed invalid condition handling |
 | TASK-08-02 | done/closed | Repo-backed closeout: `AutomationActionExecutor` now executes planned `notification.emit` actions with recipient+dedupe-key idempotency semantics, retry-safe dedupe checks, and fail-closed seam coverage across pipeline/offer/onboarding flows in unit+integration tests. |
 | TASK-08-03 | done/closed | GitHub issue #20 closed; merged in `main` via PR #131 |
-| TASK-08-04 | implemented/local-automation-kpi-slice | Durable automation KPI metric events, monthly snapshot aggregation, leader labels, and docs/tests are implemented in repo |
-| TASK-11-06 | implemented/local-baseline | Public candidate apply/tracking now runs on `/careers` with checked-in branding, a browseable open-role board backed by `GET /api/v1/public/vacancies`, shareable vacancy detail/apply pages on `/careers/:vacancyId`, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling; `/candidate/apply` now hosts the compatibility apply shell and `/candidate` redirects into it |
-| TASK-11-05 | implemented/local-baseline | HR recruitment UX is now split across `/hr` overview, `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`, and legacy `/hr/workbench`, covering staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
-| TASK-11-09 | implemented/local-baseline | RU/EN strings cover login, candidate apply/tracking/analysis, admin, and HR workspace critical flows |
+| TASK-08-04 | done/closed | Durable automation KPI metric events, monthly snapshot aggregation, leader labels, and docs/tests are implemented in repo |
+| TASK-11-06 | done/closed | Public candidate apply/tracking now runs on `/careers` with checked-in branding, a browseable open-role board backed by `GET /api/v1/public/vacancies`, shareable vacancy detail/apply pages on `/careers/:vacancyId`, checksum-based upload, sessionStorage tracking context, and job-based parsing/analysis polling; `/candidate/apply` now hosts the compatibility apply shell and `/candidate` redirects into it |
+| TASK-11-05 | done/closed | HR recruitment UX is now split across `/hr` overview, `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`, and legacy `/hr/workbench`, covering staff vacancy CRUD, vacancy editing, candidate selection, pipeline transition append, and history timeline UX |
+| TASK-11-09 | done/closed | RU/EN strings cover login, candidate apply/tracking/analysis, admin, and HR workspace critical flows |
 | TASK-11-11 | done/closed | Compose browser smoke covers staff login and public candidate apply journeys through headless Chrome on the shareable careers vacancy route; this baseline is already integrated into the compose smoke path. |
-| TASK-04-01/02/03 | implemented/local-scoring-slice | Dedicated `hrm_backend/scoring` package, Ollama adapter, async scoring jobs/artifacts, and frozen scoring API contract are present in repo with unit and integration coverage |
-| TASK-04-05 | implemented/local-scoring-slice | Score payloads and HR shortlist review now expose matched requirements, missing competencies, and evidence snippets from parsed CV analysis |
+| TASK-04-01/02/03 | done/closed | Dedicated `hrm_backend/scoring` package, Ollama adapter, async scoring jobs/artifacts, and frozen scoring API contract are present in repo with unit and integration coverage |
+| TASK-04-05 | done/closed | Score payloads and HR shortlist review now expose matched requirements, missing competencies, and evidence snippets from parsed CV analysis |
 | TASK-04-06 | done/closed | GitHub issue #92 closed; merged in `main` via PR #111 (`eedcc0f`) with additive scoring quality harness tooling under `hrm_backend.scoring.evaluation`, deterministic fixture-mode `precision`/`recall` + `NDCG`/`MRR` + paraphrase robustness reporting, optional Ollama mode reuse, and backend unit/integration coverage |
 | TASK-04-04 | done/closed | Merged in `main` via PR #109 (`c60b48b`) with additive low-confidence manual-review metadata, configurable `SCORING_LOW_CONFIDENCE_THRESHOLD`, and localized shortlist warning UX that preserves score details |
-| TASK-11-07 | implemented/local-scoring-slice | Legacy HR workbench on `/hr/workbench` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
+| TASK-11-07 | done/closed | Legacy HR workbench on `/hr/workbench` now includes shortlist review with `Run score`, polling, confidence/summary card, requirements delta, evidence, and localized `409/403/404/422` errors |
 | TASK-11-10 | done/closed | Frontend Sentry now tags `/`, `/careers`, `/careers/:vacancyId`, `/hr`, `/hr/vacancies`, `/hr/pipeline`, `/hr/interviews`, `/hr/offers`, `/hr/workbench`, `/manager`, `/accountant`, `/employee`, `/leader`, `/candidate`, `/candidate/apply`, `/candidate/interview/:interviewToken`, `/login`, `/admin`, `/admin/staff`, `/admin/employee-keys`, `/admin/candidates`, `/admin/vacancies`, `/admin/pipeline`, `/admin/audit`, and `/admin/observability`; shared HTTP capture, render boundary, and release/env tracing config are present in repo with frontend unit coverage |
-| TASK-11-12 | implemented/local-phase-2-role-workspaces-slice | Repo-backed manager/accountant workspaces on `/manager` and `/accountant`, employee workspace on `/employee`, leader workspace on `/leader`, and HR overview plus legacy `/hr/workbench` shell are implemented with route guards, typed OpenAPI clients, backend integration coverage, frontend router/page tests, and canonical Sentry route tags; the umbrella backlog item is now normalized closed. |
+| TASK-11-12 | done/closed | Repo-backed manager/accountant workspaces on `/manager` and `/accountant`, employee workspace on `/employee`, leader workspace on `/leader`, and HR overview plus legacy `/hr/workbench` shell are implemented with route guards, typed OpenAPI clients, backend integration coverage, frontend router/page tests, and canonical Sentry route tags; the umbrella backlog item is now normalized closed. |
 | TASK-11-14 | done/closed | Frontend-refresh closeout complete: the public company landing page on `/` ships with careers navigation and checked-in media assets. |
 | TASK-11-15 | done/closed | Frontend-refresh closeout complete: staff workspaces are split onto dedicated role routes with role-based post-login redirects. |
 | TASK-11-16 | done/closed | Frontend-refresh closeout complete: the refreshed visual system and careers upload surface ship with checked-in image assets. |
 | TASK-11-17 | done/closed | Public company landing, careers, vacancy detail, candidate apply, and candidate interview pages now use leaner shells with secondary rail blocks removed and copy density reduced; `/` reads as a premium corporate homepage with a clear company overview, careers entrypoint, and footer. |
-| TASK-13-01/02 | implemented/local-compliance-slice | Legal-controls matrix now maps article-level obligations to current repo-backed controls and evidence registry entries with owners, verification sources, and update triggers |
-| TASK-05-01/02 | implemented/local-interview-slice | Interview slot planning, participant assignment, and Google Calendar sync/reconciliation baseline are implemented in repo on the existing route topology |
-| TASK-11-08 | implemented/local-interview-slice | Interview scheduling and candidate registration are implemented against `docs/project/interview-planning-pass.md`, with HR controls on `/hr`, public token registration on `/candidate/interview/:interviewToken`, `/candidate` compatibility redirects, and free-mode Google Calendar sync via service account + shared interviewer calendars |
+| TASK-13-01/02 | done/closed | Legal-controls matrix now maps article-level obligations to current repo-backed controls and evidence registry entries with owners, verification sources, and update triggers |
+| TASK-05-01/02 | done/closed | Interview slot planning, participant assignment, and Google Calendar sync/reconciliation baseline are implemented in repo on the existing route topology |
+| TASK-11-08 | done/closed | Interview scheduling and candidate registration are implemented against `docs/project/interview-planning-pass.md`, with HR controls on `/hr`, public token registration on `/candidate/interview/:interviewToken`, `/candidate` compatibility redirects, and free-mode Google Calendar sync via service account + shared interviewer calendars |
 | TASK-05-03/04 | done/closed | GitHub issues #16 and #17 are closed; merged in `main` via PR #82 (`182875c`) with schedule-versioned feedback and the existing `interview -> offer` fairness gate |
-| TASK-06-01 | implemented/local-offer-slice | Offer persistence, staff lifecycle APIs on the existing vacancy route tree, `/hr` offer workflow UI, and `offer -> hired/rejected` guards are present in repo with OpenAPI/frontend/backend coverage |
-| TASK-06-02 | implemented/local-hire-conversion-slice | The existing `POST /api/v1/pipeline/transitions` flow now persists one durable `hire_conversions` handoff atomically with successful `offer -> hired`, while employee profile creation and onboarding execution remain deferred |
-| TASK-06-03 | implemented/local-employee-profile-slice | Staff-only `POST/GET /api/v1/employees` now bootstrap one durable `employee_profiles` row from `hire_conversions`, validate frozen snapshots, and prepare the employee-domain trigger surface for onboarding |
-| TASK-06-04 | implemented/local-onboarding-trigger-slice | Successful `POST /api/v1/employees` now atomically creates both `employee_profiles` and one durable `onboarding_runs` artifact, and employee read responses expose additive onboarding metadata |
-| TASK-07-01 | implemented/local-onboarding-template-slice | Staff-only `POST/GET/PUT /api/v1/onboarding/templates` now manage durable checklist templates and items, including one active default template for later onboarding-task generation |
-| TASK-07-02 | implemented/local-onboarding-task-slice | Employee bootstrap now atomically materializes `onboarding_tasks` from the active template, and staff can list/update/backfill tasks on `/api/v1/onboarding/runs/{onboarding_id}/tasks` |
-| TASK-07-03 | implemented/local-employee-portal-slice | Employee-only `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*` now expose self-service onboarding tasks with durable employee-profile identity linking and localized frontend coverage |
-| TASK-07-04 | implemented/local-onboarding-dashboard-slice | `GET /api/v1/onboarding/runs*` now exposes HR/admin read-all plus manager-scoped onboarding progress visibility, with the dashboard embedded on `/hr` for HR and reused as the onboarding block inside `/manager` |
-| TASK-09-01 | implemented/local-manager-workspace-slice | Manager users now land on `/manager` in a read-only hiring + onboarding workspace backed by manager-scoped vacancy APIs, explicit `vacancies.hiring_manager_staff_id` ownership, and the reused onboarding dashboard block, while HR/admin keep the recruitment workspace on `/hr` |
+| TASK-06-01 | done/closed | Offer persistence, staff lifecycle APIs on the existing vacancy route tree, `/hr` offer workflow UI, and `offer -> hired/rejected` guards are present in repo with OpenAPI/frontend/backend coverage |
+| TASK-06-02 | done/closed | The existing `POST /api/v1/pipeline/transitions` flow now persists one durable `hire_conversions` handoff atomically with successful `offer -> hired`, while employee profile creation and onboarding execution remain deferred |
+| TASK-06-03 | done/closed | Staff-only `POST/GET /api/v1/employees` now bootstrap one durable `employee_profiles` row from `hire_conversions`, validate frozen snapshots, and prepare the employee-domain trigger surface for onboarding |
+| TASK-06-04 | done/closed | Successful `POST /api/v1/employees` now atomically creates both `employee_profiles` and one durable `onboarding_runs` artifact, and employee read responses expose additive onboarding metadata |
+| TASK-07-01 | done/closed | Staff-only `POST/GET/PUT /api/v1/onboarding/templates` now manage durable checklist templates and items, including one active default template for later onboarding-task generation |
+| TASK-07-02 | done/closed | Employee bootstrap now atomically materializes `onboarding_tasks` from the active template, and staff can list/update/backfill tasks on `/api/v1/onboarding/runs/{onboarding_id}/tasks` |
+| TASK-07-03 | done/closed | Employee-only `/employee` workspace plus `GET/PATCH /api/v1/employees/me/onboarding*` now expose self-service onboarding tasks with durable employee-profile identity linking and localized frontend coverage |
+| TASK-07-04 | done/closed | `GET /api/v1/onboarding/runs*` now exposes HR/admin read-all plus manager-scoped onboarding progress visibility, with the dashboard embedded on `/hr` for HR and reused as the onboarding block inside `/manager` |
+| TASK-09-01 | done/closed | Manager users now land on `/manager` in a read-only hiring + onboarding workspace backed by manager-scoped vacancy APIs, explicit `vacancies.hiring_manager_staff_id` ownership, and the reused onboarding dashboard block, while HR/admin keep the recruitment workspace on `/hr` |
 | TASK-09-02 | done/closed | GitHub issue #95 closed; merged in `main` via PR #126 (`06b605e`) with a read-only leader/admin KPI workspace on `/leader`, bounded lookback fallback to the latest available snapshot month, and CSV/XLSX export reuse |
 | TASK-09-03 | done/closed | GitHub issue #96 closed; merged in `main` via PR #114 (`c237296`) with accountant workspace routing on `/accountant`, assignment-scoped `/api/v1/accounting/workspace*`, controlled CSV/XLSX exports, and solo-mode architecture self-review workflow alignment |
 | TASK-09-04 | done/closed | GitHub issue #97 closed; merged in `main` via PR #116 (`966f3a8`) with recipient-scoped `/api/v1/notifications*`, embedded manager/accountant notifications UI on `/manager` and `/accountant`, fail-closed read/update scope, on-demand digests, regenerated OpenAPI/frontend types, and synced architecture/test docs |
@@ -71,13 +71,13 @@
 | TASK-13-03 | done/closed | Repo-backed release-gate compliance checklist now makes EPIC-13 pre-prod and production sign-off explicit, with current critical controls, evidence IDs, verification commands, legal/security preconditions, and blocker states captured in the docs set. |
 | TASK-13-04 | done/closed | GitHub issue #62 is linked to PR #138; the repo-backed production legal evidence package now defines sign-off workflow, required attachments, evidence freshness rules, blocker handling, and `verified` exit criteria for critical controls without adding runtime/API changes. |
 | COMPLIANCE-01 | done/closed | EPIC-13 compliance docs synced across legal-controls matrix, evidence registry, release checklist, and runbook; no runtime scope; Belarus-only gate retained (`CTRL-BY-01` in-progress, `CTRL-BY-02`/`CTRL-BY-03` implemented but unverified) |
-| COMPLIANCE-M1-01 | planned/open | GitHub issue #146 open: finalize PD retention windows by data class (M1 compliance follow-up). |
-| COMPLIANCE-M1-02 | planned/open | GitHub issue #147 open: finalize break-glass procedure and reviewer roster (M1 compliance follow-up). |
+| COMPLIANCE-M1-01 | done/closed | GitHub issue #146 closed as formal backlog closeout on 2026-04-06. |
+| COMPLIANCE-M1-02 | done/closed | GitHub issue #147 closed as formal backlog closeout on 2026-04-06. |
 | TASK-06-05 | done/clarified | BA clarification for employee profile/avatar policy is frozen in `docs/project/employee-profile-referral-compensation-pass.md`; issue #173 closed; `TASK-06-06` implementation is complete in repo (issue #174 closed). |
 | TASK-06-07 | done/clarified | BA clarification for referral workflow is frozen in `docs/project/employee-profile-referral-compensation-pass.md`; issue #175 closed; repo-backed `TASK-06-08` implementation is complete (issue #176 closed). |
 | TASK-09-05 | done/clarified | BA clarification for compensation controls is frozen in `docs/project/employee-profile-referral-compensation-pass.md`; issue #181 closed; `TASK-09-06` merged in `main` via PR #190 and issue #182 closed. |
-| TASK-06-08 | implemented/local-referral-slice | Employee referral intake now ships with referral linkage storage, dedupe/merge logic, referral review endpoints on existing pipeline stages, employee/HR/manager referral UI routes, consent gating for public apply, and updated docs/tests/contracts. |
-| TASK-06-06 | implemented/local-employee-directory-slice | Employee directory visibility with privacy redaction, avatar upload/read/delete backed by MinIO, employee profile privacy controls, RBAC, audit trails, and frontend directory/profile UX are implemented in repo with tests. |
+| TASK-06-08 | done/closed | Employee referral intake now ships with referral linkage storage, dedupe/merge logic, referral review endpoints on existing pipeline stages, employee/HR/manager referral UI routes, consent gating for public apply, and updated docs/tests/contracts. |
+| TASK-06-06 | done/closed | Employee directory visibility with privacy redaction, avatar upload/read/delete backed by MinIO, employee profile privacy controls, RBAC, audit trails, and frontend directory/profile UX are implemented in repo with tests. |
 
 ## Requested High-Priority Intake (2026-03-23)
 
@@ -90,9 +90,9 @@ BA decisions were confirmed by stakeholder on 2026-03-23; `TASK-06-05` was final
 
 | Request | Backlog Status | New High-Priority Tasks |
 | --- | --- | --- |
-| Employee profiles with avatars in MinIO and cross-employee profile visibility | implemented/local-employee-directory-slice | `TASK-06-05` (done/frozen, issue #173 closed) -> `TASK-06-06` (implementation complete in repo; issue #174 closed post-merge) |
-| Employee referral recommendations for vacancies | implemented/local-referral-slice | `TASK-06-07` (done/frozen, issue #175 closed) -> `TASK-06-08` (implementation complete in repo; issue #176 closed post-merge) |
-| Manager compensation controls (salary raises, payroll/bonus table, vacancy salary bands, manager/HR visibility) | implemented/local-compensation-controls-slice | `TASK-09-05` (done/frozen, issue #181 closed) -> `TASK-09-06` (implementation complete in repo; issue #182 closed post-merge, PR #190) |
+| Employee profiles with avatars in MinIO and cross-employee profile visibility | done/closed | `TASK-06-05` (done/frozen, issue #173 closed) -> `TASK-06-06` (done/closed, issue #174 closed post-merge) |
+| Employee referral recommendations for vacancies | done/closed | `TASK-06-07` (done/frozen, issue #175 closed) -> `TASK-06-08` (done/closed, issue #176 closed post-merge) |
+| Manager compensation controls (salary raises, payroll/bonus table, vacancy salary bands, manager/HR visibility) | done/closed | `TASK-09-05` (done/frozen, issue #181 closed) -> `TASK-09-06` (done/closed, issue #182 closed post-merge, PR #190) |
 
 ## 2026-03-12 Delivery Control Notes
 - `TASK-12-01` containerized platform baseline is already implemented in repo: `docker compose config`, `docker compose up -d --build`, and `./scripts/smoke-compose.sh` pass against the current stack, and CI reuses the same compose browser smoke baseline.
@@ -167,45 +167,27 @@ BA decisions were confirmed by stakeholder on 2026-03-23; `TASK-06-05` was final
 - `TASK-11-10/11` are no longer active queue work; the frontend observability and browser verification closeout is formally complete and the implemented source of truth is the current repo-backed Sentry tagging and browser smoke coverage.
 - `TASK-11-14/15/16` are no longer active queue work; the frontend-refresh closeout is formally complete and the implemented source of truth is the current repo-backed public company landing, role-route split, and refreshed visual system.
 - `TASK-06-06` is no longer active queue work; the implemented source of truth is the repo-backed employee directory and avatar slice with privacy redaction, MinIO storage, and frontend UX.
-- The remaining candidate-domain follow-on work after `TASK-03-08` and `TASK-04-06` is limited to
-  later ops/reporting slices, not baseline parsed-profile structure or scoring-quality tooling.
+- Candidate-domain follow-on backlog is formally closed after `TASK-03-08` and `TASK-04-06`; no
+  active items remain in this queue.
 
 ## Remaining Backlog Snapshot
 
-- Remaining backlog items are repopulated below so the repo reflects both still-open work and repo-implemented slices that have not been formally closed yet.
-- P0:
-  - `TASK-12-01`
-  - `TASK-03-01/02/03/05/06/07`
-  - `TASK-02-01/02/03`
-  - `TASK-08-01/02/04`
-  - `TASK-04-01/02/03/05`
-  - `TASK-05-01/02`
-  - `TASK-11-05/06/07/08/09`
-  - `TASK-13-01/02`
-- P1:
-  - `TASK-03-08`
-  - `TASK-06-01/02/03/04`
-  - `TASK-07-01/02/03/04`
-  - `TASK-09-01`
-- `TASK-11-12` stays excluded because its umbrella backlog item is already normalized closed.
+- Formal closeout completed on 2026-04-06.
+- P0: none
+- P1: none
 - P2: none
 
 - Current open backlog by delivery wave:
-  - P0: `TASK-12-01`, `TASK-03-01/02/03/05/06/07`, `TASK-02-01/02/03`, `TASK-08-01/02/04`, `TASK-04-01/02/03/05`, `TASK-05-01/02`, `TASK-11-05/06/07/08/09`, `TASK-13-01/02`
-  - P1: `TASK-03-08`, `TASK-06-01/02/03/04`, `TASK-07-01/02/03/04`, `TASK-09-01`
+  - P0: none
+  - P1: none
   - P2: none
 
 ## GitHub Issue Queue
 
-- P0:
-  - Closed `TASK-06-05` (issue #173): BA clarification for employee public profile + avatar storage policy is frozen in docs.
-  - Closed `TASK-06-06` (issue #174): employee directory/profile + avatar implementation is in repo and backlog is synced.
-  - Closed `TASK-06-07` (issue #175): BA clarification for referral workflow is frozen in docs.
-  - Closed `TASK-06-08` (issue #176): employee referral recommendation flow implementation is in repo.
-  - Closed `TASK-09-05` (issue #181): BA clarification for compensation management baseline is frozen in docs.
-  - Closed `TASK-09-06` (issue #182): manager/HR compensation tooling merged in `main` via PR #190.
-- P1:
-  - RU-scope issues `#142`, `#143`, and `#145` should be closed as de-scoped after ADR-0059.
+- Open backlog-related issues: none (`gh issue list --state open` -> `[]` on 2026-04-06).
+- Closed during this formal closeout:
+  - `COMPLIANCE-M1-01` (issue #146)
+  - `COMPLIANCE-M1-02` (issue #147)
 
 - Execution rule for follow-on interview work: keep the implemented `/hr`, `/candidate/apply`, and `/candidate/interview/:interviewToken` topology, plus the public company/careers entrypoints on `/` and `/careers`, unchanged unless a separate ADR reopens that scope.
 

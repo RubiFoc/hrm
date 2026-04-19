@@ -39,6 +39,15 @@ export function RootLayout() {
       to: "/careers",
       value: "/careers",
     },
+    ...(session.accessToken && session.role
+      ? [
+          {
+            label: t("navigation.departments"),
+            to: "/departments",
+            value: "/departments",
+          },
+        ]
+      : []),
     session.accessToken && session.role
       ? {
           label: t("navigation.workspace"),
@@ -49,7 +58,7 @@ export function RootLayout() {
           label: t("loginAction"),
           to: "/login",
           value: "/login",
-      },
+        },
   ];
   const activeTabValue = resolveActiveTabValue(
     location.pathname,
@@ -144,6 +153,9 @@ export function RootLayout() {
 function resolveActiveTabValue(pathname: string, hasWorkspaceTab: boolean): false | string {
   if (pathname === "/careers" || pathname.startsWith("/careers/")) {
     return "/careers";
+  }
+  if (pathname === "/departments" || pathname.startsWith("/departments/")) {
+    return "/departments";
   }
   if (
     pathname === "/hr"

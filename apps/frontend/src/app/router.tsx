@@ -19,6 +19,7 @@ import { CandidatePage } from "../pages/CandidatePage";
 import { CareersPage } from "../pages/CareersPage";
 import { CareersVacancyPage } from "../pages/CareersVacancyPage";
 import { CompanyHomePage } from "../pages/CompanyHomePage";
+import { DepartmentsPage } from "../pages/DepartmentsPage";
 import { EmployeeOnboardingPage } from "../pages/EmployeeOnboardingPage";
 import { EmployeeDirectoryPage } from "../pages/employee/EmployeeDirectoryPage";
 import { EmployeeDirectoryProfilePage } from "../pages/employee/EmployeeDirectoryProfilePage";
@@ -131,6 +132,20 @@ export const appRoutes = [
           {
             index: true,
             element: <LeaderWorkspacePage />,
+          },
+        ],
+      },
+      {
+        path: "departments",
+        element: (
+          <RoleGuard
+            allowedRoles={["admin", "hr", "manager", "employee", "leader", "accountant"]}
+          />
+        ),
+        children: [
+          {
+            index: true,
+            element: <DepartmentsPage />,
           },
         ],
       },

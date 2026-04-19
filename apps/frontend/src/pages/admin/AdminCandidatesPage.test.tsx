@@ -41,6 +41,9 @@ describe("AdminCandidatesPage", () => {
 
   beforeEach(async () => {
     fetchMock.mockReset();
+    window.localStorage.clear();
+    window.localStorage.setItem("hrm_access_token", "admin-token");
+    window.localStorage.setItem("hrm_user_role", "admin");
     await i18n.changeLanguage("ru");
   });
 

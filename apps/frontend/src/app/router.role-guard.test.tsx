@@ -80,6 +80,16 @@ describe("role route guard", () => {
           }),
         );
       }
+      if (url.includes("/api/v1/departments")) {
+        return Promise.resolve(
+          jsonResponse({
+            items: [],
+            total: 0,
+            limit: 20,
+            offset: 0,
+          }),
+        );
+      }
       return Promise.resolve(jsonResponse({}));
     });
   });
@@ -120,6 +130,18 @@ describe("role route guard", () => {
     renderWithPath("/accountant");
     expect(
       await screen.findByRole("heading", { name: /accountant workspace|кабинет бухгалтера/i }),
+    ).toBeDefined();
+  });
+
+  it("allows employee user into /departments", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "employee");
+
+    renderWithPath("/departments");
+    expect(
+      await screen.findByRole("heading", {
+        name: /departments directory|справочник департаментов/i,
+      }),
     ).toBeDefined();
   });
 });

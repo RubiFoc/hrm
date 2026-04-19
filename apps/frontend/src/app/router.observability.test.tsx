@@ -105,6 +105,16 @@ describe("frontend observability route tags", () => {
       if (url.endsWith("/health")) {
         return Promise.resolve(jsonResponse({ status: "ok" }));
       }
+      if (url.includes("/api/v1/departments")) {
+        return Promise.resolve(
+          jsonResponse({
+            items: [],
+            total: 0,
+            limit: 20,
+            offset: 0,
+          }),
+        );
+      }
       if (url.includes("/api/v1/audit/events?")) {
         return Promise.resolve(
           jsonResponse({
@@ -221,6 +231,22 @@ describe("frontend observability route tags", () => {
     expect(setTagMock).toHaveBeenCalledWith("workspace", "careers");
     expect(setTagMock).toHaveBeenCalledWith("role", "anonymous");
     expect(setTagMock).toHaveBeenCalledWith("route", "/careers");
+  });
+
+  it("tags the departments route on /departments", async () => {
+    window.localStorage.setItem("hrm_access_token", "token");
+    window.localStorage.setItem("hrm_user_role", "employee");
+
+    renderWithPath("/departments");
+
+    expect(
+      await screen.findByRole("heading", {
+        name: /departments directory|справочник департаментов/i,
+      }),
+    ).toBeDefined();
+    expect(setTagMock).toHaveBeenCalledWith("workspace", "departments");
+    expect(setTagMock).toHaveBeenCalledWith("role", "employee");
+    expect(setTagMock).toHaveBeenCalledWith("route", "/departments");
   });
 
   it("tags the HR workspace route on /hr", async () => {
