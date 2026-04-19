@@ -67,6 +67,24 @@ Use this log for decisions that change interfaces, data models, deployment topol
 | ADR-0060 | 2026-03-27 | accepted | Add employee referral intake tied to existing pipeline lifecycle | backend-engineer + frontend-engineer | recruitment domain, referrals, frontend routes, audit |
 | ADR-0061 | 2026-03-27 | accepted | Add employee directory privacy controls and avatar storage | backend-engineer + frontend-engineer | employee domain, object storage, RBAC, frontend directory |
 | ADR-0062 | 2026-03-27 | accepted | Freeze compensation controls baseline (raise approval chain, salary-band governance, payroll/bonus visibility) | business-analyst + architect + coordinator | compensation policy, RBAC/PII boundaries, audit/legal controls, implementation scope |
+| ADR-0063 | 2026-04-06 | accepted | Add departments reference directory with admin/leader edits and staff reads | backend-engineer + frontend-engineer | departments domain, RBAC, frontend routing, docs |
+
+## ADR-0063
+- Context: Operational stakeholders need a canonical department directory that leaders/admins can
+  maintain, while other staff roles can only read for visibility.
+- Decision:
+  - Introduce a departments reference data table with API list/read endpoints for all staff roles.
+  - Allow only `admin` and `leader` roles to create or update department names.
+  - Expose the directory on a dedicated `/departments` frontend route with read-only UI for
+    non-privileged staff.
+- Consequences:
+  - New departments domain is now part of the shared reference data surface and must stay aligned
+    across RBAC, OpenAPI, frontend types, and docs.
+  - Department names become a single canonical source for future vacancy/employee metadata usage.
+- Architecture self-review record (solo-maintainer mode):
+  - Review date: 2026-04-06.
+  - Reviewer: coordinator (acting architect role).
+  - Result: accepted; the change is additive and preserves existing runtime topology.
 
 ## ADR-0061
 - Context: `TASK-06-06` requires employee directory visibility with privacy redaction plus avatar upload/read

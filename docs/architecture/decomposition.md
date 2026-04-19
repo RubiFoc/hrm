@@ -18,6 +18,7 @@ industries rather than only IT roles.
 | HR Operations | Process automation and operational workflows | HR, leaders | Phase 1-2 |
 | Finance Adapter | Compensation controls, payroll/bonus visibility, and accounting-aligned exports | Accountants, HR, managers, leaders | Phase 2 |
 | Platform | Identity, access, audit, notifications, integrations | All roles | Phase 1 |
+| Reference Data | Shared company directories (departments, catalogs) | All staff roles | Phase 1 |
 | Core Foundation | Shared technical primitives reused by all backend domains | Backend teams | Phase 1-2 |
 | Intelligence | CV analysis and recommendation support | HR, managers | Phase 1 |
 | Analytics | KPI and operational reporting (monthly snapshots in v1) | Admin, leaders | Phase 1-2 |
@@ -30,6 +31,7 @@ industries rather than only IT roles.
 | Frontend Telemetry Service | Frontend Experience | Sentry SDK integration and client monitoring | Sentry |
 | Core Shared Package | Core Foundation | Reusable ORM base, env parsers, shared errors, common utils | Python imports |
 | Auth and Access Service | Platform | Authentication, role policies, session validation | REST/Token |
+| Department Directory Service | Reference Data | Department reference CRUD and shared list/read access | REST |
 | Vacancy Service | Recruitment | Vacancy CRUD, requirements and stages | REST |
 | Candidate Service | Recruitment | Candidate profiles, attachments, status transitions | REST |
 | CV Processing Service | Intelligence | Document extraction and profession-agnostic normalized CV structure (workplaces, held positions, education, titles, dates, generic skills) | Async jobs + REST status |
@@ -120,6 +122,7 @@ industries rather than only IT roles.
 | Employee profiles | Employee Profile Service | PostgreSQL | Created post-hire |
 | Onboarding tasks | Onboarding Service | PostgreSQL | Linked to employee profile |
 | In-app notifications | Notification Service | PostgreSQL | Recipient-scoped, deduped, and read-tracked |
+| Departments directory | Department Directory Service | PostgreSQL | Canonical reference data for department names |
 | KPI snapshots | Reporting Service | PostgreSQL | Monthly snapshots keyed by `period_month + metric_key`, rebuilt on demand |
 | Automation executions | Workflow Automation Service | PostgreSQL | Used for KPI and incident analysis |
 | Audit events | Audit Service | Append-only storage | Compliance evidence |

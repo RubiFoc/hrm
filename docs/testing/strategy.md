@@ -145,6 +145,17 @@ Acceptance rules for the implementation slice:
   - `./scripts/check-openapi-freeze.sh`
   - `npm --prefix apps/frontend run api:types:check`
 
+## Departments Directory Verification
+- Unit coverage:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/unit/departments`
+- Integration coverage:
+  - `UV_CACHE_DIR=/tmp/uv-cache uv run --project apps/backend pytest -q apps/backend/tests/integration/departments/test_department_api.py`
+- Frontend coverage:
+  - `npm --prefix apps/frontend run test -- --run src/pages/DepartmentsPage.test.tsx src/app/router.role-guard.test.tsx src/app/router.observability.test.tsx`
+- Contract sync:
+  - `./scripts/check-openapi-freeze.sh`
+  - `npm --prefix apps/frontend run api:types:check`
+
 ## Change-Based Verification Matrix
 | Change Type | Required Checks |
 | --- | --- |
@@ -152,6 +163,11 @@ Acceptance rules for the implementation slice:
 | New feature | Unit happy/negative + integration contract path |
 | Refactor | Unit non-regression + integration non-regression |
 | Runtime/Platform | Compose config validation + deterministic smoke cycle (`up -> smoke`, `down -> up -> smoke`) |
+
+## Frontend Auth Propagation Check
+- Required when frontend auth/session storage or API request plumbing changes.
+- Manual verification: sign in via `/login`, open `/admin/candidates`, and confirm the list loads
+  without a missing-bearer-token error.
 
 ## EPIC-13 Release-Gate Verification
 - Use this check set when the release-gate documentation or compliance mappings change:

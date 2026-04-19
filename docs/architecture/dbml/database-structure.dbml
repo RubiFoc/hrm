@@ -47,6 +47,17 @@ Table employee_registration_keys {
   }
 }
 
+Table departments {
+  department_id uuid [pk, not null]
+  name varchar(128) [not null, unique]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  Indexes {
+    name [name: 'ix_departments_name', unique]
+  }
+}
+
 Table notifications {
   notification_id uuid [pk, not null]
   recipient_staff_id uuid [not null]

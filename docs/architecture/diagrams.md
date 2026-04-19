@@ -1,8 +1,8 @@
 # Architecture Diagrams
 
 ## Last Updated
-- Date: 2026-04-04
-- Updated by: backend-engineer + coordinator
+- Date: 2026-04-06
+- Updated by: backend-engineer + frontend-engineer
 
 This file is the canonical diagram set for the system. Update diagrams whenever architecture, data flow, or critical business flow changes.
 
@@ -45,6 +45,7 @@ flowchart TB
     COREPKG[Core Shared Package]
     AUTH[Auth and Access Service]
     ADMIN[Admin Governance Service]
+    REFDATA[Reference Data Service]
     POLICY[Access Policy Evaluator]
     REC[Recruitment Services]
     SCOREDOM[Match Scoring Service]
@@ -73,6 +74,7 @@ flowchart TB
   UI --> API
   API --> AUTH
   API --> ADMIN
+  API --> REFDATA
   API --> POLICY
   API --> REC
   API --> SCOREDOM
@@ -84,8 +86,10 @@ flowchart TB
   WORKERS --> POLICY
   AUTH --> REDISDNL
   ADMIN --> DB
+  REFDATA --> DB
   AUTH -.imports.-> COREPKG
   ADMIN -.imports.-> COREPKG
+  REFDATA -.imports.-> COREPKG
   POLICY -.imports.-> COREPKG
   REC -.imports.-> COREPKG
   SCOREDOM -.imports.-> COREPKG
@@ -129,6 +133,7 @@ flowchart TB
 ```mermaid
 flowchart LR
   VAC[Vacancy Management]
+  DEPT[Department Directory]
   REF[Referral Intake]
   CAND[Candidate Management]
   SCORE[AI Match Scoring]
@@ -144,6 +149,7 @@ flowchart LR
   KPI[KPI and Audit]
 
   VAC --> SCORE
+  DEPT -.reference data.-> VAC
   REF --> CAND
   REF --> VAC
   CAND --> SCORE
@@ -152,6 +158,7 @@ flowchart LR
   FAIR --> OFFER
   OFFER --> HIRE
   HIRE --> EMP
+  DEPT -.reference data.-> EMP
   VAC --> COMP
   EMP --> COMP
   EMP --> ONB

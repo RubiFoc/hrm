@@ -31,6 +31,7 @@ import {
   type CandidateResponse,
   type CandidateUpdateRequest,
 } from "../../api";
+import { readAuthSession } from "../../app/auth/session";
 import {
   formatDateTime,
   normalizeFilterValue,
@@ -73,6 +74,8 @@ const EMPTY_DRAFT: CandidateDraft = {
 export function AdminCandidatesPage() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const session = readAuthSession();
+  const accessToken = session.accessToken;
 
   const [searchInput, setSearchInput] = useState("");
   const [locationInput, setLocationInput] = useState("");
@@ -90,14 +93,15 @@ export function AdminCandidatesPage() {
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
 
   const listQuery = useQuery({
-    queryKey: ["admin-candidates-list", query],
+    queryKey: ["admin-candidates-list", accessToken, query],
     queryFn: () => listCandidateProfiles(query),
+    enabled: Boolean(accessToken),
   });
 
   const selectedCandidateQuery = useQuery({
-    queryKey: ["admin-candidate-detail", selectedCandidateId],
+    queryKey: ["admin-candidate-detail", accessToken, selectedCandidateId],
     queryFn: () => getCandidateProfile(selectedCandidateId),
-    enabled: Boolean(selectedCandidateId),
+    enabled: Boolean(accessToken && selectedCandidateId),
   });
 
   const createMutation = useMutation({

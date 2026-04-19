@@ -1,8 +1,8 @@
 # Operations Runbook
 
 ## Last Updated
-- Date: 2026-03-23
-- Updated by: coordinator
+- Date: 2026-04-06
+- Updated by: codex
 
 ## Local Environment (Docker Compose)
 ### Prerequisites
@@ -16,6 +16,16 @@
 3. Start stack: `docker compose up -d --build`
 4. Verify status: `docker compose ps`
 5. Run smoke suite: `./scripts/smoke-compose.sh`
+
+### Demo Data Seed
+- Reset DB and seed demo data for all roles (destructive):
+  `DATABASE_URL=postgresql+psycopg://hrm:hrm@localhost:5432/hrm uv run --project apps/backend python -m hrm_backend.demo.cli --output secrets/demo-credentials.txt`
+- If you are already using the compose stack, run the seed inside the compose network:
+  `docker compose run --rm -v ./secrets:/tmp/out backend uv run --no-dev python -m hrm_backend.demo.cli --output /tmp/out/demo-credentials.txt`
+- Add one more vacancy + CV without resetting data:
+  `docker compose run --rm -v ./secrets:/tmp/out backend uv run --no-dev python -m hrm_backend.demo.cli --create-vacancy-cv --output /tmp/out/demo-credentials.txt`
+- Credentials file: `secrets/demo-credentials.txt`
+- The command truncates all tables except `alembic_version` before seeding.
 
 Optional self-contained AI runtime:
 1. Override scoring runtime target:

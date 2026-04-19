@@ -1,7 +1,7 @@
 # RBAC Role Matrix (Phase 1 Baseline)
 
 ## Last Updated
-- Date: 2026-04-04
+- Date: 2026-04-06
 - Updated by: backend-engineer
 
 This matrix is the access baseline for `TASK-01-01`, `TASK-01-02`, `TASK-01-03`,
@@ -34,6 +34,10 @@ Enforcement source of truth:
 | `vacancy:read` | yes | yes | no | no | yes | no |
 | `vacancy:create` | yes | yes | no | no | no | no |
 | `vacancy:update` | yes | yes | no | no | no | no |
+| `department:create` | yes | no | no | no | yes | no |
+| `department:read` | yes | yes | yes | yes | yes | yes |
+| `department:list` | yes | yes | yes | yes | yes | yes |
+| `department:update` | yes | no | no | no | yes | no |
 | `pipeline:read` | yes | yes | no | no | yes | no |
 | `pipeline:update` | yes | yes | no | no | no | no |
 | `pipeline:transition` | yes | yes | no | no | no | no |

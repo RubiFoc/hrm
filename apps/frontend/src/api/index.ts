@@ -33,6 +33,12 @@ export {
   uploadMyEmployeeAvatar,
 } from "./employeeDirectory";
 export {
+  createDepartment,
+  getDepartment,
+  listDepartments,
+  updateDepartment,
+} from "./departments";
+export {
   getManagerWorkspaceCandidateSnapshot,
   getManagerWorkspaceOverview,
 } from "./managerWorkspace";
@@ -154,6 +160,13 @@ export type {
   EmployeeProfilePrivacySettingsResponse,
   EmployeeProfilePrivacyUpdateRequest,
 } from "./employeeDirectory";
+export type {
+  DepartmentCreateRequest,
+  DepartmentListQuery,
+  DepartmentListResponse,
+  DepartmentResponse,
+  DepartmentUpdateRequest,
+} from "./departments";
 export type {
   ManagerWorkspaceCandidateSnapshotItemResponse,
   ManagerWorkspaceCandidateSnapshotResponse,

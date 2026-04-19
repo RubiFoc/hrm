@@ -686,6 +686,54 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/departments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Departments
+         * @description List department reference entries.
+         */
+        get: operations["list_departments_api_v1_departments_get"];
+        put?: never;
+        /**
+         * Create Department
+         * @description Create a department reference entry.
+         */
+        post: operations["create_department_api_v1_departments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/departments/{department_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Department
+         * @description Fetch one department reference entry.
+         */
+        get: operations["get_department_api_v1_departments__department_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Department
+         * @description Patch a department reference entry.
+         */
+        patch: operations["update_department_api_v1_departments__department_id__patch"];
+        trace?: never;
+    };
     "/api/v1/employees": {
         parameters: {
             query?: never;
@@ -3088,6 +3136,82 @@ export interface components {
             op: "contains";
             /** Value */
             value: string;
+        };
+        /**
+         * DepartmentCreateRequest
+         * @description Request payload for creating a department.
+         */
+        DepartmentCreateRequest: {
+            /** Name */
+            name: string;
+        };
+        /**
+         * DepartmentListItemResponse
+         * @description Department list item payload.
+         */
+        DepartmentListItemResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Department Id
+             * Format: uuid
+             */
+            department_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * DepartmentListResponse
+         * @description Paginated list of departments.
+         */
+        DepartmentListResponse: {
+            /** Items */
+            items: components["schemas"]["DepartmentListItemResponse"][];
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * DepartmentResponse
+         * @description Department payload returned by API endpoints.
+         */
+        DepartmentResponse: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Department Id
+             * Format: uuid
+             */
+            department_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * DepartmentUpdateRequest
+         * @description Request payload for patching a department.
+         */
+        DepartmentUpdateRequest: {
+            /** Name */
+            name?: string | null;
         };
         /**
          * EmployeeAvatarDeleteResponse
@@ -6767,6 +6891,138 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_departments_api_v1_departments_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+                search?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepartmentListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_department_api_v1_departments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepartmentCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepartmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_department_api_v1_departments__department_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                department_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepartmentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_department_api_v1_departments__department_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                department_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepartmentUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DepartmentResponse"];
+                };
             };
             /** @description Validation Error */
             422: {

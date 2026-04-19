@@ -7,6 +7,8 @@
  */
 import { captureFrontendHttpFailure } from "../app/observability/sentry";
 
+const AUTH_TOKEN_KEY = "hrm_access_token";
+
 export class ApiError extends Error {
   status: number;
   detail: string;
@@ -29,17 +31,63 @@ export type BlobResult = {
   contentType: string;
 };
 
+/**
+ * Read access token from browser local storage, if available.
+ *
+ * Outputs:
+ * - trimmed access token string, or null when not available.
+ *
+ * Side effects:
+ * - reads from `window.localStorage` in browser contexts.
+ */
+function resolveStoredAccessToken(): string | null {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return null;
+  }
+  const raw = window.localStorage.getItem(AUTH_TOKEN_KEY);
+  if (!raw) {
+    return null;
+  }
+  const trimmed = raw.trim();
+  return trimmed ? trimmed : null;
+}
+
+/**
+ * Attach bearer authorization header when a stored token exists.
+ *
+ * Inputs:
+ * - `init`: fetch init provided by the caller.
+ *
+ * Outputs:
+ * - updated init with `Authorization` header set, or original init when no token exists.
+ */
+function withAuthHeaders(init?: RequestInit): RequestInit | undefined {
+  const token = resolveStoredAccessToken();
+  if (!token) {
+    return init;
+  }
+  const headers = new Headers(init?.headers ?? undefined);
+  if (!headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  return {
+    ...init,
+    headers,
+  };
+}
+
 export async function apiRequest<TResponse>(
   input: RequestInfo | URL,
   init?: RequestInit,
 ): Promise<TResponse> {
+  const preparedInit = withAuthHeaders(init);
   let response: Response;
   try {
-    response = await fetch(input, init);
+    response = await fetch(input, preparedInit);
   } catch (error) {
     captureFrontendHttpFailure(error, {
       input,
-      method: init?.method,
+      method: preparedInit?.method,
     });
     throw error;
   }
@@ -51,7 +99,7 @@ export async function apiRequest<TResponse>(
     const apiError = new ApiError(response.status, detail);
     captureFrontendHttpFailure(apiError, {
       input,
-      method: init?.method,
+      method: preparedInit?.method,
       status: response.status,
       detail,
     });
@@ -75,13 +123,14 @@ export async function apiRequestBlob(
   input: RequestInfo | URL,
   init?: RequestInit,
 ): Promise<BlobResult> {
+  const preparedInit = withAuthHeaders(init);
   let response: Response;
   try {
-    response = await fetch(input, init);
+    response = await fetch(input, preparedInit);
   } catch (error) {
     captureFrontendHttpFailure(error, {
       input,
-      method: init?.method,
+      method: preparedInit?.method,
     });
     throw error;
   }
@@ -93,7 +142,7 @@ export async function apiRequestBlob(
     const apiError = new ApiError(response.status, detail);
     captureFrontendHttpFailure(apiError, {
       input,
-      method: init?.method,
+      method: preparedInit?.method,
       status: response.status,
       detail,
     });
@@ -114,13 +163,14 @@ export async function downloadFile(
   input: RequestInfo | URL,
   init?: RequestInit,
 ): Promise<DownloadResult> {
+  const preparedInit = withAuthHeaders(init);
   let response: Response;
   try {
-    response = await fetch(input, init);
+    response = await fetch(input, preparedInit);
   } catch (error) {
     captureFrontendHttpFailure(error, {
       input,
-      method: init?.method,
+      method: preparedInit?.method,
     });
     throw error;
   }
@@ -132,7 +182,7 @@ export async function downloadFile(
     const apiError = new ApiError(response.status, detail);
     captureFrontendHttpFailure(apiError, {
       input,
-      method: init?.method,
+      method: preparedInit?.method,
       status: response.status,
       detail,
     });
