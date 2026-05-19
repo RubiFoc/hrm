@@ -279,50 +279,56 @@ export function HrVacanciesPage() {
         <Stack spacing={2}>
           <Typography variant="h6">{t("hrDashboard.editSectionTitle")}</Typography>
           {selectedVacancy ? (
-            <Typography variant="body2" color="text.secondary">
-              {t("hrDashboard.selectedVacancySummary", {
-                vacancyTitle: selectedVacancy.title,
-                vacancyId: selectedVacancy.vacancy_id,
-              })}
-            </Typography>
+            <>
+              <Typography variant="body2" color="text.secondary">
+                {t("hrDashboard.selectedVacancySummary", {
+                  vacancyTitle: selectedVacancy.title,
+                  vacancyId: selectedVacancy.vacancy_id,
+                })}
+              </Typography>
+              <TextField
+                label={t("hrDashboard.fields.title")}
+                value={editDraft.title}
+                onChange={(event) =>
+                  setEditDraft((prev) => ({ ...prev, title: event.target.value }))
+                }
+              />
+              <TextField
+                label={t("hrDashboard.fields.department")}
+                value={editDraft.department}
+                onChange={(event) =>
+                  setEditDraft((prev) => ({ ...prev, department: event.target.value }))
+                }
+              />
+              <TextField
+                label={t("hrDashboard.fields.status")}
+                value={editDraft.status}
+                onChange={(event) =>
+                  setEditDraft((prev) => ({ ...prev, status: event.target.value }))
+                }
+              />
+              <TextField
+                label={t("hrDashboard.fields.description")}
+                value={editDraft.description}
+                multiline
+                minRows={3}
+                onChange={(event) =>
+                  setEditDraft((prev) => ({ ...prev, description: event.target.value }))
+                }
+              />
+              <Button
+                variant="outlined"
+                onClick={handleUpdateVacancy}
+                disabled={updateVacancyMutation.isPending}
+              >
+                {updateVacancyMutation.isPending
+                  ? t("hrDashboard.updatePending")
+                  : t("hrDashboard.updateAction")}
+              </Button>
+            </>
           ) : (
             <Alert severity="info">{t("hrDashboard.selectVacancyPrompt")}</Alert>
           )}
-          <TextField
-            label={t("hrDashboard.fields.title")}
-            value={editDraft.title}
-            onChange={(event) => setEditDraft((prev) => ({ ...prev, title: event.target.value }))}
-          />
-          <TextField
-            label={t("hrDashboard.fields.department")}
-            value={editDraft.department}
-            onChange={(event) =>
-              setEditDraft((prev) => ({ ...prev, department: event.target.value }))
-            }
-          />
-          <TextField
-            label={t("hrDashboard.fields.status")}
-            value={editDraft.status}
-            onChange={(event) => setEditDraft((prev) => ({ ...prev, status: event.target.value }))}
-          />
-          <TextField
-            label={t("hrDashboard.fields.description")}
-            value={editDraft.description}
-            multiline
-            minRows={3}
-            onChange={(event) =>
-              setEditDraft((prev) => ({ ...prev, description: event.target.value }))
-            }
-          />
-          <Button
-            variant="outlined"
-            onClick={handleUpdateVacancy}
-            disabled={updateVacancyMutation.isPending}
-          >
-            {updateVacancyMutation.isPending
-              ? t("hrDashboard.updatePending")
-              : t("hrDashboard.updateAction")}
-          </Button>
         </Stack>
       </Paper>
 

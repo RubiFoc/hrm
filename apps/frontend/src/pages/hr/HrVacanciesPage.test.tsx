@@ -43,6 +43,38 @@ describe("HrVacanciesPage", () => {
     cleanup();
   });
 
+  it("keeps the edit form hidden until a vacancy is selected", async () => {
+    fetchMock.mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith("/api/v1/vacancies")) {
+        return jsonResponse({
+          items: [
+            {
+              vacancy_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+              title: "Platform Engineer",
+              description: "Build platform",
+              department: "Engineering",
+              status: "open",
+              hiring_manager_staff_id: null,
+              hiring_manager_login: null,
+              created_at: "2026-03-10T08:00:00Z",
+              updated_at: "2026-03-12T08:30:00Z",
+            },
+          ],
+          total: 1,
+          limit: 20,
+          offset: 0,
+        });
+      }
+      return jsonResponse({});
+    });
+
+    renderHrVacanciesPage();
+
+    expect(await screen.findByText(/выберите вакансию из таблицы/i)).toBeDefined();
+    expect(screen.queryByRole("button", { name: /сохранить изменения вакансии|save vacancy changes/i })).toBeNull();
+  });
+
   it("creates a salary band for the selected vacancy", async () => {
     fetchMock.mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
